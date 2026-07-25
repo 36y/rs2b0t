@@ -43,6 +43,7 @@ const LADDER = 'Ladder';
 const CLIMB_UP = 'Climb-up';
 const CLIMB_DOWN = 'Climb-down';
 const AGGRO_SHAKE_TICKS = 5; // ~3s upstairs, long enough for the spiders to drop us
+const SHAKE_COOLDOWN_MS = 60_000;
 
 export const SETTINGS: SettingsSchema = {
     mode: { type: 'string', default: 'Master', options: ['Master', 'Runner'], label: 'Mode', help: 'Master crafts natures at the altar and takes essence from runners; Runner ferries essence to the master (runner ships in a later phase)' },
@@ -357,6 +358,8 @@ async function openUnnoteShop(): Promise<boolean> {
     if (Shop.isOpen()) {
         return true;
     }
+    // the scene reads empty for a tick or two after the ladder trip — blank isn't absent
+    await Execution.delayUntil(() => Npcs.query().name(UNNOTE_NPC).nearest() !== null, 5000);
     const npc = Npcs.query().name(UNNOTE_NPC).nearest();
     if (!npc) {
         return false;
@@ -498,12 +501,17 @@ function shopEssStock(): number {
 }
 
 class UnNoteEssence implements Task {
+    private lastShakeAt = 0;
     constructor(private bot: NatureCrafter) {}
     validate(): boolean { return notedEssence() > 0 && unnotedEssence() === 0 && Inventory.count(COINS) >= LOW_COINS; }
     async execute(): Promise<void> {
         this.bot.setStatus('topping up unnoted essence at the store');
         await this.bot.walkTo(STORE_TILE, 3);
-        await shakeAggroOnLadder(this.bot);
+        // one trip per arrival — a retried store visit must not climb all over again
+        if (Date.now() - this.lastShakeAt > SHAKE_COOLDOWN_MS) {
+            await shakeAggroOnLadder(this.bot);
+            this.lastShakeAt = Date.now();
+        }
         if (!(await openUnnoteShop())) {
             this.bot.log(`couldn't open ${UNNOTE_NPC}'s store — retrying`);
             return;
