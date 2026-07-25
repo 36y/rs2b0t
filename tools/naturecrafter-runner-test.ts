@@ -55,7 +55,7 @@ try {
     console.log(`runner '${USER}' at the Ardougne East bank`);
 
     await cheatQuiet(page, '~clearinv');
-    await cheatQuiet(page, '~bankitem blankrune 52'); // 2 batches — withdraws as one note, un-notes 26 at a time
+    await cheatQuiet(page, '~bankitem blankrune 52'); // 2+ batches — withdraws as one note, un-notes 25 at a time
     await cheatQuiet(page, '~bankitem coins 100000');
     await page.waitForTimeout(800);
 

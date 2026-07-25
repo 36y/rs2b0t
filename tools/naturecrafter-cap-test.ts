@@ -1,20 +1,22 @@
-// End-to-end smoke: a runner ships essence Ardougne->Karamja and hands it to a master
-// that crafts natures. Usage: bun tools/naturecrafter-e2e-test.ts [base] [budget-min]
+// Trade-cap smoke: a runner holding MORE than the 25 cap must offer exactly 25 and keep the rest.
+// Both accounts start at the ruins, so it tests the trade only — no shipping.
+// Usage: bun tools/naturecrafter-cap-test.ts [base] [budget-min]
 
 import type { Page } from 'playwright-core';
 import { boot, bringUpOffIsland, fail, launchBrowser, login, type } from './lib/harness.js';
 import { cheatQuiet, startScript } from './tutorial/harness.js';
 
 const base = process.argv[2] || 'http://localhost:8890';
-const budgetMin = Number(process.argv[3]) || 20;
+const budgetMin = Number(process.argv[3]) || 10;
 const stamp = Date.now().toString(36).slice(-6);
-const M_USER = `nem${stamp}`; // master
-const R_USER = `ner${stamp}`; // runner
+const M_USER = `ncm${stamp}`; // master
+const R_USER = `ncr${stamp}`; // runner
 const ALTAR_TELE = '::tele 0,44,47,49,14'; // nature ruins (2865,3022)
-const BANK_TELE = '::tele 0,41,51,31,19'; // Ardougne East bank (2655,3283)
+const SEED = 27; // over the 25 cap -> the runner must keep 2
+const CAP = 25;
 
 type Abi = {
-    __rs2b0t: { Inventory: { items(): { name: string | null; count: number }[] }; Skills: { xp(s: string): number; level(s: string): number }; reader: { worldTile(): { x: number; z: number; level: number } | null } };
+    __rs2b0t: { Inventory: { items(): { name: string | null; count: number }[] }; Skills: { xp(s: string): number } };
     rs2b0t: { runner: { state: string; ctx?: { log?: { msg: string }[] } } };
 };
 
@@ -35,19 +37,16 @@ async function teleTo(page: Page, user: string, tele: string): Promise<void> {
     if (!ok) fail(`${user}: relogin failed`);
 }
 
-function sample(page: Page): Promise<{ pos: { x: number; z: number } | null; natures: number; unnoted: number; noted: number; rcXp: number; state: string; logs: string[] }> {
+function sample(page: Page): Promise<{ unnoted: number; natures: number; rcXp: number; state: string; logs: string[] }> {
     return page.evaluate(() => {
         const g = globalThis as never as Abi;
         const items = g.__rs2b0t.Inventory.items();
-        const ess = items.filter(i => (i.name ?? '').toLowerCase() === 'rune essence');
         return {
-            pos: g.__rs2b0t.reader.worldTile(),
+            unnoted: items.filter(i => (i.name ?? '').toLowerCase() === 'rune essence' && i.count === 1).length,
             natures: items.filter(i => (i.name ?? '').toLowerCase() === 'nature rune').reduce((s, i) => s + Math.max(1, i.count), 0),
-            unnoted: ess.filter(i => i.count === 1).length,
-            noted: ess.filter(i => i.count > 1).reduce((s, i) => s + i.count, 0),
             rcXp: g.__rs2b0t.Skills.xp('runecraft'),
             state: g.rs2b0t.runner.state,
-            logs: (g.rs2b0t.runner.ctx?.log ?? []).slice(-12).map(l => l.msg)
+            logs: (g.rs2b0t.runner.ctx?.log ?? []).slice(-20).map(l => l.msg)
         };
     });
 }
@@ -62,8 +61,8 @@ try {
     await bringUp(pageM, M_USER);
     await bringUp(pageR, R_USER);
     await teleTo(pageM, M_USER, ALTAR_TELE);
-    await teleTo(pageR, R_USER, BANK_TELE);
-    console.log('master at the altar, runner at the Ardougne bank');
+    await teleTo(pageR, R_USER, ALTAR_TELE);
+    console.log('master + runner both at the nature ruins');
 
     await cheatQuiet(pageM, '~maxme');
     await pageM.waitForTimeout(1500);
@@ -72,53 +71,59 @@ try {
     await pageM.evaluate(n => {
         sessionStorage.setItem('rs2b0t:set:NatureCrafter:mode', 'Master');
         sessionStorage.setItem('rs2b0t:set:NatureCrafter:partner', n);
-        sessionStorage.setItem('rs2b0t:set:NatureCrafter:bankAt', '400'); // never bank natures during the smoke
+        sessionStorage.setItem('rs2b0t:set:NatureCrafter:bankAt', '400');
     }, R_USER);
 
-    // runner needs 99 hp — dangerous monsters on the Karamja route
-    await cheatQuiet(pageR, '~maxme');
-    await pageR.waitForTimeout(1200);
     await cheatQuiet(pageR, '~clearinv');
-    await cheatQuiet(pageR, '~bankitem blankrune 26'); // 26 = 25 + 1 -> leaves a "note of 1" (the finding-#1 wedge case)
-    await cheatQuiet(pageR, '~bankitem coins 100000');
+    await cheatQuiet(pageR, `~item blankrune ${SEED}`); // unnoted, straight into the pack
+    await cheatQuiet(pageR, '~item coins 20000');
     await pageR.evaluate(n => {
         sessionStorage.setItem('rs2b0t:set:NatureCrafter:mode', 'Runner');
         sessionStorage.setItem('rs2b0t:set:NatureCrafter:partner', n);
     }, M_USER);
-    await pageM.waitForTimeout(600);
+    await pageR.waitForTimeout(800);
+
+    const held = (await sample(pageR)).unnoted;
+    if (held < SEED) fail(`runner holds ${held} unnoted essence, expected ${SEED}`);
+    console.log(`runner seeded with ${held} unnoted essence (cap is ${CAP})`);
 
     await startScript(pageM, 'NatureCrafter');
     await startScript(pageR, 'NatureCrafter');
-    console.log('both bots started — runner making the Ardougne→Karamja→altar trip');
+    console.log('both bots started — watching the capped hand-off');
 
-    const xp0 = (await sample(pageM)).rcXp;
+    // the cap is per trade WINDOW: after the capped 25 the runner still holds the remainder and
+    // will hand it over in a second trade, so assert on the per-delivery amounts, not the end state
     const deadline = Date.now() + budgetMin * 60_000;
     let seenM = 0, seenR = 0;
     let m = await sample(pageM), r = await sample(pageR);
-    let delivered = false, crafted = false, keptNoted = false;
+    let capLogged = false;
+    const deliveries: number[] = [];
     while (Date.now() < deadline) {
         m = await sample(pageM); r = await sample(pageR);
-        const secs = Math.round((budgetMin * 60_000 - (deadline - Date.now())) / 1000);
-        console.log(`  t=${secs}s | M nat=${m.natures} rc+${m.rcXp - xp0} @${m.pos ? `${m.pos.x},${m.pos.z}` : '?'} | R noted=${r.noted} unnoted=${r.unnoted} @${r.pos ? `${r.pos.x},${r.pos.z}` : '?'} ${r.state}`);
         for (let i = seenR; i < r.logs.length; i++) { console.log(`   [R] ${r.logs[i]}`); }
         seenR = r.logs.length;
         for (let i = seenM; i < m.logs.length; i++) { console.log(`   [M] ${m.logs[i]}`); }
         seenM = m.logs.length;
+        const secs = Math.round((budgetMin * 60_000 - (deadline - Date.now())) / 1000);
+        console.log(`  t=${secs}s | R unnoted=${r.unnoted} | M unnoted=${m.unnoted} nat=${m.natures} | ${r.state}/${m.state}`);
 
-        if (r.logs.some(l => /delivered \d+ essence/.test(l))) { delivered = true; }
-        if (delivered && r.noted > 0) { keptNoted = true; } // still holds the leftover note after a delivery
-        if (m.natures >= 52 && m.rcXp > xp0) { crafted = true; } // all 26 essence crafted (26*2) — a note-of-1 wedge would stall at 50
-        if (crafted && delivered) { break; }
+        if (r.logs.some(l => new RegExp(`offering the ${CAP} cap`).test(l))) { capLogged = true; }
+        for (const l of r.logs) {
+            const hit = /delivered (\d+) essence/.exec(l);
+            if (hit && !deliveries.includes(Number(hit[1]))) { deliveries.push(Number(hit[1])); }
+        }
+        if (deliveries.length > 0 && r.unnoted <= SEED - CAP) { break; }
         if (r.state === 'crashed' || m.state === 'crashed') { break; }
-        await pageM.waitForTimeout(3000);
+        await pageM.waitForTimeout(2500);
     }
 
-    if (crafted && delivered) {
-        console.log(`PASS: runner delivered essence to the master (kept its noted stack: ${keptNoted}), master crafted ${m.natures} natures (rc +${m.rcXp - xp0} xp)`);
+    const over = deliveries.filter(n => n > CAP);
+    if (deliveries.includes(CAP) && over.length === 0) {
+        console.log(`PASS: a ${SEED}-essence runner offered exactly ${CAP} in the trade window (deliveries seen: ${deliveries.join(', ')}; cap log seen: ${capLogged})`);
         await browser.close();
         process.exit(0);
     }
-    fail(`incomplete within ${budgetMin}min [delivered=${delivered} crafted=${crafted} keptNoted=${keptNoted} Mnat=${m.natures} Rnoted=${r.noted} Runnoted=${r.unnoted} Rstate=${r.state}]`);
+    fail(`cap not honoured [deliveries=${deliveries.join(',') || 'none'} over-cap=${over.join(',') || 'none'} capLog=${capLogged} Runnoted=${r.unnoted} Rstate=${r.state} Mstate=${m.state}]`);
 } catch (e) {
     console.error(e);
     fail(String(e));

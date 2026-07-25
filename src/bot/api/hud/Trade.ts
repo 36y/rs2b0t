@@ -6,6 +6,7 @@ import { Players } from '../queries/Players.js';
 const TRADE_OP = 4; // OP_PLAYER4 = "Trade with" (login.rs2: set_player_op("Trade with", 4))
 const OFFER_INV = 3322; // tradeside:inv — your pack while trading; option4 = "Offer All"
 const OFFER_ALL = 4;
+const OFFER_X = 5; // tradeside option5 = "Offer X" -> count dialog
 const ACCEPT_OFFER = 3420; // trademain:accept (first screen)
 const ACCEPT_CONFIRM = 3546; // tradeconfirm:accept (second screen)
 const DECLINE = 3422; // trademain:decline
@@ -75,6 +76,30 @@ export const Trade = {
         }
 
         return ActionRouter.driver.invButton(it.id, it.slot, OFFER_INV, OFFER_ALL);
+    },
+
+    // offer exactly n (never more): Offer-X + count dialog; pick chooses among same-name slots
+    async offer(itemName: string, n: number, pick?: (i: { count: number; id: number; slot: number }) => boolean): Promise<boolean> {
+        if (n <= 0 || !reader.tradeOfferOpen()) {
+            return false;
+        }
+
+        const matches = reader.tradeSidePack().filter(i => i.name?.toLowerCase() === itemName.toLowerCase());
+        const it = pick ? matches.find(pick) : matches[0];
+        if (!it) {
+            return false;
+        }
+
+        if (!(await ActionRouter.driver.invButton(it.id, it.slot, OFFER_INV, OFFER_X))) {
+            return false;
+        }
+
+        if (!(await Execution.delayUntil(() => reader.countDialogOpen(), 3000))) {
+            return false;
+        }
+
+        actions.answerCountDialog(n);
+        return Execution.delayUntil(() => Trade.myOffer().reduce((s, o) => s + Math.max(1, o.count), 0) >= n, 4000);
     },
 
     async accept(): Promise<boolean> {

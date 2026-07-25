@@ -75,10 +75,12 @@ export const Shop = {
         return bought;
     },
 
-    async sell(name: string, n: number): Promise<number> {
+    // pick chooses among same-name pack slots (e.g. sell the noted stack, not unnoted singles)
+    async sell(name: string, n: number, pick?: (i: { id: number; count: number; slot: number }) => boolean): Promise<number> {
         let sold = 0;
         while (sold < n && Shop.isOpen()) {
-            const it = reader.shopInv(SHOP_PLAYER_COM).find(s => s.name?.toLowerCase() === name.toLowerCase());
+            const matches = reader.shopInv(SHOP_PLAYER_COM).filter(s => s.name?.toLowerCase() === name.toLowerCase());
+            const it = pick ? matches.find(pick) : matches[0];
             if (!it) {
                 break;
             }
