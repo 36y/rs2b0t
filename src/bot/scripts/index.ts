@@ -26,6 +26,7 @@ import WalkToBot, { WALKTO_SETTINGS } from './WalkToBot.js';
 import WildyAgility, { WILDY_AGILITY_SETTINGS } from './WildyAgility.js';
 import Woodcutter, { SETTINGS as WOODCUTTER_SETTINGS } from './Woodcutter.js';
 import SmelterBot, { SETTINGS as SMELTER_SETTINGS } from './SmelterBot.js';
+import TannerBot, { TANNER_SETTINGS } from './TannerBot.js';
 import SmithingBot, { SETTINGS as SMITHING_SETTINGS } from './SmithingBot.js';
 import BankFletcher, { SETTINGS as BANKFLETCHER_SETTINGS } from './BankFletcher.js';
 import FlaxPicker, { SETTINGS as FLAXPICKER_SETTINGS } from './FlaxPicker.js';
@@ -370,4 +371,13 @@ ScriptRegistry.register({
     tags: ['navigation', 'utility', 'web-walk'],
     settingsSchema: WALKTO_SETTINGS,
     create: () => new WalkToBot()
+});
+
+ScriptRegistry.register({
+    name: 'TannerBot',
+    description: 'Al Kharid tanning loop — banks hides, tans the whole load in one click at the Tanner, and every Nth trip keeps a slot free to buy out Dommik\'s thread',
+    category: 'Crafting',
+    tags: ['alkharid', 'leather', 'dragonhide', 'banking', 'afk'],
+    settingsSchema: TANNER_SETTINGS,
+    create: () => new TannerBot()
 });
