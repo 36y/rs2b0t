@@ -39,6 +39,10 @@ const COINS = 'Coins';
 const ARD_BANK = new Tile(2655, 3283, 0); // Ardougne East bank, by Captain Barnaby's pier
 const STORE_TILE = new Tile(2767, 3122, 0); // Jiminua's Jungle Store, Karamja
 const UNNOTE_NPC = 'Jiminua';
+const LADDER = 'Ladder';
+const CLIMB_UP = 'Climb-up';
+const CLIMB_DOWN = 'Climb-down';
+const AGGRO_SHAKE_TICKS = 5; // ~3s upstairs, long enough for the spiders to drop us
 
 export const SETTINGS: SettingsSchema = {
     mode: { type: 'string', default: 'Master', options: ['Master', 'Runner'], label: 'Mode', help: 'Master crafts natures at the altar and takes essence from runners; Runner ferries essence to the master (runner ships in a later phase)' },
@@ -320,6 +324,34 @@ class WaitForRunner implements Task {
     }
 }
 
+// jungle spiders chase the runner all the way to the store; a trip up the ladder next to
+// Jiminua (2766,3121) and straight back down drops their aggro
+async function shakeAggroOnLadder(bot: NatureCrafter): Promise<void> {
+    const level = (): number => Game.tile()?.level ?? 0;
+    const ground = level();
+    const up = Locs.query().name(LADDER).action(CLIMB_UP).nearest();
+    if (!up) {
+        return;
+    }
+    bot.setStatus('shaking the jungle spiders off on the ladder');
+    if (!(await up.interact(CLIMB_UP)) || !(await Execution.delayUntil(() => level() !== ground, 10_000))) {
+        bot.log('could not climb the store ladder — carrying on');
+        return;
+    }
+    await Execution.delayTicks(AGGRO_SHAKE_TICKS);
+    for (let i = 0; i < 3; i++) {
+        // locs read empty for a tick after a level change, so this may need a retry
+        const down = Locs.query().name(LADDER).action(CLIMB_DOWN).nearest();
+        if (down && (await down.interact(CLIMB_DOWN)) && (await Execution.delayUntil(() => level() === ground, 10_000))) {
+            bot.log('waited out the spiders upstairs and came back down');
+            await Execution.delayTicks(1);
+            return;
+        }
+        await Execution.delayTicks(2);
+    }
+    bot.log('stuck up the store ladder — the walker will bring us back down');
+}
+
 // opens via Talk-to + the first ("yes/buy") dialogue option, not a bare Trade op
 async function openUnnoteShop(): Promise<boolean> {
     if (Shop.isOpen()) {
@@ -471,6 +503,7 @@ class UnNoteEssence implements Task {
     async execute(): Promise<void> {
         this.bot.setStatus('topping up unnoted essence at the store');
         await this.bot.walkTo(STORE_TILE, 3);
+        await shakeAggroOnLadder(this.bot);
         if (!(await openUnnoteShop())) {
             this.bot.log(`couldn't open ${UNNOTE_NPC}'s store — retrying`);
             return;
