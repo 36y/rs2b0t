@@ -28,6 +28,7 @@ import Woodcutter, { SETTINGS as WOODCUTTER_SETTINGS } from './Woodcutter.js';
 import SmelterBot, { SETTINGS as SMELTER_SETTINGS } from './SmelterBot.js';
 import TannerBot, { TANNER_SETTINGS } from './TannerBot.js';
 import LeatherCrafter, { CRAFTER_SETTINGS } from './LeatherCrafter.js';
+import Firemaker, { FIREMAKER_SETTINGS } from './Firemaker.js';
 import SmithingBot, { SETTINGS as SMITHING_SETTINGS } from './SmithingBot.js';
 import BankFletcher, { SETTINGS as BANKFLETCHER_SETTINGS } from './BankFletcher.js';
 import FlaxPicker, { SETTINGS as FLAXPICKER_SETTINGS } from './FlaxPicker.js';
@@ -390,4 +391,13 @@ ScriptRegistry.register({
     tags: ['crafting', 'leather', 'dragonhide', 'banking', 'afk'],
     settingsSchema: CRAFTER_SETTINGS,
     create: () => new LeatherCrafter()
+});
+
+ScriptRegistry.register({
+    name: 'Firemaker',
+    description: 'Banks logs and burns them along the longest clear lane next to the bank — Varrock east/west, Draynor or Seers',
+    category: 'Skilling',
+    tags: ['firemaking', 'banking', 'varrock', 'draynor', 'seers', 'afk'],
+    settingsSchema: FIREMAKER_SETTINGS,
+    create: () => new Firemaker()
 });
