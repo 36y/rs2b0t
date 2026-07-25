@@ -21,6 +21,8 @@
         .mbx-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; flex: 0 0 auto; }
         .mbx-dot.is-online { background: #04A800; }
         .mbx-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .mbx-close { margin-left: auto; flex: 0 0 auto; background: none; border: 0; color: #666; cursor: pointer; font: inherit; padding: 0 2px; }
+        .mbx-close:hover { color: #e05b5b; }
         /* TILE_W/TILE_H below must match TILE_W/TILE_H in DomSlotOps.ts (crop math depends on it) */
         .mbx-body { position: relative; width: 236px; height: 155px; background: #000; }
         .mbx-clip { position: absolute; inset: 0; overflow: hidden; background: #000; }
@@ -39,6 +41,32 @@
 
         .mbx-addtile { display: flex; align-items: center; justify-content: center; height: 52px; flex: 0 0 auto; font-size: 14px; color: #666; border: 1px dashed #444; border-radius: 4px; cursor: pointer; }
         .mbx-addtile:hover { color: #04A800; border-color: #04A800; }
+
+        #mbx-drawer { position: fixed; top: 12px; right: 264px; z-index: 50; width: 16px; height: 56px; display: flex; align-items: center; justify-content: center; background: #111; border: 1px solid #333; border-right: 0; border-radius: 4px 0 0 4px; color: #666; cursor: pointer; }
+        #mbx-drawer:hover { color: #04A800; border-color: #04A800; }
+        /* collapse by width, NOT display:none — the focused slot's position:fixed clip
+           is a rail descendant and display:none on the rail would blank it */
+        #mbx-app.mbx-rail-hidden #mbx-rail { flex: 0 0 0px; width: 0; padding: 0; border-left: 0; overflow: hidden; }
+        #mbx-app.mbx-rail-hidden #mbx-drawer { right: 0; }
+        #mbx-app.mbx-rail-hidden .mbx-slot.is-focused .mbx-clip { right: 0; }
+
+        .mbx-chooser-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; }
+        .mbx-chooser-overlay[hidden] { display: none; }
+        .mbx-chooser { width: 300px; max-height: 70vh; overflow-y: auto; background: #111; border: 1px solid #333; border-radius: 4px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .mbx-chooser-title { color: #5be05b; }
+        .mbx-chooser-list { display: flex; flex-direction: column; gap: 4px; }
+        .mbx-chooser-empty { color: #666; }
+        #mbx-load-all { background: #07330a; border: 1px solid #04A800; color: #5be05b; padding: 5px 7px; border-radius: 3px; cursor: pointer; font: inherit; }
+        .mbx-vault-error { color: #e05b5b; min-height: 14px; }
+        .mbx-vault-reset { color: #666; cursor: pointer; text-decoration: underline; }
+        .mbx-vault-reset:hover { color: #e05b5b; }
+        .mbx-profile-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; border: 1px solid #2c2c2c; border-radius: 4px; cursor: pointer; }
+        .mbx-profile-row:hover { border-color: #04A800; }
+        .mbx-profile-del { background: none; border: 0; color: #666; cursor: pointer; font: inherit; }
+        .mbx-profile-del:hover { color: #e05b5b; }
+        .mbx-chooser-form { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid #2c2c2c; padding-top: 8px; }
+        .mbx-chooser-form input { background: #000; border: 1px solid #333; color: #ddd; padding: 5px 7px; border-radius: 3px; font: inherit; }
+        .mbx-chooser-form button { background: #07330a; border: 1px solid #04A800; color: #5be05b; padding: 5px 7px; border-radius: 3px; cursor: pointer; font: inherit; }
     </style>
 </head>
 <body>
@@ -47,6 +75,7 @@
         <div id="mbx-rail">
             <div id="mbx-add" class="mbx-addtile">+ add bot</div>
         </div>
+        <div id="mbx-drawer" title="show/hide bots">▶</div>
     </div>
     <script type="module" src="./bot/multibox.js"></script>
 </body>

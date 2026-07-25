@@ -55,13 +55,14 @@ export default defineConfig([
     },
     // Only ui/ and the entrypoints may touch the DOM (keeps headless viable).
     // The MultiBox manager is a second DOM entrypoint: main.ts (its bundle
-    // entry) and DomSlotOps.ts (its DOM-ops layer, analogous to ui/) are
-    // exempted the same way; the rest of src/bot/multibox/ stays fenced.
+    // entry) and its DOM view layers DomSlotOps.ts and ProfileChooser.ts
+    // (analogous to ui/) are exempted the same way; the rest of
+    // src/bot/multibox/ stays fenced.
     {
         files: ['src/bot/**/*.ts'],
-        ignores: ['src/bot/ui/**', 'src/bot/main.ts', 'src/bot/multibox/DomSlotOps.ts', 'src/bot/multibox/main.ts'],
+        ignores: ['src/bot/ui/**', 'src/bot/main.ts', 'src/bot/multibox/DomSlotOps.ts', 'src/bot/multibox/ProfileChooser.ts', 'src/bot/multibox/VaultPrompt.ts', 'src/bot/multibox/main.ts'],
         rules: {
-            'no-restricted-globals': ['error', { name: 'document', message: 'DOM only in src/bot/ui/, main.ts, and src/bot/multibox/{DomSlotOps,main}.ts.' }, { name: 'window', message: 'DOM only in src/bot/ui/, main.ts, and src/bot/multibox/{DomSlotOps,main}.ts.' }]
+            'no-restricted-globals': ['error', { name: 'document', message: 'DOM only in src/bot/ui/, main.ts, and src/bot/multibox/{DomSlotOps,ProfileChooser,VaultPrompt,main}.ts.' }, { name: 'window', message: 'DOM only in src/bot/ui/, main.ts, and src/bot/multibox/{DomSlotOps,ProfileChooser,VaultPrompt,main}.ts.' }]
         }
     }
 ]);

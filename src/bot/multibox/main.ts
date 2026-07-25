@@ -1,5 +1,8 @@
 import { DomSlotOps } from './DomSlotOps.js';
 import { MultiBoxController } from './MultiBoxController.js';
+import { ProfileChooser } from './ProfileChooser.js';
+import { vault, type Profile } from './ProfileVault.js';
+import { VaultPrompt } from './VaultPrompt.js';
 import type { Account } from './types.js';
 
 function boot(): void {
@@ -16,11 +19,56 @@ function boot(): void {
         if (!tile) return;
         const idx = Array.from(rail.querySelectorAll('.mbx-slot')).indexOf(tile);
         const snap = controller.snapshot()[idx];
-        if (snap) { controller.focus(snap.id); renderRail(); }
+        if (!snap) return;
+        if ((ev.target as HTMLElement).closest('.mbx-close')) {
+            controller.remove(snap.id);
+        } else {
+            controller.focus(snap.id);
+        }
+        renderRail();
     });
 
-    // No prompt: a bot starts empty and gets its login typed into its own panel.
-    addTile.addEventListener('click', () => { controller.add(); renderRail(); });
+    const chooser = new ProfileChooser(p => {
+        controller.add(p);
+        renderRail();
+    });
+    document.body.appendChild(chooser.el);
+
+    const prompt = new VaultPrompt(vault);
+    document.body.appendChild(prompt.el);
+    addTile.addEventListener('click', () => {
+        void prompt.ensureUnlocked().then(ok => {
+            if (ok) {
+                chooser.open();
+            }
+        });
+    });
+
+    window.addEventListener('message', ev => {
+        if (ev.origin !== location.origin) return;
+        const d = ev.data as { type?: string; username?: string; password?: string };
+        if (d?.type !== 'rs2b0t:profile-save' || typeof d.username !== 'string' || d.username.length === 0 || typeof d.password !== 'string') return;
+        void prompt.ensureUnlocked().then(ok => {
+            if (ok) {
+                void vault.upsert({ username: d.username!, password: d.password! });
+            }
+        });
+    });
+
+    const app = document.getElementById('mbx-app')!;
+    const drawer = document.getElementById('mbx-drawer')!;
+    const RAIL_HIDDEN_KEY = 'rs2b0t:multibox:railHidden';
+    function setRailHidden(hidden: boolean): void {
+        app.classList.toggle('mbx-rail-hidden', hidden);
+        drawer.textContent = hidden ? '◀' : '▶';
+        localStorage.setItem(RAIL_HIDDEN_KEY, hidden ? '1' : '0');
+        // the focused slot re-fits the widened/narrowed main pane via its resize listener
+        window.dispatchEvent(new Event('resize'));
+    }
+    drawer.addEventListener('click', () => setRailHidden(!app.classList.contains('mbx-rail-hidden')));
+    if (localStorage.getItem(RAIL_HIDDEN_KEY) === '1') {
+        setRailHidden(true);
+    }
 
     // Bind live status (name + online dot) onto the rail tiles, which DomSlotOps
     // keeps in slot order — so snapshot[i] is tile[i].
@@ -44,7 +92,22 @@ function boot(): void {
         controller,
         add: (a?: Account) => controller.add(a),
         focus: (id: number) => { controller.focus(id); renderRail(); },
-        slots: () => controller.snapshot()
+        slots: () => controller.snapshot(),
+        importProfiles: async (json: string | Profile[]): Promise<number> => {
+            if (!(await prompt.ensureUnlocked())) {
+                return 0;
+            }
+            const arr = typeof json === 'string' ? (JSON.parse(json) as Profile[]) : json;
+            let n = 0;
+            for (const p of Array.isArray(arr) ? arr : []) {
+                if (p && typeof p.username === 'string' && p.username.length > 0 && typeof p.password === 'string') {
+                    await vault.upsert({ username: p.username, password: p.password });
+                    n++;
+                }
+            }
+            return n;
+        },
+        profiles: (): string[] => vault.list().map(p => p.username)
     };
 }
 
