@@ -14,6 +14,7 @@ import { Paint } from '../api/hud/Paint.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import { Skills } from '../api/hud/Skills.js';
 import { Locs, type Loc } from '../api/queries/Locs.js';
+import { CANT_REACH, GameMessages } from '../events/gameMessages.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
 
@@ -24,6 +25,15 @@ const EDGEVILLE = new Tile(3094, 3493, 0);
 const RIDGE_MIN_AGILITY = 52;
 const PIT_Z_GAP = 2000;
 const LAP_RETRY_LIMIT = 4;
+const OBSTACLE_TIMEOUT_MS = 15_000;
+const START_TIMEOUT_MS = 2_400;
+const SETTLE_TICKS = 8;
+
+// a human sees the obstacle finish and clicks the next one a beat later, and that
+// beat varies; occasionally attention drifts for longer
+function reactionMs(): number {
+    return Math.random() < 0.08 ? 900 + Math.random() * 1500 : 180 + Math.random() * 420;
+}
 
 export const WILDY_AGILITY_SETTINGS: SettingsSchema = {
     food: {
@@ -473,11 +483,23 @@ class RunLap implements Task {
 
         const before = Skills.xp('agility');
         const hpBefore = Skills.effective('hitpoints');
+        const mark = GameMessages.mark();
+        const startedAt = Date.now();
         this.bot.setStatus(`${op} ${obstacle.name} at ${obstacle.tile()}`);
         const clicked = await obstacle.interact(op);
 
+        const done = (): boolean => Skills.xp('agility') > before || Skills.effective('hitpoints') < hpBefore
+            || GameMessages.sawSince(mark, CANT_REACH) || EventSignal.pending() || ChatDialog.canContinue();
+
         if (clicked) {
-            await Execution.delayUntil(() => Skills.xp('agility') > before || Skills.effective('hitpoints') < hpBefore || EventSignal.pending() || ChatDialog.canContinue(), 15_000);
+            // a click that landed shows itself within a beat, so a silent one is a
+            // swallowed click worth re-sending rather than sitting out the full budget.
+            // The animation is the earliest sign it landed — the narration can lag, and
+            // without that term real crossings get abandoned as dead clicks.
+            const started = await Execution.delayUntil(() => done() || Game.animating() || GameMessages.since(mark).length > 0, START_TIMEOUT_MS);
+            if (started && !done()) {
+                await Execution.delayUntil(done, OBSTACLE_TIMEOUT_MS);
+            }
         } else {
             await Execution.delayTicks(2);
         }
@@ -488,15 +510,18 @@ class RunLap implements Task {
         }
 
         const outcome = classifyAttempt(Skills.xp('agility') > before, Skills.effective('hitpoints') < hpBefore);
+        const unreachable = outcome !== 'cleared' && GameMessages.sawSince(mark, CANT_REACH);
 
+        // the clear is already confirmed by xp; only wait out the movement, and do
+        // not gate on the animation — the course's idle/emote loop never settles
         let last = Game.tile();
-        for (let settle = 0; settle < 25; settle++) {
+        for (let settle = 0; settle < SETTLE_TICKS; settle++) {
             await Execution.delayTicks(1);
             if (ChatDialog.canContinue()) {
                 break;
             }
             const now = Game.tile();
-            if (now && last && now.x === last.x && now.z === last.z && !Game.animating()) {
+            if (now && last && now.x === last.x && now.z === last.z) {
                 break;
             }
             last = now;
@@ -505,8 +530,16 @@ class RunLap implements Task {
         if (outcome === 'cleared') {
             this.stuck = 0;
             this.bot.countCleared();
+            this.bot.log(`cleared '${this.bot.currentName()}' in ${Date.now() - startedAt}ms`);
             this.bot.advance();
+            await Execution.delay(reactionMs());
             return;
+        }
+
+        // don't web-walk at the obstacle to fix this: its tile is deliberately unpathable
+        // (you climb it), so pathing at it only burns the A* budget. Retrying is enough.
+        if (unreachable) {
+            this.bot.setStatus(`out of range for ${obstacle.name} — retrying`);
         }
 
         if (++this.stuck >= LAP_RETRY_LIMIT) {
