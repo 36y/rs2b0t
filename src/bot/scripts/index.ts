@@ -27,6 +27,7 @@ import WildyAgility, { WILDY_AGILITY_SETTINGS } from './WildyAgility.js';
 import Woodcutter, { SETTINGS as WOODCUTTER_SETTINGS } from './Woodcutter.js';
 import SmelterBot, { SETTINGS as SMELTER_SETTINGS } from './SmelterBot.js';
 import TannerBot, { TANNER_SETTINGS } from './TannerBot.js';
+import LeatherCrafter, { CRAFTER_SETTINGS } from './LeatherCrafter.js';
 import SmithingBot, { SETTINGS as SMITHING_SETTINGS } from './SmithingBot.js';
 import BankFletcher, { SETTINGS as BANKFLETCHER_SETTINGS } from './BankFletcher.js';
 import FlaxPicker, { SETTINGS as FLAXPICKER_SETTINGS } from './FlaxPicker.js';
@@ -380,4 +381,13 @@ ScriptRegistry.register({
     tags: ['alkharid', 'leather', 'dragonhide', 'banking', 'afk'],
     settingsSchema: TANNER_SETTINGS,
     create: () => new TannerBot()
+});
+
+ScriptRegistry.register({
+    name: 'LeatherCrafter',
+    description: 'Needle-and-thread crafting loop — banks for leather and makes the best item your Crafting level allows for it',
+    category: 'Crafting',
+    tags: ['crafting', 'leather', 'dragonhide', 'banking', 'afk'],
+    settingsSchema: CRAFTER_SETTINGS,
+    create: () => new LeatherCrafter()
 });
