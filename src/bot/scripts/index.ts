@@ -396,7 +396,7 @@ ScriptRegistry.register({
 ScriptRegistry.register({
     name: 'Firemaker',
     description: 'Banks logs and burns them along the longest clear lane next to the bank — Varrock east/west, Draynor or Seers',
-    category: 'Skilling',
+    category: 'Firemaking',
     tags: ['firemaking', 'banking', 'varrock', 'draynor', 'seers', 'afk'],
     settingsSchema: FIREMAKER_SETTINGS,
     create: () => new Firemaker()
