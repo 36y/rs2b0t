@@ -127,43 +127,65 @@ function opIndex(ops: readonly (string | null)[], pattern: RegExp): number {
     return -1;
 }
 
+type WithdrawResult = 'withdrawn' | 'missing' | 'retry';
+
 // the bank helpers are name-keyed, which cannot separate same-named hides/leathers
-async function withdrawXById(id: number, count: number): Promise<boolean> {
+async function withdrawXById(id: number, count: number): Promise<WithdrawResult> {
     if (count <= 0) {
-        return true;
+        return 'withdrawn';
+    }
+    if (!Bank.loaded()) {
+        return 'retry';
     }
     const item = Bank.items().find(i => i.id === id);
     if (!item) {
-        return false;
+        return 'missing';
     }
     const op = opIndex(item.ops, /withdraw[\s-]*x/i);
     if (op === -1) {
-        return false;
+        return 'retry';
     }
-    const before = Inventory.used();
-    ActionRouter.driver.invButton(item.id, item.slot, item.comId, op);
+    const before = invById(id);
+    if (!(await ActionRouter.driver.invButton(item.id, item.slot, item.comId, op))) {
+        return 'retry';
+    }
     if (!(await Execution.delayUntil(() => reader.countDialogOpen(), 3000))) {
-        return false;
+        return 'retry';
     }
-    actions.answerCountDialog(count);
-    return Execution.delayUntil(() => Inventory.used() > before, 4000);
+    if (!actions.answerCountDialog(count)) {
+        return 'retry';
+    }
+    return (await Execution.delayUntil(() => invById(id) > before, 4000)) ? 'withdrawn' : 'retry';
 }
 
 // deposits by object id: the leathers and their products share display names in
 // places, so a name-keyed deposit would bank the wrong thing
-async function depositAllExceptIds(keep: Set<number>): Promise<void> {
+async function depositAllExceptIds(keep: Set<number>): Promise<boolean> {
     for (let guard = 0; guard < 32; guard++) {
-        const item = reader.bankSideItems().find(i => !keep.has(i.id));
+        let items = reader.bankSideItems();
+        if (items.length === 0 && Inventory.used() > 0 && Bank.isOpen()) {
+            await Execution.delayUntil(() => reader.bankSideItems().length > 0 || !Bank.isOpen(), 1200);
+            items = reader.bankSideItems();
+        }
+        if (items.length === 0) {
+            return Inventory.used() === 0;
+        }
+        const item = items.find(i => !keep.has(i.id));
         if (!item) {
-            return;
+            return true;
         }
         const op = opIndex(item.ops, /deposit[\s-]*all/i);
         if (op === -1) {
-            return;
+            return false;
         }
-        ActionRouter.driver.invButton(item.id, item.slot, item.comId, op);
-        await Execution.delayUntil(() => !reader.bankSideItems().some(i => i.slot === item.slot && i.id === item.id), 2000);
+        if (!(await ActionRouter.driver.invButton(item.id, item.slot, item.comId, op))) {
+            return false;
+        }
+        if (!(await Execution.delayUntil(() => !reader.bankSideItems().some(i => i.slot === item.slot && i.id === item.id), 2000))) {
+            return false;
+        }
     }
+    return false;
 }
 
 export default class LeatherCrafter extends LoopingBot {
@@ -180,7 +202,10 @@ export default class LeatherCrafter extends LoopingBot {
     private startedAt = Date.now();
 
     override async onStart(): Promise<void> {
-        await Execution.delayUntil(() => Game.ingame() && Game.tile() !== null, 0);
+        await Execution.delayUntil(
+            () => Game.ingame() && reader.sceneState() === 2 && Game.tile() !== null && Skills.level('crafting') > 0,
+            0
+        );
 
         this.kindLabel = this.settings.str('leatherType', 'Leather');
         this.kind = LEATHERS[this.kindLabel] ?? LEATHERS.Leather;
@@ -238,29 +263,49 @@ export default class LeatherCrafter extends LoopingBot {
             this.log('could not open the bank — retrying');
             return;
         }
-
-        await depositAllExceptIds(new Set([NEEDLE, THREAD, this.kind.leatherId]));
-
-        if (invById(NEEDLE) === 0 && !(await withdrawXById(NEEDLE, 1))) {
-            this.log('no needle in the bank — stopping.');
-            ScriptRunner.stop();
+        if (!(await Execution.delayUntil(() => Bank.loaded(), 3000))) {
+            this.log('bank contents not ready — retrying');
             return;
         }
-        if (invById(THREAD) < 5 && !(await withdrawXById(THREAD, this.threadStock))) {
-            this.log('no thread in the bank — stopping.');
-            ScriptRunner.stop();
+
+        if (!(await depositAllExceptIds(new Set([NEEDLE, THREAD, this.kind.leatherId])))) {
+            this.log('bank inventory view not ready — retrying');
+            return;
+        }
+
+        if (invById(NEEDLE) === 0 && !(await this.withdrawRequired(NEEDLE, 1, 'needle', 'no needle in the bank — stopping.'))) {
+            return;
+        }
+        if (invById(THREAD) < 5 && !(await this.withdrawRequired(THREAD, this.threadStock, 'thread', 'no thread in the bank — stopping.'))) {
             return;
         }
 
         const free = reader.inventorySize() - Inventory.used();
-        if (!(await withdrawXById(this.kind.leatherId, free))) {
-            this.log(`no ${this.kindLabel} left in the bank — stopping.`);
-            ScriptRunner.stop();
+        if (!(await this.withdrawRequired(
+            this.kind.leatherId,
+            free,
+            this.kindLabel,
+            `no ${this.kindLabel} left in the bank — stopping.`
+        ))) {
             return;
         }
 
         actions.closeModal();
         await Execution.delayUntil(() => !Bank.isOpen(), 3000);
+    }
+
+    private async withdrawRequired(id: number, count: number, label: string, missingMessage: string): Promise<boolean> {
+        const result = await withdrawXById(id, count);
+        if (result === 'withdrawn') {
+            return true;
+        }
+        if (result === 'retry') {
+            this.log(`could not withdraw ${label} — retrying`);
+            return false;
+        }
+        this.log(missingMessage);
+        ScriptRunner.stop();
+        return false;
     }
 
     private async craftLeg(): Promise<void> {
