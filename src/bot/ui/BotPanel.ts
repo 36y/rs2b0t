@@ -34,11 +34,7 @@ export default class BotPanel {
     private stateCell: HTMLElement;
     private playerCell: HTMLElement;
     private tileCell: HTMLElement;
-    private energyCell: HTMLElement;
-    private countsCell: HTMLElement;
     private modalsCell: HTMLElement;
-    private tickCell: HTMLElement;
-    private chatList: HTMLElement;
 
     private lastRender = 0;
 
@@ -107,17 +103,8 @@ export default class BotPanel {
         this.stateCell = row(status, 'state');
         this.playerCell = row(status, 'player');
         this.tileCell = row(status, 'tile');
-        this.energyCell = row(status, 'energy');
-        this.countsCell = row(status, 'nearby');
         this.modalsCell = row(status, 'modals');
-        this.tickCell = row(status, 'tick');
         root.appendChild(status);
-
-        const chat = el('div', 'rs2b0t-section');
-        chat.appendChild(sectionTitle('chat'));
-        this.chatList = el('div', 'rs2b0t-chat');
-        chat.appendChild(this.chatList);
-        root.appendChild(chat);
 
         const logSection = el('div', 'rs2b0t-section');
         logSection.appendChild(sectionTitle('log'));
@@ -367,27 +354,8 @@ export default class BotPanel {
         const tile = reader.worldTile();
         this.tileCell.textContent = tile ? `${tile.x}, ${tile.z}, ${tile.level}` : '-';
 
-        this.energyCell.textContent = ingame ? `${reader.energy()}% / ${reader.weight()} kg` : '-';
-        this.countsCell.textContent = ingame ? `${reader.playerCount()} players, ${reader.npcCount()} npcs` : '-';
-
         const modals = reader.modals();
         this.modalsCell.textContent = `main ${modals.main} / side ${modals.side} / chat ${modals.chat}`;
-
-        const mean = this.host.tickMeanMs;
-        this.tickCell.textContent = `${this.host.tickCount}${mean > 0 ? ` (${mean.toFixed(0)}ms)` : ''}`;
-
-        const lines = reader.chat(6);
-        this.chatList.replaceChildren();
-        for (const line of lines) {
-            const div = el('div', 'rs2b0t-chat-line');
-            div.textContent = line.username ? `${line.username}: ${line.text}` : line.text;
-            this.chatList.appendChild(div);
-        }
-        if (lines.length === 0) {
-            const div = el('div', 'rs2b0t-chat-line rs2b0t-dim');
-            div.textContent = '(no messages)';
-            this.chatList.appendChild(div);
-        }
 
         this.renderScriptControls();
     }

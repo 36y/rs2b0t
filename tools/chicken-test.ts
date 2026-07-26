@@ -78,7 +78,7 @@ try {
     });
     console.log(`teleport ${arrived ? 'ok' : 'DID NOT TAKE'} — tile now ${tileNow}`);
     if (!arrived) {
-        const chat = await page.evaluate(() => Array.from(document.querySelectorAll('.rs2b0t-chat-line')).map(n => n.textContent));
+        const chat = await page.evaluate(() => (globalThis as never as Rs2b0t).rs2b0t.reader.chat(6).map(line => line.text));
         fail(`still at ${tileNow}; chat: ${chat.join(' | ')}`);
     }
 

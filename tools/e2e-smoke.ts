@@ -78,10 +78,13 @@ try {
             const key = node.querySelector('.rs2b0t-key')?.textContent ?? '';
             rows[key] = node.querySelector('.rs2b0t-value')?.textContent ?? '';
         }
+        const sections = Array.from(document.querySelectorAll('#bot-panel > .rs2b0t-section'));
+        const status = sections.find(section => section.querySelector('.rs2b0t-section-title')?.textContent === 'status');
         return {
             banner: text('.rs2b0t-banner')[0] ?? '',
             rows,
-            chat: text('.rs2b0t-chat-line'),
+            sectionTitles: sections.map(section => section.querySelector('.rs2b0t-section-title')?.textContent ?? ''),
+            statusRows: status ? Array.from(status.querySelectorAll('.rs2b0t-key'), node => node.textContent ?? '') : [],
             tick: (globalThis as never as { rs2b0t: { host: { tickCount: number; tickMeanMs: number } } }).rs2b0t.host.tickCount
         };
     });
@@ -89,15 +92,15 @@ try {
     if (panel.banner !== '') fail(`unexpected adapter banner: '${panel.banner}'`);
     console.log('banner: none (adapter healthy)');
 
-    const { state, player, tile, energy, nearby, tick } = panel.rows;
+    if (panel.sectionTitles.includes('chat')) fail('chat section is still present');
+    const removedStatusRows = ['energy', 'nearby', 'tick'].filter(label => panel.statusRows.includes(label));
+    if (removedStatusRows.length > 0) fail(`removed status rows are still present: ${removedStatusRows.join(', ')}`);
+
+    const { state, player, tile, modals } = panel.rows;
     if (state !== 'ingame') fail(`state row: '${state}'`);
     if (!/^\d+, \d+, \d+$/.test(tile)) fail(`tile row: '${tile}'`);
-    if (!/^\d+% \/ \d+ kg$/.test(energy)) fail(`energy row: '${energy}'`);
-    if (!/^\d+ players, \d+ npcs$/.test(nearby)) fail(`nearby row: '${nearby}'`);
-    if (!/^[1-9]\d* \(\d+ms\)$/.test(tick)) fail(`tick row: '${tick}'`);
-    console.log(`panel: player='${player}' tile=(${tile}) energy=${energy} nearby=${nearby} tick=${tick}`);
-
-    console.log(`chat: ${panel.chat.join(' | ')}`);
+    if (!/^main -?\d+ \/ side -?\d+ \/ chat -?\d+$/.test(modals)) fail(`modals row: '${modals}'`);
+    console.log(`panel: player='${player}' tile=(${tile}) modals='${modals}'`);
 
     const before = panel.tick;
     await page.waitForTimeout(2000);
