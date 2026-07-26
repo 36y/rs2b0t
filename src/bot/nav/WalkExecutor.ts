@@ -235,7 +235,12 @@ class WalkExecutorImpl {
                 return 'closest';
             }
 
-            const found = locateOnPath(tiles, me, pathIdx, PROGRESS_WINDOW, CORRIDOR);
+            // A path can fold back within the spatial corridor while a wall or
+            // door still separates its sections. Never localize beyond the
+            // next unhandled transport, or a dungeon landing can skip the door
+            // that actually leads out of its room (Lumbridge cellar, #12).
+            const progressLimit = tiles.findIndex((tile, index) => index >= pathIdx && tile.transport !== undefined);
+            const found = locateOnPath(tiles, me, pathIdx, PROGRESS_WINDOW, CORRIDOR, progressLimit === -1 ? tiles.length - 1 : progressLimit);
             if (found !== -1) {
                 pathIdx = found;
                 offCorridor = 0;

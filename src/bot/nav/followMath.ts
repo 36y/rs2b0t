@@ -10,9 +10,9 @@ export function isOnFarSide(me: PathTileLike | null, approach: PathTileLike, ste
     return me !== null && me.level === step.level && chebyshev(me, step) < chebyshev(me, approach);
 }
 
-export function locateOnPath(tiles: PathTileLike[], me: PathTileLike, fromIdx: number, window: number, corridor: number): number {
+export function locateOnPath(tiles: PathTileLike[], me: PathTileLike, fromIdx: number, window: number, corridor: number, limitIdx = tiles.length - 1): number {
     let found = -1;
-    for (let i = fromIdx; i < Math.min(fromIdx + window, tiles.length); i++) {
+    for (let i = fromIdx; i < Math.min(fromIdx + window, tiles.length, limitIdx + 1); i++) {
         if (tiles[i].level === me.level && chebyshev(tiles[i], me) <= corridor) {
             found = i;
         }

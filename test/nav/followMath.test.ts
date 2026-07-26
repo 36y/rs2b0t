@@ -22,6 +22,11 @@ describe('locateOnPath', () => {
     test('level mismatch never matches', () => {
         expect(locateOnPath(tiles, t(12, 0, 1), 10, 26, 3)).toBe(-1);
     });
+    test('does not jump across a transport when the path folds nearby', () => {
+        const folded = [t(0, 0), t(1, 0), t(2, 0), t(3, 0), t(3, 1), t(2, 1), t(1, 1), t(0, 1)];
+        expect(locateOnPath(folded, t(0, 0), 0, 20, 1)).toBe(7);
+        expect(locateOnPath(folded, t(0, 0), 0, 20, 1, 3)).toBe(1);
+    });
 });
 
 describe('selectClickTarget', () => {
