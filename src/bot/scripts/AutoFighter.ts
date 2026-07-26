@@ -31,6 +31,7 @@ import {
 } from './AutoFighterData.js';
 import { SolveClue } from '../clues/SolveClue.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
+import { Reach } from '../api/Reach.js';
 
 const BOOTH = { name: 'Bank booth', op: 'Use-quickly' };
 const KIT = ['spade', 'sextant', 'watch', 'chart'];
@@ -219,12 +220,21 @@ class LootDrops implements Task {
             return;
         }
         this.bot.setStatus(`looting ${drop.name} at ${drop.tile()}`);
+        const id = drop.id;
+        const tile = drop.tile();
+        const find = () => GroundItems.query()
+            .where(item => item.id === id && item.tile().equals(tile))
+            .nearest();
         const before = countMatching(Inventory.items(), LOOT);
-        if (!(await drop.interact('Take'))) {
-            await Execution.delayTicks(2);
-            return;
-        }
-        if (await Execution.delayUntil(() => countMatching(Inventory.items(), LOOT) > before, 5000)) {
+        const status = await Reach.entityOp({
+            find,
+            op: 'Take',
+            expect: () => countMatching(Inventory.items(), LOOT) > before,
+            expectMs: 5000,
+            what: drop.name ?? 'loot',
+            log: message => this.bot.log(message)
+        });
+        if (status === 'done' && countMatching(Inventory.items(), LOOT) > before) {
             this.bot.countLoot();
         }
     }
@@ -382,11 +392,15 @@ class Fight implements Task {
             return;
         }
         this.bot.setStatus(`attacking ${TARGET} at ${target.tile()}`);
-        if (!(await target.interact('Attack'))) {
-            await Execution.delayTicks(2);
-            return;
-        }
-        if (!(await Execution.delayUntil(() => Game.inCombat() || ChatDialog.canContinue(), 5000)) || ChatDialog.canContinue()) {
+        const status = await Reach.entityOp({
+            find: () => this.track(target),
+            op: 'Attack',
+            expect: () => Game.inCombat() || ChatDialog.canContinue(),
+            expectMs: 5000,
+            what: TARGET,
+            log: message => this.bot.log(message)
+        });
+        if (status !== 'done' || ChatDialog.canContinue()) {
             return;
         }
         this.bot.setStatus('fighting');

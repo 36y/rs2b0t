@@ -19,6 +19,7 @@ import { CANT_REACH, GameMessages } from '../events/gameMessages.js';
 import { RecoveryHints } from '../runtime/RecoveryHints.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
+import { Reach } from '../api/Reach.js';
 
 const COMBAT_SKILLS = ['attack', 'strength', 'defence', 'hitpoints'];
 
@@ -281,17 +282,24 @@ class LootDrops implements Task {
 
         const name = drop.name ?? 'loot';
         this.bot.setStatus(`looting ${name} at ${drop.tile()}`);
+        const id = drop.id;
+        const tile = drop.tile();
+        const find = () => GroundItems.query()
+            .where(item => item.id === id && item.tile().equals(tile))
+            .nearest();
         const before = Inventory.used();
-        if (!drop.interact('Take')) {
-            this.bot.log(`no Take op on ground ${name}? ops=[${drop.actions().join(', ')}]`);
-            await Execution.delayTicks(2);
-            return;
-        }
-
-        if (await Execution.delayUntil(() => Inventory.used() > before, 6000)) {
+        const status = await Reach.entityOp({
+            find,
+            op: 'Take',
+            expect: () => Inventory.used() > before,
+            expectMs: 6000,
+            what: name,
+            log: message => this.bot.log(message)
+        });
+        if (status === 'done' && Inventory.used() > before) {
             this.bot.log(`looted ${name}`);
-        } else {
-            this.bot.log('loot timed out (unreachable?)');
+        } else if (status === 'retry') {
+            this.bot.log('loot attempt did not complete');
         }
     }
 

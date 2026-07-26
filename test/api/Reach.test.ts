@@ -11,6 +11,7 @@ let cantReach: boolean;
 let locInteractCount: number;
 let doorInteractCount: number;
 let npcInteractCount: number;
+let onNpcInteract: (() => void) | null;
 let dialogOpen: boolean;
 let expectFlips: boolean;
 let onDoorOpen: (() => void) | null;
@@ -44,6 +45,18 @@ const doorHandle = () => (sceneDoor ? {
         return true;
     }
 } : null);
+const npcHandle = () => (sceneNpc ? {
+    name: sceneNpc.name,
+    tile: () => sceneNpc!.tile,
+    distance: () => 1,
+    actions: () => ['Talk-to', 'Attack'],
+    interact: async () => {
+        npcInteractCount++;
+        onNpcInteract?.();
+        if (cantReach) { GameMessages.record("I can't reach that!"); }
+        return sceneNpc?.interactResult ?? false;
+    }
+} : null);
 function whereChain(preds: ((l: unknown) => boolean)[]): unknown {
     return {
         where: (p: (l: unknown) => boolean) => whereChain([...preds, p]),
@@ -59,7 +72,6 @@ mock.module('#/bot/api/queries/Locs.js', () => ({
     }
 }));
 mock.module('#/bot/api/queries/Npcs.js', () => {
-    const npcHandle = (): unknown => (sceneNpc ? { name: sceneNpc.name, tile: () => sceneNpc!.tile, actions: () => ['Talk-to'], interact: async () => { npcInteractCount++; if (cantReach) { GameMessages.record("I can't reach that!"); } return sceneNpc!.interactResult; } } : null);
     return {
         Npcs: {
             query: () => ({
@@ -106,10 +118,109 @@ beforeEach(() => {
     locInteractCount = 0;
     doorInteractCount = 0;
     npcInteractCount = 0;
+    onNpcInteract = null;
     dialogOpen = false;
     expectFlips = true;
     onDoorOpen = null;
     GameMessages.reset();
+});
+
+describe('Reach.entityOp', () => {
+    test('normal success dispatches once without opening a door', async () => {
+        sceneNpc = { name: 'Guard', tile: { x: 8, z: 5, level: 0 }, interactResult: true };
+        expectFlips = false;
+        onNpcInteract = () => { expectFlips = true; };
+
+        const r = await Reach.entityOp({ find: npcHandle, op: 'Attack', expect: () => expectFlips, what: 'Guard' });
+
+        expect(r).toBe('done');
+        expect(npcInteractCount).toBe(1);
+        expect(doorInteractCount).toBe(0);
+    });
+
+    test("fresh server can't-reach opens the door and a fresh retry succeeds", async () => {
+        sceneNpc = { name: 'Guard', tile: { x: 8, z: 5, level: 0 }, interactResult: true };
+        sceneDoor = { name: 'Large door', ops: ['Open'], tile: { x: 1, z: 0, level: 0 }, distance: 1, interactResult: true };
+        cantReach = true;
+        expectFlips = false;
+        onNpcInteract = () => { if (!cantReach) { expectFlips = true; } };
+        onDoorOpen = () => { cantReach = false; };
+
+        const r = await Reach.entityOp({ find: npcHandle, op: 'Attack', expect: () => expectFlips, what: 'Guard' });
+
+        expect(r).toBe('done');
+        expect(npcInteractCount).toBe(2);
+        expect(doorInteractCount).toBe(1);
+    });
+
+    test('success arriving while the door opens does not dispatch a redundant retry', async () => {
+        sceneNpc = { name: 'Guard', tile: { x: 8, z: 5, level: 0 }, interactResult: true };
+        sceneDoor = { name: 'Large door', ops: ['Open'], tile: { x: 1, z: 0, level: 0 }, distance: 1, interactResult: true };
+        cantReach = true;
+        expectFlips = false;
+        onDoorOpen = () => {
+            cantReach = false;
+            expectFlips = true;
+        };
+
+        const r = await Reach.entityOp({ find: npcHandle, op: 'Attack', expect: () => expectFlips, what: 'Guard' });
+
+        expect(r).toBe('done');
+        expect(npcInteractCount).toBe(1);
+        expect(doorInteractCount).toBe(1);
+    });
+
+    test('a stale pre-mark can\'t-reach message is ignored', async () => {
+        sceneNpc = { name: 'Guard', tile: { x: 8, z: 5, level: 0 }, interactResult: true };
+        expectFlips = false;
+        GameMessages.record("I can't reach that!");
+
+        const r = await Reach.entityOp({ find: npcHandle, op: 'Attack', expect: () => expectFlips, what: 'Guard' });
+
+        expect(r).toBe('retry');
+        expect(npcInteractCount).toBe(1);
+        expect(doorInteractCount).toBe(0);
+    });
+
+    test("fresh server can't-reach with no openable door is unreachable after one call", async () => {
+        sceneNpc = { name: 'Guard', tile: { x: 8, z: 5, level: 0 }, interactResult: true };
+        cantReach = true;
+        expectFlips = false;
+
+        const r = await Reach.entityOp({ find: npcHandle, op: 'Attack', expect: () => expectFlips, what: 'Guard' });
+
+        expect(r).toBe('unreachable');
+        expect(npcInteractCount).toBe(1);
+        expect(doorInteractCount).toBe(0);
+    });
+
+    test('dispatch false returns retry after one call', async () => {
+        sceneNpc = { name: 'Guard', tile: { x: 8, z: 5, level: 0 }, interactResult: false };
+        expectFlips = false;
+
+        const r = await Reach.entityOp({ find: npcHandle, op: 'Attack', expect: () => expectFlips, what: 'Guard' });
+
+        expect(r).toBe('retry');
+        expect(npcInteractCount).toBe(1);
+        expect(doorInteractCount).toBe(0);
+    });
+
+    test('target disappearing after a successful door open returns retry without a stale second interaction', async () => {
+        sceneNpc = { name: 'Guard', tile: { x: 8, z: 5, level: 0 }, interactResult: true };
+        sceneDoor = { name: 'Large door', ops: ['Open'], tile: { x: 1, z: 0, level: 0 }, distance: 1, interactResult: true };
+        cantReach = true;
+        expectFlips = false;
+        onDoorOpen = () => {
+            cantReach = false;
+            sceneNpc = null;
+        };
+
+        const r = await Reach.entityOp({ find: npcHandle, op: 'Attack', expect: () => expectFlips, what: 'Guard' });
+
+        expect(r).toBe('retry');
+        expect(npcInteractCount).toBe(1);
+        expect(doorInteractCount).toBe(1);
+    });
 });
 
 describe('Reach.locOp', () => {

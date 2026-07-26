@@ -11,6 +11,7 @@ import { openOp, towardDest } from './walkOpening.js';
 import { chebyshev } from '../nav/followMath.js';
 import { CANT_REACH, GameMessages } from '../events/gameMessages.js';
 import { talkOp } from '../quests/exec/primitives.js';
+import type { Interactable } from './entities/index.js';
 
 export type ReachStatus = 'done' | 'retry' | 'unreachable';
 
@@ -28,6 +29,19 @@ export interface ReachNpcOpts {
     name: string;
     near: WorldTile;
     openMs?: number;
+    log?: (m: string) => void;
+}
+
+export interface ReachEntity extends Interactable {
+    tile(): WorldTile;
+}
+
+export interface ReachEntityOpts<T extends ReachEntity> {
+    find: () => T | null;
+    op: string;
+    expect: () => boolean;
+    expectMs?: number;
+    what?: string;
     log?: (m: string) => void;
 }
 
@@ -76,11 +90,13 @@ async function reachThroughDoors(
     expectMs: number,
     targetTile: () => WorldTile | null,
     what: string,
-    log: (m: string) => void
+    log: (m: string) => void,
+    retryAfterTimeout = true
 ): Promise<ReachStatus> {
     for (let i = 0; i < REACH_DOOR_ATTEMPTS; i++) {
         const mark = GameMessages.mark();
-        if (await attempt()) {
+        const dispatched = await attempt();
+        if (dispatched) {
             await Execution.delayUntil(() => expect() || GameMessages.sawSince(mark, CANT_REACH), expectMs);
             if (expect()) { return 'done'; }
             if (GameMessages.sawSince(mark, CANT_REACH)) {
@@ -92,12 +108,35 @@ async function reachThroughDoors(
                 continue;
             }
         }
+        if (!retryAfterTimeout) {
+            if (!dispatched) {
+                await Execution.delayTicks(1);
+            }
+            return 'retry';
+        }
         await Execution.delayTicks(1);
     }
     return 'retry';
 }
 
 export const Reach = {
+    async entityOp<T extends ReachEntity>(opts: ReachEntityOpts<T>): Promise<ReachStatus> {
+        const log = opts.log ?? ((): void => {});
+        return reachThroughDoors(
+            async () => {
+                if (opts.expect()) { return true; }
+                const entity = opts.find();
+                return entity ? await entity.interact(opts.op) : false;
+            },
+            opts.expect,
+            opts.expectMs ?? 5000,
+            () => opts.find()?.tile() ?? null,
+            opts.what ?? opts.op,
+            log,
+            false
+        );
+    },
+
     async locOp(opts: ReachLocOpts): Promise<ReachStatus> {
         const log = opts.log ?? ((): void => {});
         const find = () => Locs.query().name(opts.name).action(opts.op).within(opts.within ?? 10).nearest();
