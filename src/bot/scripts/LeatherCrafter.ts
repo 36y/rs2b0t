@@ -12,6 +12,7 @@ import { ActionRouter } from '../input/ActionRouter.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
+import { issueHardLeatherBurst } from './LeatherCrafterLogic.js';
 
 const NEEDLE = 1733;
 const THREAD = 1734;
@@ -111,7 +112,9 @@ export const CRAFTER_SETTINGS: SettingsSchema = {
 };
 
 function invById(id: number): number {
-    return Inventory.items().filter(i => i.id === id).reduce((n, i) => n + i.count, 0);
+    return Inventory.items()
+        .filter(i => i.id === id)
+        .reduce((n, i) => n + i.count, 0);
 }
 
 function opIndex(ops: readonly (string | null)[], pattern: RegExp): number {
@@ -263,20 +266,25 @@ export default class LeatherCrafter extends LoopingBot {
     private async craftLeg(): Promise<void> {
         const recipe = this.recipe!;
         const needle = Inventory.items().find(i => i.id === NEEDLE);
-        const leather = Inventory.items().find(i => i.id === this.kind.leatherId);
-        if (!needle || !leather) {
+        const leathers = Inventory.items().filter(i => i.id === this.kind.leatherId);
+        if (!needle || leathers.length === 0) {
             return;
         }
 
         const before = invById(this.kind.leatherId);
         this.setStatus(`making ${recipe.label}`);
-        if (!(await needle.useOn(leather))) {
-            return;
-        }
 
         if (this.kind.flow === 'single') {
-            // hardleather bodies are made one per use — no interface to drive
-            await Execution.delayUntil(() => invById(this.kind.leatherId) < before, 5000);
+            // There is no make-X interface for hard leather. The server crafts
+            // synchronously, so use the needle on ten distinct slots at once.
+            if ((await issueHardLeatherBurst(leathers, target => needle.useOn(target))) === 0) {
+                return;
+            }
+            if (await Execution.delayUntil(() => invById(this.kind.leatherId) < before, 5000)) {
+                await Execution.delayTicks(1);
+            }
+        } else if (!(await needle.useOn(leathers[0]))) {
+            return;
         } else if (this.kind.flow === 'interface') {
             if (!(await Execution.delayUntil(() => reader.modals().main === LEATHER_IF, 5000))) {
                 return;
