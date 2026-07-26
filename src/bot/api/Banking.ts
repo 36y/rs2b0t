@@ -1,6 +1,6 @@
 import type { WorldTile } from '../adapter/ClientAdapter.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import { nearestBank } from './BankLocations.js';
+import { nearestBank, type BankObjectAccess } from './BankLocations.js';
 import { Execution } from './Execution.js';
 import { Game } from './Game.js';
 import { Traversal } from './Traversal.js';
@@ -12,6 +12,7 @@ export type BankStrategy = 'off' | 'items' | 'time' | 'either';
 export interface BankDestination {
     name: string;
     tile: WorldTile;
+    access?: BankObjectAccess;
 }
 
 export interface BankTriggerState {
@@ -101,19 +102,19 @@ export const Banking = {
         const boothName = opts.boothName ?? 'Bank booth';
         const boothOp = opts.boothOp ?? 'Use-quickly';
         const log = opts.log ?? (() => {});
+        let destination: BankDestination | null = null;
 
         if (!realBooth(boothName)) {
             const here = Game.tile();
-            const bank = opts.destination ?? (here ? nearestBank(here) : null);
-            if (bank) {
-                log(`no booth in scene — web-walking to the ${bank.name} bank at ${bank.tile}`);
-                await Traversal.walkResilient(bank.tile, { radius: 4, timeoutMs: 120_000, log });
+            destination = opts.destination ?? (here ? nearestBank(here) : null);
+            if (destination) {
+                log(`no booth in scene — web-walking to the ${destination.name} bank at ${destination.tile}`);
+                await Traversal.walkResilient(destination.tile, { radius: 4, timeoutMs: 120_000, log });
             }
         }
-        if (!realBooth(boothName)) {
-            return false;
-        }
-        if (!(await Bank.openNearest(boothName, boothOp, log))) {
+
+        const access = destination?.access ?? { name: boothName, op: boothOp };
+        if (!(await Bank.openNearestAccess(access, log))) {
             return false;
         }
         await Bank.depositAllMatching(depositMatcher(opts.deposit, opts.commonJunk ?? true));

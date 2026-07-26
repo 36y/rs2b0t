@@ -8,10 +8,20 @@ export interface BankRequirement {
     quest?: string;
 }
 
+export interface BankObjectAccess {
+    name: string;
+    op: string;
+    openFirst?: {
+        name: string;
+        op: string;
+    };
+}
+
 export interface BankLocation {
     name: string;
     tile: Tile;
     requires?: BankRequirement;
+    access?: BankObjectAccess;
 }
 
 export const BANK_LOCATIONS: BankLocation[] = [
@@ -31,7 +41,15 @@ export const BANK_LOCATIONS: BankLocation[] = [
     { name: 'Shilo Village', tile: new Tile(2852, 2954, 0), requires: { quest: 'Shilo Village' } },
     { name: 'Fishing Guild', tile: new Tile(2586, 3420, 0), requires: { skill: { name: 'fishing', level: 68 } } },
     { name: 'Shantay Pass', tile: new Tile(3309, 3120, 0) },
-    { name: 'Duel Arena', tile: new Tile(3382, 3269, 0) }
+    {
+        name: 'Duel Arena',
+        tile: new Tile(3382, 3269, 0),
+        access: {
+            name: 'Open chest',
+            op: 'Bank',
+            openFirst: { name: 'Closed chest', op: 'Open' }
+        }
+    }
 ];
 
 export function nearestUsableBank(from: WorldTile, usable: (bank: BankLocation) => boolean): BankLocation | null {

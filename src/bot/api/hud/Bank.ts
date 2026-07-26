@@ -1,6 +1,7 @@
 import type { InvItemSnapshot, WorldTile } from '../../adapter/ClientAdapter.js';
 import { reader, actions } from '../../adapter/ClientAdapter.js';
 import { ActionRouter } from '../../input/ActionRouter.js';
+import type { BankObjectAccess } from '../BankLocations.js';
 import { Execution } from '../Execution.js';
 import { Reachability } from '../Reachability.js';
 import { Traversal } from '../Traversal.js';
@@ -138,6 +139,42 @@ export const Bank = {
         return Bank.isOpen();
     },
 
+    async openNearestAccess(access: BankObjectAccess, log?: (msg: string) => void): Promise<boolean> {
+        if (Bank.isOpen()) {
+            return true;
+        }
+
+        if (access.openFirst && !locWithAction(access.name, access.op)) {
+            const opener = access.openFirst;
+            for (let attempt = 0; attempt < 3 && !Bank.isOpen(); attempt++) {
+                const closed = locWithAction(opener.name, opener.op);
+                if (!closed) {
+                    log?.(`no '${opener.name}' with '${opener.op}' in the scene`);
+                    await Execution.delayTicks(1);
+                    continue;
+                }
+
+                log?.(`opening '${opener.name}' before banking`);
+                if (!(await closed.interact(opener.op))) {
+                    log?.(`could not '${opener.op}' '${opener.name}'`);
+                    await Execution.delayTicks(1);
+                    continue;
+                }
+
+                if (await Execution.delayUntil(() => Bank.isOpen() || locWithAction(access.name, access.op) !== null, 8000)) {
+                    break;
+                }
+            }
+
+            if (!Bank.isOpen() && !locWithAction(access.name, access.op)) {
+                log?.(`'${access.name}' never became usable`);
+                return false;
+            }
+        }
+
+        return Bank.isOpen() || Bank.openNearest(access.name, access.op, log);
+    },
+
     async openNearest(boothName: string, op: string, log?: (msg: string) => void): Promise<boolean> {
         const pick = (acts: string[]): string | undefined =>
             acts.find(a => a.toLowerCase() === op.toLowerCase()) ?? acts.find(a => /^use|^bank/i.test(a)) ?? acts[0];
@@ -181,6 +218,14 @@ export const Bank = {
         return Bank.isOpen();
     }
 };
+
+function locWithAction(name: string, op: string) {
+    const wanted = op.toLowerCase();
+    return Locs.query()
+        .name(name)
+        .where(loc => loc.actions().some(action => action.toLowerCase() === wanted))
+        .nearest();
+}
 
 function bankStand(booth: WorldTile): WorldTile | null {
     const me = reader.worldTile();

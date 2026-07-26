@@ -24,6 +24,16 @@ test('Yanille bank centre matches its bank_zones midpoint', () => {
     expect(yanille?.tile.z).toBe(3092);
 });
 
+test('Duel Arena opens its chest before using the bank action', () => {
+    const duelArena = BANK_LOCATIONS.find(b => b.name === 'Duel Arena');
+    expect(duelArena?.access).toEqual({
+        name: 'Open chest',
+        op: 'Bank',
+        openFirst: { name: 'Closed chest', op: 'Open' }
+    });
+    expect(BANK_LOCATIONS.filter(bank => bank.access).map(bank => bank.name)).toEqual(['Duel Arena']);
+});
+
 test('nearestBank returns the closest bank on the same level', () => {
     expect(nearestBank({ x: 2605, z: 3085, level: 0 })?.name).toBe('Yanille');
     expect(nearestBank({ x: 3270, z: 3168, level: 0 })?.name).toBe('Al Kharid');
