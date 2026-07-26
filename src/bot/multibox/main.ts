@@ -1,5 +1,5 @@
 import { TrafficCollector } from '../adapter/TrafficAdapter.js';
-import { DomSlotOps } from './DomSlotOps.js';
+import { DomSlotOps, orderedSlotElements } from './DomSlotOps.js';
 import { MultiBoxController } from './MultiBoxController.js';
 import { ProfileChooser } from './ProfileChooser.js';
 import { vault, type Profile } from './ProfileVault.js';
@@ -27,6 +27,10 @@ function boot(): void {
     let draggingId: number | null = null;
     let suppressClick = false;
     let orderWrite = Promise.resolve();
+
+    function railTiles(): HTMLElement[] {
+        return orderedSlotElements(rail);
+    }
 
     function clearDropMarker(): void {
         for (const tile of Array.from(rail.querySelectorAll('.mbx-drop-before, .mbx-drop-after'))) {
@@ -59,7 +63,7 @@ function boot(): void {
         }
         const tile = (ev.target as HTMLElement).closest('.mbx-slot');
         if (!tile) return;
-        const idx = Array.from(rail.querySelectorAll('.mbx-slot')).indexOf(tile);
+        const idx = railTiles().indexOf(tile as HTMLElement);
         const snap = controller.snapshot()[idx];
         if (!snap) return;
         if ((ev.target as HTMLElement).closest('.mbx-close')) {
@@ -77,7 +81,7 @@ function boot(): void {
             ev.preventDefault();
             return;
         }
-        const index = Array.from(rail.querySelectorAll('.mbx-slot')).indexOf(tile);
+        const index = railTiles().indexOf(tile as HTMLElement);
         const slot = controller.snapshot()[index];
         if (!slot) {
             ev.preventDefault();
@@ -99,7 +103,7 @@ function boot(): void {
         if (!tile) {
             return;
         }
-        const index = Array.from(rail.querySelectorAll('.mbx-slot')).indexOf(tile);
+        const index = railTiles().indexOf(tile as HTMLElement);
         const slot = controller.snapshot()[index];
         if (!slot || slot.id === draggingId) {
             clearDropMarker();
@@ -125,7 +129,7 @@ function boot(): void {
         ev.preventDefault();
         const slots = controller.snapshot();
         const fromIndex = slots.findIndex(slot => slot.id === draggingId);
-        const targetIndex = Array.from(rail.querySelectorAll('.mbx-slot')).indexOf(tile);
+        const targetIndex = railTiles().indexOf(tile as HTMLElement);
         if (fromIndex < 0 || targetIndex < 0) {
             return;
         }
@@ -198,7 +202,7 @@ function boot(): void {
     function renderRail(): void {
         const snaps = controller.snapshot();
         resources.setBotCount(snaps.length);
-        const tiles = Array.from(rail.querySelectorAll('.mbx-slot'));
+        const tiles = railTiles();
         if (tiles.length !== snaps.length) {
             throw new Error(`rail desync: ${tiles.length} tiles vs ${snaps.length} slots`);
         }

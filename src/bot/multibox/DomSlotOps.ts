@@ -215,18 +215,54 @@ class DomSlotHandle implements SlotHandle {
     }
 }
 
+function flexOrder(el: HTMLElement): number {
+    const order = Number.parseInt(el.style.order, 10);
+    return Number.isFinite(order) ? order : 0;
+}
+
+/**
+ * Return rail slots in their visual flex order. Their DOM order deliberately
+ * stays fixed because moving an iframe ancestor reloads its browsing context in
+ * Firefox.
+ */
+export function orderedSlotElements(root: ParentNode): HTMLElement[] {
+    return Array.from(root.querySelectorAll<HTMLElement>('.mbx-slot')).sort((a, b) => flexOrder(a) - flexOrder(b));
+}
+
 export class DomSlotOps implements SlotOps {
     constructor(private railEl: HTMLElement, private beforeEl: HTMLElement) {}
 
     spawn(account: Account): SlotHandle {
         const handle = new DomSlotHandle(account);
         this.railEl.insertBefore(handle.el, this.beforeEl);
+        this.applyVisualOrder(orderedSlotElements(this.railEl));
         return handle;
     }
 
     move(handle: SlotHandle, before: SlotHandle | null): void {
         const moving = handle as DomSlotHandle;
         const target = before as DomSlotHandle | null;
-        this.railEl.insertBefore(moving.el, target?.el ?? this.beforeEl);
+        const slots = orderedSlotElements(this.railEl);
+        const fromIndex = slots.indexOf(moving.el);
+        if (fromIndex < 0 || target === moving) {
+            return;
+        }
+
+        slots.splice(fromIndex, 1);
+        const toIndex = target === null ? slots.length : slots.indexOf(target.el);
+        if (toIndex < 0) {
+            return;
+        }
+        slots.splice(toIndex, 0, moving.el);
+        this.applyVisualOrder(slots);
+    }
+
+    private applyVisualOrder(slots: HTMLElement[]): void {
+        // Negative values keep every slot before the add/resources controls,
+        // whose default flex order is zero.
+        const first = -slots.length;
+        slots.forEach((slot, index) => {
+            slot.style.order = String(first + index);
+        });
     }
 }
