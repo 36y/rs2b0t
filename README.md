@@ -9,7 +9,9 @@ Project site: **[2004bot.com](https://2004bot.com)** — overview, screenshots, 
 rendered [API](https://2004bot.com/docs/api) / [dev](https://2004bot.com/docs/dev) docs.
 
 A single-instance build is hosted at **https://w1.rs2b2t.com/rs2b0t** — open it,
-log in with an rs2b2t account, pick a script, and run.
+log in with an rs2b2t account, pick a script, and run. To run several accounts in
+one tab, use the MultiBox wall at **https://w1.rs2b2t.com/rs2b0t/wall** (keep the
+tab visible; a backgrounded tab is throttled by the browser).
 
 ## Highlights
 

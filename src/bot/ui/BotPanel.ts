@@ -2,7 +2,7 @@ import { reader } from '../adapter/ClientAdapter.js';
 import type { BotHostImpl } from '../BotHost.js';
 import { ActionRouter } from '../input/ActionRouter.js';
 import { AutoRelogin } from '../runtime/AutoRelogin.js';
-import { boxId, boxKey } from '../runtime/box.js';
+import { boxId, boxKey, wallLinkHref } from '../runtime/box.js';
 import { Credentials } from '../runtime/Credentials.js';
 import { ScriptRegistry } from '../runtime/ScriptRegistry.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
@@ -45,6 +45,15 @@ export default class BotPanel {
 
         const title = el('div', 'rs2b0t-title');
         title.textContent = 'rs2b0t';
+        const wallHref = wallLinkHref(boxId());
+        if (wallHref) {
+            const wall = document.createElement('a');
+            wall.className = 'rs2b0t-wall-link';
+            wall.href = wallHref;
+            wall.textContent = 'MultiBox';
+            wall.title = 'Run several accounts in one tab';
+            title.appendChild(wall);
+        }
         root.appendChild(title);
 
         this.banner = el('div', 'rs2b0t-banner');

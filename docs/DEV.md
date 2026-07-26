@@ -6,7 +6,7 @@ The rs2b0t bot client has **three canonical run modes**, one command each.
 |---|---|---|---|
 | **Local dev** | `sh tools/deploy-local.sh` | single (`/bot.html`) or wall (`/multibox.html`) | local engine at `localhost:8890` |
 | **Wall vs live** | `bun run b0t` | multibox wall | local client + reverse proxy → `w1.rs2b2t.com` |
-| **Hosted (prod)** | `make deploy` *(in `~/code/rs2b2t`)* | single instance (`/rs2b0t`) | **same-origin** at `w1.rs2b2t.com/rs2b0t` |
+| **Hosted (prod)** | `make deploy` *(in `~/code/rs2b2t`)* | single (`/rs2b0t`) + wall (`/rs2b0t/wall`) | **same-origin** at `w1.rs2b2t.com/rs2b0t` |
 
 ## Live wall viewers and resource telemetry
 
@@ -20,6 +20,12 @@ publishes deltas to the wall, which means direct production sockets are included
 when they bypass the local proxy. HTTP assets, headers, and transport overhead are not
 counted. The card updates once per second by changing its own text only — it never reloads
 or reparents a bot iframe.
+
+Bot count and traffic are measured inside the browser, so they work on any wall. CPU and
+RAM come from the local proxy's `/__rs2b0t/resources`; a wall served straight from an
+engine (hosted, or `deploy-local.sh`) has no such endpoint, and those two rows are hidden
+rather than shown as permanently `offline`. A monitor that answers but misbehaves is a
+different case and still reports loudly on every row.
 
 The card never substitutes guessed or zero values for missing telemetry. `measuring…`
 means a real second sample is still pending; `unavailable` identifies
@@ -99,19 +105,34 @@ The single-instance client is served same-origin from the engine at
 `~/code/rs2b2t`), not deployed separately:
 
 1. `tools/pack-rs2b0t.sh` builds `TARGET=prod` and stages a **self-contained** subtree
-   into a target engine's `public/rs2b0t/` (`index.html` + `bot/` assets; single instance
-   — no multibox). Because `bot.html` loads assets relatively (`./bot/…`), the subtree
-   works under `/rs2b0t/` with no path rewrites.
-2. `~/code/rs2b2t` `ops/scripts/build.sh` extracts the prod login modulus from the staged
-   engine's `public/client/client.js` (the ≥250-digit run), runs `pack-rs2b0t.sh` with it,
-   and guards that the client staged + the baked modulus matches the engine's.
-3. `ops/Caddyfile.game` rewrites the clean `/rs2b0t` URL to `/rs2b0t/index.html` (the engine
-   serves nested public files by exact path but does **not** directory-index).
+   into a target engine's `public/rs2b0t/`: `index.html` (single client), `multibox.html`
+   (the wall), `bot.html`, and `bot/` assets. Because every page loads assets relatively
+   (`./bot/…`), the subtree works under `/rs2b0t/` with no path rewrites. `bot.html` is
+   staged under its own name as well as `index.html` because `DomSlotOps` resolves each
+   wall slot to `bot.html` relative to `baseURI` — without it the single client looks
+   healthy while every slot 404s.
+2. `~/code/rs2b2t` `ops/scripts/build.sh` derives the prod login modulus from the SSM key
+   (authoritative; ADR-0016), runs `pack-rs2b0t.sh` with it, and guards that every page and
+   bundle staged and that `botclient.js` baked that modulus.
+3. `ops/Caddyfile.game` rewrites the clean `/rs2b0t` URL to `/rs2b0t/index.html` and
+   `/rs2b0t/wall` to `/rs2b0t/multibox.html` (the engine serves nested public files by exact
+   path but does **not** directory-index). `/rs2b0t/wall` takes **no trailing slash**: both
+   the wall's own assets and its slot iframes resolve against the browser-visible URL, so a
+   trailing slash would push every one of them a directory deeper.
 4. `make build → push → deploy` ships it. Rollback: `make deploy TAG=<prev>`.
 
 Verify locally without touching prod: run `pack-rs2b0t.sh` with the **local** modulus
-against the local engine, then `bun tools/hosted-proof-test.ts` — it proves the `prod`
-target resolves same-origin and logs in with no proxy.
+against the local engine, then `bun tools/hosted-proof-test.ts` (single client) and
+`bun tools/hosted-wall-test.ts` (the wall — two accounts ingame, slot iframes resolving
+under `/rs2b0t/`, resource card honest). Neither uses a proxy. The `/rs2b0t/wall` rewrite
+itself is not reproducible locally — there is no Caddy — so it is a post-deploy check.
+
+The hosted wall runs every bot in one tab, so all of them hold full speed while that tab
+is visible — a strict improvement on one tab per account, where every tab but the front
+one is starved. It does **not** survive being backgrounded: the game loop is
+`setTimeout`-driven and Chrome clamps hidden tabs to 1/sec, so minimising the wall starves
+all of it. For unattended running use `bun run b0t`, whose Electron shell disables
+background throttling.
 
 ## Local-engine test tricks
 

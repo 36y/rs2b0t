@@ -1,8 +1,11 @@
 #!/bin/sh
-# Package the single-instance rs2b0t client as a self-contained /rs2b0t/ subtree
-# under a target engine's public/. bot.html loads its assets relatively
-# (./bot/…), so index.html + bot/ under /rs2b0t/ resolve with no path rewrites.
-# NOT the multibox wall — single instance only.
+# Package the rs2b0t client as a self-contained /rs2b0t/ subtree under a target
+# engine's public/. Both pages load their assets relatively (./bot/…), so they
+# resolve under /rs2b0t/ with no path rewrites.
+#
+# Stages the single client (index.html) AND the multibox wall (multibox.html).
+# bot.html is staged too, under its own name: DomSlotOps resolves every wall slot
+# to bot.html relative to baseURI, so the wall asks for /rs2b0t/bot.html.
 #
 # Usage: PROD_RSAN=<login-modulus> ENGINE=<engine-root-with-public> sh tools/pack-rs2b0t.sh
 #
@@ -28,20 +31,30 @@ TARGET=prod PROD_RSAN="$PROD_RSAN" bun run build:bot
 DEST="$ENGINE/public/rs2b0t"
 mkdir -p "$DEST/bot"
 cp out/botclient.js out/botclient.js.map out/ondemandworker.js out/ondemandworker.js.map \
-   out/navworker.js out/navworker.js.map out/collision.lcnav.gz out/tinymidipcm.wasm "$DEST/bot/"
+   out/navworker.js out/navworker.js.map out/multibox.js out/multibox.js.map \
+   out/collision.lcnav.gz out/tinymidipcm.wasm "$DEST/bot/"
 cp public-bot/bot.html "$DEST/index.html"
+cp public-bot/bot.html "$DEST/bot.html"
+cp public-bot/multibox.html "$DEST/multibox.html"
 
-# Cache-bust the client bundle: the served page (/rs2b0t/) is dynamic (not edge-
-# cached), but botclient.js is a static asset Cloudflare caches for hours. Stamp
-# the <script src> with a content hash so each build gets a fresh URL and a new
-# bot client goes live immediately, without a manual cache purge.
+# Cache-bust the bundles: the served pages are dynamic (not edge-cached), but
+# botclient.js and multibox.js are static assets Cloudflare caches for hours.
+# Stamp each <script src> with a content hash so a new build goes live
+# immediately, without a manual cache purge.
 V="$(shasum out/botclient.js | cut -c1-10)"
-sed -i '' "s#\./bot/botclient\.js#./bot/botclient.js?v=$V#g" "$DEST/index.html" 2>/dev/null \
-  || sed -i "s#\./bot/botclient\.js#./bot/botclient.js?v=$V#g" "$DEST/index.html"
+M="$(shasum out/multibox.js | cut -c1-10)"
+
+stamp() {
+    sed -i '' "$2" "$1" 2>/dev/null || sed -i "$2" "$1"
+}
+
+stamp "$DEST/index.html" "s#\./bot/botclient\.js#./bot/botclient.js?v=$V#g"
+stamp "$DEST/bot.html" "s#\./bot/botclient\.js#./bot/botclient.js?v=$V#g"
+stamp "$DEST/multibox.html" "s#\./bot/multibox\.js#./bot/multibox.js?v=$M#g"
 
 # soundfont lives in the engine repo; the bot bundle resolves it relative to itself
 if [ -f "$ENGINE/public/client/SCC1_Florestan.sf2" ]; then
     cp "$ENGINE/public/client/SCC1_Florestan.sf2" "$DEST/bot/"
 fi
 
-echo "packed: $DEST/index.html (+ /rs2b0t/bot, botclient.js?v=$V) — single instance"
+echo "packed: $DEST/index.html + multibox.html (+ /rs2b0t/bot, botclient.js?v=$V, multibox.js?v=$M)"

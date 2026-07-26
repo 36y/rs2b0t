@@ -8,6 +8,8 @@ export interface ResourcePanelNodes {
     cpu: HTMLElement;
     memory: HTMLElement;
     traffic: HTMLElement;
+    cpuRow?: HTMLElement;
+    memoryRow?: HTMLElement;
 }
 
 interface TrafficSample extends TrafficTotals {
@@ -23,6 +25,7 @@ export interface ResourcePanelOptions {
     getTrafficSnapshot?: () => TrafficSnapshot;
     endpoint?: string;
     intervalMs?: number;
+    now?: () => number;
 }
 
 const MEASURING = 'measuring…';
@@ -213,9 +216,11 @@ export class ResourcePanel {
     private readonly getTrafficSnapshot: (() => TrafficSnapshot) | null;
     private readonly endpoint: string;
     private readonly intervalMs: number;
+    private readonly now: () => number;
     private previousTraffic: TrafficSample | null = null;
     private timer: ReturnType<typeof setTimeout> | null = null;
     private running = false;
+    private hostTelemetry = true;
 
     constructor(
         private readonly nodes: ResourcePanelNodes,
@@ -225,6 +230,7 @@ export class ResourcePanel {
         this.getTrafficSnapshot = options.getTrafficSnapshot ?? null;
         this.endpoint = options.endpoint ?? DEFAULT_ENDPOINT;
         this.intervalMs = options.intervalMs ?? DEFAULT_INTERVAL_MS;
+        this.now = options.now ?? (() => Date.now());
     }
 
     setBotCount(count: number): void {
@@ -233,6 +239,10 @@ export class ResourcePanel {
     }
 
     async refresh(): Promise<boolean> {
+        if (!this.hostTelemetry) {
+            return this.refreshTrafficOnly();
+        }
+
         let response: Response;
         try {
             response = await this.fetchResource(this.endpoint, { cache: 'no-store' });
@@ -240,6 +250,20 @@ export class ResourcePanel {
             this.previousTraffic = null;
             this.renderAll(OFFLINE, 'resource monitor is offline');
             return false;
+        }
+
+        // An absent monitor is not a broken one: a wall served straight from an
+        // engine has no proxy behind this route, and traffic is still measurable
+        // in the browser.
+        if (response.status === 404) {
+            this.hostTelemetry = false;
+            this.previousTraffic = null;
+            for (const row of [this.nodes.cpuRow, this.nodes.memoryRow]) {
+                if (row) {
+                    row.hidden = true;
+                }
+            }
+            return this.refreshTrafficOnly();
         }
 
         if (!response.ok) {
@@ -336,6 +360,12 @@ export class ResourcePanel {
         }
 
         return this.rateForTraffic(traffic, sampledAt);
+    }
+
+    private refreshTrafficOnly(): boolean {
+        const traffic = this.readTraffic(null, this.now());
+        render(this.nodes.traffic, traffic);
+        return traffic.status !== 'error';
     }
 
     private rateForTraffic(traffic: TrafficTotals, sampledAt: number): MetricState {

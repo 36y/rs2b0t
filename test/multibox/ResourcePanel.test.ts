@@ -14,6 +14,18 @@ function makeNodes(): ResourcePanelNodes {
     return { botCount, cpu, memory, traffic };
 }
 
+function makeNodesWithRows(): ResourcePanelNodes & { cpuRow: HTMLElement; memoryRow: HTMLElement } {
+    const base = makeNodes();
+    const cpuRow = document.createElement('div');
+    const memoryRow = document.createElement('div');
+    document.body.append(cpuRow, memoryRow);
+    return { ...base, cpuRow, memoryRow };
+}
+
+function browserTotals(receivedBytes: number, sentBytes: number): TrafficSnapshot {
+    return { status: 'available', receivedBytes, sentBytes };
+}
+
 function response(body: unknown, status = 200): Response {
     return new Response(JSON.stringify(body), {
         status,
@@ -44,6 +56,11 @@ afterEach(() => {
 });
 
 describe('ResourcePanel', () => {
+    test('a hidden host row is actually not displayed, despite the row being a flex box', async () => {
+        const html = await Bun.file('public-bot/multibox.html').text();
+        expect(html).toContain('.mbx-resource-row[hidden] { display: none; }');
+    });
+
     test('the resource card starts explicitly measuring and contains only the requested metrics', async () => {
         const html = await Bun.file('public-bot/multibox.html').text();
         expect(html.indexOf('id="mbx-resources"')).toBeGreaterThan(html.indexOf('id="mbx-add"'));
@@ -354,5 +371,61 @@ describe('ResourcePanel', () => {
         expect(iframe.src).toBe(originalSrc);
         expect(nodes.cpu.textContent).toBe('1 core (12.5% of 8)');
         expect(nodes.memory.textContent).toBe('unavailable — not readable');
+    });
+});
+
+describe('ResourcePanel without a resource monitor', () => {
+    test('a 404 hides the host rows and keeps traffic measured in the browser', async () => {
+        const nodes = makeNodesWithRows();
+        let bytes = 0;
+        let clock = 1_700_000_000_000;
+        const panel = new ResourcePanel(nodes, {
+            fetch: async () => response({}, 404),
+            getTrafficSnapshot: () => browserTotals(bytes, bytes),
+            now: () => clock
+        });
+
+        await panel.refresh();
+        expect(nodes.cpuRow.hidden).toBe(true);
+        expect(nodes.memoryRow.hidden).toBe(true);
+
+        bytes = 2048;
+        clock += 1000;
+        await panel.refresh();
+        expect(nodes.traffic.textContent).toContain('↓');
+        expect(nodes.traffic.textContent).not.toContain('offline');
+    });
+
+    test('once latched off it stops polling the missing endpoint', async () => {
+        const nodes = makeNodesWithRows();
+        let fetches = 0;
+        const panel = new ResourcePanel(nodes, {
+            fetch: async () => {
+                fetches++;
+                return response({}, 404);
+            },
+            getTrafficSnapshot: () => browserTotals(0, 0),
+            now: () => 1_700_000_000_000
+        });
+
+        await panel.refresh();
+        await panel.refresh();
+        await panel.refresh();
+        expect(fetches).toBe(1);
+    });
+
+    test('a monitor that exists but is broken still reports on every row', async () => {
+        const nodes = makeNodesWithRows();
+        const panel = new ResourcePanel(nodes, {
+            fetch: async () => response({}, 500),
+            getTrafficSnapshot: () => browserTotals(0, 0),
+            now: () => 1_700_000_000_000
+        });
+
+        await panel.refresh();
+        expect(nodes.cpuRow.hidden).toBe(false);
+        expect(nodes.memoryRow.hidden).toBe(false);
+        expect(nodes.cpu.textContent).toContain('monitor error');
+        expect(nodes.traffic.textContent).toContain('monitor error');
     });
 });

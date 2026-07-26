@@ -19,7 +19,9 @@ function boot(): void {
             botCount: document.getElementById('mbx-resource-bots')!,
             cpu: document.getElementById('mbx-resource-cpu')!,
             memory: document.getElementById('mbx-resource-memory')!,
-            traffic: document.getElementById('mbx-resource-traffic')!
+            traffic: document.getElementById('mbx-resource-traffic')!,
+            cpuRow: document.getElementById('mbx-resource-cpu-row')!,
+            memoryRow: document.getElementById('mbx-resource-memory-row')!
         },
         { getTrafficSnapshot: () => traffic.snapshot() }
     );

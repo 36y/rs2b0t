@@ -22,6 +22,7 @@ import VarBitType from '#/config/VarBitType.js';
 import IfType from '#/config/IfType.js';
 import { ComponentType, ButtonType } from '#/config/IfType.js';
 import { TARGET } from '#/config/target.js';
+import { loginExponent, loginModulus, refreshLoginKey } from '#/config/loginKey.js';
 
 import ClientEntity from '#/dash3d/ClientEntity.js';
 import ClientLocAnim from '#/dash3d/ClientLocAnim.js';
@@ -1862,7 +1863,7 @@ export class Client extends GameShell {
                 this.out.p4(1337);
                 this.out.pjstr(username);
                 this.out.pjstr(password);
-                this.out.rsaenc(BigInt(process.env.LOGIN_RSAN!), BigInt(process.env.LOGIN_RSAE!));
+                this.out.rsaenc(loginModulus(), loginExponent());
 
                 this.loginout.pos = 0;
                 if (reconnect) {
@@ -2027,8 +2028,12 @@ export class Client extends GameShell {
                 this.loginMes1 = 'Your account is already logged in.';
                 this.loginMes2 = 'Try again in 60 secs...';
             } else if (response === 6) {
-                this.loginMes1 = 'RuneScape has been updated!';
-                this.loginMes2 = 'Please reload this page.';
+                if (await refreshLoginKey()) {
+                    await this.login(username, password, reconnect);
+                } else {
+                    this.loginMes1 = 'RuneScape has been updated!';
+                    this.loginMes2 = 'Please reload this page.';
+                }
             } else if (response === 7) {
                 this.loginMes1 = 'This world is full.';
                 this.loginMes2 = 'Please use a different world.';
