@@ -178,8 +178,10 @@ export default class TannerBot extends LoopingBot {
         // one slot is held back on a thread run so the stack has somewhere to land
         const free = reader.inventorySize() - Inventory.used() - (threadRun ? 1 : 0);
         if (!(await withdrawXById(this.mode.hideId, free))) {
-            this.log(`no ${this.mode.hideLabel} left in the bank — stopping.`);
-            ScriptRunner.stop();
+            const banked = bankItemById(this.mode.hideId)?.count ?? 0;
+            this.log(banked > 0
+                ? `${banked} ${this.mode.hideLabel} still in the bank — withdrawal failed, retrying.`
+                : `${this.mode.hideLabel} not currently visible in the bank — waiting.`);
             return false;
         }
 
