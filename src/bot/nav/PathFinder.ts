@@ -237,11 +237,17 @@ export class PathFinder {
             if (!this.walkable(edge.from.x, edge.from.z, edge.from.level) || !this.walkable(edge.to.x, edge.to.z, edge.to.level)) {
                 continue;
             }
+            const dx = edge.to.x - edge.from.x;
+            const dz = edge.to.z - edge.from.z;
+            const hasMidpointDoor = edge.kind === 'door' && (Math.abs(dx) === 2 || Math.abs(dz) === 2) && dx % 2 === 0 && dz % 2 === 0;
             const transport: TransportInfo = {
                 locName: edge.locName,
                 action: edge.action,
-                locX: edge.from.x,
-                locZ: edge.from.z,
+                // Diagonal wall doors occupy the otherwise-unwalkable midpoint
+                // between their two stand tiles. Recording a stand tile here
+                // makes the executor confuse nearby doors and avoidance strikes.
+                locX: hasMidpointDoor ? edge.from.x + dx / 2 : edge.from.x,
+                locZ: hasMidpointDoor ? edge.from.z + dz / 2 : edge.from.z,
                 toLevel: edge.to.level !== edge.from.level ? edge.to.level : undefined,
                 toTile: edge.kind === 'dungeon' ? { x: edge.to.x, z: edge.to.z } : undefined
             };

@@ -61,3 +61,7 @@ export function chooseCrossClick(canStepEdge: boolean, canReachLanding: boolean)
     }
     return canReachLanding ? 'landing-click' : 'landing-scene';
 }
+
+export function shouldApproachClosedBarrier(me: PathTileLike | null, approach: PathTileLike, closed: boolean): boolean {
+    return closed && me !== null && (me.x !== approach.x || me.z !== approach.z || me.level !== approach.level);
+}

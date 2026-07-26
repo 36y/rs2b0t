@@ -14,7 +14,7 @@ import { ActionRouter } from '../input/ActionRouter.js';
 import { Navigator, type PathResult } from './Navigator.js';
 import { DirectNavigator } from './DirectNavigator.js';
 import type { TransportInfo, Waypoint } from './PathFinder.js';
-import { chebyshev, chooseCrossClick, crossingEligible, isOnFarSide, locateOnPath, selectClickTarget, starvedTerminalIndex } from './followMath.js';
+import { chebyshev, chooseCrossClick, crossingEligible, isOnFarSide, locateOnPath, selectClickTarget, shouldApproachClosedBarrier, starvedTerminalIndex } from './followMath.js';
 import { classifyReason } from './walkLadder.js';
 import { isArrived } from './arrival.js';
 
@@ -493,7 +493,11 @@ class WalkExecutorImpl {
                 log(`crossed '${transport.locName}' at (${transport.locX},${transport.locZ})`);
                 return true;
             }
-            if (here && !(here.x === approach.x && here.z === approach.z && here.level === approach.level)) {
+            const shut = this.findTransportLoc(transport);
+            // A diagonal wall leaf rotates onto the approach tile as it opens.
+            // Only insist on that tile while the *closed* leaf still exists;
+            // afterwards it is blocked and we must click through the opening.
+            if (shouldApproachClosedBarrier(here, approach, shut !== null)) {
                 DirectNavigator.walk(approach);
                 await Execution.delayUntil(() => {
                     const p = reader.worldTile();
@@ -501,7 +505,6 @@ class WalkExecutorImpl {
                 }, APPROACH_WALK_MS);
                 continue;
             }
-            const shut = this.findTransportLoc(transport);
             if (shut) {
                 const mark = GameMessages.mark();
                 if (!shut.interact(transport.action)) {

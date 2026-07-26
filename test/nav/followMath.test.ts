@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { chooseCrossClick, crossingEligible, locateOnPath, selectClickTarget, starvedTerminalIndex, type PathTileLike } from '#/bot/nav/followMath.js';
+import { chooseCrossClick, crossingEligible, locateOnPath, selectClickTarget, shouldApproachClosedBarrier, starvedTerminalIndex, type PathTileLike } from '#/bot/nav/followMath.js';
 
 const t = (x: number, z: number, level = 0): PathTileLike => ({ x, z, level });
 
@@ -127,5 +127,17 @@ describe('chooseCrossClick', () => {
     });
     test('edge blocked and no route to landing → raw scene-step', () => {
         expect(chooseCrossClick(false, false)).toBe('landing-scene');
+    });
+});
+
+describe('shouldApproachClosedBarrier', () => {
+    const approach = t(3106, 3162);
+
+    test('walks onto the approach while the diagonal door is shut', () => {
+        expect(shouldApproachClosedBarrier(t(3106, 3161), approach, true)).toBe(true);
+    });
+
+    test('crosses instead of retrying the tile occupied by the open leaf', () => {
+        expect(shouldApproachClosedBarrier(t(3106, 3161), approach, false)).toBe(false);
     });
 });

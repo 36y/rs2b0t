@@ -103,6 +103,19 @@ describe('PathFinder goal selection for unwalkable targets', () => {
         expect(r.waypoints.some(wp => wp.transport?.locName === 'Door')).toBe(true);
     });
 
+    test('records a two-tile diagonal wall door at its shared midpoint', () => {
+        const finder = new PathFinder(buildPack(roomWalkable));
+        finder.addEdges([], DOOR_EDGES);
+
+        for (const [from, to] of [[OUTSIDE, INSIDE], [INSIDE, OUTSIDE]] as const) {
+            const r = finder.findPath(from, to);
+            expect(r.ok).toBe(true);
+            if (!r.ok) continue;
+            const door = r.waypoints.find(wp => wp.transport)?.transport;
+            expect({ x: door?.locX, z: door?.locZ }).toEqual({ x: 3214, z: 3212 });
+        }
+    });
+
     test('falls back to the ring when every cardinal-adjacent tile is sealed (enclave)', () => {
         const solidBlock = (x: number, z: number): boolean => !(x >= 3210 && x <= 3214 && z >= 3210 && z <= 3214);
         const finder = new PathFinder(buildPack(solidBlock));
