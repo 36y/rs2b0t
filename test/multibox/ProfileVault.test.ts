@@ -45,6 +45,48 @@ describe('ProfileVault', () => {
         expect(raw).not.toContain('hunter2');
     });
 
+    test('reorder is encrypted and survives locking and unlocking', async () => {
+        const v = new ProfileVault();
+        await v.setup('pw');
+        await v.upsert({ username: 'alice', password: 'a' });
+        await v.upsert({ username: 'bob', password: 'b' });
+        await v.upsert({ username: 'carol', password: 'c' });
+
+        await v.reorder(['carol', 'alice', 'bob']);
+        expect(v.list().map(profile => profile.username)).toEqual(['carol', 'alice', 'bob']);
+        expect(localStorage.getItem(KEY)).not.toContain('carol');
+
+        const reopened = new ProfileVault();
+        expect(await reopened.unlock('pw')).toBe(true);
+        expect(reopened.list().map(profile => profile.username)).toEqual(['carol', 'alice', 'bob']);
+    });
+
+    test('reorder ignores duplicates and unknown profiles, then appends unloaded profiles', async () => {
+        const v = new ProfileVault();
+        await v.setup('pw');
+        await v.upsert({ username: 'alice', password: 'a' });
+        await v.upsert({ username: 'bob', password: 'b' });
+        await v.upsert({ username: 'carol', password: 'c' });
+
+        await v.reorder(['carol', 'missing', 'carol']);
+        expect(v.list().map(profile => profile.username)).toEqual(['carol', 'alice', 'bob']);
+    });
+
+    test('concurrent profile changes persist in call order', async () => {
+        const v = new ProfileVault();
+        await v.setup('pw');
+        await v.upsert({ username: 'alice', password: 'a' });
+        await v.upsert({ username: 'bob', password: 'b' });
+
+        const add = v.upsert({ username: 'carol', password: 'c' });
+        const reorder = v.reorder(['carol', 'bob', 'alice']);
+        await Promise.all([add, reorder]);
+
+        const reopened = new ProfileVault();
+        expect(await reopened.unlock('pw')).toBe(true);
+        expect(reopened.list().map(profile => profile.username)).toEqual(['carol', 'bob', 'alice']);
+    });
+
     test('wrong passphrase fails to unlock and stays locked', async () => {
         const v = new ProfileVault();
         await v.setup('pw');
@@ -80,6 +122,16 @@ describe('ProfileVault', () => {
         expect(v.status()).toBe('empty');
         expect(localStorage.getItem(KEY)).toBeNull();
         expect(() => v.list()).toThrow();
+    });
+
+    test('reset cannot be undone by an in-flight encrypted write', async () => {
+        const v = new ProfileVault();
+        await v.setup('pw');
+        const pending = v.upsert({ username: 'alice', password: 'a' });
+        v.reset();
+        await pending;
+        expect(v.status()).toBe('empty');
+        expect(localStorage.getItem(KEY)).toBeNull();
     });
 
     test('setup while locked throws', async () => {

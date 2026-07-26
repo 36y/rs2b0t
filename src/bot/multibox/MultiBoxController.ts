@@ -71,6 +71,23 @@ export class MultiBoxController {
         this.applyModes();
     }
 
+    move(id: number, toIndex: number): boolean {
+        const fromIndex = this.slots.findIndex(s => s.id === id);
+        if (fromIndex < 0 || !Number.isSafeInteger(toIndex)) {
+            return false;
+        }
+
+        const destination = Math.max(0, Math.min(this.slots.length - 1, toIndex));
+        if (destination === fromIndex) {
+            return false;
+        }
+
+        const [slot] = this.slots.splice(fromIndex, 1);
+        this.slots.splice(destination, 0, slot);
+        this.ops.move(slot.handle, this.slots[destination + 1]?.handle ?? null);
+        return true;
+    }
+
     snapshot(): SlotSnapshot[] {
         return this.slots.map(s => this.snap(s));
     }

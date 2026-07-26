@@ -1,5 +1,6 @@
 import type { Account, RenderMode, SlotHandle, SlotOps, SlotStatus } from './types.js';
 import type { LoginCoordination } from '../runtime/LoginCoordination.js';
+import { paintThumbnail } from './ThumbnailPainter.js';
 
 const LOGICAL_W = 1100;
 const LOGICAL_H = 620;
@@ -66,6 +67,7 @@ class DomSlotHandle implements SlotHandle {
     constructor(account: Account) {
         this.el = document.createElement('div');
         this.el.className = 'mbx-slot';
+        this.el.draggable = true;
 
         const cap = document.createElement('div');
         cap.className = 'mbx-cap';
@@ -164,11 +166,10 @@ class DomSlotHandle implements SlotHandle {
         if (this.mode !== 'focused' || railWidth() === 0) {
             return;
         }
-        const src = this.iframe.contentDocument?.getElementById('canvas') as HTMLCanvasElement | null;
-        if (!src || src.width === 0) {
-            return;
-        }
-        this.mirror.getContext('2d')!.drawImage(src, 0, 0, src.width, src.height, 0, 0, TILE_W, TILE_H);
+        const doc = this.iframe.contentDocument;
+        const game = doc?.getElementById('canvas') as HTMLCanvasElement | null;
+        const overlay = doc?.getElementById('overlay') as HTMLCanvasElement | null;
+        paintThumbnail(this.mirror.getContext('2d')!, game, overlay, TILE_W, TILE_H);
     };
 
     private poll = (): void => {
@@ -221,5 +222,11 @@ export class DomSlotOps implements SlotOps {
         const handle = new DomSlotHandle(account);
         this.railEl.insertBefore(handle.el, this.beforeEl);
         return handle;
+    }
+
+    move(handle: SlotHandle, before: SlotHandle | null): void {
+        const moving = handle as DomSlotHandle;
+        const target = before as DomSlotHandle | null;
+        this.railEl.insertBefore(moving.el, target?.el ?? this.beforeEl);
     }
 }

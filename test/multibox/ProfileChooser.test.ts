@@ -36,6 +36,18 @@ describe('ProfileChooser', () => {
         expect(names).toEqual(['alice', 'bob']);
     });
 
+    test('lists profiles in the order saved from the bot rail', async () => {
+        await vault.upsert({ username: 'alice', password: 'a' });
+        await vault.upsert({ username: 'bob', password: 'b' });
+        await vault.upsert({ username: 'carol', password: 'c' });
+        await vault.reorder(['carol', 'alice', 'bob']);
+        const { chooser } = make();
+
+        chooser.open();
+        const names = Array.from(chooser.el.querySelectorAll('.mbx-profile-name')).map(n => n.textContent);
+        expect(names).toEqual(['carol', 'alice', 'bob']);
+    });
+
     test('clicking a row loads that profile and closes', async () => {
         await vault.upsert({ username: 'alice', password: 'a' });
         const { chooser, loaded } = make();

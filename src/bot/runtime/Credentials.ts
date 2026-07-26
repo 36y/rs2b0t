@@ -10,6 +10,15 @@ export interface Creds {
     password: string;
 }
 
+type CredentialsListener = (creds: Creds | null) => void;
+const listeners = new Set<CredentialsListener>();
+
+function notify(creds: Creds | null): void {
+    for (const listener of listeners) {
+        listener(creds ? { ...creds } : null);
+    }
+}
+
 export const Credentials = {
     get(): Creds | null {
         if (!hasStorage) {
@@ -28,14 +37,33 @@ export const Credentials = {
     },
 
     save(username: string, password: string): void {
-        if (hasStorage) {
-            sessionStorage.setItem(boxKey('creds'), JSON.stringify({ username, password }));
+        if (username.length === 0) {
+            this.clear();
+            return;
         }
+        const next = { username, password };
+        const current = this.get();
+        if (current?.username === username && current.password === password) {
+            return;
+        }
+        if (hasStorage) {
+            sessionStorage.setItem(boxKey('creds'), JSON.stringify(next));
+        }
+        notify(next);
     },
 
     clear(): void {
+        const hadCredentials = this.get() !== null;
         if (hasStorage) {
             sessionStorage.removeItem(boxKey('creds'));
         }
+        if (hadCredentials) {
+            notify(null);
+        }
+    },
+
+    onChange(listener: CredentialsListener): () => void {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
     }
 };

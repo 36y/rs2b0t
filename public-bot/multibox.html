@@ -13,9 +13,12 @@
         #mbx-rail { flex: 0 0 264px; width: 264px; box-sizing: border-box; height: 100vh; overflow-y: auto; overflow-x: hidden; padding: 12px; background: #111; border-left: 1px solid #333; display: flex; flex-direction: column; gap: 10px; }
 
         /* a rail tile: name + status dot over a live game frame cropped to the game viewport */
-        .mbx-slot { width: 236px; flex: 0 0 auto; border: 1px solid #2c2c2c; border-radius: 4px; background: #000; cursor: pointer; overflow: hidden; }
+        .mbx-slot { width: 236px; flex: 0 0 auto; border: 1px solid #2c2c2c; border-radius: 4px; background: #000; cursor: grab; overflow: hidden; user-select: none; }
         .mbx-slot:hover { border-color: #04A800; }
         .mbx-slot.is-focused { border-color: #04A800; }
+        .mbx-slot.is-dragging { cursor: grabbing; opacity: 0.4; }
+        .mbx-slot.mbx-drop-before { box-shadow: 0 -5px 0 #04A800; }
+        .mbx-slot.mbx-drop-after { box-shadow: 0 5px 0 #04A800; }
         .mbx-cap { display: flex; align-items: center; gap: 6px; padding: 3px 7px; background: #1a1a1a; }
         .mbx-slot.is-focused .mbx-cap { background: #07330a; color: #5be05b; }
         .mbx-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; flex: 0 0 auto; }

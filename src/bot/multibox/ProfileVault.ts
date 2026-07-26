@@ -78,6 +78,8 @@ export class ProfileVault {
     private cache: Profile[] | null = null;
     private key: CryptoKey | null = null;
     private salt: Uint8Array<ArrayBuffer> | null = null;
+    private persistTail = Promise.resolve();
+    private persistGeneration = 0;
 
     status(): VaultStatus {
         if (this.cache) {
@@ -100,6 +102,7 @@ export class ProfileVault {
         if (this.status() === 'locked') {
             throw new Error('vault is locked — unlock or reset first');
         }
+        this.persistGeneration++;
         const raw = hasLocal ? localStorage.getItem(KEY) : null;
         const legacy = parseLegacy(raw) ?? (hasLocal ? parseLegacy(localStorage.getItem(LEGACY_KEY)) : null) ?? [];
         this.salt = crypto.getRandomValues(new Uint8Array(16));
@@ -130,6 +133,7 @@ export class ProfileVault {
     }
 
     reset(): void {
+        this.persistGeneration++;
         if (hasLocal) {
             localStorage.removeItem(KEY);
             localStorage.removeItem(LEGACY_KEY);
@@ -163,6 +167,33 @@ export class ProfileVault {
         await this.persist();
     }
 
+    async reorder(usernames: string[]): Promise<void> {
+        const all = this.assertUnlocked();
+        const byUsername = new Map(all.map(profile => [profile.username, profile]));
+        const seen = new Set<string>();
+        const ordered: Profile[] = [];
+
+        for (const username of usernames) {
+            const profile = byUsername.get(username);
+            if (profile && !seen.has(username)) {
+                ordered.push(profile);
+                seen.add(username);
+            }
+        }
+        for (const profile of all) {
+            if (!seen.has(profile.username)) {
+                ordered.push(profile);
+                seen.add(profile.username);
+            }
+        }
+
+        if (ordered.every((profile, index) => profile === all[index])) {
+            return;
+        }
+        this.cache = ordered;
+        await this.persist();
+    }
+
     private assertUnlocked(): Profile[] {
         if (!this.cache) {
             throw new Error('vault is not unlocked');
@@ -170,14 +201,25 @@ export class ProfileVault {
         return this.cache;
     }
 
-    private async persist(): Promise<void> {
+    private persist(): Promise<void> {
         if (!hasLocal || !this.key || !this.salt || !this.cache) {
-            return;
+            return Promise.resolve();
         }
-        const iv = crypto.getRandomValues(new Uint8Array(12));
-        const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, this.key, new TextEncoder().encode(JSON.stringify(this.cache)));
-        const blob: StoredBlob = { v: 1, kdf: 'PBKDF2-SHA256', iter: ITER, salt: b64(this.salt), iv: b64(iv), ct: b64(new Uint8Array(ct)) };
-        localStorage.setItem(KEY, JSON.stringify(blob));
+        const key = this.key;
+        const salt = this.salt;
+        const plaintext = new TextEncoder().encode(JSON.stringify(this.cache));
+        const generation = this.persistGeneration;
+        const write = this.persistTail.then(async () => {
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintext);
+            if (generation !== this.persistGeneration) {
+                return;
+            }
+            const blob: StoredBlob = { v: 1, kdf: 'PBKDF2-SHA256', iter: ITER, salt: b64(salt), iv: b64(iv), ct: b64(new Uint8Array(ct)) };
+            localStorage.setItem(KEY, JSON.stringify(blob));
+        });
+        this.persistTail = write.catch(() => {});
+        return write;
     }
 }
 

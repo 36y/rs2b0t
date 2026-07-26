@@ -38,4 +38,5 @@ export interface SlotHandle {
 
 export interface SlotOps {
     spawn(account: Account): SlotHandle;
+    move(handle: SlotHandle, before: SlotHandle | null): void;
 }

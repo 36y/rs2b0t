@@ -13,8 +13,6 @@ const MAX_ATTEMPTS = 15;
 class AutoReloginImpl {
     private enabled = false;
     private autoLogin = false;
-    private username = '';
-    private password = '';
 
     private wasIngame = false;
     private reconnecting = false;
@@ -45,14 +43,14 @@ class AutoReloginImpl {
     }
 
     setCredentials(username: string, password: string): void {
-        this.username = username;
-        this.password = password;
+        if (username.length > 0) {
+            Credentials.save(username, password);
+        } else {
+            Credentials.clear();
+        }
     }
 
     private creds(): Creds | null {
-        if (this.username.length > 0) {
-            return { username: this.username, password: this.password };
-        }
         return Credentials.get();
     }
 
@@ -79,13 +77,13 @@ class AutoReloginImpl {
     private onFrame(): void {
         if (reader.ingame()) {
             const live = actions.loginCredentials();
-            if (live.username.length > 0) {
-                this.username = live.username;
-                this.password = live.password;
+            const saved = this.creds();
+            if (live.username.length > 0 && (!saved || live.username !== saved.username || live.password !== saved.password)) {
+                this.setCredentials(live.username, live.password);
             }
 
             if (this.reconnecting && reader.sceneState() === 2) {
-                this.log('info', `auto-relogin: back ingame as '${this.username}' after ${this.attempts} attempt(s)`);
+                this.log('info', `auto-relogin: back ingame as '${live.username}' after ${this.attempts} attempt(s)`);
                 if (this.wePaused) {
                     ScriptRunner.resume();
                 }

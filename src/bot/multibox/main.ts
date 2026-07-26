@@ -24,9 +24,39 @@ function boot(): void {
         { getTrafficSnapshot: () => traffic.snapshot() }
     );
 
+    let draggingId: number | null = null;
+    let suppressClick = false;
+    let orderWrite = Promise.resolve();
+
+    function clearDropMarker(): void {
+        for (const tile of Array.from(rail.querySelectorAll('.mbx-drop-before, .mbx-drop-after'))) {
+            tile.classList.remove('mbx-drop-before', 'mbx-drop-after');
+        }
+    }
+
+    function persistSlotOrder(): void {
+        if (vault.status() !== 'unlocked') {
+            return;
+        }
+        const usernames = controller.snapshot().map(slot => slot.username);
+        orderWrite = orderWrite.then(() => vault.reorder(usernames)).catch(err => console.error('[rs2b0t] failed to save bot order', err));
+    }
+
+    function moveSlot(id: number, toIndex: number): boolean {
+        if (!controller.move(id, toIndex)) {
+            return false;
+        }
+        renderRail();
+        persistSlotOrder();
+        return true;
+    }
+
     // Tiles carry a click-catching overlay (.mbx-hit) because the iframe underneath
     // would otherwise swallow the click and the rail could never switch bots.
     rail.addEventListener('click', ev => {
+        if (suppressClick) {
+            return;
+        }
         const tile = (ev.target as HTMLElement).closest('.mbx-slot');
         if (!tile) return;
         const idx = Array.from(rail.querySelectorAll('.mbx-slot')).indexOf(tile);
@@ -38,6 +68,87 @@ function boot(): void {
             controller.focus(snap.id);
         }
         renderRail();
+    });
+
+    rail.addEventListener('dragstart', ev => {
+        const target = ev.target as HTMLElement;
+        const tile = target.closest('.mbx-slot');
+        if (!tile || target.closest('.mbx-close')) {
+            ev.preventDefault();
+            return;
+        }
+        const index = Array.from(rail.querySelectorAll('.mbx-slot')).indexOf(tile);
+        const slot = controller.snapshot()[index];
+        if (!slot) {
+            ev.preventDefault();
+            return;
+        }
+        draggingId = slot.id;
+        tile.classList.add('is-dragging');
+        if (ev.dataTransfer) {
+            ev.dataTransfer.effectAllowed = 'move';
+            ev.dataTransfer.setData('text/plain', String(slot.id));
+        }
+    });
+
+    rail.addEventListener('dragover', ev => {
+        if (draggingId === null) {
+            return;
+        }
+        const tile = (ev.target as HTMLElement).closest('.mbx-slot');
+        if (!tile) {
+            return;
+        }
+        const index = Array.from(rail.querySelectorAll('.mbx-slot')).indexOf(tile);
+        const slot = controller.snapshot()[index];
+        if (!slot || slot.id === draggingId) {
+            clearDropMarker();
+            return;
+        }
+        ev.preventDefault();
+        if (ev.dataTransfer) {
+            ev.dataTransfer.dropEffect = 'move';
+        }
+        clearDropMarker();
+        const rect = tile.getBoundingClientRect();
+        tile.classList.add(ev.clientY < rect.top + rect.height / 2 ? 'mbx-drop-before' : 'mbx-drop-after');
+    });
+
+    rail.addEventListener('drop', ev => {
+        if (draggingId === null) {
+            return;
+        }
+        const tile = (ev.target as HTMLElement).closest('.mbx-slot');
+        if (!tile) {
+            return;
+        }
+        ev.preventDefault();
+        const slots = controller.snapshot();
+        const fromIndex = slots.findIndex(slot => slot.id === draggingId);
+        const targetIndex = Array.from(rail.querySelectorAll('.mbx-slot')).indexOf(tile);
+        if (fromIndex < 0 || targetIndex < 0) {
+            return;
+        }
+        const rect = tile.getBoundingClientRect();
+        let destination = targetIndex + (ev.clientY >= rect.top + rect.height / 2 ? 1 : 0);
+        if (fromIndex < destination) {
+            destination--;
+        }
+        if (moveSlot(draggingId, destination)) {
+            suppressClick = true;
+            window.setTimeout(() => {
+                suppressClick = false;
+            }, 0);
+        }
+        clearDropMarker();
+    });
+
+    rail.addEventListener('dragend', () => {
+        draggingId = null;
+        clearDropMarker();
+        for (const tile of Array.from(rail.querySelectorAll('.is-dragging'))) {
+            tile.classList.remove('is-dragging');
+        }
     });
 
     const chooser = new ProfileChooser(p => {
@@ -112,11 +223,16 @@ function boot(): void {
 
     (globalThis as Record<string, unknown>).multibox = {
         controller,
-        add: (a?: Account) => controller.add(a),
+        add: (a?: Account) => {
+            const slot = controller.add(a);
+            renderRail();
+            return slot;
+        },
         focus: (id: number) => {
             controller.focus(id);
             renderRail();
         },
+        move: (id: number, toIndex: number) => moveSlot(id, toIndex),
         slots: () => controller.snapshot(),
         importProfiles: async (json: string | Profile[]): Promise<number> => {
             if (!(await prompt.ensureUnlocked())) {

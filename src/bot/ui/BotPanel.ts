@@ -206,11 +206,16 @@ export default class BotPanel {
         passInput.value = saved?.password ?? '';
         sec.appendChild(labeled('pass', passInput));
 
+        Credentials.onChange(creds => {
+            userInput.value = creds?.username ?? '';
+            passInput.value = creds?.password ?? '';
+        });
+
         const status = el('div', 'rs2b0t-load-status');
 
         const buttons = el('div', 'rs2b0t-buttons');
         button(buttons, 'Save', () => {
-            Credentials.save(userInput.value.trim(), passInput.value);
+            AutoRelogin.setCredentials(userInput.value.trim(), passInput.value);
             if (boxId() !== '' && window.parent !== window) {
                 window.parent.postMessage({ type: 'rs2b0t:profile-save', username: userInput.value.trim(), password: passInput.value }, window.location.origin);
             }
@@ -227,9 +232,7 @@ export default class BotPanel {
             status.className = `rs2b0t-load-status ${ok ? 'rs2b0t-load-ok' : 'rs2b0t-load-error'}`;
         });
         button(buttons, 'Clear', () => {
-            Credentials.clear();
-            userInput.value = '';
-            passInput.value = '';
+            AutoRelogin.setCredentials('', '');
             status.textContent = 'cleared';
             status.className = 'rs2b0t-load-status';
         });

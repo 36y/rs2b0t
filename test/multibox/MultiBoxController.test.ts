@@ -21,6 +21,12 @@ class FakeHandle implements SlotHandle {
 class FakeOps implements SlotOps {
     handles: FakeHandle[] = [];
     spawn(_a: Account): SlotHandle { const h = new FakeHandle(); this.handles.push(h); return h; }
+    move(handle: SlotHandle, before: SlotHandle | null): void {
+        const fromIndex = this.handles.indexOf(handle as FakeHandle);
+        const [moving] = this.handles.splice(fromIndex, 1);
+        const toIndex = before === null ? this.handles.length : this.handles.indexOf(before as FakeHandle);
+        this.handles.splice(toIndex, 0, moving);
+    }
 }
 
 describe('MultiBoxController', () => {
@@ -102,6 +108,37 @@ describe('MultiBoxController', () => {
         expect(ops.handles[0].mode).toBe('focused');
         expect(ops.handles[1].mode).toBe('background');
         expect(c.focusedId).toBe(a.id);
+    });
+
+    test('move reorders slots and their handles without changing focus', () => {
+        const ops = new FakeOps();
+        const c = new MultiBoxController(ops);
+        c.add({ username: 'alice', password: 'a' })!;
+        const bob = c.add({ username: 'bob', password: 'b' })!;
+        const carol = c.add({ username: 'carol', password: 'c' })!;
+        c.focus(bob.id);
+        const originalHandles = [...ops.handles];
+
+        expect(c.move(carol.id, 0)).toBe(true);
+        expect(c.snapshot().map(slot => slot.username)).toEqual(['carol', 'alice', 'bob']);
+        expect(ops.handles).toEqual([originalHandles[2], originalHandles[0], originalHandles[1]]);
+        expect(c.focusedId).toBe(bob.id);
+
+        expect(c.move(carol.id, 2)).toBe(true);
+        expect(c.snapshot().map(slot => slot.username)).toEqual(['alice', 'bob', 'carol']);
+    });
+
+    test('move rejects invalid requests and clamps valid destinations', () => {
+        const c = new MultiBoxController(new FakeOps());
+        const alice = c.add({ username: 'alice', password: 'a' })!;
+        c.add({ username: 'bob', password: 'b' })!;
+
+        expect(c.move(999, 0)).toBe(false);
+        expect(c.move(alice.id, 0.5)).toBe(false);
+        expect(c.move(alice.id, -50)).toBe(false);
+        expect(c.move(alice.id, 50)).toBe(true);
+        expect(c.snapshot().map(slot => slot.username)).toEqual(['bob', 'alice']);
+        expect(c.move(alice.id, 50)).toBe(false);
     });
 
     test('exactly one bot is focused and the rest background while any exist', () => {
