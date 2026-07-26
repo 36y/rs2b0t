@@ -69,13 +69,18 @@ class ScriptRunnerImpl {
             await bot.onStart?.();
         })()
             .then(() => {
+                ctx.loopInFlight = false;
+                if (ctx.state === 'stopping') {
+                    this.finishStop(ctx);
+                    return;
+                }
+
                 RandomEvents.setGrindTargets(bot.grindTargets());
                 RandomEvents.setLampSkill(SettingsStore.globalBag().str('lampSkill', 'strength'));
                 Supervisor.resetProgress();
                 if (RecoveryHints.pendingRecovery) {
                     RecoveryHints.clear();
                 }
-                ctx.loopInFlight = false;
                 ctx.nextLoopAt = 0;
                 ctx.progress();
             })
