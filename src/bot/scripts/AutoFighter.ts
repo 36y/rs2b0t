@@ -17,9 +17,18 @@ import { nearestBank } from '../api/BankLocations.js';
 import { GroundItems } from '../api/queries/GroundItems.js';
 import { Npcs, type Npc } from '../api/queries/Npcs.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import type Tile from '../api/Tile.js';
-import { countMatching, matchesAny, shouldEat, shouldPanic, slotsMatching } from './ArdyFighterLogic.js';
-import { DEFAULT_LOOT, SPOTS, SPOT_OPTIONS, TARGET_OPTIONS } from './AutoFighterData.js';
+import Tile from '../api/Tile.js';
+import { countMatching, matchesAny, shouldBank, shouldEat, shouldPanic, slotsMatching } from './ArdyFighterLogic.js';
+import {
+    autoBankEnabled,
+    BANKING_OPTIONS,
+    CUSTOM_COORDINATES,
+    DEFAULT_CUSTOM_SPOT,
+    DEFAULT_LOOT,
+    resolveKillingSpot,
+    SPOT_OPTIONS,
+    START_POSITION
+} from './AutoFighterData.js';
 import { SolveClue } from '../clues/SolveClue.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
 
@@ -28,8 +37,10 @@ const KIT = ['spade', 'sextant', 'watch', 'chart'];
 const COMBAT_SKILLS = ['attack', 'strength', 'defence', 'hitpoints'];
 
 export const SETTINGS: SettingsSchema = {
-    target: { type: 'string', default: 'Guard', options: TARGET_OPTIONS, label: 'Target to kill' },
-    spot: { type: 'string', default: 'Varrock East gate', options: SPOT_OPTIONS, label: 'Killing spot', help: 'guard spawn clusters measured from the map data' },
+    target: { type: 'string', default: 'Guard', label: 'Target NPC name', help: 'exact in-game name, e.g. Guard, Chicken, or Moss giant' },
+    spot: { type: 'string', default: START_POSITION, options: SPOT_OPTIONS, label: 'Killing spot', help: 'use the tile where the script starts, or walk to custom coordinates' },
+    coordinates: { type: 'tile', default: DEFAULT_CUSTOM_SPOT, label: 'Killing coordinates (x,z)', showIf: { key: 'spot', anyOf: [CUSTOM_COORDINATES] } },
+    leashRadius: { type: 'number', default: 8, min: 2, max: 30, label: 'Leash radius (tiles)' },
     combatStyle: { type: 'string', default: 'strength', options: COMBAT_STYLE_OPTIONS, label: 'Combat style' },
     food: { type: 'string', default: 'Trout', label: 'Food (withdrawn from bank)' },
     foodWithdraw: { type: 'number', default: 10, min: 0, max: 27, label: 'Food to carry' },
@@ -38,11 +49,12 @@ export const SETTINGS: SettingsSchema = {
     panicHp: { type: 'number', default: 25, min: 0, max: 100, label: 'Panic below HP% (no food)' },
     loot: { type: 'string[]', default: DEFAULT_LOOT, label: 'Loot item names (contains)', help: 'defaults to gem-table items + clue scrolls, nothing else' },
     solveClues: { type: 'boolean', default: true, label: 'Solve clue drops', group: 'Clues' },
-    bankAtLootSlots: { type: 'number', default: 12, min: 1, max: 27, label: 'Safety-bank at loot slots' }
+    banking: { type: 'string', default: 'Auto', options: BANKING_OPTIONS, label: 'Banking', help: 'Auto = bank loot at the nearest bank and return; None = no loot-only bank trips' },
+    bankAtLootSlots: { type: 'number', default: 12, min: 1, max: 27, label: 'Bank at loot slots', showIf: { key: 'banking', anyOf: ['Auto'] } }
 };
 
 let TARGET = 'Guard';
-let ANCHOR = SPOTS['Varrock East gate'].tile;
+let ANCHOR = DEFAULT_CUSTOM_SPOT;
 let LEASH = 8;
 let FOOD = 'Trout';
 let FOOD_WITHDRAW = 10;
@@ -52,6 +64,7 @@ let PANIC_AT = 0.25;
 let LOOT = DEFAULT_LOOT;
 let SOLVE_CLUES = true;
 let BANK_AT = 12;
+let AUTO_BANK = true;
 let COMBAT_MODE = 1;
 
 function foodCount(): number {
@@ -81,11 +94,10 @@ export default class AutoFighter extends TaskBot {
     override async onStart(): Promise<void> {
         await Execution.delayUntil(() => Game.ingame() && Game.tile() !== null, 0);
 
-        TARGET = this.settings.str('target', 'Guard');
-        const spotName = this.settings.str('spot', 'Varrock East gate');
-        const spot = SPOTS[spotName] ?? SPOTS['Varrock East gate'];
-        ANCHOR = spot.tile;
-        LEASH = spot.leash;
+        TARGET = this.settings.str('target', 'Guard').trim() || 'Guard';
+        const spotMode = this.settings.str('spot', START_POSITION);
+        ANCHOR = resolveKillingSpot(spotMode, Tile.from(Game.tile()!), this.settings.tile('coordinates', DEFAULT_CUSTOM_SPOT));
+        LEASH = this.settings.num('leashRadius', 8);
         FOOD = this.settings.str('food', 'Trout');
         FOOD_WITHDRAW = this.settings.num('foodWithdraw', 10);
         EAT_AT = this.settings.num('eatAtHp', 50) / 100;
@@ -94,6 +106,7 @@ export default class AutoFighter extends TaskBot {
         LOOT = this.settings.list('loot', DEFAULT_LOOT).map(s => s.trim().toLowerCase());
         SOLVE_CLUES = this.settings.bool('solveClues', true);
         BANK_AT = this.settings.num('bankAtLootSlots', 12);
+        AUTO_BANK = autoBankEnabled(this.settings.str('banking', 'Auto'));
         COMBAT_MODE = parseCombatStyle(this.settings.str('combatStyle', 'strength'));
 
         this.solveClue = new SolveClue({
@@ -126,7 +139,7 @@ export default class AutoFighter extends TaskBot {
 
         this.startedAt = Date.now();
         this.xpAtStart = COMBAT_SKILLS.reduce((n, sk) => n + Skills.xp(sk), 0);
-        this.log(`AutoFighter starting — '${TARGET}' at ${spotName} ${ANCHOR} r${LEASH}, food '${FOOD}'x${FOOD_WITHDRAW}, loot [${LOOT.join(', ')}]`);
+        this.log(`AutoFighter starting — '${TARGET}' at ${spotMode} ${ANCHOR} r${LEASH}, banking ${AUTO_BANK ? 'auto' : 'none'}, food '${FOOD}'x${FOOD_WITHDRAW}, loot [${LOOT.join(', ')}]`);
 
         this.on('chat.message', e => {
             if (/oh dear.*you are dead/i.test(e.text)) {
@@ -288,7 +301,7 @@ class BankRun implements Task {
         if (foodCount() > 0) {
             this.bot.bankFoodEmpty = false;
         }
-        return this.bot.bankAfterSolve || lootSlots() >= BANK_AT
+        return this.bot.bankAfterSolve || (AUTO_BANK && shouldBank(lootSlots(), BANK_AT, Inventory.isFull()))
             || (foodCount() === 0 && FOOD_WITHDRAW > 0 && !this.bot.bankFoodEmpty);
     }
     async execute(): Promise<void> {

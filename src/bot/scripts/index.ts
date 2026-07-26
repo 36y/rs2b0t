@@ -139,7 +139,7 @@ ScriptRegistry.register({
 
 ScriptRegistry.register({
     name: 'AutoFighter',
-    description: 'Anchor-based clue farmer — kills the chosen target at a chosen guard spot, loots ONLY gem-table items + clue scrolls, solves clues on pickup (shared SolveClue), banks after each solve, returns to killing',
+    description: 'Start-or-coordinate fighter — kills any named NPC in its leash, loots selected drops, auto-banks, solves clues, and returns to the killing spot',
     category: 'Combat',
     tags: ['combat', 'clues', 'banking', 'afk'],
     settingsSchema: AUTOFIGHTER_SETTINGS,

@@ -1,135 +1,198 @@
-import { chromium } from 'playwright-core';
+import type { Page } from 'playwright-core';
+import { boot, fail, launchBrowser, login, parseArgs, startFromLibrary, type Rs2b0t } from './lib/harness.js';
 
-const base = process.argv[2] || 'http://localhost:8890';
-const username = process.argv[3] || `at${Date.now().toString(36).slice(-7)}`;
-const ANCHOR = { x: 3273, z: 3427 };
+const { base, rest } = parseArgs(process.argv.slice(2), { base: 'http://localhost:8890' });
+const accountStem = (rest[0] ?? `af${Date.now().toString(36).slice(-7)}`).slice(0, 10);
+const COW_TELE = '::tele 0,50,51,55,6';
+const VARROCK_START_TELE = '::tele 0,51,53,0,35';
+const CUSTOM_ANCHOR = { x: 3273, z: 3427, level: 0 };
 
-function fail(msg: string): never {
-    console.error(`FAIL: ${msg}`);
-    process.exit(1);
-}
-
-type R = {
-    rs2b0t: {
-        client: { ingame: boolean; sceneState: number; loginUser: string; loginPass: string; login(u: string, p: string, r: boolean): Promise<void> };
-        runner: { state: string; start(script: unknown): void; ctx: { log: { msg: string }[] } | null };
-        reader: { worldTile(): { x: number; z: number; level: number } | null };
-        registry: { get(name: string): unknown };
+type Runtime = Rs2b0t & {
+    rs2b0t: Rs2b0t['rs2b0t'] & {
         actions?: { continueDialog?: () => boolean };
-    };
-    __rs2b0t: {
-        Game: { inCombat(): boolean };
-        Skills: { xp(name: string): number };
+        runner: Rs2b0t['rs2b0t']['runner'] & { bot: { kills?: number; trips?: number; status?: string } | null };
     };
 };
 
-const browser = await chromium.launch({
-    executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    headless: true,
-    args: ['--no-sandbox']
-});
-try {
-    const page = await browser.newPage();
-    page.on('pageerror', e => console.log(`pageerror: ${e}`));
+function logs(page: Page): Promise<string[]> {
+    return page.evaluate(() => ((globalThis as never as Runtime).rs2b0t.runner.ctx?.log ?? []).map(l => l.msg));
+}
 
-    const boot = () => page.waitForFunction(() => ((globalThis as never as { rs2b0t?: { client: { constructor: { loopCycle: number } } } }).rs2b0t?.client.constructor.loopCycle ?? 0) > 10, undefined, { timeout: 60000 });
-    const login = async () => {
-        await page.evaluate(([u, p]) => { const c = (globalThis as never as R).rs2b0t.client; c.loginUser = u; c.loginPass = p; void c.login(u, p, false); }, [username, 'test']);
-        return page.waitForFunction(() => (globalThis as never as R).rs2b0t.client.ingame && (globalThis as never as R).rs2b0t.client.sceneState === 2, undefined, { timeout: 12000 }).then(() => true).catch(() => false);
-    };
-    const type = async (t: string) => {
-        await page.locator('#canvas').click({ position: { x: 380, y: 250 } });
-        await page.waitForTimeout(400);
-        await page.keyboard.type(t, { delay: 30 });
-        await page.keyboard.press('Enter');
-        await page.waitForTimeout(1500);
-    };
-    const clearDialogs = () => page.evaluate(async () => {
-        const a = (globalThis as never as R).rs2b0t.actions;
-        for (let i = 0; i < 30; i++) { a?.continueDialog?.(); await new Promise(r => setTimeout(r, 250)); }
+function tile(page: Page) {
+    return page.evaluate(() => (globalThis as never as Runtime).rs2b0t.reader.worldTile());
+}
+
+function combatXp(page: Page): Promise<number> {
+    return page.evaluate(() => {
+        const reader = (globalThis as never as Runtime).rs2b0t.reader;
+        return [0, 1, 2, 3].reduce((sum, index) => sum + reader.stat(index).xp, 0);
     });
-    const tile = () => page.evaluate(() => (globalThis as never as R).rs2b0t.reader.worldTile());
-    const logLines = () => page.evaluate(() => ((globalThis as never as R).rs2b0t.runner.ctx?.log ?? []).map(l => l.msg));
-    const combatXp = () => page.evaluate(() => {
-        const { Skills } = (globalThis as never as R).__rs2b0t;
-        return ['attack', 'strength', 'defence', 'hitpoints'].reduce((n, s) => n + Skills.xp(s), 0);
-    });
-    const inCombat = () => page.evaluate(() => (globalThis as never as R).__rs2b0t.Game.inCombat());
+}
 
-    await page.goto(`${base}/bot.html`);
-    await boot();
-    for (let i = 0; i < 6 && !(await login()); i++) { await page.waitForTimeout(3000); }
-    await type('::tele 0,50,50,20,20');
-    await page.reload();
-    await boot();
-    let backIn = false;
-    for (let i = 0; i < 8 && !backIn; i++) { await page.waitForTimeout(5000); backIn = await login(); }
-    if (!backIn) { fail('relogin failed'); }
-    await type('::~maxme');
-    await clearDialogs();
-    let at = null as { x: number; z: number; level: number } | null;
-    for (let attempt = 0; attempt < 4; attempt++) {
-        await type('::tele 0,51,53,9,35');
-        await page.waitForTimeout(2000);
-        at = await tile();
-        if (at && Math.abs(at.x - ANCHOR.x) <= 8 && Math.abs(at.z - ANCHOR.z) <= 8) { break; }
-        await clearDialogs();
-    }
-    if (!at || Math.abs(at.x - ANCHOR.x) > 8 || Math.abs(at.z - ANCHOR.z) > 8) { fail(`gate tele failed (at ${at ? `${at.x},${at.z}` : '?'})`); }
-    console.log(`${username} at Varrock East gate (${at.x},${at.z})`);
+async function cheat(page: Page, command: string, waitMs = 1400): Promise<void> {
+    await page.evaluate(value => {
+        const client = (globalThis as never as Runtime).rs2b0t.client;
+        const input = value.replace(/^::/, '');
+        client.out?.p1Enc(224); // CLIENT_CHEAT
+        client.out?.p1(input.length + 1);
+        client.out?.pjstr(input);
+    }, command);
+    await page.waitForTimeout(waitMs);
+}
 
-    await page.evaluate(() => { const r = (globalThis as never as R).rs2b0t; r.runner.start(r.registry.get('AutoFighter')); });
-    await page.evaluate(() => (globalThis as never as { rs2b0t: { setRenderMode(m: string): void } }).rs2b0t.setRenderMode('background'));
-    console.log('started AutoFighter — watching for a Guard kill');
-
-    const xp0 = await combatXp();
-    let fought = false;
-    let killEvidence = false;
-    for (let i = 0; i < 60; i++) {
-        await page.waitForTimeout(2000);
-        if (await inCombat()) { fought = true; }
-        const gained = (await combatXp()) - xp0;
-        if (fought && gained >= 80 && !(await inCombat())) { killEvidence = true; break; }
-    }
-    console.log(`fight loop: engaged=${fought} kill-evidence=${killEvidence} (xp +${(await combatXp()) - xp0})`);
-    if (!fought) {
-        const npcs = await page.evaluate(() => {
-            const abi = (globalThis as never as { __rs2b0t: { Npcs: { query(): { where(p: (n: { distance(): number }) => boolean): { results(): { name: string | null; tile(): { x: number; z: number }; inCombat: boolean; actions(): string[] }[] } } } } }).__rs2b0t;
-            return abi.Npcs.query().where(n => n.distance() <= 15).results().map(n => `${n.name}@(${n.tile().x},${n.tile().z}) combat=${n.inCombat} ops[${n.actions().filter(Boolean).join(',')}]`);
-        });
-        console.log(`nearby npcs: ${npcs.join(' | ') || '(none)'}`);
-        console.log('--- bot log tail ---');
-        for (const l of (await logLines()).slice(-25)) { console.log(`  ${l}`); }
-        fail('never entered combat at the gate');
-    }
-
-    await type('::give spade');
-    await type('::give trail_clue_easy_map001');
-    console.log('gave Spade + easy clue — watching for SolveClue preemption');
-
-    const before = (await logLines()).length;
-    const seen = { banked: false, trail: false, returned: false };
-    for (let i = 0; i < 150 && !(seen.banked && seen.trail); i++) {
-        await page.waitForTimeout(2000);
-        const lines = (await logLines()).slice(before);
-        for (const l of lines) {
-            if (/\[clue\] banking loot at the/.test(l)) { seen.banked = true; }
-            if (/\[clue\] leg \d+ — solving/.test(l)) { seen.trail = true; }
+async function clearDialogs(page: Page): Promise<void> {
+    await page.evaluate(async () => {
+        const actions = (globalThis as never as Runtime).rs2b0t.actions;
+        for (let i = 0; i < 30; i++) {
+            actions?.continueDialog?.();
+            await new Promise(resolve => setTimeout(resolve, 100));
         }
-        if (i > 0 && i % 45 === 0) { console.log(`  t+${i * 2}s ${JSON.stringify(seen)} at ${JSON.stringify(await tile())}`); }
+    });
+}
+
+async function prepare(page: Page, user: string, url: string): Promise<void> {
+    page.on('pageerror', error => console.log(`pageerror: ${error}`));
+    await page.goto(url);
+    await boot(page);
+    if (!(await login(page, user))) fail(`${user}: first login failed`);
+    await cheat(page, '::~maxme');
+    await clearDialogs(page);
+}
+
+function paramRow(page: Page, label: string) {
+    return page.locator('.rs2b0t-param-row', {
+        has: page.locator('.rs2b0t-param-label', { hasText: label })
+    });
+}
+
+async function openParams(page: Page): Promise<void> {
+    await page.getByRole('button', { name: /Edit parameters/ }).click();
+    await page.waitForSelector('.rs2b0t-params-body', { state: 'visible', timeout: 5000 });
+}
+
+async function closeParams(page: Page): Promise<void> {
+    const modal = page.locator('.rs2b0t-modal', { has: page.locator('.rs2b0t-params-body') });
+    await modal.locator('.rs2b0t-modal-header > button').click();
+    await page.waitForSelector('.rs2b0t-params-body', { state: 'hidden', timeout: 5000 });
+}
+
+async function waitForCombatProgress(page: Page, xpAtStart: number, timeoutMs: number): Promise<{ engaged: boolean; gained: number }> {
+    const deadline = Date.now() + timeoutMs;
+    let engaged = false;
+    while (Date.now() < deadline) {
+        const snap = await page.evaluate(() => {
+            const runtime = (globalThis as never as Runtime).rs2b0t;
+            return { state: runtime.runner.state, inCombat: runtime.reader.inCombat() };
+        });
+        if (snap.state === 'crashed') fail(`AutoFighter crashed: ${(await logs(page)).slice(-8).join(' | ')}`);
+        engaged ||= snap.inCombat;
+        const gained = (await combatXp(page)) - xpAtStart;
+        if (gained > 0) return { engaged, gained };
+        await page.waitForTimeout(500);
     }
-    for (let i = 0; i < 120 && seen.trail && !seen.returned; i++) {
-        await page.waitForTimeout(2000);
-        const t = await tile();
-        if (t && Math.abs(t.x - ANCHOR.x) <= 14 && Math.abs(t.z - ANCHOR.z) <= 14) { seen.returned = true; }
+    return { engaged, gained: (await combatXp(page)) - xpAtStart };
+}
+
+const browser = await launchBrowser();
+try {
+    const startContext = await browser.newContext({ viewport: { width: 1280, height: 760 } });
+    const startPage = await startContext.newPage();
+    const startUser = `${accountStem}a`.slice(0, 12);
+    const startUrl = `${base}/bot.html?AutoFighter.foodWithdraw=0&AutoFighter.solveClues=false&AutoFighter.banking=None&AutoFighter.loot=Cow%20hide`;
+    await prepare(startPage, startUser, startUrl);
+    await cheat(startPage, COW_TELE);
+    await startFromLibrary(startPage, 'Combat', 'AutoFighter');
+    await openParams(startPage);
+
+    const targetRow = paramRow(startPage, 'Target NPC name');
+    const targetInput = targetRow.locator('input[type="text"]');
+    if ((await targetInput.count()) !== 1 || (await targetRow.locator('select').count()) !== 0) {
+        fail('Target NPC name is not a freeform text field');
+    }
+    await targetInput.fill('Cow');
+    await targetInput.press('Tab');
+    await paramRow(startPage, 'Killing spot').locator('select').selectOption('Start position');
+    if ((await paramRow(startPage, 'Killing coordinates').count()) !== 0) {
+        fail('custom coordinates are visible for Start position');
+    }
+    await closeParams(startPage);
+
+    const expectedStart = await tile(startPage);
+    if (!expectedStart) fail('no start tile before the start-position test');
+    const startXp = await combatXp(startPage);
+    await startPage.getByRole('button', { name: 'Start' }).click();
+    await startPage.waitForFunction(() => ((globalThis as never as Runtime).rs2b0t.runner.ctx?.log ?? []).some(line => line.msg.startsWith('AutoFighter starting')), undefined, { timeout: 15000 });
+    const startLog = (await logs(startPage)).find(line => line.startsWith('AutoFighter starting')) ?? '';
+    const expectedAnchor = `(${expectedStart.x}, ${expectedStart.z}, ${expectedStart.level})`;
+    if (!startLog.includes("'Cow'") || !startLog.includes(`Start position ${expectedAnchor}`)) {
+        fail(`start-position/freeform settings not applied: "${startLog}"`);
+    }
+    const cowFight = await waitForCombatProgress(startPage, startXp, 90_000);
+    if (cowFight.gained <= 0) fail(`freeform Cow target was never fought: ${startLog}`);
+    console.log(`freeform target + start position: Cow fought from ${expectedAnchor} (xp +${cowFight.gained})`);
+    await startPage.getByRole('button', { name: 'Stop' }).click();
+    await startContext.close();
+
+    const customContext = await browser.newContext({ viewport: { width: 1280, height: 760 } });
+    const customPage = await customContext.newPage();
+    const customUser = `${accountStem}b`.slice(0, 12);
+    const params = new URLSearchParams({
+        'AutoFighter.target': 'Guard',
+        'AutoFighter.spot': 'Custom coordinates',
+        'AutoFighter.coordinates': `${CUSTOM_ANCHOR.x},${CUSTOM_ANCHOR.z},${CUSTOM_ANCHOR.level}`,
+        'AutoFighter.leashRadius': '8',
+        'AutoFighter.foodWithdraw': '0',
+        'AutoFighter.solveClues': 'false',
+        'AutoFighter.banking': 'Auto',
+        'AutoFighter.bankAtLootSlots': '1',
+        'AutoFighter.loot': 'Uncut sapphire'
+    });
+    await prepare(customPage, customUser, `${base}/bot.html?${params}`);
+    await cheat(customPage, VARROCK_START_TELE);
+    await cheat(customPage, '::give uncut_sapphire');
+    await startFromLibrary(customPage, 'Combat', 'AutoFighter');
+    await openParams(customPage);
+
+    if ((await paramRow(customPage, 'Target NPC name').locator('input[type="text"]').inputValue()) !== 'Guard') {
+        fail('custom run target text did not resolve to Guard');
+    }
+    if ((await paramRow(customPage, 'Killing spot').locator('select').inputValue()) !== 'Custom coordinates') {
+        fail('Custom coordinates mode is not selected');
+    }
+    const coordinateValues = await paramRow(customPage, 'Killing coordinates').locator('input').evaluateAll(inputs => inputs.map(input => (input as HTMLInputElement).value));
+    if (coordinateValues.join(',') !== '3273,3427,0') {
+        fail(`coordinate editor did not contain 3273,3427,0: ${coordinateValues.join(',')}`);
+    }
+    if ((await paramRow(customPage, 'Banking').locator('select').inputValue()) !== 'Auto') {
+        fail('Miner-style Auto banking is not selected');
+    }
+    await closeParams(customPage);
+
+    const customStart = await tile(customPage);
+    if (!customStart || (customStart.x === CUSTOM_ANCHOR.x && customStart.z === CUSTOM_ANCHOR.z)) {
+        fail(`custom run did not start away from its anchor: ${JSON.stringify(customStart)}`);
+    }
+    const customXp = await combatXp(customPage);
+    await customPage.getByRole('button', { name: 'Start' }).click();
+    await customPage.waitForFunction(() => ((globalThis as never as Runtime).rs2b0t.runner.ctx?.log ?? []).some(line => line.msg.includes('banking at the')), undefined, { timeout: 120_000 });
+    await customPage.waitForFunction(() => {
+        const runtime = (globalThis as never as Runtime).rs2b0t;
+        const banked = !runtime.reader.inventory().some(item => (item.name ?? '').toLowerCase().includes('uncut sapphire'));
+        return banked && (runtime.runner.bot?.trips ?? 0) >= 1;
+    }, undefined, { timeout: 120_000 });
+
+    const guardFight = await waitForCombatProgress(customPage, customXp, 120_000);
+    if (guardFight.gained <= 0) fail(`Guard was never fought after auto-banking: ${(await logs(customPage)).slice(-12).join(' | ')}`);
+    const arrived = await tile(customPage);
+    if (!arrived || Math.max(Math.abs(arrived.x - CUSTOM_ANCHOR.x), Math.abs(arrived.z - CUSTOM_ANCHOR.z)) > 14) {
+        fail(`bot did not return to custom coordinates after banking: ${JSON.stringify(arrived)}`);
     }
 
-    console.log('--- bot log tail ---');
-    for (const l of (await logLines()).slice(-35)) { console.log(`  ${l}`); }
-    console.log(`seen: ${JSON.stringify(seen)}`);
-    if (!seen.banked) { fail('clue never preempted into bank-first'); }
-    if (!seen.trail) { fail('trail never started'); }
-    console.log(`PASS: AutoFighter — fought at the gate${killEvidence ? ' (kill)' : ''}, clue preempted (bank-first + trail)${seen.returned ? ', returned to the spot' : ' (trail still walking at timeout — return not observed this run)'}`);
+    await customPage.screenshot({ path: 'out/autofighter-running.png' });
+    console.log(`custom coordinates + auto bank: sapphire deposited, returned, Guard fought (xp +${guardFight.gained})`);
+    console.log('screenshot: out/autofighter-running.png');
+    console.log('PASS: AutoFighter freeform targeting, start/custom spots, and auto banking');
+    await customContext.close();
 } finally {
     await browser.close();
 }
