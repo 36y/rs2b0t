@@ -1,4 +1,5 @@
 import { TaskBot, type Task } from '../api/Bot.js';
+import { EventSignal } from '../api/EventSignal.js';
 import { Execution } from '../api/Execution.js';
 import { Game } from '../api/Game.js';
 import Tile from '../api/Tile.js';
@@ -28,6 +29,10 @@ export const GATHERING_SETTINGS: SettingsSchema = {
     dropMatch: { type: 'string', default: 'ore', label: 'Drop items containing', help: 'when full, drop items whose name contains this (the gathered product)' },
     leashRadius: { type: 'number', default: 10, min: 2, max: 30, label: 'Leash radius (tiles)' }
 };
+
+export function shouldYieldGathering(eventPending: boolean, inventoryFull: boolean, dialogPending: boolean, targetMissing: boolean): boolean {
+    return eventPending || inventoryFull || dialogPending || targetMissing;
+}
 
 export default class GatheringBot extends TaskBot {
     override loopDelay = 600;
@@ -380,6 +385,10 @@ class Gather implements Task {
         return s !== null && !s.tile().equals(from);
     }
 
+    private shouldYield(): boolean {
+        return shouldYieldGathering(EventSignal.pending(), Inventory.isFull(), ChatDialog.canContinue(), this.find() === null);
+    }
+
     private async fleeGas(key: string, tile: Tile): Promise<void> {
         this.bot.log(`rock at ${tile} is smoking — backing off before it blows`);
         this.bot.setStatus('smoking rock — backing off');
@@ -407,7 +416,7 @@ class Gather implements Task {
             }
 
             await Execution.delayUntil(
-                () => Inventory.used() > before || Game.animating() || this.find() === null || Inventory.isFull() || ChatDialog.canContinue() || this.gasAt(target.tile()) || (npc && this.activeSpotMoved(target.tile())),
+                () => Inventory.used() > before || Game.animating() || this.shouldYield() || this.gasAt(target.tile()) || (npc && this.activeSpotMoved(target.tile())),
                 12000
             );
             if (this.gasAt(target.tile())) {
@@ -426,12 +435,12 @@ class Gather implements Task {
         }
 
         for (let guard = 0; guard < 200; guard++) {
-            if (Inventory.isFull() || ChatDialog.canContinue() || this.find() === null) {
+            if (this.shouldYield()) {
                 return;
             }
             const mark = Inventory.used();
             await Execution.delayUntil(
-                () => Inventory.used() > mark || !Game.animating() || Inventory.isFull() || ChatDialog.canContinue() || this.find() === null || this.gasAt(target.tile()),
+                () => Inventory.used() > mark || !Game.animating() || this.shouldYield() || this.gasAt(target.tile()),
                 8000
             );
             if (this.gasAt(target.tile())) {
