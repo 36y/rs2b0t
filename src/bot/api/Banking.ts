@@ -9,6 +9,11 @@ import { Locs } from './queries/Locs.js';
 
 export type BankStrategy = 'off' | 'items' | 'time' | 'either';
 
+export interface BankDestination {
+    name: string;
+    tile: WorldTile;
+}
+
 export interface BankTriggerState {
     lootCount: number;
     minutesSinceLastBank: number;
@@ -86,9 +91,11 @@ export const Banking = {
     async bankNearest(opts: {
         deposit: (name: string) => boolean;
         commonJunk?: boolean;
+        destination?: BankDestination;
         returnTo?: WorldTile;
         boothName?: string;
         boothOp?: string;
+        afterDeposit?: () => void | Promise<void>;
         log?: (msg: string) => void;
     }): Promise<boolean> {
         const boothName = opts.boothName ?? 'Bank booth';
@@ -97,7 +104,7 @@ export const Banking = {
 
         if (!realBooth(boothName)) {
             const here = Game.tile();
-            const bank = here ? nearestBank(here) : null;
+            const bank = opts.destination ?? (here ? nearestBank(here) : null);
             if (bank) {
                 log(`no booth in scene — web-walking to the ${bank.name} bank at ${bank.tile}`);
                 await Traversal.walkResilient(bank.tile, { radius: 4, timeoutMs: 120_000, log });
@@ -110,6 +117,7 @@ export const Banking = {
             return false;
         }
         await Bank.depositAllMatching(depositMatcher(opts.deposit, opts.commonJunk ?? true));
+        await opts.afterDeposit?.();
         await Execution.delayTicks(1);
         if (opts.returnTo) {
             await Traversal.walkResilient(opts.returnTo, { radius: 3, timeoutMs: 120_000, log });

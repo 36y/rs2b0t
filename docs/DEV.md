@@ -13,7 +13,8 @@ The rs2b0t bot client has **three canonical run modes**, one command each.
 The bundle bakes a server target (`TARGET=…`) that fixes how the client resolves the
 game WebSocket host and which RSA login modulus it uses:
 
-- **`local`** (default) — **same-origin**: `wsHost = window.location.host`. Local dev key.
+- **`local`** (default) — **same-origin**: `wsHost = window.location.host`. Local dev key;
+  set the public `LOCAL_RSAE` and `LOCAL_RSAN` values when using a stock engine key.
 - **`live`** — hardcodes `w1.rs2b2t.com` + `wss`. Used with the local reverse proxy
   (`tools/live-proxy.ts`) for running a local client against production. Key via
   `LIVE_RSAN`.
@@ -49,7 +50,7 @@ target resolves same-origin and logs in with no proxy.
   with `ENGINE_DIR=~/code/rs2b2t-engine sh tools/deploy-local.sh`.
 - The engine uses a **rotated 1024-bit RSA login key** (not the upstream 512-bit default);
   the matching modulus is baked into the `local` target. A stock-key client gets login
-  code 6.
+  code 6 unless `LOCAL_RSAE` and `LOCAL_RSAN` are supplied to `deploy-local.sh`.
 - Cheats/debugprocs (staffModLevel 4 locally): `::tele 0,mx,mz,lx,lz`, `::~maxme`,
   `::~item <objname> <count>`, `::~bankitem`, `::~spawnloc <locname>`. `::~maxme`'s
   level-up dialogs swallow the next typed command — do cheats on the clean post-relogin

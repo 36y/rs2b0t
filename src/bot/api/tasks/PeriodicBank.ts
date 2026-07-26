@@ -2,7 +2,7 @@ import type { WorldTile } from '../../adapter/ClientAdapter.js';
 import type { Task } from '../Bot.js';
 import { Execution } from '../Execution.js';
 import { Game } from '../Game.js';
-import { Banking, shouldBankNow, type BankStrategy } from '../Banking.js';
+import { Banking, shouldBankNow, type BankDestination, type BankStrategy } from '../Banking.js';
 
 const FAILURE_BACKOFF_MS = 3 * 60_000;
 
@@ -12,6 +12,8 @@ export interface PeriodicBankOptions {
     minutesThreshold: () => number;
     countLoot: () => number;
     deposit: (name: string) => boolean;
+    afterDeposit?: () => void | Promise<void>;
+    destination?: () => BankDestination | null;
     commonJunk?: () => boolean;
     returnTo?: () => WorldTile | null;
     setStatus?: (s: string) => void;
@@ -43,6 +45,8 @@ export class PeriodicBank implements Task {
         this.opts.setStatus?.('periodic bank run');
         const ok = await Banking.bankNearest({
             deposit: this.opts.deposit,
+            afterDeposit: this.opts.afterDeposit,
+            destination: this.opts.destination?.() ?? undefined,
             commonJunk: this.opts.commonJunk?.() ?? true,
             returnTo: this.opts.returnTo?.() ?? undefined,
             log: this.opts.log
@@ -52,6 +56,8 @@ export class PeriodicBank implements Task {
             this.suppressUntil = performance.now() + FAILURE_BACKOFF_MS;
             this.opts.log?.('periodic bank: no bank reachable — will retry later');
             await Execution.delayTicks(3);
+        } else {
+            this.opts.log?.('periodic bank: completed');
         }
     }
 }

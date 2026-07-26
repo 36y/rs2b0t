@@ -5,7 +5,7 @@ import Tile from '../api/Tile.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
 import { DeathRecovery } from '../api/tasks/DeathRecovery.js';
 import { PeriodicBank } from '../api/tasks/PeriodicBank.js';
-import { PERIODIC_BANK_SETTINGS, depositAllExcept, parseBankStrategy } from '../api/Banking.js';
+import { PERIODIC_BANK_SETTINGS, depositAllExcept, parseBankStrategy, type BankDestination } from '../api/Banking.js';
 import { COMBAT_STYLE_OPTIONS, parseCombatStyle } from '../api/CombatStyle.js';
 import { ChatDialog } from '../api/hud/ChatDialog.js';
 import { GroundItems } from '../api/queries/GroundItems.js';
@@ -72,7 +72,7 @@ export default class ChickenKiller extends TaskBot {
 
         const hinted = RecoveryHints.takeAnchor();
         const here = Game.tile()!;
-        this.anchor = hinted ?? new Tile(here.x, here.z, here.level);
+        this.anchor = this.selectAnchor(new Tile(here.x, here.z, here.level), hinted);
         RecoveryHints.anchor = this.anchor;
         if (hinted) {
             this.log(`recovery restart — keeping original anchor ${this.anchor}`);
@@ -80,6 +80,8 @@ export default class ChickenKiller extends TaskBot {
         this.startedAt = Date.now();
         this.xpAtStart = COMBAT_SKILLS.reduce((n, sk) => n + Skills.xp(sk), 0);
         this.log(`anchored at ${this.anchor}, hunting ${this.target}, leash ${this.leash}`);
+
+        await this.prepareForTravel(new Tile(here.x, here.z, here.level));
 
         this.on('chat.message', e => {
             if (/oh dear.*you are dead/i.test(e.text)) {
@@ -108,6 +110,8 @@ export default class ChickenKiller extends TaskBot {
                 minutesThreshold: () => this.settings.num('bankEveryMinutes', 10),
                 countLoot: () => this.depositables(),
                 deposit: depositAllExcept(this.keepList()),
+                afterDeposit: () => this.afterBankDeposit(),
+                destination: () => this.bankDestination(),
                 returnTo: () => this.getAnchor(),
                 setStatus: (s) => this.setStatus(s),
                 log: (m) => this.log(m)
@@ -127,6 +131,18 @@ export default class ChickenKiller extends TaskBot {
 
     override recoveryAnchor(): Tile | null {
         return this.anchor;
+    }
+
+    protected selectAnchor(here: Tile, hinted: Tile | null): Tile {
+        return hinted ?? here;
+    }
+
+    protected async prepareForTravel(_start: Tile): Promise<void> {}
+
+    protected async afterBankDeposit(): Promise<void> {}
+
+    protected bankDestination(): BankDestination | null {
+        return null;
     }
 
     leashRadius(): number {
@@ -407,6 +423,11 @@ class ReturnToAnchor implements Task {
 
     async execute(): Promise<void> {
         this.bot.setStatus('returning to anchor');
-        await Traversal.walkTo(this.bot.getAnchor(), { radius: 3, timeoutMs: 90000 });
+        this.bot.log(`web-walking to the hunting anchor ${this.bot.getAnchor()}`);
+        await Traversal.walkResilient(this.bot.getAnchor(), {
+            radius: 3,
+            timeoutMs: 120_000,
+            log: message => this.bot.log(`  ${message}`)
+        });
     }
 }

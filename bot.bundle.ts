@@ -13,14 +13,15 @@ const TARGET_NAME = process.env.TARGET ?? 'local';
 // PUBLIC login keys per target. rs2b2t standardized BOTH its local and prod
 // login keys on 1024-bit RSA with exponent 65537 — upstream's 512-bit default
 // was rotated out in engine commit 6031c06b. local = the rs2b2t-engine repo's
-// committed data/config/private.pem public half (verified end-to-end via
-// against the local engine → login response 2). live =
+// committed data/config/private.pem public half (verified end-to-end against
+// the local engine → login response 2). LOCAL_RSAE/LOCAL_RSAN can override it
+// when testing against an unmodified upstream engine. live =
 // prod's own rotated modulus, a PUBLIC value supplied via LIVE_RSAN at
 // live-build time (extract from prod client.js).
 const TARGET_RSA: Record<string, { rsae: string; rsan: string }> = {
     local: {
-        rsae: '65537',
-        rsan: '135523076496100112838368820296627333081299340012903560093710594598681655098748405760144616526347126272127045237860467661349157596468705435014708178676542187051745346055229544524388140867808854007219907874939518784380039390430841371837588073879981616508242779530473286487605800927487856120184640386127488369021'
+        rsae: process.env.LOCAL_RSAE ?? '65537',
+        rsan: process.env.LOCAL_RSAN ?? '135523076496100112838368820296627333081299340012903560093710594598681655098748405760144616526347126272127045237860467661349157596468705435014708178676542187051745346055229544524388140867808854007219907874939518784380039390430841371837588073879981616508242779530473286487605800927487856120184640386127488369021'
     },
     live: {
         rsae: '65537',

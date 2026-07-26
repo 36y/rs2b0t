@@ -52,6 +52,29 @@ test('execute forwards commonJunk=false so the junk opt-out reaches bankNearest'
     expect(called.commonJunk).toBe(false);
     (Banking as any).bankNearest = spy; (Game as any).inCombat = gspy;
 });
+test('execute forwards the after-deposit bank hook', async () => {
+    let called: any = null;
+    const spy = Banking.bankNearest; (Banking as any).bankNearest = async (o: any) => { called = o; return true; };
+    const afterDeposit = async () => {};
+    await make({ afterDeposit }).execute();
+    expect(called.afterDeposit).toBe(afterDeposit);
+    (Banking as any).bankNearest = spy;
+});
+test('execute forwards an explicit bank destination', async () => {
+    let called: any = null;
+    const spy = Banking.bankNearest; (Banking as any).bankNearest = async (o: any) => { called = o; return true; };
+    const destination = { name: 'Al Kharid', tile: { x: 3269, z: 3167, level: 0 } };
+    await make({ destination: () => destination }).execute();
+    expect(called.destination).toEqual(destination);
+    (Banking as any).bankNearest = spy;
+});
+test('execute logs a durable completion marker after successful banking', async () => {
+    const messages: string[] = [];
+    const spy = Banking.bankNearest; (Banking as any).bankNearest = async () => true;
+    await make({ log: message => messages.push(message) }).execute();
+    expect(messages).toContain('periodic bank: completed');
+    (Banking as any).bankNearest = spy;
+});
 test('backs off ALL strategies after a failed (unreachable-bank) attempt', async () => {
     const bspy = Banking.bankNearest; (Banking as any).bankNearest = async () => false;
     const gspy = (Game as any).inCombat; (Game as any).inCombat = () => false;

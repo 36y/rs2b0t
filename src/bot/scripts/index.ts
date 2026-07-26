@@ -12,6 +12,7 @@ import ArdyThiever, { SETTINGS as ARDYTHIEVER_SETTINGS } from './ArdyThiever.js'
 import ArdyCakes, { SETTINGS as ARDYCAKES_SETTINGS } from './ArdyCakes.js';
 import ChaosDruidKiller, { SETTINGS as CHAOSDRUID_SETTINGS } from './ChaosDruidKiller.js';
 import ChickenKiller, { SETTINGS as CHICKEN_SETTINGS } from './ChickenKiller.js';
+import CowKiller, { SETTINGS as COWKILLER_SETTINGS } from './CowKiller.js';
 import ClueSolver, { SETTINGS as CLUESOLVER_SETTINGS } from './ClueSolver.js';
 import CookBot, { SETTINGS as COOKBOT_SETTINGS } from './CookBot.js';
 import GatheringBot from './GatheringBot.js';
@@ -38,7 +39,6 @@ import RuneCrafter, { SETTINGS as RUNECRAFTER_SETTINGS } from './RuneCrafter.js'
 import NatureCrafter, { SETTINGS as NATURECRAFTER_SETTINGS } from './NatureCrafter.js';
 import ShopBuyout, { SHOPBUYOUT_SETTINGS } from './ShopBuyout.js';
 import { ShopRunner, SHOPRUNNER_SETTINGS } from './ShopRunner.js';
-import type { SettingsSchema } from '../runtime/Settings.js';
 
 ScriptRegistry.register({
     name: 'TutorialBot',
@@ -74,21 +74,13 @@ ScriptRegistry.register({
     create: () => new ChickenKiller()
 });
 
-function chickenPreset(overrides: Record<string, unknown>): SettingsSchema {
-    const schema: SettingsSchema = {};
-    for (const [key, def] of Object.entries(CHICKEN_SETTINGS)) {
-        schema[key] = key in overrides ? { ...def, default: overrides[key] } : def;
-    }
-    return schema;
-}
-
 ScriptRegistry.register({
     name: 'CowKiller',
-    description: 'Kills cows in the Lumbridge field, loots cow hides + bones (anchor = start tile)',
+    description: 'Walks to Lumbridge or south-Falador cows, loots hides + bones, and supports Al Kharid toll banking',
     category: 'Combat',
-    tags: ['lumbridge', 'cowhide', 'bones', 'afk'],
-    settingsSchema: chickenPreset({ targetName: 'Cow', lootMatch: 'cow hide|bones', buryBones: false }),
-    create: () => new ChickenKiller()
+    tags: ['lumbridge', 'falador', 'cowhide', 'bones', 'banking', 'afk'],
+    settingsSchema: COWKILLER_SETTINGS,
+    create: () => new CowKiller()
 });
 
 ScriptRegistry.register({
