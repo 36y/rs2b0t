@@ -1,7 +1,9 @@
+import { TrafficCollector } from '../adapter/TrafficAdapter.js';
 import { DomSlotOps } from './DomSlotOps.js';
 import { MultiBoxController } from './MultiBoxController.js';
 import { ProfileChooser } from './ProfileChooser.js';
 import { vault, type Profile } from './ProfileVault.js';
+import { ResourcePanel } from './ResourcePanel.js';
 import { VaultPrompt } from './VaultPrompt.js';
 import type { Account } from './types.js';
 
@@ -11,6 +13,16 @@ function boot(): void {
 
     const ops = new DomSlotOps(rail, addTile);
     const controller = new MultiBoxController(ops);
+    const traffic = new TrafficCollector();
+    const resources = new ResourcePanel(
+        {
+            botCount: document.getElementById('mbx-resource-bots')!,
+            cpu: document.getElementById('mbx-resource-cpu')!,
+            memory: document.getElementById('mbx-resource-memory')!,
+            traffic: document.getElementById('mbx-resource-traffic')!
+        },
+        { getTrafficSnapshot: () => traffic.snapshot() }
+    );
 
     // Tiles carry a click-catching overlay (.mbx-hit) because the iframe underneath
     // would otherwise swallow the click and the rail could never switch bots.
@@ -74,6 +86,7 @@ function boot(): void {
     // keeps in slot order — so snapshot[i] is tile[i].
     function renderRail(): void {
         const snaps = controller.snapshot();
+        resources.setBotCount(snaps.length);
         const tiles = Array.from(rail.querySelectorAll('.mbx-slot'));
         if (tiles.length !== snaps.length) {
             throw new Error(`rail desync: ${tiles.length} tiles vs ${snaps.length} slots`);
@@ -86,12 +99,24 @@ function boot(): void {
     }
 
     window.setInterval(renderRail, 1000);
+    resources.start();
+    window.addEventListener(
+        'pagehide',
+        () => {
+            resources.stop();
+            traffic.close();
+        },
+        { once: true }
+    );
     renderRail();
 
     (globalThis as Record<string, unknown>).multibox = {
         controller,
         add: (a?: Account) => controller.add(a),
-        focus: (id: number) => { controller.focus(id); renderRail(); },
+        focus: (id: number) => {
+            controller.focus(id);
+            renderRail();
+        },
         slots: () => controller.snapshot(),
         importProfiles: async (json: string | Profile[]): Promise<number> => {
             if (!(await prompt.ensureUnlocked())) {

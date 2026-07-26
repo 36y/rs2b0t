@@ -1,3 +1,5 @@
+import { trafficMeter } from './TrafficMeter.js';
+
 export default class ClientStream {
     private readonly socket: WebSocket;
     private readonly wsin: WebSocketReader;
@@ -137,6 +139,7 @@ class WebSocketWriter {
         }
         try {
             this.socket.send(src.slice(0, len));
+            trafficMeter.addSent(len);
         } catch (_e) {
             this.ioerror = true;
         }
@@ -213,6 +216,7 @@ class WebSocketReader {
         const event: WebSocketEvent = new WebSocketEvent(new Uint8Array(e.data));
 
         this.total += event.available;
+        trafficMeter.addReceived(event.len);
 
         if (this.callback) {
             const cb = this.callback;

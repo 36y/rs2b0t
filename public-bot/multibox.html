@@ -41,6 +41,12 @@
 
         .mbx-addtile { display: flex; align-items: center; justify-content: center; height: 52px; flex: 0 0 auto; font-size: 14px; color: #666; border: 1px dashed #444; border-radius: 4px; cursor: pointer; }
         .mbx-addtile:hover { color: #04A800; border-color: #04A800; }
+        .mbx-resources { width: 236px; box-sizing: border-box; flex: 0 0 auto; padding: 7px 8px; border: 1px solid #2c2c2c; border-radius: 4px; background: #0a0a0a; display: flex; flex-direction: column; gap: 4px; }
+        .mbx-resource-bots { padding-bottom: 4px; border-bottom: 1px solid #222; color: #5be05b; }
+        .mbx-resource-row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 3px 8px; }
+        .mbx-resource-label { color: #666; }
+        .mbx-resource-value { color: #bbb; text-align: right; white-space: nowrap; }
+        .mbx-resource-value.mbx-resource-detail { flex: 1 0 100%; color: #d9a45b; text-align: left; white-space: normal; overflow-wrap: anywhere; line-height: 1.35; }
 
         #mbx-drawer { position: fixed; top: 12px; right: 264px; z-index: 50; width: 16px; height: 56px; display: flex; align-items: center; justify-content: center; background: #111; border: 1px solid #333; border-right: 0; border-radius: 4px 0 0 4px; color: #666; cursor: pointer; }
         #mbx-drawer:hover { color: #04A800; border-color: #04A800; }
@@ -74,6 +80,12 @@
         <div id="mbx-main"></div>
         <div id="mbx-rail">
             <div id="mbx-add" class="mbx-addtile">+ add bot</div>
+            <div id="mbx-resources" class="mbx-resources">
+                <div id="mbx-resource-bots" class="mbx-resource-bots">0 bots</div>
+                <div class="mbx-resource-row" title="CPU used by every process/thread in the dedicated bot browser"><span class="mbx-resource-label">CPU</span><span id="mbx-resource-cpu" class="mbx-resource-value">measuring…</span></div>
+                <div class="mbx-resource-row" title="Current memory charged to the dedicated bot browser"><span class="mbx-resource-label">RAM</span><span id="mbx-resource-memory" class="mbx-resource-value">measuring…</span></div>
+                <div class="mbx-resource-row" title="Bot game and cache WebSocket payload measured inside each client"><span class="mbx-resource-label">Traffic</span><span id="mbx-resource-traffic" class="mbx-resource-value">measuring…</span></div>
+            </div>
         </div>
         <div id="mbx-drawer" title="show/hide bots">▶</div>
     </div>
