@@ -571,7 +571,10 @@ export const reader = {
     },
 
     loginMessage(): string {
-        return raw?.loginMes1 ?? '';
+        if (!raw) {
+            return '';
+        }
+        return [raw.loginMes1, raw.loginMes2].filter(Boolean).join('\n');
     },
 
     menuEntries(): string[] {
@@ -721,8 +724,7 @@ export const actions = {
             return false;
         }
 
-        void raw.login(username, password, false);
-        return true;
+        return raw.startLogin(username, password);
     },
 
     menuAction(action: number, a: number, b: number, c: number): boolean {

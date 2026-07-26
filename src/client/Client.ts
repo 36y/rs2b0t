@@ -86,6 +86,17 @@ const SCROLLBAR_GRIP_FOREGROUND = 0x4d4233;
 const SCROLLBAR_GRIP_HIGHLIGHT = 0x766654;
 const SCROLLBAR_GRIP_LOWLIGHT = 0x332d25;
 
+interface LoginAttempt {
+    cancelled: boolean;
+    stream: ClientStream | null;
+    done: Promise<void>;
+}
+
+interface LoginStart {
+    accepted: boolean;
+    done: Promise<void>;
+}
+
 export class Client extends GameShell {
     static nodeId: number = 10;
     static memServer: boolean = true;
@@ -286,6 +297,7 @@ export class Client extends GameShell {
     private loginMes2: string = '';
     private loginUser: string = '';
     private loginPass: string = '';
+    private loginAttempt: LoginAttempt | null = null;
 
     private imageRunes: Pix8[] = [];
     private titleFlames: TitleFlames | null = null;
@@ -1281,6 +1293,7 @@ export class Client extends GameShell {
     }
 
     protected override mainquit(): void {
+        this.cancelLoginAttempt();
         this.stream?.close();
         this.stream = null;
 
@@ -1380,6 +1393,22 @@ export class Client extends GameShell {
                 this.loginSelect = 0;
             }
         } else if (this.loginscreen === 2) {
+            const buttonY: number = ((this.sHei / 2) | 0) + 70;
+            const cancelX: number = ((this.sWid / 2) | 0) + 80;
+            if (this.mouseClickButton === 1 && this.mouseClickX >= cancelX - 75 && this.mouseClickX <= cancelX + 75 && this.mouseClickY >= buttonY - 20 && this.mouseClickY <= buttonY + 20) {
+                this.cancelLoginAttempt();
+                this.loginscreen = 0;
+                this.loginUser = '';
+                this.loginPass = '';
+                return;
+            }
+
+            // A programmatic login keeps the native screen live while the socket is
+            // pending. Do not let queued game input edit or resubmit credentials.
+            if (this.loginAttempt) {
+                return;
+            }
+
             let y: number = ((this.sHei / 2) | 0) - 40;
             y += 30;
 
@@ -1393,23 +1422,11 @@ export class Client extends GameShell {
                 this.loginSelect = 1;
             }
 
-            let x = ((this.sWid / 2) | 0) - 80;
-            y = ((this.sHei / 2) | 0) + 50;
-            y += 20;
+            const loginX: number = ((this.sWid / 2) | 0) - 80;
 
-            if (this.mouseClickButton === 1 && this.mouseClickX >= x - 75 && this.mouseClickX <= x + 75 && this.mouseClickY >= y - 20 && this.mouseClickY <= y + 20) {
-                await this.login(this.loginUser, this.loginPass, false);
-
-                if (this.ingame) {
-                    return;
-                }
-            }
-
-            x = ((this.sWid / 2) | 0) + 80;
-            if (this.mouseClickButton === 1 && this.mouseClickX >= x - 75 && this.mouseClickX <= x + 75 && this.mouseClickY >= y - 20 && this.mouseClickY <= y + 20) {
-                this.loginscreen = 0;
-                this.loginUser = '';
-                this.loginPass = '';
+            if (this.mouseClickButton === 1 && this.mouseClickX >= loginX - 75 && this.mouseClickX <= loginX + 75 && this.mouseClickY >= buttonY - 20 && this.mouseClickY <= buttonY + 20) {
+                this.startLogin(this.loginUser, this.loginPass);
+                return;
             }
 
             while (true) {
@@ -1700,15 +1717,107 @@ export class Client extends GameShell {
         });
     }
 
+    public startLogin(username: string, password: string): boolean {
+        return this.beginLogin(username, password, false).accepted;
+    }
+
+    private beginLogin(username: string, password: string, reconnect: boolean): LoginStart {
+        if (this.loginAttempt) {
+            return { accepted: false, done: this.loginAttempt.done };
+        }
+        if (this.ingame) {
+            return { accepted: false, done: Promise.resolve() };
+        }
+
+        if (!reconnect) {
+            this.loginscreen = 2;
+            this.loginSelect = 0;
+            this.loginUser = username;
+            this.loginPass = password;
+            this.loginMes1 = '';
+            this.loginMes2 = 'Connecting to server...';
+        }
+
+        const attempt: LoginAttempt = {
+            cancelled: false,
+            stream: null,
+            done: Promise.resolve()
+        };
+        this.loginAttempt = attempt;
+        attempt.done = this.performLogin(username, password, reconnect, attempt)
+            .catch((error: unknown): void => {
+                if (!this.isLoginAttemptActive(attempt)) {
+                    return;
+                }
+                this.closeLoginStream(attempt);
+                console.error('[client] login failed', error);
+                this.loginMes1 = '';
+                this.loginMes2 = 'Error connecting to server.';
+            })
+            .finally((): void => {
+                if (this.loginAttempt === attempt) {
+                    this.loginAttempt = null;
+                }
+            });
+
+        return { accepted: true, done: attempt.done };
+    }
+
     private async login(username: string, password: string, reconnect: boolean): Promise<void> {
+        await this.beginLogin(username, password, reconnect).done;
+    }
+
+    private isLoginAttemptActive(attempt: LoginAttempt): boolean {
+        return this.loginAttempt === attempt && !attempt.cancelled;
+    }
+
+    private closeLoginStream(attempt: LoginAttempt): void {
+        const stream = attempt.stream;
+        attempt.stream = null;
+        stream?.close();
+        if (this.stream === stream) {
+            this.stream = null;
+        }
+    }
+
+    private cancelLoginAttempt(): void {
+        const attempt = this.loginAttempt;
+        if (!attempt) {
+            return;
+        }
+        attempt.cancelled = true;
+        this.closeLoginStream(attempt);
+        if (this.loginAttempt === attempt) {
+            this.loginAttempt = null;
+        }
+    }
+
+    protected async openLoginStream(): Promise<ClientStream> {
+        return new ClientStream(await ClientStream.openSocket(TARGET.wsHost, TARGET.tls));
+    }
+
+    protected async loginSleep(ms: number): Promise<void> {
+        await sleep(ms);
+    }
+
+    private async performLogin(username: string, password: string, reconnect: boolean, attempt: LoginAttempt): Promise<void> {
         try {
             if (!reconnect) {
                 this.loginMes1 = '';
                 this.loginMes2 = 'Connecting to server...';
                 await this.titleScreenDraw();
+                if (!this.isLoginAttemptActive(attempt)) {
+                    return;
+                }
             }
 
-            this.stream = new ClientStream(await ClientStream.openSocket(TARGET.wsHost, TARGET.tls));
+            const stream = await this.openLoginStream();
+            if (!this.isLoginAttemptActive(attempt)) {
+                stream.close();
+                return;
+            }
+            attempt.stream = stream;
+            this.stream = stream;
 
             const userhash = JString.toUserhash(username);
             const loginServer = Number(userhash >> 16n) & 0x1f;
@@ -1717,14 +1826,23 @@ export class Client extends GameShell {
             this.out.p1(14);
             this.out.p1(loginServer);
 
-            this.stream.write(this.out.data, 2);
+            stream.write(this.out.data, 2);
             for (let i = 0; i < 8; i++) {
-                await this.stream.read();
+                await stream.read();
+            }
+            if (!this.isLoginAttemptActive(attempt)) {
+                return;
             }
 
-            let response: number = await this.stream.read();
+            let response: number = await stream.read();
+            if (!this.isLoginAttemptActive(attempt)) {
+                return;
+            }
             if (response === 0) {
-                await this.stream.readBytes(this.in.data, 0, 8);
+                await stream.readBytes(this.in.data, 0, 8);
+                if (!this.isLoginAttemptActive(attempt)) {
+                    return;
+                }
                 this.in.pos = 0;
 
                 this.loginSeed = this.in.g8();
@@ -1768,17 +1886,29 @@ export class Client extends GameShell {
                     seed[i] += 50;
                 }
                 this.randomIn = new Isaac(seed);
-                this.stream?.write(this.loginout.data, this.loginout.pos);
+                stream.write(this.loginout.data, this.loginout.pos);
 
-                response = await this.stream.read();
+                response = await stream.read();
+                if (!this.isLoginAttemptActive(attempt)) {
+                    return;
+                }
             }
 
             if (response === 1) {
-                await sleep(2000);
-                await this.login(username, password, reconnect);
+                this.closeLoginStream(attempt);
+                await this.loginSleep(2000);
+                if (!this.isLoginAttemptActive(attempt)) {
+                    return;
+                }
+                await this.performLogin(username, password, reconnect, attempt);
             } else if (response === 2) {
-                this.staffmodlevel = await this.stream.read();
-                this.mouseTracked = (await this.stream.read()) === 1;
+                const staffmodlevel = await stream.read();
+                const mouseTracked = (await stream.read()) === 1;
+                if (!this.isLoginAttemptActive(attempt)) {
+                    return;
+                }
+                this.staffmodlevel = staffmodlevel;
+                this.mouseTracked = mouseTracked;
 
                 this.prevMouseClickTime = 0;
                 this.mouseTrackDelta = 0;
@@ -1912,7 +2042,7 @@ export class Client extends GameShell {
                 this.loginMes1 = 'Unable to connect.';
                 this.loginMes2 = 'Bad session id.';
             } else if (response === 11) {
-                this.loginMes2 = 'Login server rejected session.';
+                this.loginMes1 = 'Login server rejected session.';
                 this.loginMes2 = 'Please try again.';
             } else if (response === 12) {
                 this.loginMes1 = 'You need a members account to login to this world.';
@@ -1947,21 +2077,36 @@ export class Client extends GameShell {
                 this.loginMes1 = 'Invalid loginserver requested';
                 this.loginMes2 = 'Please try using a different world.';
             } else if (response === 21) {
-                for (let remaining = await this.stream.read(); remaining >= 0; remaining--) {
+                for (let remaining = await stream.read(); remaining >= 0; remaining--) {
+                    if (!this.isLoginAttemptActive(attempt)) {
+                        return;
+                    }
                     this.loginMes1 = 'You have only just left another world';
                     this.loginMes2 = 'Your profile will be transferred in: ' + remaining + ' seconds';
                     await this.titleScreenDraw();
 
-                    await sleep(1000);
+                    await this.loginSleep(1000);
                 }
 
-                await this.login(username, password, reconnect);
+                this.closeLoginStream(attempt);
+                if (!this.isLoginAttemptActive(attempt)) {
+                    return;
+                }
+                await this.performLogin(username, password, reconnect, attempt);
             } else {
                 console.log('response:' + response);
                 this.loginMes1 = 'Unexpected server response';
                 this.loginMes2 = 'Please try using a different world.';
             }
+
+            if (!this.ingame && this.isLoginAttemptActive(attempt)) {
+                this.closeLoginStream(attempt);
+            }
         } catch (e) {
+            if (!this.isLoginAttemptActive(attempt)) {
+                return;
+            }
+            this.closeLoginStream(attempt);
             if (e instanceof WebSocket && e.readyState === 3) {
                 this.loginMes1 = '';
                 this.loginMes2 = 'Error connecting to server.';
@@ -2428,6 +2573,7 @@ export class Client extends GameShell {
     }
 
     private async logout(): Promise<void> {
+        this.cancelLoginAttempt();
         if (this.stream) {
             this.stream.close();
         }

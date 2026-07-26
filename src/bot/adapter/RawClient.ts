@@ -67,6 +67,8 @@ export interface RawClient {
     loginUser: string;
     loginPass: string;
     loginMes1: string;
+    loginMes2: string;
+    startLogin(username: string, password: string): boolean;
     login(username: string, password: string, reconnect: boolean): Promise<void>;
 
     activeIcon: number;
@@ -121,6 +123,8 @@ export const SELF_TEST = [
     'loginUser',
     'loginPass',
     'loginMes1',
+    'loginMes2',
+    'startLogin',
     'login',
     'activeIcon',
     'redrawSide',

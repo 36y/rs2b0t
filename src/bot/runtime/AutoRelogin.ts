@@ -7,6 +7,7 @@ import { ScriptRunner } from './ScriptRunner.js';
 
 const FIRST_RETRY_MS = 6000;
 const RECONNECT_INTERVAL_MS = 9000;
+const BUSY_RETRY_MS = 250;
 const MAX_ATTEMPTS = 15;
 
 class AutoReloginImpl {
@@ -155,10 +156,14 @@ class AutoReloginImpl {
         }
 
         this.waitingForPermit = false;
+        if (!actions.login(c.username, c.password)) {
+            this.nextAttemptAt = performance.now() + BUSY_RETRY_MS;
+            return;
+        }
+
         this.attempts++;
         this.nextAttemptAt = performance.now() + RECONNECT_INTERVAL_MS;
         this.log('info', `auto-login: attempt ${this.attempts}/${MAX_ATTEMPTS} as '${c.username}'`);
-        actions.login(c.username, c.password);
     }
 }
 
