@@ -15,6 +15,12 @@ export const Bank = {
         return reader.bankComId() !== -1;
     },
 
+    // isOpen only says the component exists — its item list fills a beat later, and again after a
+    // deposit. Until then every count() reads 0, which is indistinguishable from an empty bank.
+    loaded(): boolean {
+        return reader.bankItems().length > 0;
+    },
+
     // bank_main:com_93/94 (5386/5387) = Note/Item; opening the bank resets to Item, so set after opening
     async setNoteMode(on: boolean): Promise<void> {
         if (!Bank.isOpen()) {

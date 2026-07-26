@@ -82,5 +82,11 @@ export const Inventory = {
     isFull(): boolean {
         const size = reader.inventorySize();
         return size > 0 && Inventory.used() >= size;
+    },
+
+    // 0 when the pack interface hasn't loaded yet — callers must treat that as "don't know"
+    free(): number {
+        const size = reader.inventorySize();
+        return size > 0 ? Math.max(0, size - Inventory.used()) : 0;
     }
 };
