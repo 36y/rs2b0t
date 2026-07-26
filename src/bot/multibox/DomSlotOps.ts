@@ -1,4 +1,5 @@
 import type { Account, RenderMode, SlotHandle, SlotOps, SlotStatus } from './types.js';
+import type { LoginCoordination } from '../runtime/LoginCoordination.js';
 
 const LOGICAL_W = 1100;
 const LOGICAL_H = 620;
@@ -45,6 +46,7 @@ interface Lcb {
     setRenderMode(mode: RenderMode): void;
     setCredentials(u: string, p: string): void;
     setAutoLogin(on: boolean): void;
+    setLoginCoordination(coordination: LoginCoordination | null): void;
 }
 interface LcbWindow extends Window { rs2b0t?: Lcb; }
 
@@ -137,6 +139,10 @@ class DomSlotHandle implements SlotHandle {
 
     setAutoLogin(on: boolean): void {
         this.whenReady(l => l.setAutoLogin(on));
+    }
+
+    setLoginCoordination(coordination: LoginCoordination | null): void {
+        this.whenReady(l => l.setLoginCoordination(coordination));
     }
 
     status(): SlotStatus {

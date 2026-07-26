@@ -1,14 +1,20 @@
 import { describe, expect, test } from 'bun:test';
 import { MultiBoxController } from '#/bot/multibox/MultiBoxController.js';
 import type { Account, RenderMode, SlotHandle, SlotOps, SlotStatus } from '#/bot/multibox/types.js';
+import type { LoginCoordination } from '#/bot/runtime/LoginCoordination.js';
 
 class FakeHandle implements SlotHandle {
     calls: string[] = [];
     mode: RenderMode = 'background';
     destroyed = false;
+    loginCoordination: LoginCoordination | null = null;
     setRenderMode(m: RenderMode): void { this.mode = m; this.calls.push(`mode:${m}`); }
     setCredentials(u: string): void { this.calls.push(`creds:${u}`); }
     setAutoLogin(on: boolean): void { this.calls.push(`autoLogin:${on}`); }
+    setLoginCoordination(coordination: LoginCoordination | null): void {
+        this.loginCoordination = coordination;
+        this.calls.push('loginCoordination');
+    }
     status(): SlotStatus { return { ready: true, ingame: false, player: null, loopCycle: 0, drawn: 0, scriptState: 'idle' }; }
     destroy(): void { this.destroyed = true; this.calls.push('destroy'); }
 }
@@ -23,7 +29,7 @@ describe('MultiBoxController', () => {
         const c = new MultiBoxController(ops);
         const snap = c.add();
         expect(snap?.username).toBe('bot1');
-        expect(ops.handles[0].calls).toEqual(['mode:focused']);
+        expect(ops.handles[0].calls).toEqual(['loginCoordination', 'mode:focused']);
     });
 
     test('auto-labelled bots stay distinct', () => {
@@ -33,12 +39,22 @@ describe('MultiBoxController', () => {
         expect(c.snapshot().length).toBe(2);
     });
 
+    test('every bot receives the same wall-level login coordinator', () => {
+        const ops = new FakeOps();
+        const coordination: LoginCoordination = { requestPermit: () => true, holdFor: () => {} };
+        const c = new MultiBoxController(ops, coordination);
+        c.add();
+        c.add();
+        expect(ops.handles[0].loginCoordination).toBe(coordination);
+        expect(ops.handles[1].loginCoordination).toBe(coordination);
+    });
+
     test('an explicit account (automation) injects creds before arming auto-login', () => {
         const ops = new FakeOps();
         const c = new MultiBoxController(ops);
         const snap = c.add({ username: 'alice', password: 'x' });
         expect(snap?.username).toBe('alice');
-        expect(ops.handles[0].calls).toEqual(['creds:alice', 'mode:focused', 'autoLogin:true']);
+        expect(ops.handles[0].calls).toEqual(['loginCoordination', 'creds:alice', 'mode:focused', 'autoLogin:true']);
     });
 
     test('a newly added bot becomes the focused one', () => {

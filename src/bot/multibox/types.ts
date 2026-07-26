@@ -1,4 +1,5 @@
 import type { RenderMode } from '../runtime/RenderGate.js';
+import type { LoginCoordination } from '../runtime/LoginCoordination.js';
 
 export type { RenderMode };
 
@@ -30,6 +31,7 @@ export interface SlotHandle {
     setRenderMode(mode: RenderMode): void;
     setCredentials(username: string, password: string): void;
     setAutoLogin(on: boolean): void;
+    setLoginCoordination(coordination: LoginCoordination | null): void;
     status(): SlotStatus;
     destroy(): void;
 }

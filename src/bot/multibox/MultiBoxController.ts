@@ -1,4 +1,6 @@
 import type { Account, RenderMode, SlotHandle, SlotOps, SlotSnapshot } from './types.js';
+import type { LoginCoordination } from '../runtime/LoginCoordination.js';
+import { LoginCoordinator } from './LoginCoordinator.js';
 
 interface Slot {
     id: number;
@@ -13,7 +15,10 @@ export class MultiBoxController {
     private slots: Slot[] = [];
     private nextId = 1;
 
-    constructor(private ops: SlotOps) {}
+    constructor(
+        private ops: SlotOps,
+        private loginCoordination: LoginCoordination = new LoginCoordinator()
+    ) {}
 
     // A bot is added empty — its login is typed into the bot's own panel, so there
     // is nothing to prompt for here. `account` is for automation, which injects
@@ -27,6 +32,7 @@ export class MultiBoxController {
             return null;
         }
         const handle = this.ops.spawn(acct);
+        handle.setLoginCoordination(this.loginCoordination);
         const slot: Slot = { id: this.nextId++, account: acct, handle, mode: 'background' };
         this.slots.push(slot);
         if (account) {

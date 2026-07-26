@@ -2,6 +2,7 @@ import { actions, reader } from '../adapter/ClientAdapter.js';
 import { BotHost } from '../BotHost.js';
 import { Credentials, type Creds } from './Credentials.js';
 import { LoginBackoff } from './LoginBackoff.js';
+import type { LoginCoordination } from './LoginCoordination.js';
 import { ScriptRunner } from './ScriptRunner.js';
 
 const FIRST_RETRY_MS = 6000;
@@ -21,6 +22,8 @@ class AutoReloginImpl {
     private nextAttemptAt = 0;
     private backoff = new LoginBackoff();
     private rateLimitedAttempt = 0;
+    private coordination: LoginCoordination | null = null;
+    private waitingForPermit = false;
 
     enable(autoLogin = false): void {
         this.autoLogin = this.autoLogin || autoLogin;
@@ -33,6 +36,11 @@ class AutoReloginImpl {
 
     setAutoLogin(on: boolean): void {
         this.autoLogin = on;
+    }
+
+    setLoginCoordination(coordination: LoginCoordination | null): void {
+        this.coordination = coordination;
+        this.waitingForPermit = false;
     }
 
     setCredentials(username: string, password: string): void {
@@ -49,7 +57,7 @@ class AutoReloginImpl {
 
     loginNow(): boolean {
         const c = this.creds();
-        if (!c || reader.ingame()) {
+        if (!c || reader.ingame() || (this.coordination !== null && !this.coordination.requestPermit())) {
             return false;
         }
         return actions.login(c.username, c.password);
@@ -85,6 +93,7 @@ class AutoReloginImpl {
                 this.attempts = 0;
                 this.backoff.reset();
                 this.rateLimitedAttempt = 0;
+                this.waitingForPermit = false;
             }
 
             this.wasIngame = true;
@@ -116,10 +125,13 @@ class AutoReloginImpl {
             return;
         }
 
-        if (this.attempts > 0 && this.rateLimitedAttempt !== this.attempts && reader.loginMessage().startsWith('Login attempts exceeded')) {
+        const loginMessage = reader.loginMessage();
+        const rateLimited = loginMessage.startsWith('Login attempts exceeded') || loginMessage.startsWith('Login limit exceeded');
+        if (this.attempts > 0 && this.rateLimitedAttempt !== this.attempts && rateLimited) {
             this.rateLimitedAttempt = this.attempts;
             const holdMs = this.backoff.next();
             this.nextAttemptAt = performance.now() + holdMs;
+            this.coordination?.holdFor(holdMs);
             this.log('warn', `auto-login: rate limited by server — holding off ${Math.round(holdMs / 1000)}s`);
         }
 
@@ -130,9 +142,19 @@ class AutoReloginImpl {
         if (this.attempts >= MAX_ATTEMPTS) {
             this.log('error', `auto-login: giving up after ${MAX_ATTEMPTS} attempts`);
             this.reconnecting = false;
+            this.waitingForPermit = false;
             return;
         }
 
+        if (this.coordination !== null && !this.coordination.requestPermit()) {
+            if (!this.waitingForPermit) {
+                this.waitingForPermit = true;
+                this.log('info', 'auto-login: queued by multibox login coordinator');
+            }
+            return;
+        }
+
+        this.waitingForPermit = false;
         this.attempts++;
         this.nextAttemptAt = performance.now() + RECONNECT_INTERVAL_MS;
         this.log('info', `auto-login: attempt ${this.attempts}/${MAX_ATTEMPTS} as '${c.username}'`);

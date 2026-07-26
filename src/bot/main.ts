@@ -7,6 +7,7 @@ import { ActionRouter } from './input/ActionRouter.js';
 import { Navigator } from './nav/Navigator.js';
 import { installAbi } from './runtime/abi.js';
 import { AutoRelogin } from './runtime/AutoRelogin.js';
+import type { LoginCoordination } from './runtime/LoginCoordination.js';
 import { RenderGate, type RenderMode } from './runtime/RenderGate.js';
 import { RunManager } from './runtime/RunManager.js';
 import { WelcomeDismisser } from './runtime/WelcomeScreen.js';
@@ -74,6 +75,7 @@ if (typeof document !== 'undefined' && document.getElementById('canvas')) {
         setRenderMode: (mode: RenderMode) => RenderGate.setMode(mode),
         setCredentials: (u: string, p: string) => AutoRelogin.setCredentials(u, p),
         setAutoLogin: (on: boolean) => AutoRelogin.setAutoLogin(on),
+        setLoginCoordination: (coordination: LoginCoordination | null) => AutoRelogin.setLoginCoordination(coordination),
         clueProgress: () => ClueExecutor.current,
         paint: paintState,
         clueTraces: () => readTraceRing(localStorage, TRACE_STORAGE_KEY),
