@@ -105,7 +105,7 @@ export default class GatheringBot extends TaskBot {
                 this.log(`warning: ${this.location.name} coordinates are UNVERIFIED — watch the first bank run`);
             }
         } else if (!powerMode) {
-            this.log('no preset location — will bank at the nearest bank booth in the scene (drops if none)');
+            this.log('no preset location — will web-walk to the nearest bank');
         }
         this.log(`gathering '${this.target}' (${this.action}) within ${this.leash} of ${this.anchor}, ${powerMode ? 'dropping' : 'banking'} *${this.productLabel()}* when full`);
 

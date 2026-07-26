@@ -192,7 +192,7 @@ ScriptRegistry.register({
             default: 'Auto',
             options: ['Auto', 'None'],
             label: 'Banking',
-            help: 'Auto = bank the ore at the nearest bank booth in the loaded scene; None = drop it (power-mining). For Auto, mine within ~a screen of a bank.'
+            help: 'Auto = web-walk to the nearest bank; None = drop it (power-mining).'
         }
     },
     create: () => new GatheringBot()
