@@ -32,6 +32,7 @@ import LeatherCrafter, { CRAFTER_SETTINGS } from './LeatherCrafter.js';
 import Firemaker, { FIREMAKER_SETTINGS } from './Firemaker.js';
 import SmithingBot, { SETTINGS as SMITHING_SETTINGS } from './SmithingBot.js';
 import BankFletcher, { SETTINGS as BANKFLETCHER_SETTINGS } from './BankFletcher.js';
+import BoneBurier, { BONE_BURIER_SETTINGS } from './BoneBurier.js';
 import FlaxPicker, { SETTINGS as FLAXPICKER_SETTINGS } from './FlaxPicker.js';
 import FlaxSpinner, { SETTINGS as FLAXSPINNER_SETTINGS } from './FlaxSpinner.js';
 import EssMiner, { SETTINGS as ESSMINER_SETTINGS } from './EssMiner.js';
@@ -266,6 +267,15 @@ ScriptRegistry.register({
     tags: ['fletching', 'banking', 'afk'],
     settingsSchema: BANKFLETCHER_SETTINGS,
     create: () => new BankFletcher()
+});
+
+ScriptRegistry.register({
+    name: 'BoneBurier',
+    description: 'Bank-standing Prayer trainer — withdraws full loads of an exact bone name and buries them until the bank is empty',
+    category: 'Prayer',
+    tags: ['prayer', 'bones', 'banking', 'afk'],
+    settingsSchema: BONE_BURIER_SETTINGS,
+    create: () => new BoneBurier()
 });
 
 ScriptRegistry.register({
