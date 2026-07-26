@@ -62,6 +62,14 @@ export function isOpenBarrierLeaf(name: string | null, ops: readonly (string | n
     return /(door|gate)/i.test(name ?? '') && ops.some(op => op !== null && /^close/i.test(op));
 }
 
+export function matchesTransportLoc(transport: TransportInfo, loc: { readonly id: number; tile(): { x: number; z: number } }): boolean {
+    const tile = loc.tile();
+    if (transport.locId !== undefined) {
+        return loc.id === transport.locId && tile.x === transport.locX && tile.z === transport.locZ;
+    }
+    return Math.max(Math.abs(tile.x - transport.locX), Math.abs(tile.z - transport.locZ)) <= 3;
+}
+
 function expandWaypoints(waypoints: Waypoint[]): PathStep[] {
     const tiles: PathStep[] = [];
     for (let i = 0; i < waypoints.length; i++) {
@@ -615,10 +623,7 @@ class WalkExecutorImpl {
         return Locs.query()
             .name(transport.locName)
             .action(transport.action)
-            .where(loc => {
-                const tile = loc.tile();
-                return Math.max(Math.abs(tile.x - transport.locX), Math.abs(tile.z - transport.locZ)) <= 3;
-            })
+            .where(loc => matchesTransportLoc(transport, loc))
             .nearest();
     }
 

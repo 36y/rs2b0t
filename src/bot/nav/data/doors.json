@@ -875,7 +875,6 @@
     {"x":3302,"z":3036,"level":0,"locId":2676,"locName":"Mine door entrance","dir":"N"},
     {"x":3302,"z":3503,"level":0,"locId":1530,"locName":"Door","dir":"E"},
     {"x":3312,"z":3234,"level":0,"locId":3197,"locName":"Gate","dir":"W"},
-    {"x":3312,"z":3235,"level":0,"locId":3198,"locName":"Gate","dir":"W"},
     {"x":3312,"z":3331,"level":0,"locId":1596,"locName":"Gate","dir":"W"},
     {"x":3312,"z":3332,"level":0,"locId":1597,"locName":"Gate","dir":"W"},
     {"x":3320,"z":3467,"level":0,"locId":1598,"locName":"Gate","dir":"W"},

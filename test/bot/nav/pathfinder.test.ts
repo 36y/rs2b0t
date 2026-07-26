@@ -113,6 +113,7 @@ describe('PathFinder goal selection for unwalkable targets', () => {
             if (!r.ok) continue;
             const door = r.waypoints.find(wp => wp.transport)?.transport;
             expect({ x: door?.locX, z: door?.locZ }).toEqual({ x: 3214, z: 3212 });
+            expect(door?.locId).toBeUndefined();
         }
     });
 
@@ -185,6 +186,27 @@ function houseWalls(x: number, z: number): number {
 const HOUSE_DOOR: DoorEdgeData[] = [{ x: DOOR_X, z: HOUSE.z0 - 1, level: 0, locId: 1530, locName: 'Door', dir: 'N' }];
 
 describe('PathFinder cardinal goals vs directional walls (LCNV v2)', () => {
+    test('carries a derived door locId through reconstruction in both directions', () => {
+        const finder = new PathFinder(buildPack(houseWalkable, houseWalls));
+        finder.addEdges(HOUSE_DOOR, []);
+        const south = { x: DOOR_X, z: HOUSE.z0 - 1, level: 0 };
+        const north = { x: DOOR_X, z: HOUSE.z0, level: 0 };
+
+        for (const [from, to] of [[south, north], [north, south]] as const) {
+            const result = finder.findPath(from, to);
+            expect(result.ok).toBe(true);
+            if (!result.ok) continue;
+            const transport = result.waypoints.find(waypoint => waypoint.transport)?.transport;
+            expect(transport).toMatchObject({
+                locName: 'Door',
+                action: 'Open',
+                locX: DOOR_X,
+                locZ: HOUSE.z0 - 1,
+                locId: 1530
+            });
+        }
+    });
+
     test('skips the wall-separated cardinal tile and routes through the door', () => {
         const finder = new PathFinder(buildPack(houseWalkable, houseWalls));
         finder.addEdges(HOUSE_DOOR, []);

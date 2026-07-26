@@ -54,12 +54,17 @@ function main(): void {
     }
 
     const ONE_WAY_EXCLUDED = new Set(['3108,3353,0', '3109,3353,0']);
+    // Current Engine gates.rs2 hits loc_add(type=-1) for this Duel Arena outer
+    // leaf and leaves Gate#3198 closed. Omit that unusable edge so navigation
+    // detours through its paired Gate#3197 one tile north.
+    const BROKEN_ENGINE_EXCLUDED = new Set(['3198@3312,3235,0']);
 
     const edges: DoorEdge[] = [];
     const skippedShapes = new Map<string, number>();
     const nameCounts = new Map<string, number>();
     let mapsquares = 0;
     let oneWaySkipped = 0;
+    let brokenEngineSkipped = 0;
 
     for (const { mx, mz, land, loc } of loadMapsquares(opts.engine)) {
         mapsquares++;
@@ -88,6 +93,10 @@ function main(): void {
                 oneWaySkipped++;
                 return;
             }
+            if (BROKEN_ENGINE_EXCLUDED.has(`${instance.locId}@${baseX + instance.x},${baseZ + instance.z},${level}`)) {
+                brokenEngineSkipped++;
+                return;
+            }
             const locName = type.name ?? type.debugname ?? `loc_${instance.locId}`;
             edges.push({
                 x: baseX + instance.x,
@@ -107,7 +116,7 @@ function main(): void {
     fs.mkdirSync(path.dirname(opts.out), { recursive: true });
     fs.writeFileSync(opts.out, json);
 
-    console.log(`openable wall loc types: ${openable.size} (skipped ${lockedSkipped} locked/macro types, ${oneWaySkipped} one-way instances -> curated transports)`);
+    console.log(`openable wall loc types: ${openable.size} (skipped ${lockedSkipped} locked/macro types, ${oneWaySkipped} one-way instances -> curated transports, ${brokenEngineSkipped} broken Engine instances)`);
     console.log(`mapsquares scanned: ${mapsquares}`);
     console.log(`door edges derived: ${edges.length} -> ${opts.out}`);
     console.log('by name:');

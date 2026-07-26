@@ -9,6 +9,7 @@ export interface TransportInfo {
     action: string;
     locX: number;
     locZ: number;
+    locId?: number;
     toLevel?: number;
     toTile?: { x: number; z: number };
 }
@@ -227,7 +228,7 @@ export class PathFinder {
             if (!this.walkable(ax, az, door.level) || !this.walkable(bx, bz, door.level)) {
                 continue;
             }
-            const transport: TransportInfo = { locName: door.locName, action: 'Open', locX: door.x, locZ: door.z };
+            const transport: TransportInfo = { locName: door.locName, action: 'Open', locX: door.x, locZ: door.z, locId: door.locId };
             this.addEdge(nodeId(ax, az, door.level), nodeId(bx, bz, door.level), DOOR_COST, transport);
             this.addEdge(nodeId(bx, bz, door.level), nodeId(ax, az, door.level), DOOR_COST, transport);
             this.doorEdges++;
