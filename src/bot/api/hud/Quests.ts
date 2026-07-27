@@ -1,4 +1,5 @@
-import { reader } from '../../adapter/ClientAdapter.js';
+import { actions, reader } from '../../adapter/ClientAdapter.js';
+import { Execution } from '../Execution.js';
 
 export type QuestStatus = 'notStarted' | 'inProgress' | 'complete' | 'unknown';
 
@@ -13,6 +14,23 @@ export const Quests = {
     status(name: string): QuestStatus {
         const hit = reader.questStatuses().find(q => q.name.toLowerCase() === name.toLowerCase());
         return hit ? toStatus(hit.colour) : 'unknown';
+    },
+    async journal(name: string): Promise<string[]> {
+        const entry = reader.questStatuses().find(q => q.name.toLowerCase() === name.toLowerCase());
+        if (!entry) {
+            return [];
+        }
+
+        const before = reader.modals().main;
+        if (!actions.ifButton(entry.comId)) {
+            return [];
+        }
+
+        const opened = await Execution.delayUntil(() => {
+            const main = reader.modals().main;
+            return main !== -1 && main !== before;
+        }, 5000);
+        return opened ? reader.mainModalTexts() : [];
     },
     points(): number {
         return reader.varp(101);

@@ -123,6 +123,10 @@ export default class AIOQuester extends TaskBot {
         return QUEST_DEFS.find(d => this.picked.has(d.record.id))?.bank ?? PROVISION_BANK;
     }
 
+    firstIncompleteQuestOwnsInventory(): boolean {
+        return QUEST_DEFS.find(d => this.picked.has(d.record.id) && Quests.status(d.record.name) !== 'complete')?.ownsInventory ?? false;
+    }
+
     pickedIds(): Set<string> {
         return this.picked;
     }
@@ -212,6 +216,11 @@ class StartupWithdraw implements Task {
     constructor(private bot: AIOQuester) {}
     validate(): boolean { return !this.done; }
     async execute(): Promise<void> {
+        if (this.bot.firstIncompleteQuestOwnsInventory()) {
+            this.bot.log('quest module owns its startup loadout — skipping generic coin withdrawal');
+            this.done = true;
+            return;
+        }
         if (Inventory.count('Coins') >= COIN_FLOAT) {
             this.bot.log(`already holding ${COIN_FLOAT}+ coins — skipping startup withdraw`);
             this.done = true;
@@ -219,7 +228,7 @@ class StartupWithdraw implements Task {
         }
         this.bot.log(`withdrawing ${COIN_FLOAT} starting coins`);
         const ok = await executeStep(
-            { kind: 'withdraw', items: [{ name: 'Coins', qty: COIN_FLOAT }], bank: this.bot.firstQuestBank() },
+            { kind: 'withdraw', items: [{ name: 'Coins', qty: COIN_FLOAT }], bank: this.bot.firstQuestBank(), leaveOpen: true },
             [],
             m => this.bot.log(`  ${m}`)
         );

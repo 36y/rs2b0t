@@ -20,6 +20,36 @@ describe('progressSignature', () => {
         expect(progressSignature(snap('complete', [['egg', 1]]))).not.toBe(base);
         expect(progressSignature(snap('inProgress', [['egg', 2]]))).not.toBe(base);
     });
+    test('quest-stage transitions count as progress even when inventory is unchanged', () => {
+        const base = snap('inProgress', [['knife', 1]]);
+        expect(progressSignature({ ...base, stage: 2 }))
+            .not.toBe(progressSignature({ ...base, stage: 3 }));
+    });
+    test('equipment changes count as progress and worn ordering is stable', () => {
+        const base = snap('inProgress', [['knife', 1]]);
+        const empty = progressSignature(base);
+        const first = progressSignature({ ...base, worn: new Set(['bronze axe', 'dramen staff']) });
+        const reordered = progressSignature({ ...base, worn: new Set(['dramen staff', 'bronze axe']) });
+        expect(first).toBe(reordered);
+        expect(first).not.toBe(empty);
+    });
+    test('travel between quest areas counts as progress', () => {
+        const base = snap('inProgress', [['knife', 1]]);
+        expect(progressSignature({ ...base, tile: { x: 3046, z: 3235, level: 0 } }))
+            .not.toBe(progressSignature({ ...base, tile: { x: 2834, z: 3334, level: 1 } }));
+    });
+    test('bank-aware snapshot fields remain available without destabilizing the world signature', () => {
+        const base = snap('inProgress', [['knife', 1]]);
+        const beforeScan: QuestSnapshot = { ...base, bank: new Map(), bankKnown: false };
+        const afterScan: QuestSnapshot = {
+            ...base,
+            bank: new Map([['dramen staff', 1]]),
+            bankKnown: true
+        };
+        expect(afterScan.bankKnown).toBe(true);
+        expect(afterScan.bank?.get('dramen staff')).toBe(1);
+        expect(progressSignature(beforeScan)).toBe(progressSignature(afterScan));
+    });
 });
 
 describe('ProgressWatchdog', () => {

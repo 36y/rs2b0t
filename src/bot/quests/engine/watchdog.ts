@@ -5,7 +5,9 @@ export const NO_PROGRESS_PARK = 8;
 
 export function progressSignature(snap: QuestSnapshot): string {
     const items = [...snap.inv.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([n, c]) => `${n}:${c}`);
-    return `${snap.journal}|${items.join(',')}`;
+    const worn = [...snap.worn].sort().join(',');
+    const tile = snap.tile ? `${snap.tile.x},${snap.tile.z},${snap.tile.level}` : '?';
+    return `${snap.journal}|stage:${snap.stage ?? '?'}|tile:${tile}|inv:${items.join(',')}|worn:${worn}`;
 }
 
 export class ProgressWatchdog {

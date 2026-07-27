@@ -14,8 +14,9 @@ import { witchshouse } from './witchshouse.js';
 import { merlinscrystal } from './merlinscrystal.js';
 import { priestperil } from './priestperil.js';
 import { blackknight } from './blackknight.js';
+import { lostcity } from './lostcity.js';
 
-export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, sheepshearer, restlessghost, cooksassistant, hetty, romeojuliet, princeali, waterfall, goblindiplomacy, demonslayer, witchshouse, merlinscrystal, priestperil, blackknight];
+export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, sheepshearer, restlessghost, cooksassistant, hetty, romeojuliet, princeali, waterfall, goblindiplomacy, demonslayer, witchshouse, merlinscrystal, priestperil, blackknight, lostcity];
 
 export function defById(id: string): QuestModule | undefined {
     return QUEST_DEFS.find(d => d.record.id === id);

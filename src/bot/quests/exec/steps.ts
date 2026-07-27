@@ -51,7 +51,12 @@ export async function executeStep(step: QuestStep, hops: LadderHop[], log: (m: s
             const before = Inventory.count(step.item);
             const g = GroundItems.query().name(step.item).within(12).nearest();
             if (!g) {
-                return ensureAt(step.anchor, 2, log);
+                const arrived = await ensureAt(step.anchor, 2, log);
+                if (arrived && step.waitIfMissing) {
+                    await Execution.delayTicks(2);
+                    return false;
+                }
+                return arrived;
             }
             if (!(await g.interact('Take'))) {
                 return false;
@@ -135,6 +140,8 @@ export async function executeStep(step: QuestStep, hops: LadderHop[], log: (m: s
         }
         case 'equip':
             return Equipment.equip(step.item);
+        case 'scanBank':
+            return openBankLeg('scanBank: no known bank', step.bank, log);
         case 'withdraw': {
             if (!(await openBankLeg('withdraw: no known bank', step.bank, log))) {
                 return false;
@@ -146,7 +153,9 @@ export async function executeStep(step: QuestStep, hops: LadderHop[], log: (m: s
                     ok = false;
                 }
             }
-            actions.closeModal();
+            if (!step.leaveOpen) {
+                actions.closeModal();
+            }
             return ok;
         }
         case 'deposit': {
@@ -155,10 +164,12 @@ export async function executeStep(step: QuestStep, hops: LadderHop[], log: (m: s
             }
             const kept = (name: string): boolean => {
                 const n = name.toLowerCase();
-                return step.keep.some(k => n.includes(k));
+                return step.keep.some(k => step.exactKeep ? n === k : n.includes(k));
             };
             await Bank.depositAllMatching(name => !kept(name));
-            actions.closeModal();
+            if (!step.leaveOpen) {
+                actions.closeModal();
+            }
             return true;
         }
         case 'buy': {

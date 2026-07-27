@@ -42,6 +42,7 @@ function describeStep(step: QuestStep): string {
         case 'interactLoc': return `${step.op} ${step.loc}`;
         case 'useOn': return `use ${step.item} on ${step.target}`;
         case 'equip': return `equip ${step.item}`;
+        case 'scanBank': return 'check the bank';
         case 'withdraw': return `withdraw ${step.items.map(i => `${i.name}×${i.qty}`).join(', ')}`;
         case 'deposit': return 'bank spillover from the last quest';
         case 'mineRock': return `mine ${step.item}`;
@@ -67,6 +68,7 @@ export class QuestEngine implements Task {
     private readonly blocked = new Map<string, string[]>();
 
     private lastBankCounts = new Map<string, number>();
+    private bankKnown = false;
 
     private runningId: string | null = null;
 
@@ -85,6 +87,16 @@ export class QuestEngine implements Task {
 
     async execute(): Promise<void> {
         if (EventSignal.pending()) {
+            await Execution.delayTicks(1);
+            return;
+        }
+
+        // StartupWithdraw and bank-aware quest steps deliberately leave the bank open so this
+        // task can take an authoritative snapshot before the interface disappears.
+        if (Bank.isOpen()) {
+            await Execution.delayUntil(() => Bank.loaded(), 3000);
+            this.refreshBankCounts(true);
+            actions.closeModal();
             await Execution.delayTicks(1);
             return;
         }
@@ -150,7 +162,15 @@ export class QuestEngine implements Task {
             this.runningId = null;
             return;
         }
-        const snap = this.buildSnapshot(module);
+        const stage = await module.readStage?.();
+        const snap = this.buildSnapshot(module, stage);
+
+        if (module.ownsInventory) {
+            // Some quests have one-way, bankless areas. Their stage oracle must run before any
+            // generic attempt to bank spillover or provision items on the mainland.
+            this.deposited.add(id);
+            this.provisioned.add(id);
+        }
 
         if (snap.journal === 'complete') {
             this.host.log(`${module.record.name} COMPLETE — ${Quests.points()} QP`);
@@ -178,11 +198,15 @@ export class QuestEngine implements Task {
                 this.deposited.add(id);
             } else {
                 this.host.noteState(rows, id, 'banking spillover', this.noProgressCount, this.parked.size);
-                const banked = await executeStep({ kind: 'deposit', keep, bank: module.bank ?? PROVISION_BANK }, module.hops ?? [], m => this.host.log(`  ${m}`));
+                const banked = await executeStep({ kind: 'deposit', keep, bank: module.bank ?? PROVISION_BANK, leaveOpen: true }, module.hops ?? [], m => this.host.log(`  ${m}`));
                 if (banked) {
                     this.deposited.add(id);
                 }
-                this.refreshBankCounts();
+                await Execution.delayUntil(() => Bank.loaded(), 3000);
+                this.refreshBankCounts(true);
+                if (Bank.isOpen()) {
+                    actions.closeModal();
+                }
                 await Execution.delayTicks(1);
                 return;
             }
@@ -193,7 +217,7 @@ export class QuestEngine implements Task {
             const foodItem = this.host.foodItem();
             const packFood = foodItem ? (snap.inv.get(foodItem.toLowerCase()) ?? 0) : 0;
             const foodFloat = (module.food && foodItem)
-                ? (this.lastBankCounts.size > 0
+                ? (this.bankKnown
                     ? floatWithdraw(snap.inv, this.lastBankCounts, foodItem, module.food)
                     : (module.food - packFood > 0 ? { name: foodItem, qty: module.food - packFood } : null))
                 : null;
@@ -257,15 +281,24 @@ export class QuestEngine implements Task {
             this.waitCount = 0;
         }
 
-        const ok = await executeStep(step, module.hops ?? [], m => {
+        const bankAwareStep: QuestStep = step.kind === 'withdraw' || step.kind === 'deposit'
+            ? { ...step, leaveOpen: true }
+            : step;
+        const ok = await executeStep(bankAwareStep, module.hops ?? [], m => {
             if (!this.stepSubLog.has(m)) {
                 this.host.log(`  ${m}`);
                 this.stepSubLog.add(m);
             }
         });
 
+        if (Bank.isOpen()) {
+            await Execution.delayUntil(() => Bank.loaded(), 3000);
+            this.refreshBankCounts(true);
+            actions.closeModal();
+        }
+
         if (ok && advancesWorld(step)) {
-            const count = this.watchdog.note(progressSignature(this.buildSnapshot(module)));
+            const count = this.watchdog.note(progressSignature(this.buildSnapshot(module, stage)));
             this.noProgressCount = count;
             if (count === NO_PROGRESS_WARN) {
                 this.host.log(`WARN: ${count} steps with no progress on ${module.record.name} — check the decide()/prefer lists`);
@@ -321,7 +354,7 @@ export class QuestEngine implements Task {
         return elig.get(id)?.name ?? id;
     }
 
-    private buildSnapshot(module: QuestModule): QuestSnapshot {
+    private buildSnapshot(module: QuestModule, stage?: number): QuestSnapshot {
         const inv = new Map<string, number>();
         for (const it of Inventory.items()) {
             if (it.name) {
@@ -340,7 +373,12 @@ export class QuestEngine implements Task {
             inv,
             worn,
             noProgress: this.noProgressCount,
-            bankCoins: this.lastBankCounts.get('coins') ?? 0
+            bankCoins: this.lastBankCounts.get('coins') ?? 0,
+            stage,
+            bank: new Map(this.lastBankCounts),
+            bankKnown: this.bankKnown,
+            tile: Game.tile(),
+            freeSlots: Inventory.free()
         };
     }
 
@@ -379,24 +417,18 @@ export class QuestEngine implements Task {
         return { counts };
     }
 
-    private refreshBankCounts(): void {
-        if (!Bank.isOpen()) {
+    private refreshBankCounts(acceptSettledEmpty = false): void {
+        if (!Bank.isOpen() || (!Bank.loaded() && !acceptSettledEmpty)) {
             return;
         }
         const next = new Map<string, number>();
-        next.set('coins', Bank.count('Coins'));
-        const food = this.host.foodItem();
-        if (food) {
-            next.set(food.toLowerCase(), Bank.count(food));
-        }
-        for (const r of this.records) {
-            for (const it of r.items) {
-                const key = it.name.toLowerCase();
-                if (!next.has(key)) {
-                    next.set(key, Bank.count(it.name));
-                }
+        for (const item of Bank.items()) {
+            if (item.name) {
+                const key = item.name.toLowerCase();
+                next.set(key, (next.get(key) ?? 0) + item.count);
             }
         }
         this.lastBankCounts = next;
+        this.bankKnown = true;
     }
 }
