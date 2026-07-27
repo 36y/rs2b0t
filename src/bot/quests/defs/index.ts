@@ -14,10 +14,11 @@ import { witchshouse } from './witchshouse.js';
 import { merlinscrystal } from './merlinscrystal.js';
 import { priestperil } from './priestperil.js';
 import { blackknight } from './blackknight.js';
+import { druidicritual } from './druidicritual.js';
 import { lostcity } from './lostcity.js';
 import { touristtrap } from './touristtrap.js';
 
-export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, sheepshearer, restlessghost, cooksassistant, hetty, romeojuliet, princeali, waterfall, goblindiplomacy, demonslayer, witchshouse, merlinscrystal, priestperil, blackknight, lostcity, touristtrap];
+export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, sheepshearer, restlessghost, cooksassistant, hetty, romeojuliet, princeali, waterfall, goblindiplomacy, demonslayer, witchshouse, merlinscrystal, priestperil, blackknight, druidicritual, lostcity, touristtrap];
 
 export function defById(id: string): QuestModule | undefined {
     return QUEST_DEFS.find(d => d.record.id === id);
