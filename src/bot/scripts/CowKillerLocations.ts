@@ -24,6 +24,11 @@ export const COW_LOCATION_OPTIONS = ['Auto', ...COW_LOCATIONS.map(location => lo
 export const AL_KHARID_BANK = new Tile(3269, 3167, 0);
 export const TOLL_COIN_TARGET = 20;
 
+export function isCowFieldLootTile(anchor: WorldTile, leashRadius: number, tile: WorldTile): boolean {
+    return tile.level === anchor.level
+        && Math.max(Math.abs(tile.x - anchor.x), Math.abs(tile.z - anchor.z)) <= leashRadius;
+}
+
 export function resolveCowLocation(setting: string, start: WorldTile): CowLocation | null {
     const normalized = setting.trim().toLowerCase();
     if (normalized === 'start tile') {

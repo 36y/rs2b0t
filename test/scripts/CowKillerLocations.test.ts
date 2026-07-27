@@ -3,6 +3,7 @@ import Tile from '#/bot/api/Tile.js';
 import {
     COW_LOCATIONS,
     COW_LOCATION_OPTIONS,
+    isCowFieldLootTile,
     needsTollCoins,
     resolveCowLocation,
     shouldBootstrapTollCoins,
@@ -29,6 +30,17 @@ describe('CowKiller locations', () => {
 
     test('dropdown contains Auto, both fields, and custom start tile', () => {
         expect(COW_LOCATION_OPTIONS).toEqual(['Auto', 'Lumbridge cow field', 'South of Falador', 'Start tile']);
+    });
+
+    test('loot stays inside the anchored cow-hunting leash', () => {
+        const lumbridge = COW_LOCATIONS[0].anchor;
+        expect(isCowFieldLootTile(lumbridge, 18, new Tile(3233, 3298, 0))).toBe(false);
+        expect(isCowFieldLootTile(lumbridge, 18, new Tile(3237, 3298, 0))).toBe(true);
+        expect(isCowFieldLootTile(lumbridge, 18, new Tile(3255, 3288, 1))).toBe(false);
+
+        const falador = COW_LOCATIONS[1].anchor;
+        expect(isCowFieldLootTile(falador, 18, new Tile(3015, 3324, 0))).toBe(true);
+        expect(isCowFieldLootTile(falador, 18, new Tile(3014, 3324, 0))).toBe(false);
     });
 });
 

@@ -165,6 +165,9 @@ export default class ChickenKiller extends TaskBot {
         const n = (name ?? '').toLowerCase();
         return this.loot.some(t => n.includes(t));
     }
+    acceptsLootAt(_tile: Tile): boolean {
+        return true;
+    }
     carriedLoot(): number {
         return Inventory.items().filter(i => this.wantsLoot(i.name)).length;
     }
@@ -307,6 +310,7 @@ class LootDrops implements Task {
         const terms = this.bot.lootTerms();
         return GroundItems.query()
             .where(g => terms.some(t => t.length > 0 && (g.name?.toLowerCase() ?? '').includes(t)))
+            .where(g => this.bot.acceptsLootAt(g.tile()))
             .within(this.bot.leashRadius() + 4)
             .nearest();
     }

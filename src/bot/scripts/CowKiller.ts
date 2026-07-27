@@ -8,6 +8,7 @@ import ChickenKiller, { SETTINGS as CHICKEN_SETTINGS } from './ChickenKiller.js'
 import {
     AL_KHARID_BANK,
     COW_LOCATION_OPTIONS,
+    isCowFieldLootTile,
     nearestCowLocation,
     needsTollCoins,
     resolveCowLocation,
@@ -93,6 +94,10 @@ export default class CowKiller extends ChickenKiller {
     override keepList(): string[] {
         const keep = super.keepList();
         return this.usesTollCoins() ? [...keep, 'Coins'] : keep;
+    }
+
+    override acceptsLootAt(tile: Tile): boolean {
+        return isCowFieldLootTile(this.getAnchor(), this.leashRadius(), tile);
     }
 
     protected override async afterBankDeposit(): Promise<void> {
