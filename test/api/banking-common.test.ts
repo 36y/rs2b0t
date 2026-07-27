@@ -1,16 +1,27 @@
 import { describe, expect, test } from 'bun:test';
-import { COMMON_BANK_LOOT, matchesCommonBankLoot, depositMatcher, depositAllExcept, PERIODIC_BANK_SETTINGS } from '#/bot/api/Banking.js';
+import { COMMON_BANK_LOOT, RANDOM_EVENT_CASKET_ID, matchesCommonBankLoot, depositMatcher, depositAllExcept, PERIODIC_BANK_SETTINGS } from '#/bot/api/Banking.js';
 
 describe('matchesCommonBankLoot', () => {
     test('matches each junk category (case-insensitive contains)', () => {
         for (const n of ['Uncut sapphire', 'Sapphire', 'Emerald', 'Ruby', 'Diamond', 'Strange fruit', 'Beer', 'Kebab']) {
-            expect(matchesCommonBankLoot(n)).toBe(true);
+            expect(matchesCommonBankLoot(n, -1)).toBe(true);
         }
     });
+    test('matches only the random-event Casket object ID', () => {
+        expect(matchesCommonBankLoot('Casket', RANDOM_EVENT_CASKET_ID)).toBe(true);
+        expect(matchesCommonBankLoot('casket', RANDOM_EVENT_CASKET_ID)).toBe(true);
+        expect(matchesCommonBankLoot('Casket', 2714)).toBe(false);
+        expect(matchesCommonBankLoot('Casket', 406)).toBe(false);
+        expect(matchesCommonBankLoot('Rusty casket', 3849)).toBe(false);
+    });
     test('rejects unrelated names and empty', () => {
-        expect(matchesCommonBankLoot('Coins')).toBe(false);
-        expect(matchesCommonBankLoot('Bones')).toBe(false);
-        expect(matchesCommonBankLoot('')).toBe(false);
+        expect(matchesCommonBankLoot('Coins', 995)).toBe(false);
+        expect(matchesCommonBankLoot('Bones', 526)).toBe(false);
+        expect(matchesCommonBankLoot('', -1)).toBe(false);
+    });
+    test('keeps name-only callers compatible without guessing which Casket they mean', () => {
+        expect(matchesCommonBankLoot('Ruby')).toBe(true);
+        expect(matchesCommonBankLoot('Casket')).toBe(false);
     });
     test('COMMON_BANK_LOOT is non-empty and lowercased', () => {
         expect(COMMON_BANK_LOOT.length).toBeGreaterThan(0);
@@ -22,14 +33,27 @@ describe('depositMatcher', () => {
     const own = (n: string) => n.toLowerCase().includes('coins');
     test('own OR common when enabled', () => {
         const m = depositMatcher(own, true);
-        expect(m('Coins')).toBe(true);
-        expect(m('Ruby')).toBe(true);
-        expect(m('Bones')).toBe(false);
+        expect(m('Coins', 995)).toBe(true);
+        expect(m('Ruby', -1)).toBe(true);
+        expect(m('Bones', 526)).toBe(false);
     });
     test('common suppressed when disabled', () => {
         const m = depositMatcher(own, false);
-        expect(m('Coins')).toBe(true);
-        expect(m('Ruby')).toBe(false);
+        expect(m('Coins', 995)).toBe(true);
+        expect(m('Ruby', -1)).toBe(false);
+    });
+    test('keeps name-only matcher calls compatible', () => {
+        expect(depositMatcher(own, true)('Ruby')).toBe(true);
+    });
+    test('banks a Casket when common rewards are enabled', () => {
+        expect(depositMatcher(() => false, true)('Casket', RANDOM_EVENT_CASKET_ID)).toBe(true);
+    });
+    test('keeps a Casket when common rewards are disabled', () => {
+        expect(depositMatcher(() => false, false)('Casket', RANDOM_EVENT_CASKET_ID)).toBe(false);
+    });
+    test('the caller predicate still banks its own Casket when common rewards are disabled', () => {
+        const ownCasket = (name: string): boolean => name.toLowerCase() === 'casket';
+        expect(depositMatcher(ownCasket, false)('Casket', RANDOM_EVENT_CASKET_ID)).toBe(true);
     });
 });
 

@@ -122,7 +122,7 @@ function findLoot() {
     return GroundItems.query()
         .where(g => {
             const name = (g.name ?? '').toLowerCase();
-            return LOOT_SET.has(name) || (BANK_COMMON && matchesCommonBankLoot(g.name ?? ''));
+            return LOOT_SET.has(name) || (BANK_COMMON && matchesCommonBankLoot(g.name ?? '', g.id));
         })
         .within(FIELD_RADIUS)
         .nearest();

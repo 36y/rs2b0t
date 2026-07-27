@@ -2,12 +2,14 @@
    to exercise the stateful bank-object transition without a live client. */
 import { afterEach, expect, test } from 'bun:test';
 
-import { Banking } from '#/bot/api/Banking.js';
+import { reader, type InvItemSnapshot } from '#/bot/adapter/ClientAdapter.js';
+import { Banking, depositMatcher } from '#/bot/api/Banking.js';
 import { Execution } from '#/bot/api/Execution.js';
 import { Game } from '#/bot/api/Game.js';
 import { Traversal } from '#/bot/api/Traversal.js';
 import { Bank } from '#/bot/api/hud/Bank.js';
 import { Locs } from '#/bot/api/queries/Locs.js';
+import { ActionRouter } from '#/bot/input/ActionRouter.js';
 
 const originals = {
     bankIsOpen: Bank.isOpen,
@@ -17,6 +19,8 @@ const originals = {
     delayTicks: Execution.delayTicks,
     delayUntil: Execution.delayUntil,
     gameTile: Game.tile,
+    bankSideItems: reader.bankSideItems,
+    invButton: ActionRouter.driver.invButton,
     locQuery: Locs.query,
     walkResilient: Traversal.walkResilient
 };
@@ -29,8 +33,32 @@ afterEach(() => {
     (Execution as any).delayTicks = originals.delayTicks;
     (Execution as any).delayUntil = originals.delayUntil;
     (Game as any).tile = originals.gameTile;
+    (reader as any).bankSideItems = originals.bankSideItems;
+    (ActionRouter.driver as any).invButton = originals.invButton;
     (Locs as any).query = originals.locQuery;
     (Traversal as any).walkResilient = originals.walkResilient;
+});
+
+test('deposit matching receives item IDs and distinguishes reward from clue caskets', async () => {
+    let items: InvItemSnapshot[] = [
+        { id: 2714, name: 'Casket', count: 1, slot: 0, comId: 5382, ops: ['Deposit-1', null, null, 'Deposit-All', null] },
+        { id: 405, name: 'Casket', count: 1, slot: 1, comId: 5382, ops: ['Deposit-1', null, null, 'Deposit-All', null] }
+    ];
+    const clicked: number[] = [];
+
+    (Bank as any).isOpen = () => true;
+    (reader as any).bankSideItems = () => items;
+    (Execution as any).delayUntil = async (condition: () => boolean) => condition();
+    (ActionRouter.driver as any).invButton = (id: number, slot: number) => {
+        clicked.push(id);
+        items = items.filter(item => item.id !== id || item.slot !== slot);
+        return true;
+    };
+
+    await Bank.depositAllMatching(depositMatcher(() => false, true));
+
+    expect(clicked).toEqual([405]);
+    expect(items.map(item => item.id)).toEqual([2714]);
 });
 
 function queryReturning(locs: any[]) {

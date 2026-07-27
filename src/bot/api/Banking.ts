@@ -59,7 +59,7 @@ export const PERIODIC_BANK_SETTINGS: SettingsSchema = {
     bankStrategy: { type: 'string', default: 'Off', options: BANK_STRATEGY_OPTIONS, label: 'Periodic bank', help: 'save accumulated loot so a death does not lose it all' },
     bankEveryItems: { type: 'number', default: 15, min: 1, max: 27, label: 'Bank at N loot items' },
     bankEveryMinutes: { type: 'number', default: 10, min: 1, max: 120, label: 'Bank every N minutes' },
-    bankCommonJunk: { type: 'boolean', default: true, label: 'Also bank gems/fruit/beer/kebabs' }
+    bankCommonJunk: { type: 'boolean', default: true, label: 'Also bank gems/fruit/beer/kebabs/caskets' }
 };
 
 export const COMMON_BANK_LOOT: string[] = [
@@ -67,7 +67,12 @@ export const COMMON_BANK_LOOT: string[] = [
     'strange fruit', 'beer', 'kebab'
 ];
 
-export function matchesCommonBankLoot(name: string): boolean {
+export const RANDOM_EVENT_CASKET_ID = 405;
+
+export function matchesCommonBankLoot(name: string, id: number = -1): boolean {
+    if (id === RANDOM_EVENT_CASKET_ID) {
+        return true;
+    }
     if (name.length === 0) {
         return false;
     }
@@ -75,8 +80,8 @@ export function matchesCommonBankLoot(name: string): boolean {
     return COMMON_BANK_LOOT.some(p => n.includes(p));
 }
 
-export function depositMatcher(own: (name: string) => boolean, includeCommon: boolean): (name: string) => boolean {
-    return (name: string) => own(name) || (includeCommon && matchesCommonBankLoot(name));
+export function depositMatcher(own: (name: string) => boolean, includeCommon: boolean): (name: string, id?: number) => boolean {
+    return (name: string, id: number = -1) => own(name) || (includeCommon && matchesCommonBankLoot(name, id));
 }
 
 export function depositAllExcept(keep: Iterable<string>): (name: string) => boolean {

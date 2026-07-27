@@ -78,7 +78,7 @@ export const Bank = {
         await Bank.depositAllMatching(() => true);
     },
 
-    async depositAllMatching(match: (name: string) => boolean, log?: (msg: string) => void): Promise<void> {
+    async depositAllMatching(match: (name: string, id: number) => boolean, log?: (msg: string) => void): Promise<void> {
         for (let guard = 0; guard < 32; guard++) {
             let items = reader.bankSideItems();
             if (items.length === 0 && Bank.isOpen()) {
@@ -86,7 +86,7 @@ export const Bank = {
                 await Execution.delayUntil(() => reader.bankSideItems().length > 0 || !Bank.isOpen(), 1200);
                 items = reader.bankSideItems();
             }
-            const item = items.find(i => i.name !== null && match(i.name));
+            const item = items.find(i => i.name !== null && match(i.name, i.id));
             if (!item) {
                 return;
             }

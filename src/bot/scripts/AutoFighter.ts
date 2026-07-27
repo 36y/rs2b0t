@@ -32,6 +32,7 @@ import {
 import { SolveClue } from '../clues/SolveClue.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
 import { Reach } from '../api/Reach.js';
+import { RANDOM_EVENT_CASKET_ID } from '../api/Banking.js';
 
 const BOOTH = { name: 'Bank booth', op: 'Use-quickly' };
 const KIT = ['spade', 'sextant', 'watch', 'chart'];
@@ -51,7 +52,8 @@ export const SETTINGS: SettingsSchema = {
     loot: { type: 'string[]', default: DEFAULT_LOOT, label: 'Loot item names (contains)', help: 'defaults to gem-table items + clue scrolls, nothing else' },
     solveClues: { type: 'boolean', default: true, label: 'Solve clue drops', group: 'Clues' },
     banking: { type: 'string', default: 'Auto', options: BANKING_OPTIONS, label: 'Banking', help: 'Auto = bank loot at the nearest bank and return; None = no loot-only bank trips' },
-    bankAtLootSlots: { type: 'number', default: 12, min: 1, max: 27, label: 'Bank at loot slots', showIf: { key: 'banking', anyOf: ['Auto'] } }
+    bankAtLootSlots: { type: 'number', default: 12, min: 1, max: 27, label: 'Bank at loot slots', showIf: { key: 'banking', anyOf: ['Auto'] } },
+    bankCommonJunk: { type: 'boolean', default: true, label: 'Bank common junk too' }
 };
 
 let TARGET = 'Guard';
@@ -66,6 +68,7 @@ let LOOT = DEFAULT_LOOT;
 let SOLVE_CLUES = true;
 let BANK_AT = 12;
 let AUTO_BANK = true;
+let BANK_COMMON = true;
 let COMBAT_MODE = 1;
 
 function foodCount(): number {
@@ -73,6 +76,13 @@ function foodCount(): number {
 }
 function lootSlots(): number {
     return slotsMatching(Inventory.items(), LOOT);
+}
+
+export function shouldKeepBankItem(name: string, id: number, food: string, bankCommon: boolean): boolean {
+    const n = name.toLowerCase();
+    const genericCasket = id === RANDOM_EVENT_CASKET_ID;
+    return matchesAny(name, [food]) || n === 'coins' || KIT.includes(n) || n.includes('clue')
+        || (n.includes('casket') && !genericCasket) || (genericCasket && !bankCommon);
 }
 
 export default class AutoFighter extends TaskBot {
@@ -108,6 +118,7 @@ export default class AutoFighter extends TaskBot {
         SOLVE_CLUES = this.settings.bool('solveClues', true);
         BANK_AT = this.settings.num('bankAtLootSlots', 12);
         AUTO_BANK = autoBankEnabled(this.settings.str('banking', 'Auto'));
+        BANK_COMMON = this.settings.bool('bankCommonJunk', true);
         COMBAT_MODE = parseCombatStyle(this.settings.str('combatStyle', 'strength'));
 
         this.solveClue = new SolveClue({
@@ -329,11 +340,7 @@ class BankRun implements Task {
         if (!(await Bank.openNearest(BOOTH.name, BOOTH.op, m => this.bot.log(`  ${m}`)))) {
             return;
         }
-        const keep = (name: string): boolean => {
-            const n = name.toLowerCase();
-            return matchesAny(name, [FOOD]) || n === 'coins' || KIT.includes(n) || n.includes('clue') || n.includes('casket');
-        };
-        await Bank.depositAllMatching(name => !keep(name), m => this.bot.log(`  ${m}`));
+        await Bank.depositAllMatching((name, id) => !shouldKeepBankItem(name, id, FOOD, BANK_COMMON), m => this.bot.log(`  ${m}`));
         for (let guard = 0; guard < FOOD_WITHDRAW && foodCount() < FOOD_WITHDRAW && !Inventory.isFull(); guard++) {
             const before = foodCount();
             if (!(await Bank.withdraw(FOOD, 'Withdraw-1'))) {
