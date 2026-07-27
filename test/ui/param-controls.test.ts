@@ -17,6 +17,7 @@ test('resolveControl maps each SettingDef shape to a kind', () => {
 
 test('summarize formats each kind compactly', () => {
     expect(summarize(def({ type: 'boolean', default: false }), 'true')).toBe('on');
+    expect(summarize(def({ type: 'boolean', default: false }), ' YES ')).toBe('on');
     expect(summarize(def({ type: 'boolean', default: false }), 'false')).toBe('off');
     expect(summarize(def({ type: 'number', default: 5, min: 0, max: 10 }), '8')).toBe('8');
     expect(summarize(def({ type: 'string', default: 'a', options: ['Auto', 'None'] }), 'Auto')).toBe('Auto');

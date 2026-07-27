@@ -86,3 +86,32 @@ describe('globalBag', () => {
         expect(SettingsStore.globalBag().str('lampSkill', 'x')).toBe('mining');
     });
 });
+
+describe('value normalization', () => {
+    test('trims freeform strings and parses booleans case-insensitively', () => {
+        const schema: SettingsSchema = {
+            target: { type: 'string', default: 'Guard' },
+            enabled: { type: 'boolean', default: false }
+        };
+        sessionStorage.setItem(K('Normalize', 'target'), '  Moss Giant  ');
+        sessionStorage.setItem(K('Normalize', 'enabled'), ' YES ');
+
+        expect(SettingsStore.resolve('Normalize', schema)).toEqual({
+            target: 'Moss Giant',
+            enabled: true
+        });
+    });
+
+    test('canonicalizes constrained list values case-insensitively', () => {
+        const schema: SettingsSchema = {
+            quests: {
+                type: 'string[]',
+                default: [],
+                options: ['cooks_assistant', 'romeo_and_juliet']
+            }
+        };
+        sessionStorage.setItem(K('Normalize', 'quests'), ' COOKS_ASSISTANT, Romeo_And_Juliet ');
+
+        expect(SettingsStore.resolve('Normalize', schema).quests).toEqual(['cooks_assistant', 'romeo_and_juliet']);
+    });
+});

@@ -16,6 +16,7 @@ import { Sustain } from '../api/Sustain.js';
 import { nearestBank } from '../api/BankLocations.js';
 import { GroundItems } from '../api/queries/GroundItems.js';
 import { Npcs, type Npc } from '../api/queries/Npcs.js';
+import { matchesEntityName } from '../api/queries/Query.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import Tile from '../api/Tile.js';
 import { countMatching, matchesAny, shouldBank, shouldEat, shouldPanic, slotsMatching } from './ArdyFighterLogic.js';
@@ -25,7 +26,6 @@ import {
     CUSTOM_COORDINATES,
     DEFAULT_CUSTOM_SPOT,
     DEFAULT_LOOT,
-    matchesTargetName,
     resolveKillingSpot,
     SPOT_OPTIONS,
     START_POSITION
@@ -389,7 +389,7 @@ class Fight implements Task {
             .nearest();
     }
     private track(engaged: Npc): Npc | null {
-        return Npcs.all().find(n => n.index === engaged.index && matchesTargetName(n.name, TARGET)) ?? null;
+        return Npcs.all().find(n => n.index === engaged.index && matchesEntityName(n.name, TARGET)) ?? null;
     }
     validate(): boolean {
         return !Game.inCombat() && Skills.hpFraction() >= EAT_AT && this.findTarget() !== null;

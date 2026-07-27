@@ -18,6 +18,7 @@ import { Traversal } from '../api/Traversal.js';
 import { EventSignal } from '../api/EventSignal.js';
 import { GroundItems } from '../api/queries/GroundItems.js';
 import { Npcs, type Npc } from '../api/queries/Npcs.js';
+import { matchesEntityName } from '../api/queries/Query.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import { countMatching, matchesAny, shouldBank, shouldEat, shouldPanic, shouldRestock, slotsMatching } from './ArdyFighterLogic.js';
 import { stealCakes } from './CakeStall.js';
@@ -446,7 +447,7 @@ class Fight implements Task {
     }
 
     private track(engaged: Npc): Npc | null {
-        return Npcs.all().find(n => n.index === engaged.index && n.name === TARGET) ?? null;
+        return Npcs.all().find(n => n.index === engaged.index && matchesEntityName(n.name, TARGET)) ?? null;
     }
 
     validate(): boolean {

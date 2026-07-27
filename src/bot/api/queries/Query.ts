@@ -6,14 +6,18 @@ interface QueryableEntity extends Locatable {
     actions(): string[];
 }
 
+export function matchesEntityName(actual: string | null, configured: string): boolean {
+    return actual !== null && actual.trim().toLowerCase() === configured.trim().toLowerCase();
+}
+
 export default class EntityQuery<E extends QueryableEntity> {
     private filters: ((e: E) => boolean)[] = [];
 
     constructor(private readonly supplier: () => E[]) {}
 
     name(...names: string[]): this {
-        const wanted = names.map(n => n.toLowerCase());
-        this.filters.push(e => e.name !== null && wanted.includes(e.name.toLowerCase()));
+        const wanted = names.map(n => n.trim().toLowerCase());
+        this.filters.push(e => e.name !== null && wanted.includes(e.name.trim().toLowerCase()));
         return this;
     }
 

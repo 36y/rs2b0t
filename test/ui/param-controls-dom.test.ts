@@ -35,6 +35,12 @@ test('checkbox edit saves true/false', () => {
     expect(saved).toBe('true');
 });
 
+test('checkbox edit reads mixed-case truthy values', () => {
+    const elc = renderControl(def({ type: 'boolean', default: false }), ' YES ', () => {}, { disabled: false });
+    const box = elc.querySelector('input[type=checkbox]') as HTMLInputElement;
+    expect(box.checked).toBe(true);
+});
+
 test('tile edit saves x,z,level', () => {
     let saved = '';
     const elc = renderControl(def({ type: 'tile', default: null }), '2661,3306,0', v => (saved = v), { disabled: false });

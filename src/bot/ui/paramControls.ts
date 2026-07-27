@@ -60,10 +60,15 @@ function listItems(value: string): string[] {
     return value.split(',').map(s => s.trim()).filter(s => s.length > 0);
 }
 
+function isTruthy(value: string): boolean {
+    const normalized = value.trim().toLowerCase();
+    return normalized === 'true' || normalized === '1' || normalized === 'yes';
+}
+
 export function summarize(def: SettingDef, value: string): string {
     switch (resolveControl(def)) {
         case 'checkbox':
-            return value === 'true' || value === '1' || value === 'yes' ? 'on' : 'off';
+            return isTruthy(value) ? 'on' : 'off';
         case 'multiselect':
         case 'taglist': {
             const items = listItems(value);
@@ -90,7 +95,7 @@ const CONTROLS: Record<ControlKind, ParamControl> = {
             const box = el('input', 'rs2b0t-param-cb');
             box.type = 'checkbox';
             box.disabled = disabled;
-            box.checked = current === 'true' || current === '1' || current === 'yes';
+            box.checked = isTruthy(current);
             box.addEventListener('change', () => onChange(box.checked ? 'true' : 'false'));
             const wrap = el('div', 'rs2b0t-ctl-checkbox');
             wrap.appendChild(box);

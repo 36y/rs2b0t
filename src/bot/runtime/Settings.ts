@@ -52,8 +52,10 @@ export class SettingsBag {
 
 function parseValue(def: SettingDef, raw: string): unknown {
     switch (def.type) {
-        case 'boolean':
-            return raw === 'true' || raw === '1' || raw === 'yes';
+        case 'boolean': {
+            const normalized = raw.trim().toLowerCase();
+            return normalized === 'true' || normalized === '1' || normalized === 'yes';
+        }
         case 'number': {
             const n = Number(raw);
             if (!Number.isFinite(n)) {
@@ -66,13 +68,22 @@ function parseValue(def: SettingDef, raw: string): unknown {
                 const wanted = raw.trim().toLowerCase();
                 return def.options.find(o => o.toLowerCase() === wanted) ?? def.default;
             }
-            return raw;
+            return raw.trim();
         }
-        case 'string[]':
-            return raw
+        case 'string[]': {
+            const values = raw
                 .split(',')
                 .map(s => s.trim())
                 .filter(s => s.length > 0);
+            if (!def.options || def.options.length === 0) {
+                return values;
+            }
+            return values.flatMap(value => {
+                const wanted = value.toLowerCase();
+                const option = def.options!.find(candidate => candidate.toLowerCase() === wanted);
+                return option === undefined ? [] : [option];
+            });
+        }
         case 'tile':
             return parseTile(raw) ?? def.default;
         default:
