@@ -25,6 +25,7 @@ import {
     CUSTOM_COORDINATES,
     DEFAULT_CUSTOM_SPOT,
     DEFAULT_LOOT,
+    matchesTargetName,
     resolveKillingSpot,
     SPOT_OPTIONS,
     START_POSITION
@@ -388,7 +389,7 @@ class Fight implements Task {
             .nearest();
     }
     private track(engaged: Npc): Npc | null {
-        return Npcs.all().find(n => n.index === engaged.index && n.name === TARGET) ?? null;
+        return Npcs.all().find(n => n.index === engaged.index && matchesTargetName(n.name, TARGET)) ?? null;
     }
     validate(): boolean {
         return !Game.inCombat() && Skills.hpFraction() >= EAT_AT && this.findTarget() !== null;

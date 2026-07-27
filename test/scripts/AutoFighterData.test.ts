@@ -6,6 +6,7 @@ import {
     BANKING_OPTIONS,
     CUSTOM_COORDINATES,
     DEFAULT_LOOT,
+    matchesTargetName,
     resolveKillingSpot,
     SPOT_OPTIONS,
     START_POSITION
@@ -24,6 +25,12 @@ describe('AutoFighter data', () => {
     test('target is a freeform text control', () => {
         expect(SETTINGS.target.options).toBeUndefined();
         expect(resolveControl(SETTINGS.target)).toBe('text');
+    });
+    test('fresh NPC snapshots match lowercase freeform targets', () => {
+        expect(matchesTargetName('Man', 'man')).toBe(true);
+        expect(matchesTargetName('Chicken', ' chicken ')).toBe(true);
+        expect(matchesTargetName('Woman', 'man')).toBe(false);
+        expect(matchesTargetName(null, 'man')).toBe(false);
     });
     test('killing spot defaults to the script start or accepts coordinates', () => {
         expect(SPOT_OPTIONS).toEqual([START_POSITION, CUSTOM_COORDINATES]);

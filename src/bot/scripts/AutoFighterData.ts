@@ -14,6 +14,10 @@ export function autoBankEnabled(mode: string): boolean {
     return mode.trim().toLowerCase() === 'auto';
 }
 
+export function matchesTargetName(actual: string | null, configured: string): boolean {
+    return actual !== null && actual.toLowerCase() === configured.trim().toLowerCase();
+}
+
 export const DEFAULT_LOOT = [
     'clue scroll',
     'uncut sapphire', 'uncut emerald', 'uncut ruby', 'uncut diamond',
