@@ -131,9 +131,9 @@ ScriptRegistry.register({
 
 ScriptRegistry.register({
     name: 'Thiever',
-    description: 'Pickpockets an NPC (Man by default); eats food when a failed steal hurts (anchor = start tile)',
+    description: 'Pickpockets an NPC (Man by default), eats after failed steals, and optionally banks to restock food before returning to the start tile',
     category: 'Thieving',
-    tags: ['pickpocket', 'coins'],
+    tags: ['pickpocket', 'coins', 'banking', 'food'],
     settingsSchema: THIEVING_SETTINGS,
     create: () => new ThievingBot()
 });
