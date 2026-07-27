@@ -47,7 +47,7 @@ test('the runner paint publishes a clickable Go bank button', () => {
 test('the canvas point the live probe clicks lands inside that button', () => {
     runnerPaint();
     const btn = regions.find(r => r.id === 'btn:gobank')!;
-    const PROBE = { x: 40, y: 429 }; // tools/naturecrafter-gobank-test.ts BTN
+    const PROBE = { x: 40, y: 429 }; // Go-bank button centre
     expect(PROBE.x).toBeGreaterThanOrEqual(btn.x);
     expect(PROBE.x).toBeLessThan(btn.x + btn.w);
     expect(PROBE.y).toBeGreaterThanOrEqual(btn.y);

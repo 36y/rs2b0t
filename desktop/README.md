@@ -33,19 +33,6 @@ browser client, just not throttled.
 bun run package        # electron-builder --dir -> desktop/dist/
 ```
 
-## Validate
-
-```sh
-# from the repo root, with Node (NOT bun — Playwright's Electron launcher uses
-# Node's inspector socket, which Bun breaks):
-PATH="/opt/homebrew/opt/node@24/bin:$PATH" npx tsx tools/desktop-test.ts
-```
-
-Launches the app, logs in, hides the window, and asserts the loop holds full
-speed (>25 fps; throttled would be ~1) with no catch-up burst — plus a forced
-2.5 s main-thread stall to confirm the scheduler's frame-gap insurance shifts
-timers instead of falsely timing out.
-
 ## Notes
 
 - Still Chromium underneath, so rendering/behaviour match the browser client.

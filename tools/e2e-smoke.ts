@@ -118,11 +118,19 @@ try {
     await page.waitForFunction(() => ((globalThis as never as { rs2b0t: { runner: { ctx: { log: { msg: string }[] } | null } } }).rs2b0t.runner.ctx?.log ?? []).filter(l => l.msg.toLowerCase().includes('quest')).length >= 2, undefined, { timeout: 20000 });
     console.log('QuestDashboard: looping and logging');
 
-    const overlayPainted = await page.evaluate(() => {
-        const overlay = document.getElementById('overlay') as HTMLCanvasElement;
-        return (overlay.getContext('2d')?.getImageData(10, 10, 1, 1).data[3] ?? 0) > 0;
-    });
-    if (!overlayPainted) fail('overlay not painted while QuestDashboard running');
+    await page.waitForFunction(
+        () => {
+            const overlay = document.getElementById('overlay') as HTMLCanvasElement;
+            const pixels = overlay.getContext('2d')?.getImageData(0, 0, overlay.width, overlay.height).data;
+            if (!pixels) return false;
+            for (let alpha = 3; alpha < pixels.length; alpha += 4) {
+                if (pixels[alpha] !== 0) return true;
+            }
+            return false;
+        },
+        undefined,
+        { timeout: 10000 }
+    ).catch(() => fail('overlay not painted while QuestDashboard running'));
     console.log('QuestDashboard: overlay painted');
 
     await page.screenshot({ path: 'out/e2e-smoke-runtime.png' });

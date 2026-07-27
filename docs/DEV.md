@@ -47,15 +47,13 @@ For Chrome DevTools MCP, launch the managed Chrome viewer and configure MCP with
 port. A dedicated profile is intentional: an ordinary shared browser process includes
 unrelated tabs and cannot provide honest bot-only CPU/RAM attribution.
 
-Firefox DevTools MCP must likewise use a dedicated profile. Point its `--firefox-path`
-at `tools/firefox-cgroup-wrapper.sh`; the wrapper puts Firefox alone in an
-`rs2b0t-viewer-*` cgroup while leaving geckodriver/MCP outside the measurement. Do not
-attach an automation agent to an everyday Firefox profile: it exposes that profile's
-cookies and sessions, and its other tabs/extensions would contaminate capacity numbers.
+Firefox automation must likewise use a dedicated profile. Do not attach an automation
+agent to an everyday Firefox profile: it exposes that profile's cookies and sessions,
+and its other tabs/extensions would contaminate capacity numbers.
 
 For an externally managed *dedicated* browser, use
 `B0T_RESOURCE_PID=<browser-root-pid> B0T_VIEWER=none bun run b0t`. On Linux that browser
-must already be in an `rs2b0t-viewer-*` cgroup (the Firefox MCP wrapper does this);
+must already be in a dedicated `rs2b0t-viewer-*` cgroup;
 otherwise CPU/RAM are explicitly unavailable instead of silently including the terminal
 or unrelated tabs.
 

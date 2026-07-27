@@ -31,7 +31,7 @@ const LIGHT_MS = 90_000;
 // fire drops the log at your feet and teleports you one square west, and a tile
 // already carrying scenery (or someone else's fire) refuses loc_add. Plots are
 // the longest such strips at each bank, read off the client's collision map and
-// loc list with tools/firemaking-probe.ts.
+// location list.
 interface Plot {
     bank: Tile;
     x0: number;

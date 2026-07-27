@@ -14,6 +14,7 @@ let takes: number;
 let npcByName: Record<string, { x: number; z: number }>;
 
 mock.module('#/bot/api/Game.js', () => ({ Game: { tile: () => playerTile, ingame: () => true, inCombat: () => false } }));
+mock.module('#/bot/api/EventSignal.js', () => ({ EventSignal: { pending: () => false } }));
 mock.module('#/bot/api/Execution.js', () => ({
     Execution: {
         delayUntil: async (fn: () => boolean): Promise<boolean> => fn(),
