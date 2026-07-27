@@ -258,11 +258,10 @@ export const QUESTS: QuestRecord[] = [
             { skill: 'fletching', level: 10 },
             { skill: 'smithing', level: 20 }
         ] },
-        items: [
-            { name: 'Hammer', qty: 1, kind: 'mustHave' },
-            { name: 'Feather', qty: 10, kind: 'acquirable' },
-            { name: 'Bronze bar', qty: 1, kind: 'mustHave' }
-        ]
+        // The quest module owns its restart-safe loadout and naturally sources every item.
+        // Listing the smithing supplies as must-have here makes the generic eligibility pass
+        // reject a fresh account before that module ever gets a chance to buy them.
+        items: []
     },
     {
         id: 'dragon', name: 'Dragon Slayer', questPoints: 2,
