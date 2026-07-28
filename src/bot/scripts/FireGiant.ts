@@ -32,7 +32,7 @@ import { Locs } from '../api/queries/Locs.js';
 import {
     AMULET, BARREL_BANK, BARREL_EXIT, BARREL_LOC, BARREL_OP, DEFAULT_MELEE_TILE, DEFAULT_SAFESPOT, DEFAULT_SAFESPOT_FALLBACK, DUNGEON_MIN_Z, EXIT_DOOR, EXIT_DOOR_LOC, EXIT_OPTIONS, ESCAPE_TELES,
     LEDGE_DOOR, LEDGE_LOC, LEDGE_OP, legFor, RAFT_LOC, RAFT_OP, RAFT_STAND,
-    attackRangeFor, eastFirst, ROCK_LOC, roomOf, takenByAnother, ROPE, ROPE_THROW_STAND, TREE_LOC, TREE_STAND, type EscapeTele
+    attackRangeFor, eastFirst, lootWaitMs, ROCK_LOC, sameRoom, takenByAnother, ROPE, ROPE_THROW_STAND, TREE_LOC, TREE_STAND, type EscapeTele
 } from './FireGiantLogic.js';
 
 const TARGET = 'Fire giant';
@@ -43,8 +43,8 @@ const BANK_HEAL_TO = 0.9;
 const RE_ENGAGE_MS = 4000;
 const TAKEN_SKIP_MS = 15_000;
 
-const LOOT_TAKE_MS = 1200;
 const LOOT_BURST_MAX = 8;
+const LOOT_SKIP_MS = 30_000;
 
 const LEASH_WAIT_MS = 15_000;
 const LEASH_SKIP_MS = 20_000;
@@ -204,8 +204,7 @@ function hasRope(): boolean {
 // overlap inside FIELD_RADIUS, and the nearest east giant is closer to the west
 // safespot than two of the west ones, so a radius alone drags the bot next door.
 function sameRoomAsAnchor(tile: Tile): boolean {
-    const room = roomOf(anchor());
-    return room === null || roomOf(tile) === room;
+    return sameRoom(anchor(), tile);
 }
 
 function fieldGiants(): Npc[] {
@@ -222,11 +221,23 @@ function fieldGiants(): Npc[] {
         .results();
 }
 
+// A drop we repeatedly fail to pick up would otherwise keep qualifying, and with the
+// safespot walk-back in between the bot just trades places with it forever.
+const lootSkip = new Map<string, number>();
+
+function lootKey(g: { name: string | null; tile(): Tile }): string {
+    return `${g.name ?? ''}@${g.tile().x},${g.tile().z}`;
+}
+
 function findLoot() {
+    const now = performance.now();
     return GroundItems.query()
         .where(g => {
             const name = (g.name ?? '').toLowerCase();
-            return LOOT_SET.has(name) || (BANK_COMMON && matchesCommonBankLoot(g.name ?? ''));
+            const wanted = LOOT_SET.has(name) || (BANK_COMMON && matchesCommonBankLoot(g.name ?? ''));
+            // Someone else's kills in the next chamber are not ours to collect, and the
+            // rooms overlap inside FIELD_RADIUS so distance will not keep us out of them
+            return wanted && sameRoomAsAnchor(g.tile()) && (lootSkip.get(lootKey(g)) ?? 0) < now;
         })
         .within(FIELD_RADIUS)
         .nearest();
@@ -270,6 +281,7 @@ async function lootOnce(bot: FireGiant): Promise<boolean> {
         return false;
     }
     const name = drop.name ?? '';
+    const key = lootKey(drop);
     bot.setStatus(`looting ${name}`);
     const usedBefore = Inventory.used();
     const countBefore = Inventory.count(name);
@@ -281,13 +293,15 @@ async function lootOnce(bot: FireGiant): Promise<boolean> {
     // burn the full timeout and report failure
     const took = await Execution.delayUntil(
         () => Inventory.used() > usedBefore || Inventory.count(name) > countBefore,
-        LOOT_TAKE_MS
+        lootWaitMs(drop.distance())
     );
     if (took) {
         bot.countLoot(name);
-        bot.log(`looted ${name}`);
+        return true;
     }
-    return took;
+    lootSkip.set(key, performance.now() + LOOT_SKIP_MS);
+    bot.log(`could not pick up ${name} at ${drop.tile().x},${drop.tile().z} — ignoring it for ${LOOT_SKIP_MS / 1000}s`);
+    return false;
 }
 
 // Loot lands on the corpse tile, so collecting it means leaving the safespot and
@@ -301,9 +315,12 @@ async function lootBurst(bot: FireGiant): Promise<void> {
         if (hpFrac() < EAT_HP && hasFood()) {
             return;
         }
-        if (!(await lootOnce(bot))) {
+        if (findLoot() === null) {
             return;
         }
+        // a failure blacklists that drop, so carry on and clear the rest of the pile
+        // instead of abandoning it over one stubborn item
+        await lootOnce(bot);
     }
 }
 
@@ -773,6 +790,12 @@ class LootCorpse implements Task {
     }
     async execute(): Promise<void> {
         await lootBurst(this.bot);
+        // End the excursion where it started. Leaving the walk back to
+        // ReturnToSafespot lets it cancel a pickup still in flight, the loot stays on
+        // the floor, and the two tasks trade places forever.
+        if (usesSafespot() && !atSafespot() && hpFrac() >= PANIC_HP) {
+            await quickReturnToSafespot(this.bot);
+        }
     }
 }
 

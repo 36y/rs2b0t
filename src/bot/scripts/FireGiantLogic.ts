@@ -66,12 +66,35 @@ export function takenByAnother(e: Engagement): boolean {
     return e.targetsAnother || (e.inCombat && !e.targetsMe);
 }
 
+/**
+ * How long to wait for a Take to land, given how far the drop is.
+ *
+ * A Take on a corpse several tiles off walks there first, so a flat short wait
+ * reports failure while the pickup is still in flight — and with a safespot walk-back
+ * queued behind it, the bot cancels its own pickup and trades places with the loot
+ * forever.
+ */
+export function lootWaitMs(distance: number): number {
+    return 1200 + Math.max(0, distance) * 700;
+}
+
 export type Room = 'west' | 'east';
 export const WEST_ROOM = { minX: 2556, maxX: 2571, minZ: 9880, maxZ: 9902 };
 export const EAST_ROOM = { minX: 2572, maxX: 2586, minZ: 9880, maxZ: 9902 };
 
 function inBox(t: PointLike, b: { minX: number; maxX: number; minZ: number; maxZ: number }): boolean {
     return t.x >= b.minX && t.x <= b.maxX && t.z >= b.minZ && t.z <= b.maxZ;
+}
+
+/**
+ * Whether two points share a chamber, permissive when the reference is not in one.
+ *
+ * The chambers overlap inside FIELD_RADIUS, so distance cannot tell them apart — a
+ * drop in the next room reads as nearer than half of our own room's spawns.
+ */
+export function sameRoom(reference: PointLike | null, other: PointLike | null): boolean {
+    const room = roomOf(reference);
+    return room === null || roomOf(other) === room;
 }
 
 export function roomOf(t: PointLike | null): Room | null {

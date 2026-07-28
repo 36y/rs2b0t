@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { AP_RANGE, attackRangeFor, BARREL_EXIT, EXIT_OPTIONS, eastFirst, takenByAnother, DEFAULT_MELEE_TILE, DEFAULT_SAFESPOT, DEFAULT_SAFESPOT_FALLBACK, ESCAPE_TELES, legFor, LEDGE, POST_ROCK, RAFT_STAND, ROCK_TILE, roomOf, ROPE_THROW_STAND, THROW_ZONE, WASHED_OUT } from '#/bot/scripts/FireGiantLogic.js';
+import { AP_RANGE, attackRangeFor, lootWaitMs, BARREL_EXIT, EXIT_OPTIONS, eastFirst, takenByAnother, DEFAULT_MELEE_TILE, DEFAULT_SAFESPOT, DEFAULT_SAFESPOT_FALLBACK, ESCAPE_TELES, legFor, LEDGE, POST_ROCK, RAFT_STAND, ROCK_TILE, roomOf, ROPE_THROW_STAND, sameRoom, THROW_ZONE, WASHED_OUT } from '#/bot/scripts/FireGiantLogic.js';
 
 const at = (x: number, z: number, level = 0) => ({ x, z, level });
 
@@ -104,6 +104,33 @@ describe('roomOf', () => {
 
 // Two-tier: hold the forward tile for the extra giant, drop to the melee-proof nook
 // whenever one actually reaches us.
+// Loot from another player's kills in the next chamber is not ours, and crossing for
+// it abandons the safespot for the whole round trip.
+describe('sameRoom', () => {
+    const westSpot = { x: 2568, z: 9892, level: 0 };
+    const centreAnchor = { x: 2575, z: 9893, level: 0 };
+    const westDrop = { x: 2565, z: 9887, level: 0 };
+    const centreDrop = { x: 2578, z: 9895, level: 0 };
+
+    test('a drop in our own chamber counts', () => {
+        expect(sameRoom(westSpot, westDrop)).toBe(true);
+        expect(sameRoom(centreAnchor, centreDrop)).toBe(true);
+    });
+    test('a drop in the other chamber does not, from either side', () => {
+        expect(sameRoom(westSpot, centreDrop)).toBe(false);
+        expect(sameRoom(centreAnchor, westDrop)).toBe(false);
+    });
+    test('a near drop across the divide is still excluded — distance cannot decide this', () => {
+        const nearButOther = { x: 2573, z: 9895, level: 0 };
+        expect(Math.max(Math.abs(nearButOther.x - westSpot.x), Math.abs(nearButOther.z - westSpot.z))).toBeLessThan(10);
+        expect(sameRoom(westSpot, nearButOther)).toBe(false);
+    });
+    test('an anchor outside both chambers accepts anything, so nothing is stranded', () => {
+        expect(sameRoom({ x: 2575, z: 9861, level: 0 }, westDrop)).toBe(true);
+        expect(sameRoom(null, centreDrop)).toBe(true);
+    });
+});
+
 describe('safespot tiers', () => {
     test('the forward spot is 2568,9892 and the fallback is 2568,9893', () => {
         expect([DEFAULT_SAFESPOT.x, DEFAULT_SAFESPOT.z, DEFAULT_SAFESPOT.level]).toEqual([2568, 9892, 0]);
@@ -204,6 +231,25 @@ describe('EXIT_OPTIONS', () => {
         expect(EXIT_OPTIONS).toContain('Camelot');
         expect(EXIT_OPTIONS).toContain('Ardougne');
         expect(EXIT_OPTIONS.length).toBe(5);
+    });
+});
+
+// The Take walks to the drop first, so a flat short wait reported failure while the
+// pickup was in flight; the safespot walk-back then cancelled it and the bot traded
+// places with the loot forever.
+describe('lootWaitMs', () => {
+    test('an adjacent drop still gets a usable minimum', () => {
+        expect(lootWaitMs(0)).toBeGreaterThanOrEqual(1000);
+    });
+    test('it grows with distance, so a far corpse is not called a failure', () => {
+        expect(lootWaitMs(8)).toBeGreaterThan(lootWaitMs(1));
+    });
+    test('a drop at the edge of the field allows for the whole walk', () => {
+        // 10 tiles is FIELD_RADIUS; walking that is seconds, not one tick
+        expect(lootWaitMs(10)).toBeGreaterThanOrEqual(5000);
+    });
+    test('a negative distance cannot shorten the wait', () => {
+        expect(lootWaitMs(-5)).toBe(lootWaitMs(0));
     });
 });
 
