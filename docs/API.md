@@ -268,7 +268,11 @@ if (raw && range) await raw.useOn(range);
 Bank.isOpen(): boolean
 Bank.items(): BankItemSnapshot[]              // { slot, id, name, count, ops, comId }
 Bank.count(name: string): number
+Bank.countById(id: number): number
 Bank.withdraw(name: string, op?: string): boolean | Promise<boolean>
+Bank.withdrawById(id: number, op?: string): boolean | Promise<boolean>
+Bank.withdrawX(name: string, count: number): Promise<boolean>
+Bank.withdrawXById(id: number, count: number): Promise<boolean>
 Bank.deposit(name: string, op?: string): boolean | Promise<boolean>
 Bank.depositInventory(): Promise<void>
 ```
@@ -276,7 +280,7 @@ Bank.depositInventory(): Promise<void>
 `withdraw`/`deposit`/`count` match names **exactly**. `op` is the context menu
 label (e.g. `'Withdraw-10'`, `'Withdraw-All'`); read the real ops off
 `Bank.items()[i].ops` when unsure. Open a bank by interacting with a booth/banker
-loc first.
+loc first. Use the `ById` variants when two objects share a display name.
 
 ## Skills
 
