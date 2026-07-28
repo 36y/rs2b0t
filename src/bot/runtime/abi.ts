@@ -1,3 +1,4 @@
+// docs/ARCHITECTURE.md#the-abi-boundary
 import { reader } from '../adapter/ClientAdapter.js';
 import { Area } from '../api/Area.js';
 import { AbstractBot, BranchTask, LeafTask, LoopingBot, TaskBot, TreeBot } from '../api/Bot.js';

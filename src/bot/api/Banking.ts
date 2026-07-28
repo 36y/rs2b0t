@@ -7,6 +7,10 @@ import { Traversal } from './Traversal.js';
 import { Bank } from './hud/Bank.js';
 import { Locs } from './queries/Locs.js';
 
+/**
+ * When a bot should break off and bank.
+ * @see docs/API.md#bank
+ */
 export type BankStrategy = 'off' | 'items' | 'time' | 'either';
 
 export interface BankDestination {
@@ -55,6 +59,10 @@ export function parseBankStrategy(label: string): BankStrategy {
     }
 }
 
+/**
+ * Shared banking parameters, mixed into a script's own settings schema.
+ * @see docs/API.md#settings
+ */
 export const PERIODIC_BANK_SETTINGS: SettingsSchema = {
     bankStrategy: { type: 'string', default: 'Off', options: BANK_STRATEGY_OPTIONS, label: 'Periodic bank', help: 'save accumulated loot so a death does not lose it all' },
     bankEveryItems: { type: 'number', default: 15, min: 1, max: 27, label: 'Bank at N loot items' },
