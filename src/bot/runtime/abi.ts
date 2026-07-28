@@ -1,6 +1,17 @@
 // docs/ARCHITECTURE.md#the-abi-boundary
 import { reader } from '../adapter/ClientAdapter.js';
 import { Area } from '../api/Area.js';
+import {
+    Banking,
+    COMMON_BANK_LOOT,
+    PERIODIC_BANK_SETTINGS,
+    RANDOM_EVENT_CASKET_ID,
+    depositAllExcept,
+    depositMatcher,
+    matchesCommonBankLoot,
+    parseBankStrategy,
+    shouldBankNow
+} from '../api/Banking.js';
 import { AbstractBot, BranchTask, LeafTask, LoopingBot, TaskBot, TreeBot } from '../api/Bot.js';
 import { Execution } from '../api/Execution.js';
 import { Game } from '../api/Game.js';
@@ -8,7 +19,7 @@ import { AcquireTask, hasAll, held } from '../api/ItemAcquisition.js';
 import Tile from '../api/Tile.js';
 import { Traversal } from '../api/Traversal.js';
 import { GroundItem, Loc, Npc, Player } from '../api/entities/index.js';
-import { Bank } from '../api/hud/Bank.js';
+import { Bank, withdrawOp } from '../api/hud/Bank.js';
 import { ChatDialog } from '../api/hud/ChatDialog.js';
 import { Equipment } from '../api/hud/Equipment.js';
 import { InvItem, Inventory } from '../api/hud/Inventory.js';
@@ -59,6 +70,16 @@ export function installAbi(): void {
         InvItem,
         Equipment,
         Bank,
+        withdrawOp,
+        Banking,
+        depositAllExcept,
+        depositMatcher,
+        matchesCommonBankLoot,
+        shouldBankNow,
+        parseBankStrategy,
+        PERIODIC_BANK_SETTINGS,
+        COMMON_BANK_LOOT,
+        RANDOM_EVENT_CASKET_ID,
         Shop,
         Skills,
         ChatDialog,

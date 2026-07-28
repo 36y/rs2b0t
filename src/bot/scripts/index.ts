@@ -1,7 +1,12 @@
 import { AGILITY_SETTINGS } from './AgilityBot.js';
-import { GATHERING_SETTINGS } from './GatheringBot.js';
 import { LOCATION_OPTIONS } from './FishingLocations.js';
 import { FISHING_METHOD_OPTIONS } from './FishingMethods.js';
+import {
+    AFTER_COOK_OPTIONS,
+    BURNT_POLICY_OPTIONS,
+    COOK_FISH_OPTIONS,
+    COOK_MODE_OPTIONS
+} from './FishCookLogic.js';
 import { ROCK_OPTIONS } from './MiningRocks.js';
 import EdgevilleMonkeyBars, { EDGEVILLE_MONKEYBARS_SETTINGS } from './EdgevilleMonkeyBars.js';
 import { ScriptRegistry } from '../runtime/ScriptRegistry.js';
@@ -15,7 +20,9 @@ import ChickenKiller, { SETTINGS as CHICKEN_SETTINGS } from './ChickenKiller.js'
 import CowKiller, { SETTINGS as COWKILLER_SETTINGS } from './CowKiller.js';
 import ClueSolver, { SETTINGS as CLUESOLVER_SETTINGS } from './ClueSolver.js';
 import CookBot, { SETTINGS as COOKBOT_SETTINGS } from './CookBot.js';
-import GatheringBot from './GatheringBot.js';
+import GatheringBot, { GATHERING_SETTINGS } from './GatheringBot.js';
+import Woodcutter, { WOODCUTTER_SETTINGS } from './Woodcutter.js';
+import { FORGETFUL_BANK_SETTING, TOOL_ACQUIRE_SETTING } from './ToolAcquire.js';
 import QuestDashboard from '../quests/QuestDashboard.js';
 import AIOQuester, { AIO_SETTINGS } from './AIOQuester.js';
 import MossGiant, { SETTINGS as MOSSGIANT_SETTINGS } from './MossGiant.js';
@@ -26,7 +33,6 @@ import ThievingBot, { SETTINGS as THIEVING_SETTINGS } from './ThievingBot.js';
 import TutorialBot from './TutorialBot.js';
 import WalkToBot, { WALKTO_SETTINGS } from './WalkToBot.js';
 import WildyAgility, { WILDY_AGILITY_SETTINGS } from './WildyAgility.js';
-import Woodcutter, { SETTINGS as WOODCUTTER_SETTINGS } from './Woodcutter.js';
 import SmelterBot, { SETTINGS as SMELTER_SETTINGS } from './SmelterBot.js';
 import TannerBot, { TANNER_SETTINGS } from './TannerBot.js';
 import LeatherCrafter, { CRAFTER_SETTINGS } from './LeatherCrafter.js';
@@ -177,16 +183,18 @@ ScriptRegistry.register({
 
 ScriptRegistry.register({
     name: 'Woodcutter',
-    description: 'Chops trees and drops logs (anchor = start tile, needs an axe)',
+    description:
+        'Chops the chosen tree type, then banks logs, drops them, or burns a full load (chop-then-burn). Needs an axe; burn mode also needs a tinderbox (both restock from the bank when Full inventory is Auto). Optional Buy/repair acquires axes from Bob or smiths mith+ from bars.',
     category: 'Woodcutting',
-    tags: ['gathering', 'drop'],
+    tags: ['gathering', 'banking', 'drop', 'firemaking'],
     settingsSchema: WOODCUTTER_SETTINGS,
     create: () => new Woodcutter()
 });
 
 ScriptRegistry.register({
     name: 'Miner',
-    description: 'Mines the selected rock types and banks the ore at the nearest bank (auto-detected), or drops it. Needs a pickaxe.',
+    description:
+        'Mines the selected rock types, then banks the ore at the nearest bank or drops it (power-mining). Needs a pickaxe (best available is restocked from the bank when Full inventory is Auto). Optional Buy/repair acquires picks from Nurmof (and repairs broken picks).',
     category: 'Mining',
     tags: ['gathering', 'banking', 'drop'],
     settingsSchema: {
@@ -195,16 +203,20 @@ ScriptRegistry.register({
             default: ['Iron'],
             options: ROCK_OPTIONS,
             label: 'Rock types',
-            help: 'which rocks to mine — every rock is named "Rocks" in-game, so pick the ore types here (multi-select). Empty = mine any rock.'
+            help:
+                'Which rocks to mine — every rock is named "Rocks" in-game, so pick the ore types here (multi-select). Empty = mine any rock.'
         },
         leashRadius: GATHERING_SETTINGS.leashRadius,
         location: {
             type: 'string',
             default: 'Auto',
             options: ['Auto', 'None'],
-            label: 'Banking',
-            help: 'Auto = web-walk to the nearest bank; None = drop it (power-mining).'
-        }
+            label: 'Full inventory',
+            help:
+                'What to do when the pack is full of ore. Auto = bank the ore at the nearest bank and restock a pickaxe if needed. None = power-mine (drop ore; no bank).'
+        },
+        toolAcquire: TOOL_ACQUIRE_SETTING,
+        forgetfulBank: FORGETFUL_BANK_SETTING
     },
     create: () => new GatheringBot()
 });
@@ -238,25 +250,113 @@ ScriptRegistry.register({
 
 ScriptRegistry.register({
     name: 'Fisher',
-    description: 'Fishes a chosen method at the spot that offers it (each spot has a pair of ops); banks the catch at the nearest bank, or drops it (location: None)',
+    description:
+        'Fishes a chosen method at the spot that offers it; banks the catch, optionally cooks at a nearby range, or drops it. Change Cook mode to reveal fish filter, burnt policy, and (for bank-raw-then-cook) the N quantity. Optional Buy/repair buys missing gear from the nearest fishing shop (Harry at Catherby, Gerrant for feathers/fly rod) and can buy bait/feathers up to Bait qty.',
     category: 'Fishing',
-    tags: ['gathering', 'drop', 'banking'],
+    tags: ['gathering', 'drop', 'banking', 'cooking'],
     settingsSchema: {
         fishMethod: {
             type: 'string',
             default: FISHING_METHOD_OPTIONS[0],
             options: FISHING_METHOD_OPTIONS,
             label: 'Fishing method',
-            help: 'what to fish — picks the right spot (each spot offers a PAIR of ops) and the correct op of the two, e.g. small net (shrimp) vs big net (mackerel)'
+            help:
+                'What to fish — picks the right spot (each spot offers a PAIR of ops) and the correct op of the two, e.g. small net (shrimp) vs big net (mackerel).'
         },
-        leashRadius: { type: 'number', default: 12, min: 2, max: 30, label: 'Leash radius (tiles)' },
+        baitQty: {
+            type: 'number',
+            default: 1000,
+            min: 1,
+            label: 'Bait / feathers qty',
+            group: 'Tools',
+            showIf: {
+                key: 'fishMethod',
+                anyOf: [
+                    'Bait rod — sardine/herring',
+                    'Fly fishing — trout/salmon',
+                    'Bait rod — pike',
+                    'Oily rod — lava eel'
+                ]
+            },
+            help:
+                'Shown when the method needs bait or feathers. Restock withdraws up to this many from the bank; with Buy/repair, buys up to this many from Harry (bait) or Gerrant (feathers) when bank+inv are short. No upper limit. Ignored for cage/net/harpoon methods.'
+        },
+        leashRadius: {
+            type: 'number',
+            default: 18,
+            min: 2,
+            max: 40,
+            label: 'Leash radius (tiles)',
+            help:
+                'How far from the start/anchor tile to prefer fishing spots. Spots hop along piers (Catherby, etc.) — 18 covers most banks; the bot still hunts a bit farther if the pier empties inside the leash.'
+        },
         location: {
             type: 'string',
             default: 'Auto',
             options: LOCATION_OPTIONS,
-            label: 'Fishing location',
-            help: 'Auto = bank the catch at the nearest bank (a known location if started at one, else the nearest booth in the scene); None = always drop (power-fishing)'
-        }
+            label: 'Location / full inventory',
+            help:
+                'Where you are fishing and what happens when the pack is full. Auto = use a known spot if you started in one, else nearest bank in the scene; banks the catch when cook is Off. Named spots (Catherby, …) pin bank/range presets. None = power-fish (always drop; cook is disabled).'
+        },
+        cookMode: {
+            type: 'string',
+            default: 'Off',
+            options: [...COOK_MODE_OPTIONS],
+            label: 'Cook mode',
+            group: 'Cooking',
+            help:
+                'More options appear below when you leave Off. Off = bank or drop raw only (see Location). Cook then bank = fish a full pack, cook it, bank cooked — reveals Fish to cook + Burnt fish. Bank raw then cook = fish+bank raw until the bank holds N of the cook filter, then withdraw/cook/bank — also reveals Bank N raw before cook + After cook cycle. Needs a Range near the bank (Catherby preset works well). Cook requires Location not None.'
+        },
+        cookFish: {
+            type: 'string',
+            default: 'All raw',
+            options: [...COOK_FISH_OPTIONS],
+            label: 'Fish to cook',
+            group: 'Cooking',
+            showIf: { key: 'cookMode', anyOf: ['Cook then bank', 'Bank raw then cook'] },
+            help:
+                'Shown when Cook mode is on. Which raw fish to cook; other raw species are banked as-is (e.g. cook Swordfish, bank Tuna raw). Choose Custom to reveal a free-text filter.'
+        },
+        cookFishCustom: {
+            type: 'string',
+            default: '',
+            label: 'Custom cook filter',
+            group: 'Cooking',
+            showIf: { key: 'cookFish', anyOf: ['Custom'] },
+            help:
+                'Shown when Fish to cook is Custom. Contains-match against raw names, e.g. "swordfish" or "Raw tuna". Empty = all raw.'
+        },
+        burntPolicy: {
+            type: 'string',
+            default: 'Drop',
+            options: [...BURNT_POLICY_OPTIONS],
+            label: 'Burnt fish',
+            group: 'Cooking',
+            showIf: { key: 'cookMode', anyOf: ['Cook then bank', 'Bank raw then cook'] },
+            help: 'Shown when Cook mode is on. Drop (default) or bank burnt fish after cooking.'
+        },
+        bankRawBeforeCook: {
+            type: 'number',
+            default: 56,
+            min: 1,
+            label: 'Bank N raw before cook',
+            group: 'Cooking',
+            showIf: { key: 'cookMode', anyOf: ['Bank raw then cook'] },
+            help:
+                'Shown only for Bank raw then cook. Live bank total of the cook-filter raw (after each deposit). When the bank holds ≥ N, withdraw a load and cook. Type any amount (no artificial max).'
+        },
+        afterCookCycle: {
+            type: 'string',
+            default: 'Stop',
+            options: [...AFTER_COOK_OPTIONS],
+            label: 'After cook cycle',
+            group: 'Cooking',
+            showIf: { key: 'cookMode', anyOf: ['Bank raw then cook'] },
+            help:
+                'Shown only for Bank raw then cook. Stop = end the script after one cook cycle of the accumulated batch. Continue = keep fishing/banking/cooking in increments of N.'
+        },
+        toolAcquire: TOOL_ACQUIRE_SETTING,
+        forgetfulBank: FORGETFUL_BANK_SETTING
     },
     create: () => new GatheringBot()
 });
