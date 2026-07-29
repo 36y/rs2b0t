@@ -169,6 +169,11 @@ tool: it wanders out of leash and the step is abandoned. Use
 [`Reach.npcDialog`](NAV.md#the-reach-primitive), which searches the whole scene and
 lets the server chase.
 
+Opening the dialogue itself goes through [`Reach`](NAV.md#the-reach-primitive), so an
+NPC who has wandered behind a shut door is reached rather than abandoned. Being inside
+the leash does not mean being reachable: Fred the Farmer paces into his bedroom, the
+one interior door re-shuts, and every talk from the anchor is silently dropped.
+
 ## Provisioning
 
 [`engine/provisioning.ts`](../src/bot/quests/engine/provisioning.ts) assembles what a
