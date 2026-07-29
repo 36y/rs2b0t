@@ -4,6 +4,27 @@ import type { QuestStatus } from '#/bot/api/hud/Quests.js';
 import type { QuestRecord } from '../types.js';
 import type { NpcStop, LadderHop } from '../exec/primitives.js';
 
+export interface QuestProgress {
+    stage: number;
+    /** Journal-visible sub-progress. `name`, or `name:N` for a counted flag. */
+    flags: ReadonlySet<string>;
+}
+
+export function hasFlag(progress: QuestProgress | undefined, name: string): boolean {
+    return progress?.flags.has(name) ?? false;
+}
+
+export function flagValue(progress: QuestProgress | undefined, name: string): number | undefined {
+    const prefix = name + ':';
+    for (const flag of progress?.flags ?? []) {
+        if (flag.startsWith(prefix)) {
+            const value = Number(flag.slice(prefix.length));
+            return Number.isFinite(value) ? value : undefined;
+        }
+    }
+    return undefined;
+}
+
 export interface QuestSnapshot {
     journal: QuestStatus;
     inv: Map<string, number>;
@@ -16,6 +37,8 @@ export interface QuestSnapshot {
     bankCoins: number;
     /** Exact server quest stage when the quest module exposes one. */
     stage?: number;
+    /** Stage plus journal sub-progress, when the module exposes readProgress. */
+    progress?: QuestProgress;
     /** Last complete bank view observed by this engine instance. */
     bank?: ReadonlyMap<string, number>;
     /** Last complete bank view keyed by exact server object ID. */
@@ -60,6 +83,8 @@ export interface QuestModule {
     ownsInventory?: boolean;
     /** Read an exact quest stage from client-visible state. Async journals are supported. */
     readStage?: () => number | undefined | Promise<number | undefined>;
+    /** Supersedes readStage: the stage plus sub-progress the stage number cannot carry. */
+    readProgress?: () => QuestProgress | undefined | Promise<QuestProgress | undefined>;
     /** Optional quest-specific survival policy applied while this module is active. */
     sustain?: QuestSustain;
     decide(snap: QuestSnapshot): QuestStep;

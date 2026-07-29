@@ -21,9 +21,16 @@ export function evaluate(
             reasons.push(r.reason);
         }
     }
-    for (const it of checkItems(record, snapshot)) {
-        if (!it.ok) {
-            reasons.push(`missing item: ${it.name} x${it.qty} (have ${it.present})`);
+    // Item requirements gate *starting* a quest. Once it is under way the items may
+    // legitimately be gone — handed over, ground up, drunk — and re-imposing them
+    // blocks a bot from ever resuming. From here the module's decide() sources what
+    // it still needs. Requirements above are checked either way: nothing consumes a
+    // skill level or a quest point.
+    if (journalStatus !== 'inProgress') {
+        for (const it of checkItems(record, snapshot)) {
+            if (!it.ok) {
+                reasons.push(`missing item: ${it.name} x${it.qty} (have ${it.present})`);
+            }
         }
     }
 

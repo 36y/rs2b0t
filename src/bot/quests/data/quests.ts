@@ -181,7 +181,12 @@ export const QUESTS: QuestRecord[] = [
             { skill: 'thieving', level: 15 },
             { skill: 'agility', level: 25 }
         ] },
-        items: []
+        items: [
+            { name: 'Dragon bones', qty: 1, kind: 'mustHave' },
+            { name: 'Guam leaf', qty: 1, kind: 'mustHave' },
+            { name: 'Bat bones', qty: 1, kind: 'mustHave' },
+            { name: 'Gold bar', qty: 1, kind: 'mustHave' }
+        ]
     },
     {
         id: 'arena', name: 'Fight Arena', questPoints: 2,

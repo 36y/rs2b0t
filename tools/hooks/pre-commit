@@ -1,0 +1,26 @@
+#!/bin/sh
+# Refuses staged secrets independent of .gitignore, which a careless edit can silently drop.
+
+fail=0
+note() { printf 'pre-commit: %s\n' "$1" >&2; fail=1; }
+
+while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    case "$f" in
+        .env.example|.env.sample|*/.env.example|*/.env.sample) ;;
+        *.pem|*.key|*.p12|*.pfx) note "key file: $f" ;;
+        multibox-accounts.recovered.json|*/multibox-accounts.recovered.json)
+            note "plaintext logins: $f" ;;
+        .env|.env.*|*/.env|*/.env.*) note "env file: $f" ;;
+    esac
+    if git show ":$f" 2>/dev/null | grep -qa 'BEGIN [A-Z ]*PRIVATE KEY'; then
+        note "private key material in: $f"
+    fi
+done <<EOF
+$(git diff --cached --name-only --diff-filter=ACMR)
+EOF
+
+if [ "$fail" -ne 0 ]; then
+    printf 'pre-commit: blocked. Unstage these, or use --no-verify if you are certain.\n' >&2
+    exit 1
+fi

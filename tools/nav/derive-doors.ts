@@ -53,7 +53,16 @@ function main(): void {
         openable.add(id);
     }
 
-    const ONE_WAY_EXCLUDED = new Set(['3108,3353,0', '3109,3353,0']);
+    const ONE_WAY_EXCLUDED = new Set([
+        '3108,3353,0', '3109,3353,0',
+        // Gu'Tanoth's east gate. Its ogre guard demands a bar of gold and teleports
+        // you down the hill otherwise, and nothing in the game needs that crossing —
+        // a baked edge here just lets the walker loop against him. Its north-west
+        // twin is deliberately left in: that guard refuses only until the relic is
+        // shown, after which the gate behaves as an ordinary door and everything
+        // west of it depends on the edge.
+        '2549,3028,0', '2550,3028,0'
+    ]);
     // Current Engine gates.rs2 hits loc_add(type=-1) for this Duel Arena outer
     // leaf and leaves Gate#3198 closed. Omit that unusable edge so navigation
     // detours through its paired Gate#3197 one tile north.

@@ -16,6 +16,7 @@
         "b0t": "sh tools/b0t.sh",
         "test": "bun test",
         "lint": "eslint .",
+        "typecheck": "tsc --noEmit",
         "format": "prettier --write",
         "smoke": "bun tools/e2e-smoke.ts",
         "gen:shopdb": "bun tools/shops/gen-shopdb.ts",

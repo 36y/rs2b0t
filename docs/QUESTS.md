@@ -99,6 +99,14 @@ whose display names collide. A `withdraw` item can include `id`, and a `deposit`
 step can include `keepIds`; ID keeps are combined with, rather than replacing,
 the step's name-based `keep` list.
 
+When the stage number alone cannot say where a quest is — which of three tribes are
+satisfied, which words have been learned, how many monsters remain — a module implements
+`readProgress()` instead of `readStage()` and returns named flags alongside the stage.
+They arrive on the snapshot as `snap.progress`, so `decide()` stays a pure function;
+`hasFlag` and `flagValue` in [`engine/types.ts`](../src/bot/quests/engine/types.ts) read
+them. [`defs/watchtower/journal.ts`](../src/bot/quests/defs/watchtower/journal.ts) is the
+worked example.
+
 Two consequences worth stating plainly:
 
 - **`'unknown'` is not `'notStarted'`.** The journal is not loaded for the first
@@ -204,8 +212,57 @@ consumes it to choose what to run.
    testable without a client. See [`test/quests/`](../test/quests/).
 
 Start from [`defs/cooksassistant.ts`](../src/bot/quests/defs/cooksassistant.ts) for
-the simple shape, or [`defs/priestperil.ts`](../src/bot/quests/defs/priestperil.ts)
-for one with level changes, gated doors, and a long item chain.
+the simple shape, [`defs/priestperil.ts`](../src/bot/quests/defs/priestperil.ts)
+for one with level changes, gated doors, and a long item chain, or
+[`defs/watchtower/`](../src/bot/quests/defs/watchtower/) for one large enough to need a
+directory.
+
+Watch Tower is also the reference for a quest whose map is **sealed pockets**. Nine
+areas — Grew's island, Toban's camp, the lower city, the city-guard pocket, each skavid
+cave, the shaman enclave, the wizard's floor — are reachable only through a scripted
+crossing that teleports the player, so nothing routes into them by walking. Two rules
+fall out of that, and both were found the hard way:
+
+- **Every branch escapes the current pocket before it acts.** A step that assumes it is
+  standing on the mainland will send the walker at a tile on the wrong side of a one-way
+  cave, and it will spend three passes proving it unreachable.
+- **A stand tile next to an unwalkable loc is not automatically reachable.**
+  [`tools/nav/probe-tile.ts`](../tools/nav/probe-tile.ts) pathfinds to every tile a quest
+  module names, from each of its regions, and is worth running before any live attempt.
+  Note that `findPath` snapping to within five tiles is a weaker claim than
+  `walkResilient(radius: 2)` actually arriving — a wide blocker whose only open side faces
+  away satisfies the first and never the second.
+- **A flood over the baked graph merges components the player cannot really connect.**
+  Any door edge the walker can click but not *pay* — a guarded gate, a toll — makes two
+  regions look like one. Watch Tower's design concluded a gold bar was unnecessary for
+  exactly this reason, and the opposite was true.
+
+Three engine behaviours bit this quest hard enough to be worth stating once:
+
+- **An op that opens a dialogue does so a tick later.** Driving it immediately makes
+  `talkThrough` find nothing open and start a *fresh* conversation with the same NPC —
+  which lands in a dead-end line, or at an aggressive NPC gets you attacked. Wait for
+  `ChatDialog.isOpen()` first, then drive what is already there.
+- **Colour tags displace punctuation.** Stripping `@dbl@` leaves a space where it stood,
+  so `"potion@dbl@."` normalises to `"potion ."`. Journal needles must not span a tag
+  boundary next to a mark.
+- **`ownsInventory: true` opts the quest out of the engine's food provisioning**, so a
+  `sustain` block declares foods that nothing ever withdraws. Source food yourself.
+- **Nobody is called `Shop keeper`.** A shop belongs to a named NPC through
+  `param=owned_shop` in the engine's `.npc` config, and `Shop.open()` matches the display
+  name. Read the owner out of the configs; a guide will not tell you.
+- **A tool that is merely absent produces no refusal.** Mining without a pickaxe is not
+  an error — the rock simply does not respond, and the step retries until the watchdog
+  parks it. Anything a step needs but does not consume has to be sourced explicitly.
+
+Two habits fall out of the last one, and both cost hours here:
+
+- **Seed a stage test with only what that stage produces, never with its tools.** Every
+  Watch Tower stage-10 test handed the bot a pickaxe, so all of them passed and the
+  quest still could not mine. Only the uncheated run found it.
+- **Guarding a requirement by location inverts it.** "Skip the pickaxe check inside the
+  enclave, because one cannot be fetched from there" describes exactly the state that
+  must walk back out. Source before entering, and let the pocket-escape handle the rest.
 
 ## See also
 

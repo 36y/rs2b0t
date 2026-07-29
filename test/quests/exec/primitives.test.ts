@@ -1,5 +1,5 @@
 import { expect, test, describe } from 'bun:test';
-import { pickPreferred, isUnderground, needsHop, talkOp } from '#/bot/quests/exec/primitives.js';
+import { pickByLine, pickPreferred, isUnderground, needsHop, talkOp, type LineRule } from '#/bot/quests/exec/primitives.js';
 
 describe('pickPreferred', () => {
     const sedridor = ["Nothing thanks, I'm just looking around.", 'What are you doing down here?', "I'm looking for the head wizard."];
@@ -18,6 +18,43 @@ describe('pickPreferred', () => {
 
     test('null when nothing matches (caller falls back + warns)', () => {
         expect(pickPreferred(['Yes please!', "Oh, it's a rune shop. No thank you, then."], ['I have been sent here with a package'])).toBeNull();
+    });
+});
+
+describe('pickByLine', () => {
+    const skavid: readonly LineRule[] = [
+        { whenLine: 'ar cur', choose: 'Gor.' },
+        { whenLine: 'bidith ig', choose: 'Cur.' },
+        { whenLine: 'cur tanath', choose: 'Bidith.' },
+        { whenLine: 'gor nod', choose: 'Tanath.' }
+    ];
+    const options = ['Cur.', 'Ar.', 'Bidith.', 'Tanath.', 'Gor.'];
+
+    test('matches the rule whose line the NPC actually spoke', () => {
+        expect(pickByLine(['Ar cur...'], options, skavid)).toBe('Gor.');
+        expect(pickByLine(['Bidith ig...'], options, skavid)).toBe('Cur.');
+        expect(pickByLine(['Cur tanath...'], options, skavid)).toBe('Bidith.');
+        expect(pickByLine(['Gor nod...'], options, skavid)).toBe('Tanath.');
+    });
+
+    test('prefers the longest matching rule so overlapping phrases cannot collide', () => {
+        expect(pickByLine(['Cur tanath...'], options, skavid)).toBe('Bidith.');
+    });
+
+    test('ignores colour tags and pipe separators in the spoken line', () => {
+        expect(pickByLine(['@dbl@Gor|nod...'], options, skavid)).toBe('Tanath.');
+    });
+
+    test('null when no rule matches, rather than guessing', () => {
+        expect(pickByLine(['Tanath gor ar bidith?'], options, skavid)).toBeNull();
+    });
+
+    test('null when the matched reply is not on offer', () => {
+        expect(pickByLine(['Ar cur...'], ['Cur.', 'Ar.'], skavid)).toBeNull();
+    });
+
+    test('null when the NPC has said nothing yet', () => {
+        expect(pickByLine([], options, skavid)).toBeNull();
     });
 });
 
@@ -44,5 +81,18 @@ describe('talkOp', () => {
     });
     test('null when the NPC has no talk-style op', () => {
         expect(talkOp(['Attack', 'Pickpocket'])).toBeNull();
+    });
+});
+
+describe('pickByLine — the option list must not be mistaken for the NPC line', () => {
+    const rules: readonly LineRule[] = [{ whenLine: 'ar cur', choose: 'Gor.' }];
+    const options = ['Cur.', 'Ar.', 'Bidith.', 'Tanath.', 'Gor.'];
+
+    test('the option labels alone match no rule, so a clobbered capture yields null', () => {
+        expect(pickByLine(options, options, rules)).toBeNull();
+    });
+
+    test('the NPC line still matches once captured before the options appear', () => {
+        expect(pickByLine(['Ar cur...'], options, rules)).toBe('Gor.');
     });
 });

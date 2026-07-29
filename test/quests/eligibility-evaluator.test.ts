@@ -35,7 +35,7 @@ test('all gates met and must-have present is READY', () => {
 
 test('unmet requirement and missing item both appear in BLOCKED reasons', () => {
     const r = rec({ requirements: { minQuestPoints: 32, skills: [{ skill: 'mining', level: 10 }] }, items: [{ name: 'Redberry pie', qty: 1, kind: 'mustHave' }] });
-    const e = evaluate(r, player({ questPoints: 18, skillLevels: new Map([['mining', 7]]) }), snap(), 'inProgress');
+    const e = evaluate(r, player({ questPoints: 18, skillLevels: new Map([['mining', 7]]) }), snap(), 'notStarted');
     expect(e.status).toBe('BLOCKED');
     expect(e.reasons).toContain('needs 32 quest points (have 18)');
     expect(e.reasons).toContain('needs Mining 10 (have 7)');
@@ -53,4 +53,18 @@ test('evaluateAll maps names to statuses via statusOf', () => {
     const res = evaluateAll(records, player(), snap(), n => statuses.get(n) ?? 'unknown');
     expect(res.find(x => x.id === 'a')!.status).toBe('DONE');
     expect(res.find(x => x.id === 'b')!.status).toBe('READY');
+});
+
+test('a started quest is not blocked by items it has already consumed', () => {
+    const r = rec({ items: [{ name: 'Dragon bones', qty: 1, kind: 'mustHave' }] });
+    const e = evaluate(r, player(), snap(), 'inProgress');
+    expect(e.status).toBe('READY');
+    expect(e.reasons).toEqual([]);
+});
+
+test('a started quest is still blocked by requirements, which are never consumed', () => {
+    const r = rec({ requirements: { minQuestPoints: 32 }, items: [{ name: 'Dragon bones', qty: 1, kind: 'mustHave' }] });
+    const e = evaluate(r, player({ questPoints: 18 }), snap(), 'inProgress');
+    expect(e.status).toBe('BLOCKED');
+    expect(e.reasons).toEqual(['needs 32 quest points (have 18)']);
 });

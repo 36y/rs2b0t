@@ -17,7 +17,7 @@ import { executeStep } from '../exec/steps.js';
 import type { BankInventorySnapshot, PlayerState, QuestEligibility, QuestRecord } from '../types.js';
 import { coinFloatWithdraw, depositPlan, floatWithdraw, planProvisioning } from './provisioning.js';
 import { nextQuest, queueRows, type QueueRow } from './queue.js';
-import type { QuestModule, QuestSnapshot, QuestStep } from './types.js';
+import type { QuestModule, QuestProgress, QuestSnapshot, QuestStep } from './types.js';
 import { NO_PROGRESS_PARK, NO_PROGRESS_WARN, ProgressWatchdog, progressSignature } from './watchdog.js';
 import type AIOQuester from '../../scripts/AIOQuester.js';
 
@@ -164,8 +164,9 @@ export class QuestEngine implements Task {
             this.runningId = null;
             return;
         }
-        const stage = await module.readStage?.();
-        const snap = this.buildSnapshot(module, stage);
+        const progress = await module.readProgress?.();
+        const stage = progress ? progress.stage : await module.readStage?.();
+        const snap = this.buildSnapshot(module, stage, progress);
 
         if (module.ownsInventory) {
             // Some quests have one-way, bankless areas. Their stage oracle must run before any
@@ -300,7 +301,7 @@ export class QuestEngine implements Task {
         }
 
         if (ok && advancesWorld(step)) {
-            const count = this.watchdog.note(progressSignature(this.buildSnapshot(module, stage)));
+            const count = this.watchdog.note(progressSignature(this.buildSnapshot(module, stage, progress)));
             this.noProgressCount = count;
             if (count === NO_PROGRESS_WARN) {
                 this.host.log(`WARN: ${count} steps with no progress on ${module.record.name} — check the decide()/prefer lists`);
@@ -356,7 +357,7 @@ export class QuestEngine implements Task {
         return elig.get(id)?.name ?? id;
     }
 
-    private buildSnapshot(module: QuestModule, stage?: number): QuestSnapshot {
+    private buildSnapshot(module: QuestModule, stage?: number, progress?: QuestProgress): QuestSnapshot {
         const inv = new Map<string, number>();
         const invIds = new Map<number, number>();
         for (const it of Inventory.items()) {
@@ -383,6 +384,7 @@ export class QuestEngine implements Task {
             noProgress: this.noProgressCount,
             bankCoins: this.lastBankCounts.get('coins') ?? 0,
             stage,
+            progress,
             bank: new Map(this.lastBankCounts),
             bankIds: new Map(this.lastBankIdCounts),
             bankKnown: this.bankKnown,

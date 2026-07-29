@@ -682,6 +682,16 @@ export const reader = {
             .map(com => com.text!);
     },
 
+    chatModalTexts(): string[] {
+        if (!raw || raw.chatModalId === -1) {
+            return [];
+        }
+
+        return walkComponents(raw.chatModalId)
+            .filter(com => com.type === ComponentType.TYPE_TEXT && com.text)
+            .map(com => com.text!);
+    },
+
     ifModelObjId(comId: number): number | null {
         const com = IfType.list[comId];
         return com && com.model1Type === 4 ? com.model1Id : null;

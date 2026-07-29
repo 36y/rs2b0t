@@ -21,6 +21,11 @@ export const ChatDialog = {
         return reader.chatOptions().map(o => o.text);
     },
 
+    /** The lines currently rendered in the chat modal, including the NPC's. */
+    texts(): string[] {
+        return reader.chatModalTexts();
+    },
+
     isMakeMenu(): boolean {
         return reader.makeProducts().length > 0;
     },
