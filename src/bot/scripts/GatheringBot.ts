@@ -4,6 +4,7 @@ import { EventSignal } from '../api/EventSignal.js';
 import { Execution } from '../api/Execution.js';
 import { Game } from '../api/Game.js';
 import Tile from '../api/Tile.js';
+import type { Npc } from '../api/entities/index.js';
 import { Bank, withdrawOp } from '../api/hud/Bank.js';
 import { ChatDialog } from '../api/hud/ChatDialog.js';
 import { Equipment } from '../api/hud/Equipment.js';
@@ -18,7 +19,10 @@ import { walkOpening } from '../api/walkOpening.js';
 import { DirectNavigator } from '../nav/DirectNavigator.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import { resolveLocation, type FishingLocation } from './FishingLocations.js';
+import { resolveFishingLocation, type FishingLocation } from './FishingLocations.js';
+import { type GatheringLocation } from './GatheringLocations.js';
+import { resolveMiningLocation } from './MiningLocations.js';
+import { resolveWoodcuttingLocation } from './WoodcuttingLocations.js';
 import { BROKEN_PICKAXE, GAS_ROCK_IDS, GAS_ROCK_TICKS, ROCK_OPTIONS, resolveRockIds } from './MiningRocks.js';
 import {
     TINDERBOX,
@@ -36,11 +40,13 @@ import {
     axeReq,
     bestHeldToolNames,
     bestPickaxe,
+    canWieldTool,
     hasAllTools,
     missingToolLabels,
     pickaxeReq,
     surplusHeldToolNames,
     tinderboxReq,
+    toolAttackLevel,
     toolKeepNames,
     toolKitLabel,
     toolRestockPlan,
@@ -87,19 +93,22 @@ import { Shop } from '../api/hud/Shop.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
 import { driveDialog } from '../quests/exec/primitives.js';
 import {
+    AXE_BAR_FOR,
     BROKEN_AXE,
     COINS,
     FORGETFUL_BANK_ODDS,
     HAMMER as ACQUIRE_HAMMER,
     acquireKeepNames,
+    buyPlansCost,
     canFundPlan,
     coinsToWithdraw,
+    fishingGearShopCart,
     parseToolAcquireMode,
     isFishingBaitPiece,
-    planFishingGearAcquire,
     planGatherToolAcquire,
     withBaitTarget,
     type AcquireWorld,
+    type FishingGearBuyPlan,
     type ToolAcquireMode,
     type ToolAcquirePlan,
     type ToolVendor
@@ -108,12 +117,67 @@ import {
 /** Default half-size of the Auto (start) burn box around the script start tile. */
 const LOCAL_BURN_HALF = 8;
 
+/**
+ * Soft home arrive radius after bank/shop/repair.
+ * Humans re-enter the camp disk — they do not pin the exact location.spot tile.
+ */
+export const HOME_ARRIVE_RADIUS = 8;
+
+/**
+ * Floor for non-Auto location modes (named camps + power None).
+ * Named camps are large (Catherby pier, Fishing Guild docks, multi-rock mines) —
+ * a tight UI default like 10–18 leaves "no spots within N of anchor" while standing
+ * in camp. Floor 40 still clipped Fishing Guild pier hops (hunt was also capped at 40).
+ * Auto keeps the raw setting so freeform / unverified snaps stay conservative.
+ */
+export const NAMED_CAMP_LEASH_FLOOR = 64;
+
+/** @deprecated Prefer {@link NAMED_CAMP_LEASH_FLOOR} — same value, kept for imports. */
+export const START_TILE_LEASH_FLOOR = NAMED_CAMP_LEASH_FLOOR;
+
+/**
+ * Effective gather leash from the UI value + location mode.
+ * - Auto → respect setting (freeform / unverified chunk snaps).
+ * - Named camp or None → at least {@link NAMED_CAMP_LEASH_FLOOR}.
+ */
+export function effectiveGatherLeash(settingLeash: number, locationSetting: string): number {
+    const raw = Math.max(2, Math.floor(Number.isFinite(settingLeash) ? settingLeash : 10));
+    if (locationSetting.trim().toLowerCase() === 'auto') {
+        return raw;
+    }
+    return Math.max(NAMED_CAMP_LEASH_FLOOR, raw);
+}
+
+/** True when Location is Auto — expert freeform; no mob-flee babysitting. */
+export function isAutoLocation(locationSetting: string): boolean {
+    return locationSetting.trim().toLowerCase() === 'auto';
+}
+
+/**
+ * Pier-hop hunt radius past the gather leash.
+ * Must exceed the leash (no hard 40 cap) so named camps with a high floor still
+ * chase spots that hop further along the dock.
+ */
+export function gatherHuntRadius(leash: number): number {
+    const L = Math.max(2, Math.floor(Number.isFinite(leash) ? leash : 10));
+    return Math.max(L + 12, 28);
+}
+
 export const GATHERING_SETTINGS: SettingsSchema = {
     targetType: { type: 'string', default: 'loc', label: "Target type ('loc' or 'npc')", help: 'loc = scenery (rocks/trees), npc = fishing spots' },
     target: { type: 'string', default: 'Rocks', label: 'Target name', help: 'in-game name, e.g. Rocks / Tree / Fishing spot' },
     action: { type: 'string', default: 'Mine', label: 'Action', help: 'right-click op, e.g. Mine / Chop down / Net' },
     dropMatch: { type: 'string', default: 'ore', label: 'Drop items containing', help: 'when full, drop items whose name contains this (the gathered product)' },
-    leashRadius: { type: 'number', default: 10, min: 2, max: 30, label: 'Leash radius (tiles)' }
+    // Named camps / None floor to NAMED_CAMP_LEASH_FLOOR. Auto alone keeps the setting.
+    leashRadius: {
+        type: 'number',
+        default: 10,
+        min: 2,
+        max: 64,
+        label: 'Leash radius (tiles)',
+        help:
+            'How far from the camp/start anchor to hunt targets. Only Location Auto uses this value as-is (freeform and unverified chunk snaps). Named camps and None floor to 64 so large piers/mines (Fishing Guild, Catherby) stay fully in range.'
+    }
 };
 
 export function shouldYieldGathering(
@@ -155,7 +219,7 @@ export default class GatheringBot extends TaskBot {
     private cooked = 0;
     private burnt = 0;
     private status = 'starting';
-    private location: FishingLocation | null = null;
+    private location: GatheringLocation | null = null;
     private banked = 0;
     private trips = 0;
     private startedAt = Date.now();
@@ -166,6 +230,8 @@ export default class GatheringBot extends TaskBot {
     private pairOp = '';
     private dropMatch = 'ore';
     private leash = 10;
+    /** Raw location setting — Auto skips mob flee (expert / may-die). */
+    private locationSetting = 'None';
 
     private rockIds = new Set<number>();
     private productKeywords: string[] = [];
@@ -234,6 +300,7 @@ export default class GatheringBot extends TaskBot {
         this.target = this.settings.str('target', 'Rocks');
         this.action = this.settings.str('action', 'Mine');
         this.dropMatch = this.settings.str('dropMatch', 'ore').toLowerCase();
+        // Final leash applied after location is resolved (named/None floor; Auto keeps setting).
         this.leash = this.settings.num('leashRadius', 10);
 
         if ('rocks' in this.settings.raw()) {
@@ -245,6 +312,12 @@ export default class GatheringBot extends TaskBot {
             this.rockIds = resolveRockIds(rocks);
             this.productKeywords = rocks.map(r => r.trim().toLowerCase());
             this.toolReqs = [pickaxeReq()];
+            // Empty multi-select falls back to every ROCK_OPTIONS entry; log so a
+            // wrong ore type (e.g. Copper at tin-only SW Varrock) is obvious.
+            this.log(
+                `rocks: ${rocks.join(', ') || '(none)'} → ${this.rockIds.size} loc id(s)`
+                    + (chosen.length === 0 ? ' [defaulted — multi-select empty]' : '')
+            );
         } else if ('fishMethod' in this.settings.raw()) {
             const method = resolveFishMethod(this.settings.str('fishMethod', FISHING_METHOD_OPTIONS[0]));
             this.targetType = 'npc';
@@ -293,15 +366,36 @@ export default class GatheringBot extends TaskBot {
 
         const here = Game.tile()!;
         const locSetting = this.settings.str('location', 'None');
-        this.location = resolveLocation(locSetting, here);
-
-        // Fishing presets pin a pier spot as the gather anchor. Miner/Woodcutter only
-        // reuse those presets for bankStand — always leash from the live start tile so
-        // Auto at Draynor does not yank oaks toward the fishing pier (3086,3231).
+        this.locationSetting = locSetting;
+        // Skill-branched location tables — Miner/WC must not resolve fishing piers.
         if (this.fishing) {
-            this.anchor = resolveRunAnchor(new Tile(here.x, here.z, here.level), this.location?.spot ?? null);
+            this.location = resolveFishingLocation(locSetting, here);
+        } else if (this.mining()) {
+            this.location = resolveMiningLocation(locSetting, here);
+        } else if (this.woodcutting()) {
+            this.location = resolveWoodcuttingLocation(locSetting, here);
+        } else {
+            this.location = null;
+        }
+
+        // Named/Auto camps pin the gather leash to the camp spot. Power mode (None)
+        // and Auto freeform (no preset in this 64×64 map square) leash from the live
+        // start tile. Leash width: only Auto respects the UI setting; named camps
+        // and None floor to NAMED_CAMP_LEASH_FLOOR (Fishing Guild / Catherby need ~64).
+        this.leash = effectiveGatherLeash(this.leash, locSetting);
+        if (this.location?.spot) {
+            this.anchor = resolveRunAnchor(new Tile(here.x, here.z, here.level), this.location.spot);
         } else {
             this.anchor = new Tile(here.x, here.z, here.level);
+        }
+
+        // After ::tele / zone load, Locs+Npcs are empty for a beat (docs/NAV.md
+        // #level-change-loc-lag). Blank ≠ absent — wait before first gather tick
+        // so we don't idle on "no rocks/trees in leash" with an empty scene.
+        if (this.fishing) {
+            await Execution.delayUntil(() => Npcs.query().results().length > 0, 5000);
+        } else {
+            await Execution.delayUntil(() => Locs.query().results().length > 0, 5000);
         }
 
         this.powerMode = locSetting.toLowerCase() === 'none';
@@ -396,6 +490,19 @@ export default class GatheringBot extends TaskBot {
         this.gearKeep = this.rebuildGearKeep();
         this.captureXpStart();
 
+        // Named/None: multi-combat pests (lava-maze spiders, etc.) pin a retaliating
+        // gatherer forever — Auto Retaliate off + FleeCombat walks hits off.
+        // Location Auto is expert / may-die: leave combat alone (no flee babysitting).
+        if (!isAutoLocation(this.locationSetting)) {
+            if (Game.setAutoRetaliate(false)) {
+                this.log('combat: Auto Retaliate off (gather — flee, do not fight)');
+            } else {
+                this.log('combat: could not toggle Auto Retaliate (controls missing?)');
+            }
+        } else {
+            this.log('combat: Location Auto — mob flee off (may die)');
+        }
+
         if (this.location) {
             const auto = locSetting.toLowerCase() === 'auto' ? ' (auto)' : '';
             this.log(`location: ${this.location.name}${auto}; bank ${this.location.bankStand}`);
@@ -445,8 +552,12 @@ export default class GatheringBot extends TaskBot {
         const cookOn = this.fishing && this.cookMode !== 'off' && this.rangeStand !== null;
         const burnOn = this.burnEnabled();
         const gatherTools = (this.mining() || this.woodcutting() || this.toolReqs.length > 0) && !this.fishing;
+        const mobFlee = !isAutoLocation(this.locationSetting);
         this.add(
             new ContinueDialog(),
+            // Named/None only: break multi-combat pulls (wildy spiders) by walking off.
+            // Auto = expert mode — no mob flee (random events still handled elsewhere).
+            ...(mobFlee ? [new FleeCombat(this)] : []),
             ...(this.mining() || this.woodcutting() ? [new RepairBrokenGatherTool(this)] : []),
             ...(this.fishing ? [new RestockFishingGear(this)] : []),
             ...(gatherTools
@@ -477,6 +588,11 @@ export default class GatheringBot extends TaskBot {
             names.add(BROKEN_PICKAXE);
             names.add(BROKEN_AXE);
             names.add(ACQUIRE_HAMMER);
+            // Smith materials must survive restock deposit — otherwise a Draynor
+            // camp bank dumps the Runite bar before executeSmithPlan can use it.
+            for (const bar of Object.values(AXE_BAR_FOR)) {
+                names.add(bar);
+            }
         }
         return [...names];
     }
@@ -817,7 +933,25 @@ export default class GatheringBot extends TaskBot {
         if (plan.kind === 'buy') {
             return this.executeBuyPlan(plan, log, opts);
         }
-        return this.executeSmithPlan(plan, log);
+        return this.executeSmithPlan(plan, log, opts);
+    }
+
+    /**
+     * Buy several fishing gear lines at one vendor in a single bank fund + shop visit.
+     * Fly rod + feathers at Gerrant must not bank between pieces.
+     */
+    async executeFishingGearShopCart(
+        plans: readonly FishingGearBuyPlan[],
+        log: (m: string) => void = m => this.log(`  ${m}`),
+        opts: { bankPrepared?: boolean } = {}
+    ): Promise<boolean> {
+        if (plans.length === 0) {
+            return false;
+        }
+        if (plans.length === 1) {
+            return this.executeBuyPlan(plans[0]!, log, opts);
+        }
+        return this.executeBuyPlans(plans, log, opts);
     }
 
     private async executeRepairPlan(
@@ -901,13 +1035,41 @@ export default class GatheringBot extends TaskBot {
         log: (m: string) => void,
         opts: { bankPrepared?: boolean } = {}
     ): Promise<boolean> {
-        this.setStatus(`buy: ${plan.qty}× ${plan.name}`);
-        this.log(`acquire: ${plan.reason} @ ${plan.vendor.keeper} (${plan.cost}gp)`);
+        return this.executeBuyPlans([plan], log, opts);
+    }
+
+    /**
+     * Fund once (vendor bankStand), open shop once, buy every line, close once.
+     * All plans must share the same vendor keeper.
+     */
+    private async executeBuyPlans(
+        plans: readonly Extract<ToolAcquirePlan, { kind: 'buy' }>[],
+        log: (m: string) => void,
+        opts: { bankPrepared?: boolean } = {}
+    ): Promise<boolean> {
+        if (plans.length === 0) {
+            return false;
+        }
+        const vendor = plans[0]!.vendor;
+        for (const p of plans) {
+            if (p.vendor.keeper !== vendor.keeper) {
+                log(`acquire: multi-buy mixed vendors (${p.vendor.keeper} vs ${vendor.keeper}) — abort`);
+                return false;
+            }
+        }
+        const totalCost = buyPlansCost(plans);
+        const label = plans.map(p => `${p.qty}× ${p.name}`).join(' + ');
+        this.setStatus(`buy: ${label}`);
+        this.log(
+            plans.length === 1
+                ? `acquire: ${plans[0]!.reason} @ ${vendor.keeper} (${totalCost}gp)`
+                : `acquire: multi-buy ${label} @ ${vendor.keeper} (${totalCost}gp)`
+        );
 
         // Caller already deposited surplus + withdrew shop GP in the same bank session.
-        const skipBank = opts.bankPrepared === true && Inventory.count(COINS) >= plan.cost;
+        const skipBank = opts.bankPrepared === true && Inventory.count(COINS) >= totalCost;
         if (!skipBank) {
-            if (!(await this.openBankAt(plan.vendor.bankStand, log))) {
+            if (!(await this.openBankAt(vendor.bankStand, log))) {
                 log('acquire: could not open bank for coins');
                 return false;
             }
@@ -915,21 +1077,25 @@ export default class GatheringBot extends TaskBot {
                 log('acquire: bank did not load for coin withdraw');
                 return false;
             }
-            const keep = new Set(acquireKeepNames(plan, this.gearKeepNamesList()).map(n => n.toLowerCase()));
+            const keepExtra = [
+                ...this.gearKeepNamesList(),
+                ...plans.map(p => p.name)
+            ];
+            const keep = new Set(acquireKeepNames(plans[0]!, keepExtra).map(n => n.toLowerCase()));
             await Bank.depositAllMatching(name => name.length > 0 && !keep.has(name.toLowerCase()));
             await Execution.delayUntil(() => Bank.loaded() || !Bank.isOpen(), 3000);
             await this.bankPace();
-            // Same open: stash worse tools, then pull GP for the shop trip.
-            await this.prepareWornSurplusForDeposit(log, acquireKeepNames(plan));
-            await this.depositSurplusGatherTools(log, acquireKeepNames(plan));
+            // Same open: stash worse tools, then pull GP for the whole cart.
+            await this.prepareWornSurplusForDeposit(log, acquireKeepNames(plans[0]!, keepExtra));
+            await this.depositSurplusGatherTools(log, acquireKeepNames(plans[0]!, keepExtra));
 
-            if (!canFundPlan(plan, Inventory.count(COINS), Bank.count(COINS))) {
-                log(`acquire: not enough coins for ${plan.name} (${plan.cost}gp)`);
+            if (Inventory.count(COINS) + Bank.count(COINS) < totalCost) {
+                log(`acquire: not enough coins for ${label} (${totalCost}gp)`);
                 this.markAcquireBackoff(60_000);
                 await this.closeScriptBank(log, { allowForgetful: false });
                 return false;
             }
-            if (!(await this.withdrawCoinsFor(plan.cost, log))) {
+            if (!(await this.withdrawCoinsFor(totalCost, log))) {
                 await this.closeScriptBank(log, { allowForgetful: false });
                 return false;
             }
@@ -941,81 +1107,114 @@ export default class GatheringBot extends TaskBot {
             }
         }
 
-        if (!(await this.walkToToolVendor(plan.vendor, log))) {
-            log(`acquire: could not reach ${plan.vendor.keeper}`);
+        if (!(await this.walkToToolVendor(vendor, log))) {
+            log(`acquire: could not reach ${vendor.keeper}`);
             return false;
         }
-        if (!(await Shop.open(plan.vendor.keeper))) {
-            log(`acquire: could not open ${plan.vendor.keeper}'s shop`);
+        if (!(await Shop.open(vendor.keeper))) {
+            log(`acquire: could not open ${vendor.keeper}'s shop`);
             return false;
         }
-        const before = Inventory.count(plan.name);
-        const bought = await Shop.buy(plan.name, plan.qty);
+
+        let anyBought = false;
+        for (const plan of plans) {
+            const before = Inventory.count(plan.name);
+            const bought = await Shop.buy(plan.name, plan.qty);
+            const got = bought > 0 ? bought : Math.max(0, Inventory.count(plan.name) - before);
+            if (got <= 0) {
+                log(`acquire: bought 0× ${plan.name} — stock/coins`);
+                continue;
+            }
+            anyBought = true;
+            this.log(`acquire: bought ${got}× ${plan.name}`);
+            if (plan.equip && canWieldTool(plan.name, Skills.level('attack'))) {
+                // Shop floor: equip offline. Do not walk back to bank just to stash a
+                // displaced bronze tool — next BankCatch / restock deposits surplus.
+                await this.equipTools([plan.name], log, { bankDisplaced: false });
+            } else if (plan.equip) {
+                log(`equip: skip ${plan.name} (need Attack ${toolAttackLevel(plan.name)})`);
+            }
+        }
         await Shop.close();
-        if (bought <= 0 && Inventory.count(plan.name) <= before) {
-            log(`acquire: bought 0× ${plan.name} — stock/coins`);
+
+        if (!anyBought) {
             this.markAcquireBackoff(20_000);
             return false;
-        }
-        this.log(`acquire: bought ${bought || Inventory.count(plan.name) - before}× ${plan.name}`);
-        if (plan.equip) {
-            // Shop floor: equip offline; only reopen bank if non-tool gear was displaced.
-            await this.equipTools([plan.name], log, { bankDisplaced: true });
         }
         return true;
     }
 
     private async executeSmithPlan(
         plan: Extract<ToolAcquirePlan, { kind: 'smith' }>,
-        log: (m: string) => void
+        log: (m: string) => void,
+        opts: { bankPrepared?: boolean } = {}
     ): Promise<boolean> {
         this.setStatus(`smith: ${plan.name}`);
         this.log(`acquire: ${plan.reason} @ Varrock anvil`);
 
-        if (!(await this.openBankAt(plan.vendorBank, log))) {
-            log('acquire: could not open bank for smith materials');
-            return false;
-        }
-        if (!(await this.waitBankReady(log))) {
-            log('acquire: bank did not load for smith materials');
-            return false;
-        }
-        const keep = new Set(acquireKeepNames(plan, this.gearKeepNamesList()).map(n => n.toLowerCase()));
-        await Bank.depositAllMatching(name => name.length > 0 && !keep.has(name.toLowerCase()));
-        await Execution.delayUntil(() => Bank.loaded() || !Bank.isOpen(), 3000);
-        await this.bankPace();
-        await this.prepareWornSurplusForDeposit(log, acquireKeepNames(plan));
-        await this.depositSurplusGatherTools(log, acquireKeepNames(plan));
+        // Restock / seed already left hammer + bar in the pack — skip the vendor
+        // bank open (and a second deposit that could strand materials elsewhere).
+        // opts.bankPrepared is API-symmetric with buy; materials-held alone is enough.
+        void opts;
+        const materialsHeld =
+            Inventory.count(ACQUIRE_HAMMER) >= 1 && Inventory.count(plan.bar) >= 1;
+        if (materialsHeld) {
+            log('acquire: smith materials already held — heading to anvil');
+            if (Bank.isOpen()) {
+                await this.closeScriptBank(log, { allowForgetful: false });
+            }
+        } else {
+            if (!(await this.openBankAt(plan.vendorBank, log))) {
+                log('acquire: could not open bank for smith materials');
+                return false;
+            }
+            if (!(await this.waitBankReady(log))) {
+                log('acquire: bank did not load for smith materials');
+                return false;
+            }
+            const keep = new Set(acquireKeepNames(plan, this.gearKeepNamesList()).map(n => n.toLowerCase()));
+            await Bank.depositAllMatching(name => name.length > 0 && !keep.has(name.toLowerCase()));
+            await Execution.delayUntil(() => Bank.loaded() || !Bank.isOpen(), 3000);
+            await this.bankPace();
+            await this.prepareWornSurplusForDeposit(log, acquireKeepNames(plan));
+            await this.depositSurplusGatherTools(log, acquireKeepNames(plan));
 
-        if (Inventory.count(ACQUIRE_HAMMER) < 1) {
-            const h = Bank.items().find(i => (i.name ?? '').toLowerCase() === ACQUIRE_HAMMER.toLowerCase());
-            if (!h) {
-                log('acquire: no hammer for smithing');
-                this.markAcquireBackoff(60_000);
-                await this.closeScriptBank(log, { allowForgetful: false });
-                return false;
+            if (Inventory.count(ACQUIRE_HAMMER) < 1) {
+                const h = Bank.items().find(i => (i.name ?? '').toLowerCase() === ACQUIRE_HAMMER.toLowerCase());
+                if (!h) {
+                    log('acquire: no hammer for smithing');
+                    this.markAcquireBackoff(60_000);
+                    await this.closeScriptBank(log, { allowForgetful: false });
+                    return false;
+                }
+                const one = withdrawOp(h.ops, '1') ?? 'Withdraw-1';
+                await this.bankPace();
+                await Bank.withdraw(ACQUIRE_HAMMER, one);
+                await Execution.delayUntil(() => Inventory.count(ACQUIRE_HAMMER) > 0, 3000);
+                await this.bankPace();
             }
-            const one = withdrawOp(h.ops, '1') ?? 'Withdraw-1';
-            await this.bankPace();
-            await Bank.withdraw(ACQUIRE_HAMMER, one);
-            await Execution.delayUntil(() => Inventory.count(ACQUIRE_HAMMER) > 0, 3000);
-            await this.bankPace();
-        }
-        if (Inventory.count(plan.bar) < 1) {
-            const b = Bank.items().find(i => (i.name ?? '').toLowerCase() === plan.bar.toLowerCase());
-            if (!b) {
-                log(`acquire: no ${plan.bar} in bank`);
-                this.markAcquireBackoff(60_000);
-                await this.closeScriptBank(log, { allowForgetful: false });
-                return false;
+            if (Inventory.count(plan.bar) < 1) {
+                const b = Bank.items().find(i => (i.name ?? '').toLowerCase() === plan.bar.toLowerCase());
+                if (!b) {
+                    log(`acquire: no ${plan.bar} in bank`);
+                    this.markAcquireBackoff(60_000);
+                    await this.closeScriptBank(log, { allowForgetful: false });
+                    return false;
+                }
+                const one = withdrawOp(b.ops, '1') ?? 'Withdraw-1';
+                await this.bankPace();
+                await Bank.withdraw(plan.bar, one);
+                await Execution.delayUntil(() => Inventory.count(plan.bar) > 0, 3000);
+                await this.bankPace();
             }
-            const one = withdrawOp(b.ops, '1') ?? 'Withdraw-1';
-            await this.bankPace();
-            await Bank.withdraw(plan.bar, one);
-            await Execution.delayUntil(() => Inventory.count(plan.bar) > 0, 3000);
-            await this.bankPace();
+            await this.closeScriptBank(log, { allowForgetful: false });
         }
-        await this.closeScriptBank(log, { allowForgetful: false });
+
+        if (Inventory.count(ACQUIRE_HAMMER) < 1 || Inventory.count(plan.bar) < 1) {
+            log(`acquire: missing hammer or ${plan.bar} before anvil walk`);
+            this.markAcquireBackoff(30_000);
+            return false;
+        }
 
         if (!(await Traversal.walkResilient(plan.anvilStand, { radius: 2, timeoutMs: 90_000, log }))) {
             log('acquire: could not reach anvil');
@@ -1044,8 +1243,11 @@ export default class GatheringBot extends TaskBot {
             return false;
         }
         this.log(`acquire: smithed ${plan.name}`);
-        if (plan.equip) {
-            await this.equipTools([plan.name], log, { bankDisplaced: true });
+        if (plan.equip && canWieldTool(plan.name, Skills.level('attack'))) {
+            // Anvil floor: same as shop — don't bank-trip solely for displaced tools.
+            await this.equipTools([plan.name], log, { bankDisplaced: false });
+        } else if (plan.equip) {
+            log(`equip: skip ${plan.name} (need Attack ${toolAttackLevel(plan.name)})`);
         }
         return true;
     }
@@ -1072,10 +1274,11 @@ export default class GatheringBot extends TaskBot {
     }
 
     private resolveCookScene(): void {
-        if (this.location?.rangeStand) {
-            this.rangeStand = this.location.rangeStand;
-            this.rangeName = this.location.rangeName ?? 'Range';
-            this.cookObstacles = this.location.obstacles ?? ['door', 'gate'];
+        const fishLoc = this.fishingLocation();
+        if (fishLoc?.rangeStand) {
+            this.rangeStand = fishLoc.rangeStand;
+            this.rangeName = fishLoc.rangeName ?? 'Range';
+            this.cookObstacles = fishLoc.obstacles ?? ['door', 'gate'];
             return;
         }
 
@@ -1086,6 +1289,14 @@ export default class GatheringBot extends TaskBot {
             this.cookObstacles = this.location?.obstacles ?? ['door', 'gate'];
             this.log(`cook: found ${this.rangeName} @ ${this.rangeStand}`);
         }
+    }
+
+    /** Narrow location to fishing camp when cook presets (rangeStand) are needed. */
+    private fishingLocation(): FishingLocation | null {
+        if (!this.fishing || !this.location) {
+            return null;
+        }
+        return this.location as FishingLocation;
     }
 
     override recoveryAnchor(): Tile | null {
@@ -1481,7 +1692,7 @@ export default class GatheringBot extends TaskBot {
         return { x: t.x, z: t.z };
     }
 
-    /** Options for planFishingGearAcquire (proximity vendor + bait qty). */
+    /** Options for fishingGearShopCart / planFishingGearBuys (proximity vendor + bait qty). */
     fishingAcquireOpts(): { near: { x: number; z: number }; baitQty: number } {
         return { near: this.fishingVendorNear(), baitQty: this.baitQty };
     }
@@ -1524,6 +1735,27 @@ export default class GatheringBot extends TaskBot {
     /** True when standing outside the gather leash (startup / after bank). */
     awayFromGatherSpot(slack = 4): boolean {
         return !tileWithinLeash(this, Game.tile() ?? this.getAnchor(), slack);
+    }
+
+    /**
+     * Soft return toward the gather anchor after bank/shop/repair.
+     * Skips the walk when already inside the camp disk — no robotic pin of the
+     * exact location.spot tile before the next chop/fish/mine.
+     */
+    async walkHomeIfNeeded(
+        log: (m: string) => void = m => this.log(`  ${m}`),
+        arriveRadius = HOME_ARRIVE_RADIUS
+    ): Promise<boolean> {
+        const here = Game.tile();
+        const anchor = this.getAnchor();
+        if (here && anchor.distanceTo(here) <= arriveRadius) {
+            return true;
+        }
+        // Also skip when still inside the gather leash (named camps are large).
+        if (here && tileWithinLeash(this, here, 0)) {
+            return true;
+        }
+        return Traversal.walkResilient(anchor, { radius: arriveRadius, log });
     }
 
     /**
@@ -1599,8 +1831,9 @@ export default class GatheringBot extends TaskBot {
         await this.prepareWornSurplusForDeposit(log);
         await this.depositSurplusGatherTools(log);
 
+        const attack = Skills.level('attack');
         const toEquip = [
-            ...upgrades.filter(s => s.equip).map(s => s.name),
+            ...upgrades.filter(s => s.equip && canWieldTool(s.name, attack)).map(s => s.name),
             ...this.toolsToEquip()
         ];
         this.log(`tools: banked better gear ready (${this.gearLabel()})`);
@@ -1676,7 +1909,7 @@ export default class GatheringBot extends TaskBot {
                 await this.equipTools(toEquip, log, { bankDisplaced: false });
             }
             if (didWork || withdrewBetter) {
-                await Traversal.walkResilient(this.getAnchor(), { radius: 3, log });
+                await this.walkHomeIfNeeded(log);
             }
             return didWork || withdrewBetter;
         };
@@ -1725,7 +1958,7 @@ export default class GatheringBot extends TaskBot {
         });
         this.markAcquireBackoff(ok ? 90_000 : 45_000);
         // Always head home after an upgrade attempt so BankCatch early-return is safe.
-        await Traversal.walkResilient(this.getAnchor(), { radius: 3, log });
+        await this.walkHomeIfNeeded(log);
         return true;
     }
 
@@ -1773,13 +2006,20 @@ export default class GatheringBot extends TaskBot {
         }
 
         // Shop buy when still under target and acquire is enabled.
+        // Same-vendor cart so multi-bait lines (if any) share one shop visit.
         if (this.toolAcquireEnabled() && this.acquireReady()) {
-            const buy = planFishingGearAcquire(method, this.acquireWorldWithBank(), this.fishingAcquireOpts());
-            if (buy?.kind === 'buy' && isFishingBaitPiece({ name: buy.name, restock: this.baitQty })) {
+            const cart = fishingGearShopCart(method, this.acquireWorldWithBank(), this.fishingAcquireOpts()).filter(
+                p => isFishingBaitPiece({ name: p.name, restock: this.baitQty })
+            );
+            if (cart.length > 0) {
+                const cartCost = buyPlansCost(cart);
+                const invFunded = Inventory.count(COINS) >= cartCost;
                 if (Bank.isOpen()) {
                     await this.closeScriptBank(log, { allowForgetful: false });
                 }
-                const ok = await this.executeToolAcquirePlan(buy, log);
+                const ok = await this.executeFishingGearShopCart(cart, log, {
+                    bankPrepared: invFunded
+                });
                 if (!ok) {
                     this.markAcquireBackoff(20_000);
                 }
@@ -1866,6 +2106,21 @@ export default class GatheringBot extends TaskBot {
         return this.rebuildGearKeep();
     }
 
+    /**
+     * True when inventory already holds what executeBuy/Smith needs so restock can
+     * pass bankPrepared and skip a second bank open (or a wrong-camp bank hop).
+     */
+    acquireMaterialsHeld(plan: ToolAcquirePlan): boolean {
+        if (plan.kind === 'buy') {
+            return Inventory.count(COINS) >= plan.cost;
+        }
+        if (plan.kind === 'smith') {
+            return Inventory.count(ACQUIRE_HAMMER) >= 1 && Inventory.count(plan.bar) >= 1;
+        }
+        // repair: broken tool must be held; coins optional float handled in executeRepairPlan
+        return this.heldCount(plan.brokenName) > 0;
+    }
+
     gatherToolRestockPlan() {
         return toolRestockPlan(this.toolReqs, this.skillLevel, this.heldCount, name => Bank.count(name));
     }
@@ -1899,7 +2154,22 @@ export default class GatheringBot extends TaskBot {
         log: (m: string) => void = m => this.log(`  ${m}`),
         opts: { bankDisplaced?: boolean } = {}
     ): Promise<boolean> {
-        const unique = [...new Set(names.filter(n => n.length > 0))];
+        const attack = Skills.level('attack');
+        // Drop tools we cannot wield — backpack use is still valid for mining/wc.
+        const unique = [
+            ...new Set(
+                names.filter(n => {
+                    if (!n || n.length === 0) {
+                        return false;
+                    }
+                    if (!canWieldTool(n, attack)) {
+                        log(`equip: skip ${n} (need Attack ${toolAttackLevel(n)}, have ${attack})`);
+                        return false;
+                    }
+                    return true;
+                })
+            )
+        ];
         if (unique.length === 0) {
             return true;
         }
@@ -2006,7 +2276,7 @@ export default class GatheringBot extends TaskBot {
     hasDepositable(): boolean {
         return Inventory.items().some(i => this.shouldDeposit(i.name ?? ''));
     }
-    getLocation(): FishingLocation | null {
+    getLocation(): GatheringLocation | null {
         return this.location;
     }
     countTrip(n: number): void {
@@ -2257,6 +2527,91 @@ function keyOf(t: { x: number; z: number }): string {
     return `${t.x},${t.z}`;
 }
 
+/** First kite step away from a mob (named camps only — Auto skips FleeCombat). */
+const FLEE_STEP = 12;
+/** Second kite if still stuck after the first walk. */
+const FLEE_STEP_HARD = 20;
+
+/**
+ * Break multi-combat pulls from aggressive NPCs (lava-maze spiders, dark wizards, etc.).
+ * Not for random events — those are handled elsewhere.
+ * Auto Retaliate is off at start — walking away ends the fight instead of trading hits.
+ * Always kite *away* from the attacker (never walk back onto the camp anchor while
+ * spiders sit on it). Prefer east when the vector is ambiguous (Lava Maze exit).
+ */
+class FleeCombat implements Task {
+    constructor(private bot: GatheringBot) {}
+
+    validate(): boolean {
+        return Game.inCombat();
+    }
+
+    private attacker(): Npc | null {
+        return (
+            Npcs.query()
+                .where(n => n.inCombat && n.targetsMe() && n.actions().includes('Attack'))
+                .nearest() ??
+            Npcs.query()
+                .where(n => n.inCombat && !n.targetsAnotherPlayer() && n.actions().includes('Attack') && n.distance() <= 2)
+                .nearest()
+        );
+    }
+
+    private fleeTile(
+        here: { x: number; z: number; level: number },
+        attacker: Npc | null,
+        step: number
+    ): Tile {
+        if (!attacker) {
+            // No face target — east first (Lava Maze spiders / wildy approach), then south.
+            return new Tile(here.x + step, here.z, here.level);
+        }
+        const at = attacker.tile();
+        let dx = here.x - at.x;
+        let dz = here.z - at.z;
+        // Stacked on the attacker or zero vector — default east (named wildy camps).
+        if (dx === 0 && dz === 0) {
+            dx = 1;
+            dz = 0;
+        }
+        const sx = dx === 0 ? 0 : dx > 0 ? 1 : -1;
+        const sz = dz === 0 ? 0 : dz > 0 ? 1 : -1;
+        // Pure north/south kite: bias a half-step east so we don't re-enter spider packs.
+        const ox = sx === 0 ? 1 : sx;
+        const oz = sz;
+        return new Tile(here.x + ox * step, here.z + oz * step, here.level);
+    }
+
+    async execute(): Promise<void> {
+        // Re-assert off in case a death/relog restored the default.
+        Game.setAutoRetaliate(false);
+
+        const here = Game.tile();
+        if (!here) {
+            await Execution.delayTicks(1);
+            return;
+        }
+        const attacker = this.attacker();
+        const dest = this.fleeTile(here, attacker, FLEE_STEP);
+        const who = attacker?.name ?? 'attacker';
+        this.bot.setStatus(`combat: fleeing ${who} → ${dest.x},${dest.z}`);
+        this.bot.log(`combat: under attack by ${who} — walking off to ${dest.x},${dest.z}`);
+
+        await Traversal.walkTo(dest, { radius: 2, timeoutMs: 20_000 });
+        await Execution.delayUntil(() => !Game.inCombat(), 12_000);
+        if (Game.inCombat()) {
+            // Still stuck — longer kite away from whoever is on us.
+            const still = Game.tile();
+            if (still) {
+                const again = this.fleeTile(still, this.attacker(), FLEE_STEP_HARD);
+                this.bot.log(`combat: still in combat — second kite to ${again.x},${again.z}`);
+                await Traversal.walkTo(again, { radius: 2, timeoutMs: 15_000 });
+                await Execution.delayUntil(() => !Game.inCombat(), 10_000);
+            }
+        }
+    }
+}
+
 class DropProduct implements Task {
     constructor(private bot: GatheringBot) {}
 
@@ -2348,7 +2703,7 @@ class BankCatch implements Task {
             await this.bot.closeScriptBank(log);
         }
         if (!this.bot.isCookBatchReady()) {
-            await Traversal.walkResilient(this.bot.getAnchor(), { radius: 3, log });
+            await this.bot.walkHomeIfNeeded(log);
         }
     }
 }
@@ -2523,7 +2878,7 @@ class FishBankCooked implements Task {
         } else {
             this.bot.endCookingLoad();
         }
-        await Traversal.walkResilient(this.bot.getAnchor(), { radius: 3, log });
+        await this.bot.walkHomeIfNeeded(log);
     }
 }
 
@@ -2564,7 +2919,7 @@ class FishWithdrawCookBatch implements Task {
             this.bot.forceBankRawEmpty();
             this.bot.finishCookCycle();
             if (!this.bot.isCookBatchReady() && this.bot.getAfterCook() === 'continue') {
-                await Traversal.walkResilient(this.bot.getAnchor(), { radius: 3, log });
+                await this.bot.walkHomeIfNeeded(log);
             }
             return;
         }
@@ -2599,7 +2954,7 @@ class FishWithdrawCookBatch implements Task {
             }
             this.bot.finishCookCycle();
             if (!this.bot.isCookBatchReady() && this.bot.getAfterCook() === 'continue') {
-                await Traversal.walkResilient(this.bot.getAnchor(), { radius: 3, log });
+                await this.bot.walkHomeIfNeeded(log);
             }
             return;
         }
@@ -2659,7 +3014,7 @@ class RepairBrokenGatherTool implements Task {
             if (plan?.kind === 'repair') {
                 const ok = await this.bot.executeToolAcquirePlan(plan, log);
                 if (ok) {
-                    await Traversal.walkResilient(this.bot.getAnchor(), { radius: 3, log });
+                    await this.bot.walkHomeIfNeeded(log);
                     return;
                 }
                 this.bot.log('acquire: repair failed — falling back to bank/buy');
@@ -2703,7 +3058,7 @@ class RepairBrokenGatherTool implements Task {
                         }
                         const ok = await this.bot.executeToolAcquirePlan(buy, log);
                         if (ok) {
-                            await Traversal.walkResilient(this.bot.getAnchor(), { radius: 3, log });
+                            await this.bot.walkHomeIfNeeded(log);
                             return;
                         }
                     }
@@ -2729,7 +3084,7 @@ class RepairBrokenGatherTool implements Task {
                 await this.bot.closeScriptBank(log);
             }
             await this.bot.equipTools([pick], log, { bankDisplaced: true });
-            await Traversal.walkResilient(this.bot.getAnchor(), { radius: 3, log });
+            await this.bot.walkHomeIfNeeded(log);
             return;
         }
 
@@ -2810,6 +3165,32 @@ class RestockFishingGear implements Task {
         );
         const log = (m: string) => this.bot.log(`  ${m}`);
 
+        // Coins already cover the shop cart (seeded restock at a booth that isn't
+        // the camp bank) — skip bank entirely and walk straight to Gerrant/Harry.
+        // Prefer-nearby Banking still helps when we *do* need the bank, but held GP
+        // must not force Edgeville from Draynor just to glance at an empty booth.
+        if (this.bot.toolAcquireEnabled() && this.bot.acquireReady() && missing.length > 0) {
+            const preCart = fishingGearShopCart(
+                method,
+                this.bot.acquireWorldWithBank(),
+                this.bot.fishingAcquireOpts()
+            );
+            if (preCart.length > 0 && Inventory.count(COINS) >= buyPlansCost(preCart)) {
+                this.bot.log('restock: coins held for shop cart — skipping bank, heading to vendor');
+                const ok = await this.bot.executeFishingGearShopCart(preCart, log, {
+                    bankPrepared: true
+                });
+                if (ok && this.bot.hasGear()) {
+                    await this.bot.walkHomeIfNeeded(log);
+                    return;
+                }
+                if (ok) {
+                    return;
+                }
+                // Shop failed — fall through to bank path for a normal retry.
+            }
+        }
+
         if (!(await this.bot.openScriptBank(log))) {
             if (power) {
                 this.bot.stopMissingGear('could not open nearest bank', missing);
@@ -2839,22 +3220,30 @@ class RestockFishingGear implements Task {
             const still = this.bot.missingGearNames();
             if (still.length > 0) {
                 if (this.bot.toolAcquireEnabled() && this.bot.acquireReady()) {
-                    const buy = planFishingGearAcquire(
+                    // Same-vendor cart (rod + feathers at Gerrant) — one bank fund + one shop.
+                    const cart = fishingGearShopCart(
                         method,
                         this.bot.acquireWorldWithBank(),
                         this.bot.fishingAcquireOpts()
                     );
-                    if (buy) {
+                    if (cart.length > 0) {
+                        const cartCost = buyPlansCost(cart);
+                        // Inv already covers the cart (coins kept through deposit) —
+                        // skip a second bank open and walk straight to Gerrant/Harry.
+                        // Otherwise executeBuyPlans funds at vendor.bankStand itself.
+                        const invFunded = Inventory.count(COINS) >= cartCost;
                         if (Bank.isOpen()) {
                             await this.bot.closeScriptBank(log, { allowForgetful: false });
                         }
-                        const ok = await this.bot.executeToolAcquirePlan(buy, log);
+                        const ok = await this.bot.executeFishingGearShopCart(cart, log, {
+                            bankPrepared: invFunded
+                        });
                         if (ok && this.bot.hasGear()) {
-                            await Traversal.walkResilient(this.bot.getAnchor(), { radius: 3, log });
+                            await this.bot.walkHomeIfNeeded(log);
                             return;
                         }
                         if (ok) {
-                            // Bought one piece; loop will restock again for remaining.
+                            // Partial cart (stock/coins) — next tick retries remaining.
                             return;
                         }
                     } else {
@@ -2913,18 +3302,22 @@ class RestockFishingGear implements Task {
         if (!this.bot.hasGear()) {
             const still = this.bot.missingGearNames();
             if (this.bot.toolAcquireEnabled() && this.bot.acquireReady()) {
-                const buy = planFishingGearAcquire(
+                const cart = fishingGearShopCart(
                     method,
                     this.bot.acquireWorldWithBank(),
                     this.bot.fishingAcquireOpts()
                 );
-                if (buy) {
+                if (cart.length > 0) {
+                    const cartCost = buyPlansCost(cart);
+                    const invFunded = Inventory.count(COINS) >= cartCost;
                     if (Bank.isOpen()) {
                         await this.bot.closeScriptBank(log, { allowForgetful: false });
                     }
-                    const ok = await this.bot.executeToolAcquirePlan(buy, log);
+                    const ok = await this.bot.executeFishingGearShopCart(cart, log, {
+                        bankPrepared: invFunded
+                    });
                     if (ok && this.bot.hasGear()) {
-                        await Traversal.walkResilient(this.bot.getAnchor(), { radius: 3, log });
+                        await this.bot.walkHomeIfNeeded(log);
                         return;
                     }
                     if (ok) {
@@ -2946,7 +3339,7 @@ class RestockFishingGear implements Task {
             await this.bot.closeScriptBank(log);
         }
         this.bot.log(`restock: gear ok (${this.bot.gearLabel()})`);
-        await Traversal.walkResilient(this.bot.getAnchor(), { radius: 3, log });
+        await this.bot.walkHomeIfNeeded(log);
     }
 }
 
@@ -2984,6 +3377,24 @@ class RestockGatherTool implements Task {
         );
         const log = (m: string) => this.bot.log(`  ${m}`);
 
+        // Hammer+bar (or shop GP / broken tool) already in pack — skip the camp-bank
+        // hop entirely. Suite seeds materials at Varrock West; walking Draynor first
+        // burns the budget before the anvil walk even starts.
+        if (this.bot.toolAcquireEnabled() && this.bot.acquireReady() && missing.length > 0) {
+            const preBuy = planGatherToolAcquire(this.bot.toolReqsList(), this.bot.acquireWorldWithBank(), {
+                upgrade: false
+            });
+            if (preBuy && this.bot.acquireMaterialsHeld(preBuy)) {
+                this.bot.log(`restock: materials held for ${preBuy.kind} — skipping bank`);
+                const ok = await this.bot.executeToolAcquirePlan(preBuy, log, { bankPrepared: true });
+                if (ok) {
+                    await this.bot.walkHomeIfNeeded(log);
+                    return;
+                }
+                // Acquire failed — fall through to bank path.
+            }
+        }
+
         if (!(await this.bot.openScriptBank(log))) {
             if (power) {
                 this.bot.stopMissingGear('could not open nearest bank', missing);
@@ -3012,12 +3423,15 @@ class RestockGatherTool implements Task {
                         upgrade: false
                     });
                     if (buy) {
+                        // After deposit-except-gear, smith bars/hammer (or shop GP)
+                        // stay in pack when gearKeep includes them — hand off prepared.
+                        const bankPrepared = this.bot.acquireMaterialsHeld(buy);
                         if (Bank.isOpen()) {
                             await this.bot.closeScriptBank(log, { allowForgetful: false });
                         }
-                        const ok = await this.bot.executeToolAcquirePlan(buy, log);
+                        const ok = await this.bot.executeToolAcquirePlan(buy, log, { bankPrepared });
                         if (ok) {
-                            await Traversal.walkResilient(this.bot.getAnchor(), { radius: 3, log });
+                            await this.bot.walkHomeIfNeeded(log);
                             return;
                         }
                     } else {
@@ -3092,12 +3506,13 @@ class RestockGatherTool implements Task {
                     upgrade: false
                 });
                 if (buy) {
+                    const bankPrepared = this.bot.acquireMaterialsHeld(buy);
                     if (Bank.isOpen()) {
                         await this.bot.closeScriptBank(log, { allowForgetful: false });
                     }
-                    const ok = await this.bot.executeToolAcquirePlan(buy, log);
+                    const ok = await this.bot.executeToolAcquirePlan(buy, log, { bankPrepared });
                     if (ok) {
-                        await Traversal.walkResilient(this.bot.getAnchor(), { radius: 3, log });
+                        await this.bot.walkHomeIfNeeded(log);
                         return;
                     }
                 }
@@ -3113,7 +3528,7 @@ class RestockGatherTool implements Task {
         }
 
         this.bot.log(`restock: tools ok (${this.bot.gearLabel()})`);
-        await Traversal.walkResilient(this.bot.getAnchor(), { radius: 3, log });
+        await this.bot.walkHomeIfNeeded(log);
     }
 }
 
@@ -3194,9 +3609,10 @@ class Gather implements Task {
     /**
      * Spots that hopped just outside the leash (common on long piers).
      * Hunt radius is wider than leash so we walk to them instead of stalling.
+     * Not hard-capped at 40 — named camps floor leash to 64 and still need headroom.
      */
     private huntRadius(): number {
-        return Math.min(40, Math.max(this.bot.leashRadius() + 10, 24));
+        return gatherHuntRadius(this.bot.leashRadius());
     }
 
     private findHuntSpot() {

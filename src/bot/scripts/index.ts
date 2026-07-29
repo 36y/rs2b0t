@@ -1,6 +1,7 @@
 import { AGILITY_SETTINGS } from './AgilityBot.js';
-import { LOCATION_OPTIONS } from './FishingLocations.js';
+import { FISHING_LOCATION_OPTIONS } from './FishingLocations.js';
 import { FISHING_METHOD_OPTIONS } from './FishingMethods.js';
+import { MINING_LOCATION_OPTIONS } from './MiningLocations.js';
 import {
     AFTER_COOK_OPTIONS,
     BURNT_POLICY_OPTIONS,
@@ -210,10 +211,10 @@ ScriptRegistry.register({
         location: {
             type: 'string',
             default: 'Auto',
-            options: ['Auto', 'None'],
-            label: 'Full inventory',
+            options: MINING_LOCATION_OPTIONS,
+            label: 'Location / full inventory',
             help:
-                'What to do when the pack is full of ore. Auto = bank the ore at the nearest bank and restock a pickaxe if needed. None = power-mine (drop ore; no bank).'
+                'Mine camp + full-pack behaviour. Auto = if you start in the same 64×64 map square as a known mine camp, snap to the nearest such camp and bank there; otherwise freeform (start-tile leash + nearest bank). Named camps pin spot + bank. None = power-mine (drop ore; bank only for missing tools).'
         },
         toolAcquire: TOOL_ACQUIRE_SETTING,
         forgetfulBank: FORGETFUL_BANK_SETTING
@@ -285,18 +286,18 @@ ScriptRegistry.register({
             type: 'number',
             default: 18,
             min: 2,
-            max: 40,
+            max: 64,
             label: 'Leash radius (tiles)',
             help:
-                'How far from the start/anchor tile to prefer fishing spots. Spots hop along piers (Catherby, etc.) — 18 covers most banks; the bot still hunts a bit farther if the pier empties inside the leash.'
+                'How far from the camp/start anchor to prefer fishing spots. Only Location Auto uses this as-is. Named camps and None floor to 64 (Fishing Guild / Catherby piers are huge). The bot still hunts past the leash when spots hop along the pier. Location Auto does not mob-flee (expert / may-die).'
         },
         location: {
             type: 'string',
             default: 'Auto',
-            options: LOCATION_OPTIONS,
+            options: FISHING_LOCATION_OPTIONS,
             label: 'Location / full inventory',
             help:
-                'Where you are fishing and what happens when the pack is full. Auto = use a known spot if you started in one, else nearest bank in the scene; banks the catch when cook is Off. Named spots (Catherby, …) pin bank/range presets. None = power-fish (always drop; cook is disabled).'
+                'Fishing camp + full-pack behaviour. Auto = if you start in the same 64×64 map square as a known camp, snap to the nearest such camp and bank there; otherwise freeform (start-tile leash + nearest bank). Named camps pin pier + bank (and range for Catherby cook). None = power-fish (always drop; cook is disabled).'
         },
         cookMode: {
             type: 'string',
