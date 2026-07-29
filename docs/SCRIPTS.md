@@ -669,12 +669,12 @@ Tags: `pickpocket`, `coins`, `banking`, `food`
 | `food` | string | `""` | Food to eat (name contains) |
 | `eatAtHp` | number (0–100) | `50` | Eat below HP% |
 | `banking` | string | `"None"` | Food banking — one of: None, Auto |
-| `foodWithdraw` | number (1–27) | `10` | Food to carry |
+| `foodWithdraw` | number (1–27) | `22` | Food to carry |
 | `bankAtFood` | number (0–26) | `0` | Bank at food remaining |
 | `dropMatch` | string | `""` | Drop when full (name contains) |
 | `loot` | string | `"coins"` | Pick up from ground (name contains) |
 | `obstacle` | string | `"door, gate"` | Openable obstacles (name contains) |
-| `leashRadius` | number (2–20) | `6` | Leash radius (tiles) |
+| `leashRadius` | number (2–40) | `19` | Leash radius (tiles) |
 
 ## Treasure Trails
 
