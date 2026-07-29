@@ -48,6 +48,22 @@
             height: 503px;
         }
 
+        #renderer-off {
+            display: none;
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            place-content: center;
+            text-align: center;
+            color: #9be05b;
+            background: #080b08;
+            font: 14px ui-monospace, monospace;
+        }
+
+        .rs2b0t-renderer-off #renderer-off {
+            display: grid;
+        }
+
         #game-stage canvas {
             position: absolute;
             top: 0;
@@ -274,6 +290,16 @@
             accent-color: #04A800;
         }
 
+        .rs2b0t-render-fps {
+            width: 78px;
+        }
+
+        .rs2b0t-render-note {
+            margin-top: 3px;
+            font-size: 10px;
+            line-height: 1.35;
+        }
+
         .rs2b0t-current-script {
             flex: 1;
             align-self: center;
@@ -460,6 +486,7 @@
                     Your browser is not capable of running our web client.
                 </canvas>
                 <canvas id="overlay" width="765" height="503"></canvas>
+                <div id="renderer-off">Renderer off<br><small>bot, script, connection, and scene still running</small></div>
             </div>
         </div>
         <div id="bot-panel"></div>

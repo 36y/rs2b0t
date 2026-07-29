@@ -1,3 +1,4 @@
+import { installWorkerClockHub } from '../../util/WorkerClock.js';
 import { TrafficCollector } from '../adapter/TrafficAdapter.js';
 import { DomSlotOps, orderedSlotElements } from './DomSlotOps.js';
 import { MultiBoxController } from './MultiBoxController.js';
@@ -6,6 +7,10 @@ import { vault, type Profile } from './ProfileVault.js';
 import { ResourcePanel } from './ResourcePanel.js';
 import { VaultPrompt } from './VaultPrompt.js';
 import type { Account } from './types.js';
+
+if (typeof window !== 'undefined') {
+    installWorkerClockHub(window);
+}
 
 function boot(): void {
     const rail = document.getElementById('mbx-rail')!;

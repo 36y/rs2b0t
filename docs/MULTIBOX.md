@@ -35,11 +35,15 @@ export interface SlotHandle {
 }
 ```
 
-Four details that are not guessable from the outside:
+Five details that are not guessable from the outside:
 
 - **Rail slots paint at ~1 fps; the focused slot draws every frame.** That is what
-  keeps a dozen bots affordable on a laptop. The rate is set per-iframe at runtime —
-  the standalone client keeps its own `RenderGate` default.
+  keeps a wall affordable while preserving the original focused-client behavior.
+  The rate is set inside each iframe; the logical game loop remains at full speed.
+- **Rendering can be disabled per bot without changing client state.** The draw gate
+  skips game and overlay paints, but keeps the iframe, canvas, complete scene, game
+  loop, script, and WebSocket alive. Re-enabling therefore draws the already-current
+  scene on the next frame instead of reconstructing it.
 - **Tiles carry a click-catching overlay** (`.mbx-hit`) above the iframe, because a
   click that lands *in* the iframe goes to the game. The overlay is what lets clicking
   a tile switch which bot is focused.
@@ -53,6 +57,10 @@ Four details that are not guessable from the outside:
 
 Reordering slots preserves the client in each one. Rebuilding the iframe would drop
 the bot's session and force a re-login.
+
+The renderer switch intentionally retains that iframe's scene and assets. It is a
+CPU optimization, not a headless-memory mode: correctness and instant restoration
+take priority over reclaiming renderer memory.
 
 ## Profiles and the vault
 

@@ -34,7 +34,13 @@ if (typeof document !== 'undefined' && document.getElementById('canvas')) {
 
     const panelRoot = document.getElementById('bot-panel');
     if (panelRoot) {
-        new BotPanel(panelRoot, BotHost);
+        new BotPanel(panelRoot, BotHost, {
+            enabled: () => RenderGate.enabled,
+            setEnabled: enabled => {
+                RenderGate.setEnabled(enabled);
+                document.body.classList.toggle('rs2b0t-renderer-off', !enabled);
+            }
+        });
     }
 
     const overlayCanvas = document.getElementById('overlay');

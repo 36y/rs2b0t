@@ -11,7 +11,7 @@ export default class BotClient extends Client {
     }
 
     protected override async frameDelay(ms: number): Promise<void> {
-        await WorkerClock.sleep(ms);
+        await WorkerClock.sleep(ms, !RenderGate.enabled);
     }
 
     override async mainloop(): Promise<void> {

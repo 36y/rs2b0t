@@ -1,15 +1,24 @@
 export type RenderMode = 'focused' | 'background' | 'hidden';
 
-class RenderGateImpl {
+export class RenderGateController {
     mode: RenderMode = 'focused';
     drawn = 0;
     backgroundIntervalMs = 300;
 
+    private rendererEnabled = true;
     private lastDrawAt = 0;
 
+    get enabled(): boolean {
+        return this.rendererEnabled;
+    }
+
     shouldDraw(now: number): boolean {
-        if (this.mode === 'focused') return true;
-        if (this.mode === 'hidden') return false;
+        if (!this.rendererEnabled || this.mode === 'hidden') {
+            return false;
+        }
+        if (this.mode === 'focused') {
+            return true;
+        }
         return now - this.lastDrawAt >= this.backgroundIntervalMs;
     }
 
@@ -21,6 +30,16 @@ class RenderGateImpl {
     setMode(mode: RenderMode): void {
         this.mode = mode;
     }
+
+    setEnabled(enabled: boolean): void {
+        if (enabled === this.rendererEnabled) {
+            return;
+        }
+        this.rendererEnabled = enabled;
+        if (enabled) {
+            this.lastDrawAt = Number.NEGATIVE_INFINITY;
+        }
+    }
 }
 
-export const RenderGate = new RenderGateImpl();
+export const RenderGate = new RenderGateController();

@@ -1,36 +1,43 @@
 import { describe, expect, test, beforeEach } from 'bun:test';
-import { RenderGate } from '#/bot/runtime/RenderGate.js';
+import { RenderGateController } from '#/bot/runtime/RenderGate.js';
 
 describe('RenderGate', () => {
+    let gate: RenderGateController;
+
     beforeEach(() => {
-        RenderGate.setMode('background');
-        RenderGate.backgroundIntervalMs = 300;
-        RenderGate.markDrawn(0);
-        RenderGate.drawn = 0;
+        gate = new RenderGateController();
     });
 
     test('focused draws every frame', () => {
-        RenderGate.setMode('focused');
-        expect(RenderGate.shouldDraw(1)).toBe(true);
-        RenderGate.markDrawn(1);
-        expect(RenderGate.shouldDraw(2)).toBe(true);
+        expect(gate.shouldDraw(1)).toBe(true);
+        gate.markDrawn(1);
+        expect(gate.shouldDraw(2)).toBe(true);
     });
 
     test('hidden never draws', () => {
-        RenderGate.setMode('hidden');
-        expect(RenderGate.shouldDraw(1000)).toBe(false);
+        gate.setMode('hidden');
+        expect(gate.shouldDraw(1000)).toBe(false);
     });
 
     test('background throttles to the interval', () => {
-        RenderGate.setMode('background');
-        RenderGate.markDrawn(1000);
-        expect(RenderGate.shouldDraw(1100)).toBe(false);
-        expect(RenderGate.shouldDraw(1300)).toBe(true);
+        gate.backgroundIntervalMs = 300;
+        gate.setMode('background');
+        gate.markDrawn(1000);
+        expect(gate.shouldDraw(1299)).toBe(false);
+        expect(gate.shouldDraw(1300)).toBe(true);
     });
 
     test('markDrawn advances the counter', () => {
-        RenderGate.markDrawn(5);
-        RenderGate.markDrawn(6);
-        expect(RenderGate.drawn).toBe(2);
+        gate.markDrawn(5);
+        gate.markDrawn(25);
+        expect(gate.drawn).toBe(2);
+    });
+
+    test('disabled never draws and re-enabling draws immediately', () => {
+        gate.markDrawn(0);
+        gate.setEnabled(false);
+        expect(gate.shouldDraw(10_000)).toBe(false);
+        gate.setEnabled(true);
+        expect(gate.shouldDraw(10_000)).toBe(true);
     });
 });

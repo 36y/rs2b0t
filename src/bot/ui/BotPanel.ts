@@ -13,6 +13,12 @@ import { isVisible, summarize } from './paramControls.js';
 import { el } from './dom.js';
 
 const SELECTED_SCRIPT_KEY = boxKey('selectedScript');
+const rendererEnabledKey = (): string => boxKey('rendererEnabled');
+
+export interface RendererControl {
+    enabled(): boolean;
+    setEnabled(enabled: boolean): void;
+}
 
 export default class BotPanel {
     private host: BotHostImpl;
@@ -38,7 +44,7 @@ export default class BotPanel {
 
     private lastRender = 0;
 
-    constructor(root: HTMLElement, host: BotHostImpl) {
+    constructor(root: HTMLElement, host: BotHostImpl, renderer?: RendererControl) {
         this.host = host;
 
         root.replaceChildren();
@@ -121,13 +127,26 @@ export default class BotPanel {
         logSection.appendChild(this.logBox);
         root.appendChild(logSection);
 
+        if (renderer) {
+            root.appendChild(this.buildRendererControls(renderer));
+        }
+
         ScriptRunner.onChange(() => {
             this.renderScriptControls();
             this.renderLog();
             this.renderSettings();
         });
 
-        host.addDrawListener(() => this.maybeRender());
+        host.addDrawListener(() => this.maybeRender(200));
+        if (renderer) {
+            // Renderer-off clients deliberately emit no draw events. Their panel
+            // still updates at a cheap 1 Hz from the untouched logical frame loop.
+            host.addFrameListener(() => {
+                if (!renderer.enabled()) {
+                    this.maybeRender(1000);
+                }
+            });
+        }
         this.render();
         this.ensureSelection();
         this.renderScriptControls();
@@ -333,9 +352,40 @@ export default class BotPanel {
         }
     }
 
-    private maybeRender(): void {
+    private buildRendererControls(renderer: RendererControl): HTMLElement {
+        const rendering = el('div', 'rs2b0t-section');
+        rendering.appendChild(sectionTitle('rendering'));
+
+        const rendererRow = el('label', 'rs2b0t-setting rs2b0t-setting-bool');
+        const rendererToggle = document.createElement('input');
+        rendererToggle.type = 'checkbox';
+        const savedEnabled = localStorage.getItem(rendererEnabledKey());
+        rendererToggle.checked = savedEnabled === null ? renderer.enabled() : savedEnabled !== '0';
+        const rendererLabel = el('span', 'rs2b0t-setting-label');
+        rendererLabel.textContent = 'game renderer';
+        rendererLabel.title = 'Stop drawing while the bot, script, connection, and complete scene keep running';
+        rendererRow.append(rendererToggle, rendererLabel);
+        rendering.appendChild(rendererRow);
+
+        const note = el('div', 'rs2b0t-dim rs2b0t-render-note');
+        note.textContent = 'Rail previews stay at 1 FPS. Rendering never pauses the bot.';
+        rendering.appendChild(note);
+
+        const applyEnabled = (): void => {
+            renderer.setEnabled(rendererToggle.checked);
+        };
+        rendererToggle.addEventListener('change', () => {
+            localStorage.setItem(rendererEnabledKey(), rendererToggle.checked ? '1' : '0');
+            applyEnabled();
+        });
+
+        applyEnabled();
+        return rendering;
+    }
+
+    private maybeRender(minimumIntervalMs: number): void {
         const now = performance.now();
-        if (now - this.lastRender < 200) {
+        if (now - this.lastRender < minimumIntervalMs) {
             return;
         }
 
