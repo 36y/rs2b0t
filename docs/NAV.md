@@ -46,6 +46,14 @@ Multi-level routing is therefore a **data** property, not an algorithm one: the
 executor already knows how to climb, and gains a new route the moment an edge for it
 exists in the pack.
 
+So is *same-level* routing, wherever the link is an Agility shortcut. `derive-doors`
+only sees doors, so a balance log or a climbable outcrop leaves two regions looking
+disconnected however open they are in game. Southern Karamja was the extreme case:
+the 6,193-tile jungle holding the Ah Za Rhoon mound and Rashiliyia's tomb, and all of
+Cairn Isle, were unreachable from anywhere until four `kind: "dungeon"` edges — a
+wooden log and a set of climbing rocks — were curated in. When a quest reports a stand
+tile as `pathable-from=[nothing]`, look for the shortcut before touching the walker.
+
 A pack-less checkout is a silent failure mode — the navigator has nothing to search,
 so every route fails rather than erroring loudly.
 

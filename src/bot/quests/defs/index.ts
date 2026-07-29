@@ -18,8 +18,10 @@ import { druidicritual } from './druidicritual.js';
 import { lostcity } from './lostcity.js';
 import { touristtrap } from './touristtrap.js';
 import { watchtower } from './watchtower/index.js';
+import { junglepotion } from './junglepotion.js';
+import { shilo } from './shilo/index.js';
 
-export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, sheepshearer, restlessghost, cooksassistant, hetty, romeojuliet, princeali, waterfall, goblindiplomacy, demonslayer, witchshouse, merlinscrystal, priestperil, blackknight, druidicritual, lostcity, touristtrap, watchtower];
+export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, sheepshearer, restlessghost, cooksassistant, hetty, romeojuliet, princeali, waterfall, goblindiplomacy, demonslayer, witchshouse, merlinscrystal, priestperil, blackknight, druidicritual, lostcity, touristtrap, watchtower, junglepotion, shilo];
 
 export function defById(id: string): QuestModule | undefined {
     return QUEST_DEFS.find(d => d.record.id === id);
