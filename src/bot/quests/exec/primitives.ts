@@ -212,7 +212,8 @@ export async function driveDialog(prefer: string[], log: (m: string) => void): P
 }
 
 async function openDialogue(npcName: string, log: (m: string) => void): Promise<boolean> {
-    if (ChatDialog.isOpen()) {
+    const dialogReady = (): boolean => ChatDialog.isOpen() || ChatDialog.canContinue();
+    if (dialogReady()) {
         return true;
     }
     const npc = Npcs.query().name(npcName).where(n => talkOp(n.actions()) !== null).nearest();
@@ -223,7 +224,7 @@ async function openDialogue(npcName: string, log: (m: string) => void): Promise<
     if (!(await npc.interact(talkOp(npc.actions())!))) {
         return false;
     }
-    if (!(await Execution.delayUntil(() => ChatDialog.isOpen(), 8000))) {
+    if (!(await Execution.delayUntil(dialogReady, 8000))) {
         log(`'${npcName}' never opened a dialogue`);
         return false;
     }
