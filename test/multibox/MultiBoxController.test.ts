@@ -110,6 +110,40 @@ describe('MultiBoxController', () => {
         expect(c.focusedId).toBe(a.id);
     });
 
+    test('focusAdjacent selects exactly one neighbouring bot', () => {
+        const ops = new FakeOps();
+        const c = new MultiBoxController(ops);
+        const alice = c.add({ username: 'alice', password: 'a' })!;
+        const bob = c.add({ username: 'bob', password: 'b' })!;
+        const carol = c.add({ username: 'carol', password: 'c' })!;
+        c.focus(bob.id);
+
+        expect(c.focusAdjacent(-1)).toBe(true);
+        expect(c.focusedId).toBe(alice.id);
+        expect(c.focusAdjacent(-1)).toBe(false);
+        expect(c.focusAdjacent(1)).toBe(true);
+        expect(c.focusedId).toBe(bob.id);
+        expect(c.focusAdjacent(1)).toBe(true);
+        expect(c.focusedId).toBe(carol.id);
+        expect(ops.handles.filter(handle => handle.mode === 'focused')).toHaveLength(1);
+    });
+
+    test('moveFocused reorders one slot and keeps that bot focused', () => {
+        const c = new MultiBoxController(new FakeOps());
+        c.add({ username: 'alice', password: 'a' })!;
+        const bob = c.add({ username: 'bob', password: 'b' })!;
+        c.add({ username: 'carol', password: 'c' })!;
+        c.focus(bob.id);
+
+        expect(c.moveFocused(-1)).toBe(true);
+        expect(c.snapshot().map(slot => slot.username)).toEqual(['bob', 'alice', 'carol']);
+        expect(c.focusedId).toBe(bob.id);
+        expect(c.moveFocused(-1)).toBe(false);
+        expect(c.moveFocused(1)).toBe(true);
+        expect(c.snapshot().map(slot => slot.username)).toEqual(['alice', 'bob', 'carol']);
+        expect(c.focusedId).toBe(bob.id);
+    });
+
     test('move reorders slots and their handles without changing focus', () => {
         const ops = new FakeOps();
         const c = new MultiBoxController(ops);

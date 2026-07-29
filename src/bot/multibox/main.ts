@@ -4,6 +4,7 @@ import { DomSlotOps, orderedSlotElements } from './DomSlotOps.js';
 import { MultiBoxController } from './MultiBoxController.js';
 import { ProfileChooser } from './ProfileChooser.js';
 import { vault, type Profile } from './ProfileVault.js';
+import { renderRailTile } from './RailTile.js';
 import { ResourcePanel } from './ResourcePanel.js';
 import { VaultPrompt } from './VaultPrompt.js';
 import type { Account } from './types.js';
@@ -62,6 +63,11 @@ function boot(): void {
         return true;
     }
 
+    function revealFocusedTile(): void {
+        const index = controller.snapshot().findIndex(slot => slot.focused);
+        railTiles()[index]?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+
     // Tiles carry a click-catching overlay (.mbx-hit) because the iframe underneath
     // would otherwise swallow the click and the rail could never switch bots.
     rail.addEventListener('click', ev => {
@@ -78,7 +84,30 @@ function boot(): void {
         } else {
             controller.focus(snap.id);
         }
+        rail.focus({ preventScroll: true });
         renderRail();
+    });
+
+    rail.addEventListener('keydown', ev => {
+        if (ev.target !== rail || ev.altKey || ev.ctrlKey || ev.metaKey) {
+            return;
+        }
+        const direction = ev.key === 'ArrowUp' ? -1 : ev.key === 'ArrowDown' ? 1 : null;
+        if (direction === null) {
+            return;
+        }
+        ev.preventDefault();
+        const changed = ev.shiftKey
+            ? controller.moveFocused(direction)
+            : controller.focusAdjacent(direction);
+        if (!changed) {
+            return;
+        }
+        renderRail();
+        if (ev.shiftKey) {
+            persistSlotOrder();
+        }
+        revealFocusedTile();
     });
 
     rail.addEventListener('dragstart', ev => {
@@ -204,7 +233,7 @@ function boot(): void {
         setRailHidden(true);
     }
 
-    // Bind live status (name + online dot) onto the rail tiles, which DomSlotOps
+    // Bind live status (name + running dot) onto the rail tiles, which DomSlotOps
     // keeps in slot order — so snapshot[i] is tile[i].
     function renderRail(): void {
         const snaps = controller.snapshot();
@@ -214,9 +243,7 @@ function boot(): void {
             throw new Error(`rail desync: ${tiles.length} tiles vs ${snaps.length} slots`);
         }
         snaps.forEach((s, i) => {
-            const tile = tiles[i];
-            tile.querySelector('.mbx-dot')!.classList.toggle('is-online', s.ingame);
-            tile.querySelector('.mbx-name')!.textContent = s.player ?? s.username;
+            renderRailTile(tiles[i], s);
         });
     }
 

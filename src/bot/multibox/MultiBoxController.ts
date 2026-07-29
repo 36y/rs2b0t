@@ -9,6 +9,8 @@ interface Slot {
     mode: RenderMode;
 }
 
+export type RailDirection = -1 | 1;
+
 export class MultiBoxController {
     focusedId: number | null = null;
 
@@ -69,6 +71,24 @@ export class MultiBoxController {
         }
         this.focusedId = id;
         this.applyModes();
+    }
+
+    focusAdjacent(direction: RailDirection): boolean {
+        const current = this.slots.findIndex(s => s.id === this.focusedId);
+        const target = this.slots[current + direction];
+        if (current < 0 || !target) {
+            return false;
+        }
+        this.focus(target.id);
+        return true;
+    }
+
+    moveFocused(direction: RailDirection): boolean {
+        const current = this.slots.findIndex(s => s.id === this.focusedId);
+        if (current < 0) {
+            return false;
+        }
+        return this.move(this.slots[current].id, current + direction);
     }
 
     move(id: number, toIndex: number): boolean {

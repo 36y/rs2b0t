@@ -11,6 +11,7 @@
         #mbx-main { flex: 1 1 auto; min-width: 0; position: relative; background: #0a0a0a; }
         /* RAIL_W below must match RAIL_W in DomSlotOps.ts (focused-slot geometry depends on it) */
         #mbx-rail { flex: 0 0 264px; width: 264px; box-sizing: border-box; height: 100vh; overflow-y: auto; overflow-x: hidden; padding: 12px; background: #111; border-left: 1px solid #333; display: flex; flex-direction: column; gap: 10px; }
+        #mbx-rail:focus { outline: 1px solid #04A800; outline-offset: -1px; }
 
         /* a rail tile: name + status dot over a live game frame cropped to the game viewport */
         .mbx-slot { width: 236px; flex: 0 0 auto; border: 1px solid #2c2c2c; border-radius: 4px; background: #000; cursor: grab; overflow: hidden; user-select: none; }
@@ -22,7 +23,7 @@
         .mbx-cap { display: flex; align-items: center; gap: 6px; padding: 3px 7px; background: #1a1a1a; }
         .mbx-slot.is-focused .mbx-cap { background: #07330a; color: #5be05b; }
         .mbx-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; flex: 0 0 auto; }
-        .mbx-dot.is-online { background: #04A800; }
+        .mbx-dot.is-running { background: #04A800; }
         .mbx-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .mbx-close { margin-left: auto; flex: 0 0 auto; background: none; border: 0; color: #666; cursor: pointer; font: inherit; padding: 0 2px; }
         .mbx-close:hover { color: #e05b5b; }
@@ -84,7 +85,7 @@
 <body>
     <div id="mbx-app">
         <div id="mbx-main"></div>
-        <div id="mbx-rail">
+        <div id="mbx-rail" tabindex="0" aria-label="running bots">
             <div id="mbx-add" class="mbx-addtile">+ add bot</div>
             <div id="mbx-resources" class="mbx-resources">
                 <div id="mbx-resource-bots" class="mbx-resource-bots">0 bots</div>

@@ -54,6 +54,9 @@ Five details that are not guessable from the outside:
 - `SlotStatus.player` is the logged-in character *once known*: a bot is added empty
   and has its account typed into its own panel, so the rail tile cannot show a name
   before that.
+- **The rail is keyboard navigable.** Click a bot tile, then use Up/Down to select
+  its neighbour or Shift+Up/Down to move the selected bot one position. A green dot
+  means the account is logged in and its script is running; every other state is gray.
 
 Reordering slots preserves the client in each one. Rebuilding the iframe would drop
 the bot's session and force a re-login.
