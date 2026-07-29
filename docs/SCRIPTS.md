@@ -54,7 +54,7 @@ Tags: `edgeville`, `dungeon`, `monkey-bars`, `wilderness`, `banking`
 
 ### GnomeCourse
 
-Runs the Gnome Stronghold agility course (start at the log balance)
+Travels to and runs the Gnome Stronghold agility course
 
 Tags: `course`, `gnome`
 

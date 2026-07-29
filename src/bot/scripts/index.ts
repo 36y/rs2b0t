@@ -446,7 +446,7 @@ ScriptRegistry.register({
 
 ScriptRegistry.register({
     name: 'GnomeCourse',
-    description: 'Runs the Gnome Stronghold agility course (start at the log balance)',
+    description: 'Travels to and runs the Gnome Stronghold agility course',
     category: 'Agility',
     tags: ['course', 'gnome'],
     settingsSchema: AGILITY_SETTINGS,
