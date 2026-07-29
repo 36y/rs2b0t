@@ -951,7 +951,7 @@ async function recoverSlaveOutfitFromRowdy(log: (m: string) => void): Promise<bo
         }
     }
 
-    Game.setCombatStyle(1);
+    Game.setCombatStyle('strength');
     for (let index = 0; index < SLAVE_OUTFIT.length; index++) {
         const name = SLAVE_OUTFIT[index];
         const id = SLAVE_OUTFIT_DROP_IDS[index];

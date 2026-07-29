@@ -3142,7 +3142,7 @@ class EnsureShortbowRapid implements Task {
             return;
         }
         this.bot.setStatus('tick: set rapid style');
-        Game.setCombatStyle(rapid);
+        Game.setCombatMode(rapid);
         if (await Execution.delayUntil(() => Game.combatMode() === rapid, 3000)) {
             this.fails = 0;
             this.bot.log('combat: range style → rapid (3t shortbow)');
@@ -5115,4 +5115,3 @@ class Gather implements Task {
         );
     }
 }
-

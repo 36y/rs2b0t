@@ -91,7 +91,7 @@ Tags: `ardougne`, `thieving`, `banking`, `clues`, `afk`
 | `anchor` | tile | `{"x":2661,"z":3306,"level":0}` | Market anchor (x,z) |
 | `leashRadius` | number (5–25) | `12` | Leash radius (tiles) |
 | `target` | string | `"Guard"` | NPC to fight (name) |
-| `combatStyle` | string | `"strength"` | Combat style — one of: attack, strength, defence |
+| `combatStyle` | string | `"strength"` | Combat style — one of: attack, strength, controlled, defence |
 | `bankStand` | tile | `{"x":2655,"z":3286,"level":0}` | Bank stand tile (x,z) |
 | `food` | string[] | `["cake","bread","chocolate slice"]` | Food names (contains) |
 | `eatAtHp` | number (0–100) | `50` | Eat below HP% |
@@ -119,7 +119,7 @@ Tags: `combat`, `clues`, `banking`, `afk`
 | `spot` | string | `"Start position"` | Killing spot — one of: Start position, Custom coordinates |
 | `coordinates` | tile | `{"x":3273,"z":3427,"level":0}` | Killing coordinates (x,z) |
 | `leashRadius` | number (2–30) | `8` | Leash radius (tiles) |
-| `combatStyle` | string | `"strength"` | Combat style — one of: attack, strength, defence |
+| `combatStyle` | string | `"strength"` | Combat style — one of: attack, strength, controlled, defence |
 | `food` | string | `"Trout"` | Food (withdrawn from bank) |
 | `foodWithdraw` | number (0–27) | `10` | Food to carry |
 | `eatAtHp` | number (0–100) | `50` | Eat below HP% |
@@ -162,7 +162,7 @@ Tags: `lumbridge`, `bones`, `feathers`, `afk`
 | `targetName` | string | `"Chicken"` | Target NPC name |
 | `lootMatch` | string | `"bones"` | Loot name match (\| = OR) |
 | `buryBones` | boolean | `true` | Bury bones? |
-| `combatStyle` | string | `"strength"` | Combat style — one of: attack, strength, defence |
+| `combatStyle` | string | `"strength"` | Combat style — one of: attack, strength, controlled, defence |
 | `bankStrategy` | string | `"Off"` | Periodic bank — one of: Off, Loot count, Time, Either |
 | `bankEveryItems` | number (1–27) | `15` | Bank at N loot items |
 | `bankEveryMinutes` | number (1–120) | `10` | Bank every N minutes |
@@ -184,7 +184,7 @@ Tags: `lumbridge`, `falador`, `cowhide`, `bones`, `banking`, `afk`
 | `targetName` | string | `"Cow"` | Target NPC name |
 | `lootMatch` | string | `"cow hide\|bones"` | Loot name match (\| = OR) |
 | `buryBones` | boolean | `false` | Bury bones? |
-| `combatStyle` | string | `"strength"` | Combat style — one of: attack, strength, defence |
+| `combatStyle` | string | `"strength"` | Combat style — one of: attack, strength, controlled, defence |
 | `bankStrategy` | string | `"Off"` | Periodic bank — one of: Off, Loot count, Time, Either |
 | `bankEveryItems` | number (1–27) | `15` | Bank at N loot items |
 | `bankEveryMinutes` | number (1–120) | `10` | Bank every N minutes |
@@ -199,7 +199,7 @@ Tags: `waterfall`, `safespot`, `members`, `banking`
 | Setting | Type | Default | Notes |
 |---|---|---|---|
 | `combatStyle` | string | `"melee"` | Combat style — one of: melee, mage, range |
-| `meleeStyle` | string | `"strength"` | Melee style — one of: attack, strength, defence |
+| `meleeStyle` | string | `"strength"` | Melee style — one of: attack, strength, controlled, defence |
 | `staff` | string | `"Staff of air"` | Staff — one of: Staff, Magic staff, Staff of air, Staff of water, Staff of earth, Staff of fire, Battlestaff, Air battlestaff, Water battlestaff, Earth battlestaff, Fire battlestaff, Mystic air staff, Mystic water staff, Mystic earth staff, Mystic fire staff |
 | `spell` | string | `"Wind Strike"` | Autocast spell — one of: Wind Strike, Water Strike, Earth Strike, Fire Strike, Wind Bolt, Water Bolt, Earth Bolt, Fire Bolt, Wind Blast, Water Blast, Earth Blast, Fire Blast, Wind Wave, Water Wave, Earth Wave, Fire Wave |
 | `runesWithdraw` | number (1–2000) | `150` | Casts of runes per bank trip |
@@ -231,7 +231,7 @@ Tags: `wilderness`, `dragons`, `hides`
 | Setting | Type | Default | Notes |
 |---|---|---|---|
 | `combatStyle` | string | `"melee"` | Combat style — one of: melee, mage |
-| `meleeStyle` | string | `"strength"` | Melee style — one of: attack, strength, defence |
+| `meleeStyle` | string | `"strength"` | Melee style — one of: attack, strength, controlled, defence |
 | `weapon` | string | `"Rune scimitar"` | Weapon — one of: Bronze scimitar, Iron scimitar, Steel scimitar, Black scimitar, Mithril scimitar, Adamant scimitar, Rune scimitar, Bronze sword, Iron sword, Steel sword, Black sword, Mithril sword, Adamant sword, Rune sword, Bronze longsword, Iron longsword, Steel longsword, Black longsword, Mithril longsword, Adamant longsword, Rune longsword |
 | `staff` | string | `"Staff of fire"` | Staff — one of: Staff, Magic staff, Staff of air, Staff of water, Staff of earth, Staff of fire, Battlestaff, Air battlestaff, Water battlestaff, Earth battlestaff, Fire battlestaff, Mystic air staff, Mystic water staff, Mystic earth staff, Mystic fire staff |
 | `spell` | string | `"Fire Strike"` | Autocast spell — one of: Wind Strike, Water Strike, Earth Strike, Fire Strike, Wind Bolt, Water Bolt, Earth Bolt, Fire Bolt, Wind Blast, Water Blast, Earth Blast, Fire Blast, Wind Wave, Water Wave, Earth Wave, Fire Wave |
@@ -256,7 +256,7 @@ Tags: `ardougne`, `safespot`, `afk`
 | Setting | Type | Default | Notes |
 |---|---|---|---|
 | `combatStyle` | string | `"melee"` | Combat style — one of: melee, mage, range |
-| `meleeStyle` | string | `"strength"` | Melee style — one of: attack, strength, defence |
+| `meleeStyle` | string | `"strength"` | Melee style — one of: attack, strength, controlled, defence |
 | `staff` | string | `"Staff of air"` | Staff — one of: Staff, Magic staff, Staff of air, Staff of water, Staff of earth, Staff of fire, Battlestaff, Air battlestaff, Water battlestaff, Earth battlestaff, Fire battlestaff, Mystic air staff, Mystic water staff, Mystic earth staff, Mystic fire staff |
 | `spell` | string | `"Wind Strike"` | Autocast spell — one of: Wind Strike, Water Strike, Earth Strike, Fire Strike, Wind Bolt, Water Bolt, Earth Bolt, Fire Bolt, Wind Blast, Water Blast, Earth Blast, Fire Blast, Wind Wave, Water Wave, Earth Wave, Fire Wave |
 | `runesWithdraw` | number (1–1000) | `150` | Casts of runes per bank trip |
@@ -283,7 +283,7 @@ Tags: `rellekka`, `keys`, `afk`
 | Setting | Type | Default | Notes |
 |---|---|---|---|
 | `combatStyle` | string | `"melee"` | Combat style — one of: melee, mage, range |
-| `meleeStyle` | string | `"strength"` | Melee style — one of: attack, strength, defence |
+| `meleeStyle` | string | `"strength"` | Melee style — one of: attack, strength, controlled, defence |
 | `rangeStyle` | string | `"rapid"` | Ranged style — one of: accurate, rapid, longrange |
 | `staff` | string | `"Staff of air"` | Staff — one of: Staff, Magic staff, Staff of air, Staff of water, Staff of earth, Staff of fire, Battlestaff, Air battlestaff, Water battlestaff, Earth battlestaff, Fire battlestaff, Mystic air staff, Mystic water staff, Mystic earth staff, Mystic fire staff |
 | `bow` | string | `"Maple shortbow"` | Bow — one of: Shortbow, Longbow, Oak shortbow, Oak longbow, Willow shortbow, Willow longbow, Maple shortbow, Maple longbow, Yew shortbow, Yew longbow, Magic shortbow, Magic longbow |

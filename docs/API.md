@@ -169,7 +169,18 @@ Game.energy(): number           // run energy
 Game.weight(): number
 Game.inCombat(): boolean        // health bar showing
 Game.tick(): number             // server ticks since client boot
+Game.combatMode(): number       // current raw com_mode varp
+Game.combatStyleMode(style: 'attack' | 'strength' | 'controlled' | 'defence'): number | null
+Game.hasCombatStyle(style): boolean
+Game.setCombatStyle(style): boolean
+Game.setCombatMode(mode: number): boolean // exact numeric mode (for ranged styles)
 ```
+
+Melee styles are resolved from the Accurate, Aggressive, Controlled, or
+Defensive labels on the equipped weapon's combat interface. This handles
+duplicate and unusual layouts without guessing from the weapon name, button
+count, or ordinal order. If a requested style is unavailable, the last defensive
+button is selected (including controlled on a three-mode weapon).
 
 ---
 
