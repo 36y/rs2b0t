@@ -1,4 +1,4 @@
-import type { SettingDef, SettingsSchema } from '../runtime/Settings.js';
+import { settingOptionLabel, type SettingDef, type SettingsSchema } from '../runtime/Settings.js';
 import { el } from './dom.js';
 import { WorldMapPicker } from './WorldMapPicker';
 
@@ -73,8 +73,10 @@ export function summarize(def: SettingDef, value: string): string {
         case 'multiselect':
         case 'taglist': {
             const items = listItems(value);
-            return items.length > 0 ? items.join(', ') : '(none)';
+            return items.length > 0 ? items.map(item => settingOptionLabel(def, item)).join(', ') : '(none)';
         }
+        case 'dropdown':
+            return settingOptionLabel(def, value);
         case 'tile': {
             const [x, z] = value.split(',').map(s => s.trim());
             return x && z ? `${x}, ${z}` : value;
@@ -149,7 +151,7 @@ const CONTROLS: Record<ControlKind, ParamControl> = {
             for (const opt of def.options ?? []) {
                 const o = document.createElement('option');
                 o.value = opt;
-                o.textContent = opt;
+                o.textContent = settingOptionLabel(def, opt);
                 sel.appendChild(o);
             }
             const match = (def.options ?? []).find(o => o.toLowerCase() === current.trim().toLowerCase());
@@ -190,7 +192,7 @@ const CONTROLS: Record<ControlKind, ParamControl> = {
                 });
                 boxes.push(box);
                 chip.appendChild(box);
-                chip.appendChild(document.createTextNode(opt));
+                chip.appendChild(document.createTextNode(settingOptionLabel(def, opt)));
                 wrap.appendChild(chip);
             });
             return wrap;

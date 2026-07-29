@@ -546,7 +546,8 @@ interface SettingDef {
     min?: number;
     max?: number;
     help?: string;
-    options?: string[];   // dropdown (string) or multi-select (string[])
+    options?: string[];   // persisted dropdown/multi-select values
+    optionLabels?: Record<string, string>; // optional user-facing label by option value
     group?: string;       // panel group heading
 }
 type SettingsSchema = Record<string, SettingDef>;

@@ -11,8 +11,16 @@ export interface SettingDef {
     max?: number;
     help?: string;
     options?: string[];
+    /** Optional display labels keyed by the persisted option value. */
+    optionLabels?: Record<string, string>;
     group?: string;
     showIf?: { key: string; anyOf: string[] };
+}
+
+/** Return an option's display label without changing its persisted value. */
+export function settingOptionLabel(def: SettingDef, value: string): string {
+    const option = def.options?.find(candidate => candidate.toLowerCase() === value.trim().toLowerCase());
+    return option === undefined ? value : (def.optionLabels?.[option] ?? option);
 }
 
 export type SettingsSchema = Record<string, SettingDef>;

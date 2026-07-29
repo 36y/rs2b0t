@@ -23,6 +23,18 @@ test('summarize formats each kind compactly', () => {
     expect(summarize(def({ type: 'string', default: 'a', options: ['Auto', 'None'] }), 'Auto')).toBe('Auto');
     expect(summarize(def({ type: 'string', default: '' }), '')).toBe('(empty)');
     expect(summarize(def({ type: 'string[]', default: [], options: ['Iron', 'Coal'] }), 'Iron, Coal')).toBe('Iron, Coal');
+    expect(summarize(def({
+        type: 'string[]',
+        default: [],
+        options: ['cook', 'sheep'],
+        optionLabels: { cook: "Cook's Assistant", sheep: 'Sheep Shearer' }
+    }), 'cook, sheep')).toBe("Cook's Assistant, Sheep Shearer");
+    expect(summarize(def({
+        type: 'string',
+        default: 'cook',
+        options: ['cook'],
+        optionLabels: { cook: "Cook's Assistant" }
+    }), 'cook')).toBe("Cook's Assistant");
     expect(summarize(def({ type: 'string[]', default: [] }), '')).toBe('(none)');
     expect(summarize(def({ type: 'tile', default: null }), '2661,3306,0')).toBe('2661, 3306');
 });

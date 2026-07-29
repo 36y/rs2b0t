@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import type { ScriptMeta } from '#/bot/runtime/ScriptRegistry.js';
-import type { SettingDef } from '#/bot/runtime/Settings.js';
+import { settingOptionLabel, type SettingDef } from '#/bot/runtime/Settings.js';
 
 const OUT = 'docs/SCRIPTS.md';
 
@@ -18,7 +18,9 @@ function cell(text: string): string {
 
 function settingRow(key: string, def: SettingDef): string {
     const bounds = def.min !== undefined || def.max !== undefined ? ` (${def.min ?? ''}–${def.max ?? ''})` : '';
-    const options = def.options ? `${def.label ? ' — ' : ''}one of: ${def.options.join(', ')}` : '';
+    const options = def.options
+        ? `${def.label ? ' — ' : ''}one of: ${def.options.map(option => settingOptionLabel(def, option)).join(', ')}`
+        : '';
     const note = cell(`${def.label ?? ''}${options}`);
     return `| \`${key}\` | ${def.type}${bounds} | \`${cell(JSON.stringify(def.default))}\` | ${note} |`;
 }

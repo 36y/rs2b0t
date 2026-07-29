@@ -19,6 +19,10 @@ import { resolveConsumeAction, resolveSustainPolicy, type ResolvedSustainPolicy 
 
 const DEATH_RE = /oh dear.*you are dead/i;
 
+export const QUEST_OPTION_LABELS: Record<string, string> = Object.fromEntries(
+    QUEST_DEFS.map(def => [def.record.id, def.record.name])
+);
+
 const ICON: Record<QueueStatus, string> = {
     DONE: '✓',
     RUNNING: '▶',
@@ -33,6 +37,7 @@ export const AIO_SETTINGS: SettingsSchema = {
         type: 'string[]',
         default: [],
         options: QUEST_DEFS.map(d => d.record.id),
+        optionLabels: QUEST_OPTION_LABELS,
         label: 'Quest queue (empty = all)',
         help: 'which implemented quests to complete, run in the listed order; leave empty to run every implemented quest'
     },
@@ -86,7 +91,8 @@ export default class AIOQuester extends TaskBot {
         QuestFood.name = this.foodItem();
         Sustain.set(async () => { if (this.shouldEat()) { await this.eatOnce(); } });
 
-        this.log(`AIOQuester — queue: ${[...this.picked].join(', ') || '(none)'}`);
+        const queueNames = [...this.picked].map(id => defById(id)?.record.name ?? id);
+        this.log(`AIOQuester — queue: ${queueNames.join(', ') || '(none)'}`);
         this.add(new ContinueDialog(), new EatFood(this), new StartupWithdraw(this), new QuestEngine(this));
     }
 

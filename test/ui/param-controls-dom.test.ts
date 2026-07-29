@@ -26,6 +26,26 @@ test('multiselect edit saves the comma-joined selection', () => {
     expect(saved).toBe('Iron, Coal');
 });
 
+test('option labels render canonical names while preserving stored values', () => {
+    let saved = '';
+    const setting = def({
+        type: 'string[]',
+        default: [],
+        options: ['cook', 'sheep'],
+        optionLabels: { cook: "Cook's Assistant", sheep: 'Sheep Shearer' }
+    });
+    const elc = renderControl(setting, 'cook', value => (saved = value), { disabled: false });
+    document.body.appendChild(elc);
+
+    expect(elc.textContent).toContain("Cook's Assistant");
+    expect(elc.textContent).toContain('Sheep Shearer');
+    expect(elc.textContent).not.toContain('cook');
+    const boxes = Array.from(elc.querySelectorAll('input[type=checkbox]')) as HTMLInputElement[];
+    expect(boxes[0].checked).toBe(true);
+    boxes[1].click();
+    expect(saved).toBe('cook, sheep');
+});
+
 test('checkbox edit saves true/false', () => {
     let saved = '';
     const elc = renderControl(def({ type: 'boolean', default: false }), 'false', v => (saved = v), { disabled: false });
