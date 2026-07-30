@@ -5,7 +5,7 @@
 
 # Bundled scripts
 
-The client ships **38 scripts** across 18 categories. They double as worked
+The client ships **39 scripts** across 19 categories. They double as worked
 examples of the [scripting API](API.md) — the source for each is under
 [`src/bot/scripts/`](../src/bot/scripts/).
 
@@ -20,6 +20,7 @@ Settings listed here are the parameters the panel exposes before you start a scr
 - [Firemaking](#firemaking) — 1
 - [Fishing](#fishing) — 1
 - [Fletching](#fletching) — 1
+- [Herblore](#herblore) — 1
 - [Mining](#mining) — 2
 - [Money making](#money-making) — 2
 - [Navigation](#navigation) — 1
@@ -451,6 +452,14 @@ Tags: `fletching`, `banking`, `afk`
 | `bankBooth` | string | `"Bank booth"` | Bank booth loc name |
 | `leashRadius` | number (2–20) | `6` | Booth search radius (tiles) |
 
+## Herblore
+
+### RoguesPurse
+
+Infinite Herblore grind at the fungus-covered cavern wall under the Karamja jungle — searches, identifies, and drops Rogues purse on the tick. Walks itself there; needs Herblore 3 and Jungle Potion past the point where Trufitus asks for the purse
+
+Tags: `herblore`, `karamja`, `members`, `afk`
+
 ## Mining
 
 ### EssMiner
@@ -546,7 +555,7 @@ Tags: `quest`, `queue`, `aio`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
-| `quests` | string[] | `[]` | Quest queue (empty = all) — one of: Rune Mysteries Quest, Doric's Quest, Sheep Shearer, The Restless Ghost, Cook's Assistant, Witch's Potion, Romeo & Juliet, Prince Ali Rescue, Waterfall Quest, Goblin Diplomacy, Demon Slayer, Witch's House, Merlin's Crystal, Priest in Peril, Black Knight's Fortress, Druidic Ritual, Lost City, The Tourist Trap, Watch Tower |
+| `quests` | string[] | `[]` | Quest queue (empty = all) — one of: Rune Mysteries Quest, Doric's Quest, Sheep Shearer, The Restless Ghost, Cook's Assistant, Witch's Potion, Romeo & Juliet, Prince Ali Rescue, Waterfall Quest, Goblin Diplomacy, Demon Slayer, Witch's House, Merlin's Crystal, Priest in Peril, Black Knight's Fortress, Druidic Ritual, Lost City, The Tourist Trap, Watch Tower, Vampire Slayer, Jungle Potion, Shilo Village |
 | `food` | string | `"Trout"` | Food item |
 | `eatAtHp` | number (1–99) | `50` | Eat below HP% |
 

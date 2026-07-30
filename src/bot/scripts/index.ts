@@ -47,6 +47,7 @@ import FlaxSpinner, { SETTINGS as FLAXSPINNER_SETTINGS } from './FlaxSpinner.js'
 import EssMiner, { SETTINGS as ESSMINER_SETTINGS } from './EssMiner.js';
 import RuneCrafter, { SETTINGS as RUNECRAFTER_SETTINGS } from './RuneCrafter.js';
 import NatureCrafter, { SETTINGS as NATURECRAFTER_SETTINGS } from './NatureCrafter.js';
+import RoguesPurse from './RoguesPurse.js';
 import ShopBuyout, { SHOPBUYOUT_SETTINGS } from './ShopBuyout.js';
 import { ShopRunner, SHOPRUNNER_SETTINGS } from './ShopRunner.js';
 
@@ -397,6 +398,14 @@ ScriptRegistry.register({
     tags: ['fletching', 'banking', 'afk'],
     settingsSchema: BANKFLETCHER_SETTINGS,
     create: () => new BankFletcher()
+});
+
+ScriptRegistry.register({
+    name: 'RoguesPurse',
+    description: 'Infinite Herblore grind at the fungus-covered cavern wall under the Karamja jungle — searches, identifies, and drops Rogues purse on the tick. Walks itself there; needs Herblore 3 and Jungle Potion past the point where Trufitus asks for the purse',
+    category: 'Herblore',
+    tags: ['herblore', 'karamja', 'members', 'afk'],
+    create: () => new RoguesPurse()
 });
 
 ScriptRegistry.register({
