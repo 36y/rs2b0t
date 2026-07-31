@@ -5,7 +5,7 @@
 
 # Bundled scripts
 
-The client ships **39 scripts** across 19 categories. They double as worked
+The client ships **40 scripts** across 19 categories. They double as worked
 examples of the [scripting API](API.md) — the source for each is under
 [`src/bot/scripts/`](../src/bot/scripts/).
 
@@ -19,7 +19,7 @@ Settings listed here are the parameters the panel exposes before you start a scr
 - [Crafting](#crafting) — 4
 - [Firemaking](#firemaking) — 1
 - [Fishing](#fishing) — 1
-- [Fletching](#fletching) — 1
+- [Fletching](#fletching) — 2
 - [Herblore](#herblore) — 1
 - [Mining](#mining) — 2
 - [Money making](#money-making) — 2
@@ -451,6 +451,16 @@ Tags: `fletching`, `banking`, `afk`
 | `bankStand` | tile | `{"x":3185,"z":3440,"level":0}` | Bank stand tile (x,z) |
 | `bankBooth` | string | `"Bank booth"` | Bank booth loc name |
 | `leashRadius` | number (2–20) | `6` | Booth search radius (tiles) |
+
+### DartFletcher
+
+Spam-attaches feathers to stackable dart tips at the five-action-per-tick server ceiling; runs anywhere until either input stack is empty
+
+Tags: `fletching`, `darts`, `members`, `fast`
+
+| Setting | Type | Default | Notes |
+|---|---|---|---|
+| `tier` | string | `"Bronze"` | Dart tier — one of: Bronze, Iron, Steel, Mithril, Adamant, Rune |
 
 ## Herblore
 

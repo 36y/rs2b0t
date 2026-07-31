@@ -41,6 +41,7 @@ import LeatherCrafter, { CRAFTER_SETTINGS } from './LeatherCrafter.js';
 import Firemaker, { FIREMAKER_SETTINGS } from './Firemaker.js';
 import SmithingBot, { SETTINGS as SMITHING_SETTINGS } from './SmithingBot.js';
 import BankFletcher, { SETTINGS as BANKFLETCHER_SETTINGS } from './BankFletcher.js';
+import DartFletcher, { DART_FLETCHER_SETTINGS } from './DartFletcher.js';
 import BoneBurier, { BONE_BURIER_SETTINGS } from './BoneBurier.js';
 import FlaxPicker, { SETTINGS as FLAXPICKER_SETTINGS } from './FlaxPicker.js';
 import FlaxSpinner, { SETTINGS as FLAXSPINNER_SETTINGS } from './FlaxSpinner.js';
@@ -398,6 +399,15 @@ ScriptRegistry.register({
     tags: ['fletching', 'banking', 'afk'],
     settingsSchema: BANKFLETCHER_SETTINGS,
     create: () => new BankFletcher()
+});
+
+ScriptRegistry.register({
+    name: 'DartFletcher',
+    description: 'Spam-attaches feathers to stackable dart tips at the five-action-per-tick server ceiling; runs anywhere until either input stack is empty',
+    category: 'Fletching',
+    tags: ['fletching', 'darts', 'members', 'fast'],
+    settingsSchema: DART_FLETCHER_SETTINGS,
+    create: () => new DartFletcher()
 });
 
 ScriptRegistry.register({
