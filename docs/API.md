@@ -194,17 +194,19 @@ Watchtower, or Trollheim. Names are case-insensitive and may include `Cast` and
 the `teleport` suffix. An unknown name returns `false` without opening a tab or
 clicking a component.
 
-For a recognised destination, the method opens magic side tab 6 when it is not
-already active. It waits up to two seconds for the tab change, but continues as
-soon as magic becomes active rather than sleeping for the full timeout. If the
-magic interface is unavailable or the tab cannot be opened, it returns `false`
-without attempting the spell.
+Spell casting does not require magic side tab 6 to be active. The client keeps
+the loaded magic root addressable while another side tab is displayed, so both
+`Game.castOnNpc()` and `Game.teleport()` resolve and dispatch directly against
+that root without changing the player's current tab. There is no separate tab or
+root-availability gate: targeted casts return `false` naturally when their spell
+component cannot be resolved, while teleports can still use their static fallback
+component when live interface lookup is unavailable.
 
-Once magic is active, the current interface button is resolved by its displayed
-name. If that live lookup fails, the matching 2004 component ID is used as a
-compatibility fallback. A `true` result only means the component click was
-dispatched; it does not prove the server accepted the cast. Scripts should wait
-for the expected tile or plane change to confirm arrival.
+For a recognised teleport, the current interface button is resolved by its
+displayed name. If that live lookup fails, the matching 2004 component ID is
+used as a compatibility fallback. A `true` result only means the component click
+was dispatched; it does not prove the server accepted the cast. Scripts should
+wait for the expected tile or plane change to confirm arrival.
 
 ```ts
 if (await Game.teleport('Camelot')) {

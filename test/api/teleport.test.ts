@@ -2,6 +2,8 @@ import { afterEach, describe, expect, test } from 'bun:test';
 
 import { actions, reader } from '#/bot/adapter/ClientAdapter.js';
 import { Game } from '#/bot/api/Game.js';
+import type { Npc } from '#/bot/api/entities/index.js';
+import { ActionRouter } from '#/bot/input/ActionRouter.js';
 import {
     resolveTeleport,
     resolveTeleportComponent,
@@ -22,6 +24,8 @@ const originals = {
     ifButton: actions.ifButton,
     buttonByText: reader.buttonByText,
     sideTabInterface: reader.sideTabInterface,
+    targetButtonByBase: reader.targetButtonByBase,
+    castOnNpc: ActionRouter.driver.castOnNpc,
     openSideTab: Game.openSideTab
 };
 
@@ -29,6 +33,8 @@ afterEach(() => {
     actions.ifButton = originals.ifButton;
     reader.buttonByText = originals.buttonByText;
     reader.sideTabInterface = originals.sideTabInterface;
+    reader.targetButtonByBase = originals.targetButtonByBase;
+    ActionRouter.driver.castOnNpc = originals.castOnNpc;
     Game.openSideTab = originals.openSideTab;
 });
 
@@ -74,8 +80,8 @@ describe('resolveTeleportComponent', () => {
 });
 
 describe('Game.teleport', () => {
-    test('opens magic and dispatches the live named component', async () => {
-        let openedTab = -1;
+    test('dispatches the live named component without activating the magic tab', async () => {
+        let openedTab = false;
         let clickedComId = -1;
         reader.sideTabInterface = () => 1151;
         reader.buttonByText = (root, label) => {
@@ -83,9 +89,9 @@ describe('Game.teleport', () => {
             expect(label).toBe('Cast @gre@Camelot teleport');
             return 8123;
         };
-        Game.openSideTab = async tab => {
-            openedTab = tab;
-            return true;
+        Game.openSideTab = async () => {
+            openedTab = true;
+            return false;
         };
         actions.ifButton = comId => {
             clickedComId = comId;
@@ -93,14 +99,14 @@ describe('Game.teleport', () => {
         };
 
         expect(await Game.teleport('Camelot')).toBe(true);
-        expect(openedTab).toBe(6);
+        expect(openedTab).toBe(false);
         expect(clickedComId).toBe(8123);
     });
 
     test('dispatches the static fallback when the live button name is missing', async () => {
         reader.sideTabInterface = () => 1151;
         reader.buttonByText = () => -1;
-        Game.openSideTab = async () => true;
+        Game.openSideTab = async () => false;
         let clickedComId = -1;
         actions.ifButton = comId => {
             clickedComId = comId;
@@ -108,6 +114,22 @@ describe('Game.teleport', () => {
         };
 
         expect(await Game.teleport('Varrock teleport')).toBe(true);
+        expect(clickedComId).toBe(1164);
+    });
+
+    test('dispatches the static fallback when the magic root is unavailable', async () => {
+        reader.sideTabInterface = () => -1;
+        reader.buttonByText = root => {
+            expect(root).toBe(-1);
+            return -1;
+        };
+        let clickedComId = -1;
+        actions.ifButton = comId => {
+            clickedComId = comId;
+            return true;
+        };
+
+        expect(await Game.teleport('Varrock')).toBe(true);
         expect(clickedComId).toBe(1164);
     });
 
@@ -126,5 +148,49 @@ describe('Game.teleport', () => {
         expect(await Game.teleport('Edgeville')).toBe(false);
         expect(opened).toBe(false);
         expect(clicked).toBe(false);
+    });
+});
+
+describe('Game.castOnNpc', () => {
+    test('casts from the loaded magic root without activating the magic tab', async () => {
+        let openedTab = false;
+        let cast: { comId: number; npcIndex: number } | null = null;
+        reader.sideTabInterface = tab => {
+            expect(tab).toBe(6);
+            return 1151;
+        };
+        reader.targetButtonByBase = (root, spell) => {
+            expect(root).toBe(1151);
+            expect(spell).toBe('Wind Strike');
+            return 8123;
+        };
+        Game.openSideTab = async () => {
+            openedTab = true;
+            return false;
+        };
+        ActionRouter.driver.castOnNpc = (comId, npcIndex) => {
+            cast = { comId, npcIndex };
+            return true;
+        };
+
+        expect(await Game.castOnNpc('Wind Strike', { index: 42 } as Npc)).toBe(true);
+        expect(openedTab).toBe(false);
+        expect(cast).toEqual({ comId: 8123, npcIndex: 42 });
+    });
+
+    test('fails naturally when the spell component cannot be resolved', async () => {
+        reader.sideTabInterface = () => -1;
+        reader.targetButtonByBase = root => {
+            expect(root).toBe(-1);
+            return -1;
+        };
+        let cast = false;
+        ActionRouter.driver.castOnNpc = () => {
+            cast = true;
+            return true;
+        };
+
+        expect(await Game.castOnNpc('Wind Strike', { index: 42 } as Npc)).toBe(false);
+        expect(cast).toBe(false);
     });
 });

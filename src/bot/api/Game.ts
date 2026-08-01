@@ -121,10 +121,6 @@ export const Game = {
 
     async castOnNpc(spell: string, npc: Npc): Promise<boolean> {
         const root = reader.sideTabInterface(MAGIC_TAB);
-        if (root === -1 || !(await Game.openSideTab(MAGIC_TAB))) {
-            return false;
-        }
-
         const comId = reader.targetButtonByBase(root, spell);
         if (comId === -1) {
             return false;
@@ -135,8 +131,9 @@ export const Game = {
 
     /**
      * Cast a standard spellbook teleport by destination name.
-     * Opens the magic tab when needed, resolves the live button by name, and
-     * falls back to its 2004 component ID. Success confirms dispatch, not arrival.
+     * Uses the magic root for live name lookup when available without activating
+     * its side tab, then falls back to the 2004 component ID. Success confirms
+     * dispatch, not arrival.
      */
     async teleport(name: string): Promise<boolean> {
         const teleport = resolveTeleport(name);
@@ -145,10 +142,6 @@ export const Game = {
         }
 
         const root = reader.sideTabInterface(MAGIC_TAB);
-        if (root === -1 || !(await Game.openSideTab(MAGIC_TAB))) {
-            return false;
-        }
-
         const comId = resolveTeleportComponent(teleport, label => reader.buttonByText(root, label));
         return actions.ifButton(comId);
     }
