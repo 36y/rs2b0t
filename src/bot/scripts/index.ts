@@ -105,7 +105,7 @@ ScriptRegistry.register({
 
 ScriptRegistry.register({
     name: 'ChaosDruidKiller',
-    description: 'Kills Chaos druids in the Edgeville dungeon, loots herbs/law runes, banks them',
+    description: 'Kills Chaos druids in the Edgeville dungeon, loots exact Herb/Law rune names, banks them',
     category: 'Combat',
     tags: ['wilderness', 'edgeville', 'herbs', 'banking'],
     settingsSchema: CHAOSDRUID_SETTINGS,
