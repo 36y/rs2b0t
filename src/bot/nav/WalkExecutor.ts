@@ -72,6 +72,23 @@ export function matchesTransportLoc(transport: TransportInfo, loc: { readonly id
     return Math.max(Math.abs(tile.x - transport.locX), Math.abs(tile.z - transport.locZ)) <= 3;
 }
 
+export function matchesTransportLanding(
+    transport: TransportInfo,
+    expectedLevel: number,
+    before: WorldTile | null,
+    current: WorldTile | null
+): boolean {
+    if (!current) {
+        return false;
+    }
+    if (transport.toTile && current.level === expectedLevel && chebyshev(current, transport.toTile) <= 3) {
+        return true;
+    }
+    return transport.acceptAnyLanding === true && before !== null && (
+        current.level !== before.level || chebyshev(current, before) > 64
+    );
+}
+
 function expandWaypoints(waypoints: Waypoint[]): PathStep[] {
     const tiles: PathStep[] = [];
     for (let i = 0; i < waypoints.length; i++) {
@@ -461,6 +478,7 @@ class WalkExecutorImpl {
                 return false;
             }
 
+            const before = reader.worldTile();
             const mark = GameMessages.mark();
             if (!loc.interact(transport.action)) {
                 log(`'${transport.action}' not offered by ${transport.locName} (ops: ${loc.actions().join(', ')})`);
@@ -474,11 +492,7 @@ class WalkExecutorImpl {
                 const climbed = (): boolean => reader.worldTile()?.level === toLevel;
                 crossed = (await Execution.delayUntil(() => climbed() || cantReach(), TRANSPORT_WAIT_MS)) && climbed();
             } else if (transport.toTile !== undefined) {
-                const toTile = transport.toTile;
-                const landed = (): boolean => {
-                    const me = reader.worldTile();
-                    return me !== null && me.level === step.level && chebyshev(me, toTile) <= 3;
-                };
+                const landed = (): boolean => matchesTransportLanding(transport, step.level, before, reader.worldTile());
                 crossed = (await Execution.delayUntil(() => landed() || cantReach(), TRANSPORT_WAIT_MS)) && landed();
             } else {
                 const open = (): boolean => this.findTransportLoc(transport) === null || Reachability.canStep(approach, step);
