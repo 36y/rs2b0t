@@ -1834,10 +1834,10 @@ export default class GatheringBot extends TaskBot {
                 this.mining() && this.gems > 0
                     ? `Gems: ${this.gems}`
                     : cookOn
-                      ? `Ok ${this.cooked} · Burnt ${this.burnt}`
-                      : burnOn
-                        ? `Burned: ${this.firesLit}`
-                        : `Inv: ${Inventory.used()}/28`;
+                        ? `Ok ${this.cooked} · Burnt ${this.burnt}`
+                        : burnOn
+                            ? `Burned: ${this.firesLit}`
+                            : `Inv: ${Inventory.used()}/28`;
             p.row(`Banked: ${this.banked}`, `Trips: ${this.trips}`, third);
             p.bar('Pack', Inventory.used() / 28);
 
@@ -4787,7 +4787,7 @@ class Gather implements Task {
         return false;
     }
 
-    private async reclickFish(index: number, startTile: Tile): Promise<boolean> {
+    private async reclickFish(index: number, _startTile: Tile): Promise<boolean> {
         const live = this.spotByIndex(index);
         if (!live || WHIRLPOOL_IDS.has(live.id)) {
             return false;

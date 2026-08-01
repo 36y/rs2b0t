@@ -51,6 +51,7 @@ import BoneBurier, { BONE_BURIER_SETTINGS } from './BoneBurier.js';
 import FlaxPicker, { SETTINGS as FLAXPICKER_SETTINGS } from './FlaxPicker.js';
 import FlaxSpinner, { SETTINGS as FLAXSPINNER_SETTINGS } from './FlaxSpinner.js';
 import EssMiner, { SETTINGS as ESSMINER_SETTINGS } from './EssMiner.js';
+import CoalTrucks from './CoalTrucks.js';
 import RuneCrafter, { SETTINGS as RUNECRAFTER_SETTINGS } from './RuneCrafter.js';
 import NatureCrafter, { SETTINGS as NATURECRAFTER_SETTINGS } from './NatureCrafter.js';
 import MuleCrafter, { SETTINGS as MULECRAFTER_SETTINGS } from './MuleCrafter.js';
@@ -247,6 +248,14 @@ ScriptRegistry.register({
     tags: ['varrock', 'mining', 'banking', 'afk'],
     settingsSchema: ESSMINER_SETTINGS,
     create: () => new EssMiner()
+});
+
+ScriptRegistry.register({
+    name: 'CoalTrucks',
+    description: 'Mines coal at the Coal Trucks, buffers 120 in the trucks, then drains them into the Seers bank — needs Mining 30 and a pickaxe. No combat handling: the level-27 giant bats are aggressive below 55 combat.',
+    category: 'Mining',
+    tags: ['mining', 'coal', 'seers', 'banking'],
+    create: () => new CoalTrucks()
 });
 
 ScriptRegistry.register({

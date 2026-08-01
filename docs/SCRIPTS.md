@@ -5,7 +5,7 @@
 
 # Bundled scripts
 
-The client ships **42 scripts** across 19 categories. They double as worked
+The client ships **43 scripts** across 19 categories. They double as worked
 examples of the [scripting API](API.md) — the source for each is under
 [`src/bot/scripts/`](../src/bot/scripts/).
 
@@ -21,7 +21,7 @@ Settings listed here are the parameters the panel exposes before you start a scr
 - [Fishing](#fishing) — 1
 - [Fletching](#fletching) — 2
 - [Herblore](#herblore) — 1
-- [Mining](#mining) — 2
+- [Mining](#mining) — 3
 - [Money making](#money-making) — 2
 - [Navigation](#navigation) — 1
 - [Prayer](#prayer) — 1
@@ -483,6 +483,12 @@ Infinite Herblore grind at the fungus-covered cavern wall under the Karamja jung
 Tags: `herblore`, `karamja`, `members`, `afk`
 
 ## Mining
+
+### CoalTrucks
+
+Mines coal at the Coal Trucks, buffers 120 in the trucks, then drains them into the Seers bank — needs Mining 30 and a pickaxe. No combat handling: the level-27 giant bats are aggressive below 55 combat.
+
+Tags: `mining`, `coal`, `seers`, `banking`
 
 ### EssMiner
 

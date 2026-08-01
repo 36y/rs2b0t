@@ -1778,13 +1778,12 @@ const SCENARIOS: Scenario[] = [
         seed: [{ debug: 'coins', name: 'Coins', qty: 3000 }],
         scene: 'bank',
         budgetMs: 240_000,
-        check: ({ start, cur, minDistToCamp, startDistToCamp, elapsedMs }) => {
+        check: ({ start, cur, minDistToCamp, startDistToCamp }) => {
             if (cur.runner === 'crashed') {
                 return 'fail';
             }
             const boughtRod = logHas(cur, /acquire:\s*bought\s+\d+×\s*Fly fishing rod/i);
             const boughtFeather = logHas(cur, /acquire:\s*bought\s+\d+×\s*Feather/i);
-            const multiBuy = logHas(cur, /acquire:\s*multi-buy/i);
             const gotRod = hasTool(cur, 'Fly fishing rod') || invCount(cur, 'Fly fishing rod') > 0;
             const gotFeather = invCount(cur, 'Feather') > 0;
             const fishXp = cur.xp.fishing - start.xp.fishing;
@@ -2142,7 +2141,7 @@ try {
                     // Mats were deposited — pack must be empty of them so restock banks.
                     if (invCount(pre, 'Runite bar') > 0 || invCount(pre, 'Hammer') > 0) {
                         throw new Error(
-                            `precondition: hammer/bar still in pack after deposit ` +
+                            'precondition: hammer/bar still in pack after deposit ' +
                                 `(bar=${invCount(pre, 'Runite bar')} hammer=${invCount(pre, 'Hammer')})`
                         );
                     }
@@ -2242,12 +2241,12 @@ try {
                     sc.id === 'fish-cook-bank'
                         ? invMatch(cur, /^(raw )?lobster$/i)
                         : sc.id === 'fish-bank-raw-cook'
-                          ? invMatch(cur, /^raw lobster$/i)
-                          : sc.script === 'Miner'
-                            ? invMatch(cur, /ore/i)
-                            : sc.script === 'Fisher'
-                              ? invMatch(cur, /^raw /i)
-                              : invMatch(cur, /logs/i);
+                            ? invMatch(cur, /^raw lobster$/i)
+                            : sc.script === 'Miner'
+                                ? invMatch(cur, /ore/i)
+                                : sc.script === 'Fisher'
+                                    ? invMatch(cur, /^raw /i)
+                                    : invMatch(cur, /logs/i);
                 if (product > 0) {
                     sawProduct = true;
                 }

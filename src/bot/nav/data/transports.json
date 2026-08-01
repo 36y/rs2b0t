@@ -37,6 +37,8 @@
     {"from":{"x":2683,"z":3268,"level":1},"to":{"x":2683,"z":3271,"level":0},"locName":"Gangplank","action":"Cross","kind":"gangplank"},
     {"from":{"x":2709,"z":3209,"level":0},"to":{"x":2704,"z":3209,"level":0},"locName":"Ropeswing","action":"Swing-on","kind":"shortcut"},
     {"from":{"x":2705,"z":3205,"level":0},"to":{"x":2709,"z":3205,"level":0},"locName":"Ropeswing","action":"Swing-on","kind":"shortcut"},
+    {"from":{"x":2598,"z":3477,"level":0},"to":{"x":2603,"z":3477,"level":0},"locName":"Log balance","action":"Walk-across","kind":"shortcut"},
+    {"from":{"x":2603,"z":3477,"level":0},"to":{"x":2598,"z":3477,"level":0},"locName":"Log balance","action":"Walk-across","kind":"shortcut"},
     {"from":{"x":2906,"z":3049,"level":0},"to":{"x":2910,"z":3049,"level":0},"locName":"A wooden log","action":"Balance","kind":"dungeon"},
     {"from":{"x":2910,"z":3049,"level":0},"to":{"x":2906,"z":3049,"level":0},"locName":"A wooden log","action":"Balance","kind":"dungeon"},
     {"from":{"x":2795,"z":2979,"level":0},"to":{"x":2791,"z":2979,"level":0},"locName":"Rocks","action":"Climb","kind":"dungeon"},

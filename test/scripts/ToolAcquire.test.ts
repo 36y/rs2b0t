@@ -27,8 +27,8 @@ import {
     planGatherToolAcquire,
     planPickaxeAcquire,
     type AcquireWorld
-} from '#/bot/api/ToolAcquire.js';
-import { AXES, PICKAXES } from '#/bot/api/Tools.js';
+} from '#/bot/scripts/ToolAcquire.js';
+import { PICKAXES } from '#/bot/scripts/Tools.js';
 
 function world(partial: Partial<AcquireWorld> & { levels?: Record<string, number>; held?: Record<string, number>; bank?: Record<string, number> }): AcquireWorld {
     const levels = partial.levels ?? {};

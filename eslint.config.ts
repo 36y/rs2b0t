@@ -32,6 +32,16 @@ export default defineConfig([
         }
     },
 
+    // The ported 2004 client swallows exceptions in dozens of places, faithfully to the
+    // original. It is a frozen port, so an empty catch there is intent rather than an
+    // oversight. Everything we write ourselves keeps the rule and comments the intent.
+    {
+        files: ['src/client/**/*.ts', 'src/dash3d/**/*.ts', 'src/graphics/**/*.ts', 'src/mapview/**/*.ts', 'src/config/**/*.ts', 'src/io/**/*.{ts,js}', 'src/sound/**/*.ts', 'src/datastruct/**/*.ts', 'src/wordfilter/**/*.ts'],
+        rules: {
+            'no-empty': ['error', { allowEmptyCatch: true }]
+        }
+    },
+
     // ---- rs2b0t fences ----
     // Only adapter/ may name client internals; everything else in src/bot/
     // imports the adapter. Protocol const-enums are exempt (inlined, no

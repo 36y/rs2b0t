@@ -182,6 +182,24 @@ Those are curated in
 and `pickChoice` matches a dialogue option case-insensitively by substring so small
 wording differences do not break a route.
 
+A crossing can also gate on a **skill**, which is how Agility shortcuts are modelled:
+
+```ts
+{ x: 2598, z: 3477, level: 0, locName: 'Log balance', action: 'Walk-across',
+  requiresSkill: { name: 'agility', level: 20 },
+  label: 'Coal trucks log balance' }
+```
+
+`meetsSkill` checks it in the same two places `meetsRequirement` is checked — pruning
+in `resetAvoids`, refusing in `handleSpecialCrossing`. Pruning is the important half:
+without it a sub-20 account paths at a log it can never walk and wedges there, instead
+of taking the long way round. The coal trucks log cuts mine→Seers from cost 263 to
+156, and prunes back to 263 — still reachable — below the gate.
+
+Note these entries are keyed at the edge's **`from` tile**, not the loc's own tile,
+because `PathFinder` records `transport.locX/locZ` as the edge origin. A two-way
+shortcut therefore needs two entries, one per direction.
+
 Ship crossings carry a `toTile`, because they teleport rather than step — the
 executor waits to land near that tile instead of watching for an adjacent move. A
 crossing the bot cannot afford should be avoided **during planning**; discovering it

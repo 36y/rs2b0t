@@ -18,7 +18,7 @@ import { buyoutPlan } from '../shops/BuyoutLogic.js';
 import { clusterEligible, estimateClusterGp, nextCluster, withdrawFor } from '../shops/RingLogic.js';
 import { SHOP_DB } from '../shops/data/shopdb.js';
 import { ROUTE, SMOKE_ROUTE } from '../shops/data/route.js';
-import type { AccountView, NavPointLike, Route, RouteCluster } from '../shops/types.js';
+import type { AccountView, NavPointLike, Route } from '../shops/types.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
 
 const BUYABLE_NAMES: string[] = [...new Set(

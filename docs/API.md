@@ -395,6 +395,19 @@ COMMON_BANK_LOOT: string[]            // 'uncut', gem names, 'strange fruit', �
 RANDOM_EVENT_CASKET_ID: number        // always treated as common loot
 ```
 
+> **Default to `depositAllExcept`.** Reach for an allow-list (`depositMatcher`, or
+> matching your own product by name) only when you can name every item the pack is
+> allowed to accumulate — and you usually can't. Random events, gem-table rolls, drops
+> and quest leavings all arrive unannounced, and anything the deposit misses **squats a
+> slot on every future trip**. That is a slow leak, not a crash: the bot keeps working
+> while each load quietly shrinks, so nothing fails and no test notices.
+>
+> Deny-listing inverts the failure. An unexpected item gets banked (harmless) instead of
+> hoarded (compounding). Keep the list to what the script genuinely needs to hold — and
+> keep the *specific* item, not the category: `CoalTrucks` keeps the one pickaxe
+> `bestPickaxe` selected, so a spare or an unusable tier is banked rather than squatting
+> a coal slot forever.
+
 **Periodic bank settings** (combat/loot scripts):
 
 ```ts

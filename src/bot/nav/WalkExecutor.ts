@@ -8,7 +8,8 @@ import { Locs, type Loc } from '../api/queries/Locs.js';
 import { Npcs } from '../api/queries/Npcs.js';
 import { Inventory } from '../api/hud/Inventory.js';
 import { ChatDialog } from '../api/hud/ChatDialog.js';
-import { SPECIAL_CROSSINGS, specialCrossingAt, pickChoice, meetsRequirement, matchesUseItem, type SpecialCrossing } from './data/specialCrossings.js';
+import { SPECIAL_CROSSINGS, specialCrossingAt, pickChoice, meetsRequirement, meetsSkill, matchesUseItem, type SpecialCrossing } from './data/specialCrossings.js';
+import { Skills } from '../api/hud/Skills.js';
 import { Reachability } from '../api/Reachability.js';
 import { ActionRouter } from '../input/ActionRouter.js';
 import { Navigator, type PathResult } from './Navigator.js';
@@ -190,7 +191,9 @@ class WalkExecutorImpl {
         this.doorStrikes.clear();
         this.avoidDoors = [];
         for (const sc of SPECIAL_CROSSINGS) {
-            if (sc.requires && !meetsRequirement(Inventory.count(sc.requires.item), sc.requires)) {
+            const shortItem = sc.requires && !meetsRequirement(Inventory.count(sc.requires.item), sc.requires);
+            const shortSkill = sc.requiresSkill && !meetsSkill(Skills.level(sc.requiresSkill.name), sc.requiresSkill);
+            if (shortItem || shortSkill) {
                 this.avoidDoors.push({ x: sc.x, z: sc.z });
             }
         }
@@ -559,6 +562,11 @@ class WalkExecutorImpl {
     private async handleSpecialCrossing(approach: PathStep, step: PathStep, sc: SpecialCrossing, log: (msg: string) => void): Promise<boolean> {
         if (sc.requires && !meetsRequirement(Inventory.count(sc.requires.item), sc.requires)) {
             log(`${sc.label}: need ${sc.requires.count} ${sc.requires.item} — skipping`);
+            return false;
+        }
+
+        if (sc.requiresSkill && !meetsSkill(Skills.level(sc.requiresSkill.name), sc.requiresSkill)) {
+            log(`${sc.label}: need ${sc.requiresSkill.name} ${sc.requiresSkill.level} — skipping`);
             return false;
         }
 

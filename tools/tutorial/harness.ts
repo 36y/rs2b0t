@@ -49,7 +49,7 @@ async function waitClientBooted(page: Page, label: string): Promise<void> {
     } catch {
         throw new Error(
             `${label}: client never reached title loop within ${Math.round(BOOT_MS / 1000)}s ` +
-                `(still downloading cache/assets? set BOOT_MS=…)`
+                '(still downloading cache/assets? set BOOT_MS=…)'
         );
     }
 }
@@ -67,7 +67,7 @@ async function waitIngame(page: Page, timeoutMs: number, label: string): Promise
     } catch {
         throw new Error(
             `${label}: not ingame/scene-ready within ${Math.round(timeoutMs / 1000)}s ` +
-                `(map download lag or login rejected — set LOGIN_MS=…)`
+                '(map download lag or login rejected — set LOGIN_MS=…)'
         );
     }
 }
@@ -93,7 +93,7 @@ export async function relog(page: Page, user: string): Promise<void> {
     console.log(
         `  relog: logout → probe from ${Math.round(RELOG_COOLDOWN_MS / 1000)}s ` +
             `(${Math.round(RELOG_PROBE_MS / 1000)}s probes / ${Math.round(RELOG_RETRY_MS / 1000)}s gap; ` +
-            `RELOG_COOLDOWN_MS / RELOG_PROBE_MS / RELOG_RETRY_MS / RELOG_BUDGET_MS override)`
+            'RELOG_COOLDOWN_MS / RELOG_PROBE_MS / RELOG_RETRY_MS / RELOG_BUDGET_MS override)'
     );
     await page.evaluate(() => (globalThis as never as Rs2b0t).rs2b0t.client.logout());
     await page.waitForFunction(() => !(globalThis as never as Rs2b0t).rs2b0t.client.ingame, undefined, {

@@ -191,7 +191,7 @@ class ChopBurnLoad implements Task {
                       t => Reachability.walkable(t),
                       (a, b) => Reachability.canStep(a, b),
                       cap
-                  )
+                )
                 : 0;
             this.bot.setBurnLaneLeft(lane);
             if (lane > 0) {
