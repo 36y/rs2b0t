@@ -120,6 +120,12 @@ export const Game: {
     myName(): string | null;
     openSideTab(tab: number): Promise<boolean>;
     castOnNpc(spell: string, npc: Npc): Promise<boolean>;
+    /**
+     * Cast a standard spellbook teleport by destination name.
+     * Opens the magic tab when needed, resolves the live button by name, and
+     * falls back to its 2004 component ID. Success confirms dispatch, not arrival.
+     */
+    teleport(name: string): Promise<boolean>;
 };
 
 // ---- entities + queries ----

@@ -167,14 +167,20 @@ const ok = await Execution.delayUntil(() => Inventory.used() < before, 3000);
 Game.ingame(): boolean
 Game.tile(): WorldTile | null   // local player tile, null before login/scene load
 Game.energy(): number           // run energy
+Game.runEnabled(): boolean
 Game.weight(): number
 Game.inCombat(): boolean        // health bar showing
+Game.animating(): boolean
 Game.tick(): number             // server ticks since client boot
 Game.combatMode(): number       // current raw com_mode varp
 Game.combatStyleMode(style: 'attack' | 'strength' | 'controlled' | 'defence'): number | null
 Game.hasCombatStyle(style): boolean
 Game.setCombatStyle(style): boolean
 Game.setCombatMode(mode: number): boolean // exact numeric mode (for ranged styles)
+Game.myName(): string | null
+Game.openSideTab(tab: number): Promise<boolean>
+Game.castOnNpc(spell: string, npc: Npc): Promise<boolean>
+Game.teleport(name: string): Promise<boolean>
 ```
 
 Melee styles are resolved from the Accurate, Aggressive, Controlled, or
@@ -182,6 +188,32 @@ Defensive labels on the equipped weapon's combat interface. This handles
 duplicate and unusual layouts without guessing from the weapon name, button
 count, or ordinal order. If a requested style is unavailable, the last defensive
 button is selected (including controlled on a three-mode weapon).
+
+`Game.teleport()` accepts Varrock, Lumbridge, Falador, Camelot, Ardougne,
+Watchtower, or Trollheim. Names are case-insensitive and may include `Cast` and
+the `teleport` suffix. An unknown name returns `false` without opening a tab or
+clicking a component.
+
+For a recognised destination, the method opens magic side tab 6 when it is not
+already active. It waits up to two seconds for the tab change, but continues as
+soon as magic becomes active rather than sleeping for the full timeout. If the
+magic interface is unavailable or the tab cannot be opened, it returns `false`
+without attempting the spell.
+
+Once magic is active, the current interface button is resolved by its displayed
+name. If that live lookup fails, the matching 2004 component ID is used as a
+compatibility fallback. A `true` result only means the component click was
+dispatched; it does not prove the server accepted the cast. Scripts should wait
+for the expected tile or plane change to confirm arrival.
+
+```ts
+if (await Game.teleport('Camelot')) {
+    await Execution.delayUntil(() => {
+        const tile = Game.tile();
+        return tile?.x === 2757 && tile.z === 3478;
+    }, 8000);
+}
+```
 
 ---
 
