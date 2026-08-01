@@ -52,6 +52,12 @@ export function resolvePick(selection: string, miningLevel: number, held: readon
     return { kind: 'stop', reason: `no ${want} in inventory, equipment, or bank` };
 }
 
+/** Pickaxe name that an EssMiner bank trip must preserve in the pack. */
+export function heldPickaxeToKeep(selection: string, miningLevel: number, held: readonly string[]): string | null {
+    const pick = resolvePick(selection, miningLevel, held, []);
+    return pick.kind === 'held' ? pick.item : null;
+}
+
 export function inEssMine(x: number, z: number): boolean {
     return (x >> 6) === 45 && (z >> 6) === 75;
 }

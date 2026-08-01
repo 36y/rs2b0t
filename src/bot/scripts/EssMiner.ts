@@ -3,7 +3,7 @@ import { Execution } from '../api/Execution.js';
 import { EventSignal } from '../api/EventSignal.js';
 import { Game } from '../api/Game.js';
 import Tile from '../api/Tile.js';
-import { depositMatcher } from '../api/Banking.js';
+import { depositAllExcept } from '../api/Banking.js';
 import { Bank } from '../api/hud/Bank.js';
 import { ChatDialog } from '../api/hud/ChatDialog.js';
 import { Equipment } from '../api/hud/Equipment.js';
@@ -18,7 +18,7 @@ import { Traversal } from '../api/Traversal.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import { SettingsStore } from '../runtime/Settings.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import { BEST_AVAILABLE, ESS_ITEM, PICK_OPTIONS, inEssMine, requiredMiningLevel, resolvePick, withdrawOneOp } from './EssMinerLogic.js';
+import { BEST_AVAILABLE, ESS_ITEM, PICK_OPTIONS, heldPickaxeToKeep, inEssMine, requiredMiningLevel, resolvePick, withdrawOneOp } from './EssMinerLogic.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
 
 const BANK_STAND = new Tile(3251, 3420, 0);
@@ -52,8 +52,9 @@ function inMine(): boolean {
     const t = Game.tile();
     return t !== null && inEssMine(t.x, t.z);
 }
-function essDeposit(): (name: string) => boolean {
-    return depositMatcher(name => name.toLowerCase() === ESS_ITEM.toLowerCase(), true);
+function bankDeposit(): (name: string) => boolean {
+    const keep = heldPickaxeToKeep(PICK_CHOICE, Skills.level('mining'), heldNames());
+    return depositAllExcept(keep ? [keep] : []);
 }
 
 export default class EssMiner extends TaskBot {
@@ -204,7 +205,7 @@ class BankEss implements Task {
         }
         this.bot.resetBankFail();
         const n = essCount();
-        await Bank.depositAllMatching(essDeposit());
+        await Bank.depositAllMatching(bankDeposit());
         await Execution.delayTicks(1);
         this.bot.countTrip(n);
         this.bot.log(`banked ${n} rune essence (trip ${this.bot.tripsTotal()})`);
@@ -231,7 +232,7 @@ class GetPick implements Task {
         }
         this.bot.resetBankFail();
         if (Inventory.isFull()) {
-            await Bank.depositAllMatching(essDeposit());
+            await Bank.depositAllMatching(bankDeposit());
             await Execution.delayTicks(1);
         }
         const bankNames = Bank.items().map(i => i.name ?? '').filter(n => n.length > 0);

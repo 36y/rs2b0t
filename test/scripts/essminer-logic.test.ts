@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { BEST_AVAILABLE, ESS_ITEM, PICK_OPTIONS, PICK_TIERS, inEssMine, requiredMiningLevel, resolvePick, withdrawOneOp } from '#/bot/scripts/EssMinerLogic.js';
+import { BEST_AVAILABLE, ESS_ITEM, PICK_OPTIONS, PICK_TIERS, heldPickaxeToKeep, inEssMine, requiredMiningLevel, resolvePick, withdrawOneOp } from '#/bot/scripts/EssMinerLogic.js';
 
 describe('PICK_TIERS', () => {
     test('best-first with the content levelrequire values (pickaxes.obj)', () => {
@@ -59,6 +59,24 @@ describe('resolvePick', () => {
     });
     test('name matching is case-insensitive', () => {
         expect(resolvePick(BEST_AVAILABLE, 50, ['rune PICKAXE'], [])).toEqual({ kind: 'held', item: 'Rune pickaxe' });
+    });
+});
+
+describe('heldPickaxeToKeep', () => {
+    test('keeps only the best usable held tier for Best available', () => {
+        expect(heldPickaxeToKeep(BEST_AVAILABLE, 50, ['Bronze pickaxe', 'Rune pickaxe', 'Logs']))
+            .toBe('Rune pickaxe');
+    });
+    test('does not preserve a higher tier the miner cannot use', () => {
+        expect(heldPickaxeToKeep(BEST_AVAILABLE, 40, ['Rune pickaxe', 'Steel pickaxe']))
+            .toBe('Steel pickaxe');
+    });
+    test('specific tier settings remain authoritative', () => {
+        expect(heldPickaxeToKeep('Bronze', 50, ['Rune pickaxe', 'Bronze pickaxe']))
+            .toBe('Bronze pickaxe');
+    });
+    test('returns null when no selected usable pickaxe is held', () => {
+        expect(heldPickaxeToKeep(BEST_AVAILABLE, 50, ['Logs', 'Coins'])).toBeNull();
     });
 });
 
