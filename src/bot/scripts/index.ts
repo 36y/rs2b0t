@@ -243,7 +243,7 @@ ScriptRegistry.register({
 
 ScriptRegistry.register({
     name: 'EssMiner',
-    description: 'Rune essence loop — Aubury teleport, one-click mine to a full pack, portal back, bank at Varrock East. Needs Rune Mysteries + a usable pickaxe (picks your best by default)',
+    description: 'Rune essence loop — Aubury teleport, one-click mine to a full pack, portal back, bank at Varrock East. Needs Rune Mysteries; uses your best pickaxe and buys the exact best usable tier from Nurmof when banked coins cover it',
     category: 'Mining',
     tags: ['varrock', 'mining', 'banking', 'afk'],
     settingsSchema: ESSMINER_SETTINGS,
