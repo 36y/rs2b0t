@@ -541,7 +541,7 @@ Tags: `wilderness`, `shopping`, `banking`, `runes`, `afk`
 
 ### ShopRunner
 
-World shop-run supply loop — cycles shop clusters buying feathers, runes, and arrows/arrowtips, banking between clusters with capped gp withdrawals; skips shops until stock regenerates
+World shop-run supply loop — cycles shop clusters buying Herblore supplies, feathers, runes, and arrows/arrowtips, banking between clusters with capped gp withdrawals; skips shops until stock regenerates
 
 Tags: `shopping`, `banking`, `worldwalker`
 
