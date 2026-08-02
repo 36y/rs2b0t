@@ -65,6 +65,23 @@ async function closeIn(near: WorldTile, radius: number, log: (m: string) => void
 
 const REACH_DOOR_ATTEMPTS = 8;
 
+/**
+ * A shut wall-door blocks the step onto its own tile, so an adjacentOk probe
+ * rejects exactly the door that needs opening (#293). Wall locs operate from
+ * either side of their edge, so reaching any tile on or beside the door is
+ * enough to click it.
+ */
+function doorApproachable(doorTile: WorldTile): boolean {
+    for (let dx = -1; dx <= 1; dx++) {
+        for (let dz = -1; dz <= 1; dz++) {
+            if (Reachability.canReach({ x: doorTile.x + dx, z: doorTile.z + dz, level: doorTile.level }, { maxSteps: REACH_BFS_STEPS })) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 async function openBlockingDoor(toward: WorldTile, log: (m: string) => void): Promise<boolean> {
     const here = reader.worldTile();
     if (!here) { return false; }
@@ -72,7 +89,7 @@ async function openBlockingDoor(toward: WorldTile, log: (m: string) => void): Pr
         .where(l => isOpenableBarrier(l.name, l.actions()))
         .where(l => l.distance() <= 6
             && towardDest(l.tile(), here, toward)
-            && Reachability.canReach(l.tile(), { maxSteps: REACH_BFS_STEPS, adjacentOk: true }))
+            && doorApproachable(l.tile()))
         .nearest();
     if (!door) { return false; }
     const t = door.tile();

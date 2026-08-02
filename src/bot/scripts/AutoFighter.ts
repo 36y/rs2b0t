@@ -619,6 +619,9 @@ class Fight implements Task {
             find: () => this.track(target),
             op: 'Attack',
             expect: () => Game.inCombat() || ChatDialog.canContinue(),
+            // a wandering target postpones the server's can't-reach verdict forever,
+            // so probe the scene and open the blocking door ourselves (#293)
+            openWhenUnreachable: true,
             expectMs: 5000,
             what: TARGET,
             log: message => this.bot.log(message)
