@@ -38,7 +38,19 @@ worker.addEventListener('message', event => {
             }
             const started = performance.now();
             const avoid = message.avoid ? new Set(message.avoid.map(d => `${d.x}|${d.z}`)) : undefined;
-            const outcome = finder.findPath(message.from, message.to, avoid, message.maxExpansions);
+            const outcome = finder.findPath(message.from, message.to, {
+                avoidDoors: avoid,
+                maxExpansions: message.maxExpansions,
+                state: message.state,
+                policy: message.policy,
+                useTeleportCatalog: message.useTeleportCatalog
+            });
+            if (message.useTeleportCatalog) {
+                const teleHops = outcome.ok ? outcome.hops.filter(h => h.kind === 'teleport').length : 0;
+                console.log(
+                    `[nav-v2 worker] teleCatalog=${message.useTeleportCatalog} policy=${JSON.stringify(message.policy)} ok=${outcome.ok} cost=${outcome.ok ? outcome.cost : '-'} teleHops=${teleHops} law=${message.state?.items?.['Law rune'] ?? '?'}`
+                );
+            }
             worker.postMessage({ type: 'path', id: message.id, elapsedMs: performance.now() - started, ...outcome });
         }
     } catch (err) {

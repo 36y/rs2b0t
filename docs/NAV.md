@@ -10,6 +10,9 @@ The hard part is not the search. It is that the client can only express movement
 *clicks on tiles it can see*, while the destination is usually off-screen, behind a
 shut door, or on another level.
 
+> **Nav v2 (experimental)** — see [Nav v2](#nav-v2-experimental) below and
+> [`docs/nav-v2/`](nav-v2/README.md). Default walker remains **classic**.
+
 ## Contents
 
 - [The collision pack](#the-collision-pack)
@@ -18,6 +21,7 @@ shut door, or on another level.
 - [Corridor snap](#corridor-snap)
 - [Doors](#doors)
 - [Special crossings](#special-crossings)
+- [Nav v2 (experimental)](#nav-v2-experimental)
 - [Level-change loc lag](#level-change-loc-lag)
 - [Arrival](#arrival)
 - [The Reach primitive](#the-reach-primitive)
@@ -221,6 +225,43 @@ Ship crossings carry a `toTile`, because they teleport rather than step — the
 executor waits to land near that tile instead of watching for an adjacent move. A
 crossing the bot cannot afford should be avoided **during planning**; discovering it
 at the gate wastes the whole walk.
+
+## Exact transport loc metadata
+
+Location-backed transports may carry `locId` / `locX` / `locZ` from content-pack enrichment
+(`bun run gen:nav-transports`). `locId` is the **map placement** (closed trapdoor on
+the floor). When climb only exists on a transformed open loc, `openLocId` is set too;
+`matchesTransportLoc` accepts either id. PathFinder prefers that metadata; the executor
+falls back to nearby-name lookup when ids are absent. Special crossings resolve via
+`specialCrossingForTransport` (exact loc tile, then approach stand).
+
+Ladders with a single tele still wrapped in quest/skill/inv guards stay in the JSON as
+`disabledReason` audit rows (not active graph edges), unless a curated activation in
+`src/bot/nav/v2/stateAwareRequires.ts` re-enables them with `requires` (nav v2 only —
+classic skips requires-gated edges when no WorldState snapshot is sent).
+
+## Nav v2 (experimental)
+
+**Global → World walker:** `classic` (default) | `v2`. Override: `?Global.navEngine=v2`
+or `walkTo(dest, { navEngine: 'v2' })`.
+
+| | Classic | v2 |
+|---|---|---|
+| Tele catalog (spell + jewellery) | no | yes |
+| Live WorldState / `requires` | no | yes |
+| Hop logs | no | yes |
+| Path-scoped bank (runes/tolls; inv jewellery only) | no | yes (one leg max) |
+| Path paint | optional | optional (`showNavPath`) |
+
+**Path paint:** Global **Show nav path** + group **Nav path paint** (`showIf`). Tile quads on
+`#overlay` (see `pathPaintTheme.ts`). Not under 3D depth.
+
+**Jewellery:** inventory Rub only at plan+execute. Bank planner does not withdraw rings/glories
+(bank-cache API is separate). **Quest-lock doors:** mesbox → session blacklist + repath.
+
+**Code:** `src/bot/nav/v2/`, `exec/`, `pathPublish.ts`, `pathOverlay.ts`. Tele catalog:
+`teleportCatalog.ts`. Pack stress: `tools/nav/script-route-corpus.ts`. Live/operator tools
+under `tools/nav-*.ts` (not CI). Index: [docs/nav-v2/](nav-v2/).
 
 ## Level-change loc lag
 

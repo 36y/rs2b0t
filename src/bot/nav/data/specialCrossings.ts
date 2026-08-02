@@ -108,6 +108,35 @@ export function specialCrossingAt(x: number, z: number, level: number): SpecialC
     return SPECIAL_CROSSINGS.find(c => c.x === x && c.z === z && c.level === level) ?? null;
 }
 
+
+/**
+ * Resolve a special crossing for a path transport hop.
+ *
+ * Try both approach and destination levels: ships (and similar) are stored as
+ * from L0 → to L1 while SPECIAL_CROSSINGS are keyed at the stand/boarding level
+ * (often 1). Pre-refactor matching used step.level; approach-only missed ships.
+ */
+export function specialCrossingForTransport(
+    transport: { locX: number; locZ: number },
+    approach: { x: number; z: number; level: number },
+    step?: { x: number; z: number; level: number }
+): SpecialCrossing | null {
+    const levels = new Set<number>([approach.level]);
+    if (step !== undefined) {
+        levels.add(step.level);
+    }
+    for (const level of levels) {
+        const hit =
+            specialCrossingAt(transport.locX, transport.locZ, level)
+            ?? specialCrossingAt(approach.x, approach.z, level)
+            ?? (step !== undefined ? specialCrossingAt(step.x, step.z, level) : null);
+        if (hit) {
+            return hit;
+        }
+    }
+    return null;
+}
+
 export function pickChoice(options: string[], choose: string[]): string | null {
     const wants = choose.map(c => c.toLowerCase());
     return options.find(o => wants.some(w => o.toLowerCase().includes(w))) ?? null;

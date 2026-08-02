@@ -141,7 +141,80 @@ export const GLOBAL_SETTINGS: SettingsSchema = {
     lampSkill: { type: 'string', default: 'strength', options: LAMP_SKILLS, label: 'Genie lamp skill', help: 'which skill genie/lamp random events train' },
     bankCommonJunk: { type: 'boolean', default: true, label: 'Bank gems/fruit/beer/kebabs/caskets (default)' },
     runAuto: { type: 'boolean', default: true, label: 'Auto re-enable run', help: 'flip the run orb back on once energy regenerates (the engine forces it off at 0)' },
-    runEnergyMin: { type: 'number', default: 20, min: 0, max: 100, label: 'Re-enable run at energy %', help: 'higher = longer walk-regen phases with faster bursts; 0 = re-enable immediately' }
+    runEnergyMin: { type: 'number', default: 20, min: 0, max: 100, label: 'Re-enable run at energy %', help: 'higher = longer walk-regen phases with faster bursts; 0 = re-enable immediately' },
+    navEngine: {
+        type: 'string',
+        default: 'classic',
+        options: ['classic', 'v2'],
+        optionLabels: {
+            classic: 'Classic (stable)',
+            v2: 'Nav v2 (experimental)'
+        },
+        label: 'World walker',
+        help:
+            'Classic is the long-standing pathfinder. Nav v2 may route through spell teleports, '
+            + 'logs transport hops, and filters skill/item-gated shortcuts using live stats. '
+            + 'Default classic so existing scripts keep prior behaviour. Change applies on the next walk.'
+    },
+    showNavPath: {
+        type: 'boolean',
+        default: false,
+        label: 'Show nav path',
+        help:
+            'Draw the current world-walk route on the game overlay (debug / operator). '
+            + 'Does not change routing. Off by default. URL: ?Global.showNavPath=true. '
+            + 'Sub-options appear when enabled (path/transport/text colours, hop labels).'
+    },
+    // ── Nav path paint (visible when showNavPath) — SP-aligned colours ──
+    navPathShowText: {
+        type: 'boolean',
+        default: true,
+        label: 'Hop labels',
+        group: 'Nav path paint',
+        showIf: { key: 'showNavPath', anyOf: ['true'] },
+        help: 'Captions on doors / ladders / teles (Open Door, Varrock teleport, …)'
+    },
+    navPathTextSize: {
+        type: 'number',
+        default: 11,
+        min: 8,
+        max: 28,
+        label: 'Hop label size (px)',
+        group: 'Nav path paint',
+        showIf: { key: 'showNavPath', anyOf: ['true'] }
+    },
+    navPathColorPath: {
+        type: 'string',
+        default: '#FF0000',
+        label: 'Path colour',
+        group: 'Nav path paint',
+        showIf: { key: 'showNavPath', anyOf: ['true'] },
+        help: 'HTML #RGB / #RRGGBB — remaining walk tiles (SP Path default red)'
+    },
+    navPathColorTransport: {
+        type: 'string',
+        default: '#00FF00',
+        label: 'Transport colour',
+        group: 'Nav path paint',
+        showIf: { key: 'showNavPath', anyOf: ['true'] },
+        help: 'HTML #RGB / #RRGGBB — door / ladder / tele hops (SP Transports default green)'
+    },
+    navPathColorClick: {
+        type: 'string',
+        default: '#FFFFFF',
+        label: 'Click target colour',
+        group: 'Nav path paint',
+        showIf: { key: 'showNavPath', anyOf: ['true'] },
+        help: 'Outline on the next walk click tile'
+    },
+    navPathColorText: {
+        type: 'string',
+        default: '#FFFFFF',
+        label: 'Hop label colour',
+        group: 'Nav path paint',
+        showIf: { key: 'showNavPath', anyOf: ['true'] },
+        help: 'HTML #RGB / #RRGGBB — transport captions (SP Text default white)'
+    }
 };
 
 const hasSession = typeof sessionStorage !== 'undefined';
