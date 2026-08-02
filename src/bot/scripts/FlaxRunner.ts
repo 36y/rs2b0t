@@ -21,9 +21,11 @@ import type { SettingsSchema } from '../runtime/Settings.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
 import {
     FLAX_FIELD, FLAX_GATE, SPINNING_WHEEL_AREA, BANK_ENTRANCE, BANK_STAND, LADDER_TILE,
-    MEET_TILE, TRADE_RANGE, FLAX, BOW_STRING, SPINNING_WHEEL, SPIN_OP, PICK_OP,
+    MEET_TILE, TRADE_RANGE, TRADE_REQUEST_COOLDOWN_MS, TRADE_FAIL_COOLDOWN_MS,
+    FLAX, BOW_STRING, SPINNING_WHEEL, SPIN_OP, PICK_OP,
     BOOTH_NAME, LADDER_NAME, CLIMB_UP, CLIMB_DOWN, FIELD_SCOPE, FIELD_ARRIVE,
     LOCAL_PICK_RADIUS, POCKET_CAP, CARVE_DROP,
+    partnerNameMatches, flaxUnitsInOffer, spinnerNeedsClearPack, canReceiveFlaxOffer,
 } from './FlaxRunnerLogic.js';
 
 const LEASH = 8;
@@ -81,6 +83,9 @@ export default class FlaxRunner extends TaskBot {
     /** Last flax tile we committed to picking — prefer it while it still exists. */
     private stickyFlax: Tile | null = null;
 
+    /** Earliest time we may call Trade.request again (stops request thrash). */
+    private nextTradeRequestAt = 0;
+
     override async onStart(): Promise<void> {
         await Execution.delayUntil(() => Game.ingame() && Game.tile() !== null, 0);
 
@@ -125,7 +130,11 @@ export default class FlaxRunner extends TaskBot {
     }
 
     override recoveryAnchor(): Tile | null {
-        if (this.mode === 'Spinner') return SPINNING_WHEEL_AREA;
+        if (this.mode === 'Spinner') {
+            // Random-event junk / leftover strings: clear pack before handoff.
+            if (this.spinnerNeedsBank()) return BANK_STAND;
+            return SPINNING_WHEEL_AREA;
+        }
         // Junk bank mid-trip: prefer the bank so watchdog doesn't yank us to the field first.
         if (this.needsJunkBank()) return BANK_STAND;
         // Waiting on trade must not walk a full pack back to the field.
@@ -159,6 +168,40 @@ export default class FlaxRunner extends TaskBot {
 
     isFlax(name: string | null | undefined): boolean {
         return (name ?? '').toLowerCase().includes(FLAX.toLowerCase());
+    }
+
+    isPartner(name: string | null | undefined): boolean {
+        return partnerNameMatches(this.partner, name);
+    }
+
+    canRequestTrade(): boolean {
+        return Date.now() >= this.nextTradeRequestAt;
+    }
+
+    noteTradeRequest(): void {
+        this.nextTradeRequestAt = Date.now() + TRADE_REQUEST_COOLDOWN_MS;
+    }
+
+    noteTradeFailed(): void {
+        this.nextTradeRequestAt = Date.now() + TRADE_FAIL_COOLDOWN_MS;
+    }
+
+    noteTradeOk(): void {
+        // Short quiet period after a successful handoff so both sides don't re-open.
+        this.nextTradeRequestAt = Date.now() + TRADE_REQUEST_COOLDOWN_MS;
+    }
+
+    /**
+     * Spinner: any non-flax in the pack with no flax held blocks a full runner
+     * delivery (random-event garbage, bow strings, etc.).
+     */
+    spinnerNeedsBank(): boolean {
+        return spinnerNeedsClearPack(flaxCount(), Inventory.used());
+    }
+
+    /** Spinner is ready to receive a full flax pack (empty inventory). */
+    spinnerReadyForHandoff(): boolean {
+        return flaxCount() === 0 && Inventory.used() === 0;
     }
 
     /** Pack is full and still holds flax — deliver, do not pick or return to the field. */
@@ -468,6 +511,7 @@ class BankJunk implements Task {
 }
 
 class OfferTrade implements Task {
+    private partnerWait = 0;
     constructor(private bot: FlaxRunner) {}
     validate(): boolean {
         if (this.bot.getMode() !== 'Runner') return false;
@@ -483,21 +527,54 @@ class OfferTrade implements Task {
                 if (gone > 0) {
                     this.bot.countDelivered(gone);
                     this.bot.countTrip();
+                    this.bot.noteTradeOk();
                     this.bot.log(`delivered ${gone} flax to spinner`);
+                } else {
+                    this.bot.noteTradeFailed();
+                    this.bot.log('trade closed without delivering flax — backing off before re-request');
                 }
             }
             return;
         }
         if (Trade.onOfferScreen()) {
-            if (Trade.myOffer().length === 0) {
+            // Header can lag; blank is not "stranger" yet (NatureCrafter pattern).
+            const who = Trade.partner();
+            if (who === null) {
+                this.partnerWait++;
+                this.bot.setStatus('reading trade partner');
+                if (this.partnerWait > 8) {
+                    this.bot.log('trade partner name never appeared — declining stuck modal');
+                    await Trade.decline();
+                    this.bot.noteTradeFailed();
+                    this.partnerWait = 0;
+                } else {
+                    await Execution.delayTicks(1);
+                }
+                return;
+            }
+            this.partnerWait = 0;
+            if (!this.bot.isPartner(who)) {
+                this.bot.setStatus(`declining trade from ${who}`);
+                this.bot.log(`declining a trade from '${who}' — not the configured spinner`);
+                await Trade.decline();
+                this.bot.noteTradeFailed();
+                return;
+            }
+
+            const offered = flaxUnitsInOffer(Trade.myOffer());
+            if (offered <= 0) {
                 this.bot.setStatus('offering flax to spinner');
                 await Trade.offerAll(FLAX);
-                await Execution.delayUntil(() => Trade.onConfirmScreen() || !Trade.active(), 4000);
-            } else {
-                this.bot.setStatus('accepting trade offer');
-                await Trade.accept();
-                await Execution.delayUntil(() => Trade.onConfirmScreen() || !Trade.active(), 4000);
+                // Wait until the offer side shows flax (or the modal dies) before accept.
+                await Execution.delayUntil(
+                    () => flaxUnitsInOffer(Trade.myOffer()) > 0 || Trade.onConfirmScreen() || !Trade.active(),
+                    4000
+                );
+                return;
             }
+            this.bot.setStatus('accepting trade offer');
+            await Trade.accept();
+            await Execution.delayUntil(() => Trade.onConfirmScreen() || !Trade.active(), 4000);
         }
     }
 }
@@ -508,6 +585,7 @@ class WaitAndTrade implements Task {
         if (this.bot.getMode() !== 'Runner') return false;
         if (Trade.active()) return false;
         if (!this.bot.readyToDeliver()) return false;
+        if (!this.bot.canRequestTrade()) return false;
         return this.bot.atMeet();
     }
     async execute(): Promise<void> {
@@ -518,6 +596,7 @@ class WaitAndTrade implements Task {
             return;
         }
         this.bot.setStatus('requesting trade with spinner');
+        this.bot.noteTradeRequest();
         await Trade.request(this.bot.getPartner());
         await Execution.delayUntil(() => Trade.active() || EventSignal.pending(), 4000);
     }
@@ -529,10 +608,15 @@ class GoToMeet implements Task {
         if (Trade.active()) return false;
         const here = Game.tile();
         if (!here) return false;
-        if (MEET_TILE.distanceTo(here) <= 1) return false;
+        // Match atMeet / TRADE_RANGE — previously d<=1 fought WaitAndTrade at d=2.
+        if (this.bot.atMeet()) return false;
         // Runner only leaves the field when the pack is ready to hand off.
         if (this.bot.getMode() === 'Runner') return this.bot.readyToDeliver();
-        // Spinner: fall-through task when not spinning/banking/trading.
+        // Spinner: clear pack first (BankStrings), then meet only when empty.
+        if (this.bot.getMode() === 'Spinner') {
+            if (this.bot.spinnerNeedsBank()) return false;
+            return this.bot.spinnerReadyForHandoff();
+        }
         return true;
     }
     async execute(): Promise<void> {
@@ -541,7 +625,7 @@ class GoToMeet implements Task {
         // Outside the wheel house (east of the door) so a closed door cannot
         // trap partners mid-handoff. Nav opens doors when the spinner leaves.
         await Traversal.walkResilient(MEET_TILE, {
-            radius: 1,
+            radius: TRADE_RANGE,
             attempts: 6,
             timeoutMs: 240_000,
             log: m => this.bot.log(`  ${m}`),
@@ -637,7 +721,10 @@ class RequestTrade implements Task {
     validate(): boolean {
         if (this.bot.getMode() !== 'Spinner') return false;
         if (Trade.active()) return false;
-        if (flaxCount() > 0) return false;
+        // Empty pack only — junk/strings must bank first or the runner's full
+        // offer cannot land and both sides re-trade forever.
+        if (!this.bot.spinnerReadyForHandoff()) return false;
+        if (!this.bot.canRequestTrade()) return false;
         return this.bot.atMeet();
     }
     async execute(): Promise<void> {
@@ -647,7 +734,10 @@ class RequestTrade implements Task {
             await Execution.delayTicks(2);
             return;
         }
+        // 2004 needs both players to click Trade; stagger spinner slightly so
+        // both bots don't hammer request every loop (opens/closes thrash).
         this.bot.setStatus('requesting trade from runner');
+        this.bot.noteTradeRequest();
         await Trade.request(this.bot.getPartner());
         await Execution.delayUntil(() => Trade.active() || EventSignal.pending(), 4000);
     }
@@ -655,6 +745,7 @@ class RequestTrade implements Task {
 
 class HandleTrade implements Task {
     private pending = 0;
+    private partnerWait = 0;
     constructor(private bot: FlaxRunner) {}
     validate(): boolean {
         if (this.bot.getMode() !== 'Spinner') return false;
@@ -662,26 +753,64 @@ class HandleTrade implements Task {
     }
     async execute(): Promise<void> {
         if (Trade.onOfferScreen()) {
-            if (Trade.myOffer().length === 0) {
-                const theirFlax = Trade.theirOffer().filter(o => (o.name ?? '').toLowerCase() === FLAX.toLowerCase());
-                if (theirFlax.length > 0) {
-                    this.bot.setStatus('accepting flax from runner');
-                    this.pending = theirFlax.reduce((s, o) => s + Math.max(1, o.count), 0);
-                    await Trade.accept();
+            const who = Trade.partner();
+            if (who === null) {
+                this.partnerWait++;
+                this.bot.setStatus('reading trade partner');
+                if (this.partnerWait > 8) {
+                    this.bot.log('trade partner name never appeared — declining stuck modal');
+                    await Trade.decline();
+                    this.bot.noteTradeFailed();
+                    this.partnerWait = 0;
                 } else {
                     await Execution.delayTicks(1);
                 }
-            } else {
-                this.bot.setStatus('accepting trade');
-                await Trade.accept();
+                return;
             }
+            this.partnerWait = 0;
+            if (!this.bot.isPartner(who)) {
+                this.bot.setStatus(`declining trade from ${who}`);
+                this.bot.log(`declining a trade from '${who}' — not the configured runner`);
+                await Trade.decline();
+                this.bot.noteTradeFailed();
+                return;
+            }
+
+            // Spinner never places items — only accept when runner has offered flax
+            // and we have room (empty pack; one free slot receives a flax stack).
+            const theirFlax = flaxUnitsInOffer(Trade.theirOffer());
+            if (theirFlax <= 0) {
+                this.bot.setStatus('waiting for runner to offer flax');
+                await Execution.delayTicks(1);
+                return;
+            }
+            if (!canReceiveFlaxOffer(Inventory.free(), theirFlax)) {
+                this.bot.log(
+                    `cannot take ${theirFlax} flax — only ${Inventory.free()} free slot(s) `
+                    + `(random-event junk?). Declining and banking.`
+                );
+                await Trade.decline();
+                this.bot.noteTradeFailed();
+                return;
+            }
+            this.bot.setStatus('accepting flax from runner');
+            this.pending = theirFlax;
+            await Trade.accept();
             return;
         }
         if (Trade.onConfirmScreen()) {
             this.bot.setStatus('confirming trade');
+            const before = flaxCount();
             await Trade.accept();
-            if (await Execution.delayUntil(() => !Trade.active(), 2500) && this.pending > 0) {
-                this.bot.log(`received ${this.pending} flax from runner`);
+            if (await Execution.delayUntil(() => !Trade.active(), 2500)) {
+                const gained = flaxCount() - before;
+                if (gained > 0 || this.pending > 0) {
+                    this.bot.log(`received ${gained > 0 ? gained : this.pending} flax from runner`);
+                    this.bot.noteTradeOk();
+                } else {
+                    this.bot.noteTradeFailed();
+                    this.bot.log('trade closed without receiving flax — backing off before re-request');
+                }
                 this.pending = 0;
             }
         }
@@ -748,16 +877,29 @@ class SpinFlax implements Task {
     }
 }
 
+/**
+ * Spinner pack clear before handoff / after spinning.
+ * Previously only ran when bow strings were held — random-event garbage alone
+ * left the spinner at the meet with no free slots, so the runner's full flax
+ * offer could never land and both sides re-traded forever.
+ */
 class BankStrings implements Task {
     constructor(private bot: FlaxRunner) {}
     validate(): boolean {
         if (this.bot.getMode() !== 'Spinner') return false;
         if (Trade.active()) return false;
-        if (bowStringCount() === 0) return false;
-        return Inventory.isFull() || flaxCount() === 0;
+        return this.bot.spinnerNeedsBank();
     }
     async execute(): Promise<void> {
-        this.bot.setStatus('banking bow strings');
+        const strings = bowStringCount();
+        const used = Inventory.used();
+        this.bot.setStatus(
+            strings > 0 ? 'banking bow strings' : 'banking junk before handoff'
+        );
+        this.bot.log(
+            `spinner banking pack (${used} slot(s) used, ${strings} string(s), `
+            + `${flaxCount()} flax) so the next trade can take a full flax load`
+        );
         await Traversal.walkResilient(BANK_ENTRANCE, {
             radius: 3,
             attempts: 4,
@@ -773,7 +915,9 @@ class BankStrings implements Task {
         // Deposit everything — strings, leftover fibre, and random-event trash.
         await Bank.depositInventory();
         await Bank.close();
-        this.bot.countTrip();
+        if (strings > 0) {
+            this.bot.countTrip();
+        }
     }
 }
 
