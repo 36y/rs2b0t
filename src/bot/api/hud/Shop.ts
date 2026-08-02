@@ -60,14 +60,18 @@ export const Shop = {
                 break;
             }
 
-            const opIndex = stepOpIndex(it.ops, 'Buy', n - bought);
-            if (opIndex === -1) {
+            const batch = buyBatch(it.ops, n - bought);
+            if (batch.length === 0) {
                 break;
             }
 
             const before = countHeld(name);
-            await ActionRouter.driver.invButton(it.id, it.slot, it.comId, opIndex + 1);
+            for (const opIndex of batch) {
+                await ActionRouter.driver.invButton(it.id, it.slot, it.comId, opIndex + 1);
+            }
             await Execution.delayUntil(() => countHeld(name) !== before, 3000);
+            // the whole batch lands in one server tick — settle so the recount sees all of it
+            await Execution.delayTicks(1);
             const got = countHeld(name) - before;
             if (got <= 0) {
                 break;
@@ -120,6 +124,31 @@ export const Shop = {
 
 function countHeld(name: string): number {
     return Inventory.count(name);
+}
+
+// The engine processes at most this many user-event packets per player tick
+// (ClientGameProtCategory USER_EVENT) — extra ops in a tick are dropped.
+const USER_OPS_PER_TICK = 5;
+const BUY_STEPS = [10, 5, 1] as const;
+
+/**
+ * One tick's worth of buy ops: up to USER_OPS_PER_TICK op indexes whose step
+ * sizes sum to at most `remaining`, largest steps first, so a full batch moves
+ * 50 items per tick instead of one op per tick.
+ */
+function buyBatch(ops: (string | null)[], remaining: number): number[] {
+    const batch: number[] = [];
+    let left = remaining;
+    while (batch.length < USER_OPS_PER_TICK && left > 0) {
+        const step = BUY_STEPS.find(size => size <= left
+            && ops.some(o => o?.toLowerCase() === `buy ${size}`));
+        if (step === undefined) {
+            break;
+        }
+        batch.push(ops.findIndex(o => o?.toLowerCase() === `buy ${step}`));
+        left -= step;
+    }
+    return batch;
 }
 
 function stepOpIndex(ops: (string | null)[], verb: 'Buy' | 'Sell', remaining: number): number {
