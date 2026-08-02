@@ -534,12 +534,38 @@ parsePartnerList(raw: string): string[]
 isConfiguredPartner(name, partners): boolean
 decideReceiverOfferScreen({ partnerHeader, partners, myOfferSlots, theirProductCount })
 decideGiverOfferScreen(myOfferSlots): 'offer' | 'accept' | 'wait'
-parseMuleMode(raw): 'off' | 'gatherer' | 'mule'
-muleGathererHandoffActive(mode, partners, powerMode): boolean
+parseMuleMode(raw): 'off' | 'gatherer' | 'mule' | 'cooker' | 'supplier'
+muleGathererHandoffActive / muleReceiverActive / muleCookerActive / muleSupplierActive
 ```
 
-GatheringBot settings: `muleMode` (Off / Gatherer / Mule) + `mulePartner` (comma names).
-Gatherer trades full packs at the camp meet instead of banking; Mule accepts, banks, returns.
+GatheringBot `muleMode` + `mulePartner`:
+
+| Mode | Role |
+| --- | --- |
+| Gatherer | Full haul → trade at camp meet (no bank) |
+| Mule | Accept → **bank** (demo for ore/logs; replace with a processor script) |
+| Cooker | Accept **raw fish** → cook at camp range → bank cooked (`burntPolicy`) |
+| Supplier | Withdraw raw from bank when N ready → trade at meet (pairs with Cooker) |
+
+### Cooking ranges (`api/CookingRanges`)
+
+Map-pack catalog of `debugname=range` ovens + curated surfaces for fishing camps:
+
+```ts
+COOKING_RANGE_LOCS          // all Range SW tiles from Server maps
+nearestCookingRange(origin, maxCheb?)
+cookSurfaceForFishCamp(name, role?) // role: 'pier' | 'bank'
+resolveFishCampCookSurface(name, spot, maxCheb?, role?)
+FISH_CAMP_COOK_PLANS        // pier + optional bank surface per camp
+```
+
+**Pier vs bank role:** cook-then-bank uses the pier surface (short walk with raw);
+bank-raw-then-cook prefers a surface near the bank when one is curated (e.g. Seers
+village range).
+
+**Two-step path:** a surface may set `approach` then `stand`. FishCook walks
+`approach` first (e.g. exterior of Sinclair Large door), then `stand` next to the
+Range — so pathfinding enters the building before aiming at the interior oven.
 
 ### Entity query helpers
 
