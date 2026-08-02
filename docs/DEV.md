@@ -165,6 +165,8 @@ bun run verify:gatheringbot -- fish-bank-raw-cook
 BUDGET_S=180 bun run verify:gatheringbot -- mine-bank
 HEADED=1 bun tools/gatheringbot-test.ts acquire
 HEADED=1 BUDGET_S=180 bun tools/gatheringbot-test.ts   # headed full suite
+# Two-account mule handoff (Gatherer + Mule at SE Varrock iron):
+HEADED=1 BUDGET_S=180 bun tools/gatheringbot-mule-pair-test.ts
 ```
 
 Scenarios (filter by id or tag: `mining` / `fishing` / `wc` / `acquire` / `path` /
@@ -173,9 +175,15 @@ Scenarios (filter by id or tag: `mining` / `fishing` / `wc` / `acquire` / `path`
 | id | what it proves |
 | --- | --- |
 | `mine-bank` / `mine-power` | SW Varrock tin bank loop vs drop mode |
-| `fish-bank` / `fish-cook-bank` / `fish-bank-raw-cook` | Draynor net bank; Catherby cook-then-bank (seed cooked); Catherby bank-raw-then-cook (`cert_raw_lobster` 973 → bank, pot+26 raw, N=1000 → catch→bank→cook batch) |
-| `wc-bank` / `wc-burn` | Draynor chop+bank; chop-then-burn |
-| `mine-path-runite` / `fish-path-shark` | long path into Lava Maze / Fishing Guild |
+| `mine-bank-rimmington` | Rimmington iron → Falador East (long soft-home / second mine camp) |
+| `mine-iron-se-varrock` / `mine-iron-dwarven-north` | Iron local-prefer: stay on near cluster (`maxDistToCamp`) |
+| `mine-mule-gatherer-meet` | Single-account gatherer mule: full pack → meet + wait (no bank) |
+| `fish-mule-gatherer-meet` | Fisher gatherer mule smoke at Draynor (raw haul, no bank) |
+| *(pair harness)* | `gatheringbot-mule-pair-test.ts` — two accounts, full Gatherer↔Mule iron handoff |
+| `fish-bank` / `fish-bank-barb` | Draynor net bank; Barbarian fly → Edgeville (wide membership + bank) |
+| `fish-cook-bank` / `fish-bank-raw-cook` | Catherby cook-then-bank (seed cooked); bank-raw-then-cook (`givebank raw_lobster` 973 + pot+26 raw, N=1000) |
+| `wc-bank` / `wc-bank-seers` / `wc-burn` | Draynor chop+bank; Seers trees bank; chop-then-burn |
+| `mine-path-runite` / `fish-path-shark` | long path into Lava Maze (must mine runite — XP/ore, not flee-only) / Fishing Guild |
 | `buy-pick` / `buy-axe` / `buy-net` | Buy/repair with **coins only** (no pre-granted tools) |
 | `repair-axe-bob` | Seed broken steel axe → Bob item-on-NPC repair (`macro_broken_steel_hatchet`) |
 | `repair-pick-nurmof` | Seed broken steel pick → Nurmof repair (`macro_broken_steel_pickaxe`) |
@@ -185,14 +193,25 @@ Scenarios (filter by id or tag: `mining` / `fishing` / `wc` / `acquire` / `path`
 | `auto-freeform-fish-ardy-river` | Auto freeform at Ardougne river fly |
 | `smith-rune-axe` | Buy/repair smith path (bars + hammer → rune axe) |
 
+Tags: `mining` / `fishing` / `wc` / `mule` / `local` / `acquire` / `path` / `endgame` / `freeform`.
+
 **Location / leash (product behaviour, not just the harness):**
 
 - **Named camps** pin the **home** tile to the camp spot and floor **membership**
   (ReturnToAnchor / rock disk) to **64** (overridable per camp via `campRadius`).
   The UI `leashRadius` is ignored below that floor for membership. **Fishing spots**
-  chase from the **player** inside camp (`chaseRadius`, default 24) with a hunt pad
-  past chase — not a single pin disk for hops. Spots outside membership are rejected
-  so chase cannot leave the coastline.
+  are any matching spot inside membership (nearest to player); freeform fish uses a
+  hunt pad past the UI leash. Soft-home / prefer-local helpers live under `api/`
+  (`GatherCamp`, `TargetPick`, `Anchor`).
+- **Mine prefer-local:** matching rocks within 12 of the player win over far camp
+  membership hits; post-deplete tiles are not soft-cooled (iron respawn ~6t).
+- **Mule mode** (Miner/Fisher/Woodcutter): `muleMode` Off / Gatherer / Mule +
+  `mulePartner`. Gatherer trades full hauls at the camp meet instead of banking;
+  Mule accepts trades, banks, returns. Shared policy: `api/mule/PartnerTrade`.
+  Disabled under location None.
+  - **Single-account** smoke in the main suite: `mine-mule-gatherer-meet` (meet + hold haul + no bank).
+  - **Two-account e2e:** `bun tools/gatheringbot-mule-pair-test.ts` boots Gatherer + Mule
+    on separate pages at SE Varrock iron and asserts product handoff.
 - **Location Auto** alone keeps the raw `leashRadius`. Auto snaps only when the start
   tile shares a preset’s **64×64 map square**; otherwise freeform (null location,
   start-tile leash, nearest bank, player-relative fish). Auto is expert / may-die:

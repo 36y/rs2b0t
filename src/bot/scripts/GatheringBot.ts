@@ -1,4 +1,12 @@
-import { beyondLeash, createReturnToAnchorTask, resolveRunAnchor, tileWithinLeash } from '../api/Anchor.js';
+import {
+    beyondLeash,
+    createReturnToAnchorTask,
+    HOME_ARRIVE_RADIUS,
+    resolveRunAnchor,
+    shouldSoftHomeFromGatherMiss,
+    shouldWalkHomeToGatherAnchor,
+    tileWithinLeash
+} from '../api/Anchor.js';
 import { TaskBot, type Task } from '../api/Bot.js';
 import { EventSignal } from '../api/EventSignal.js';
 import { Execution } from '../api/Execution.js';
@@ -21,12 +29,36 @@ import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import { resolveFishingLocation, type FishingLocation } from '../api/FishingLocations.js';
 import {
-    DEFAULT_CAMP_RADIUS,
+    effectiveGatherLeash,
+    gatherHuntRadius,
+    gatherSpotRangeOrigin,
+    isAutoLocation,
+    NAMED_CAMP_LEASH_FLOOR,
+    resourceWithinCamp,
+    spotWithinGatherRange
+} from '../api/GatherCamp.js';
+import {
     DEFAULT_CHASE_RADIUS,
     resolveCampRadius,
     resolveChaseRadius,
     type GatheringLocation
 } from '../api/GatheringLocations.js';
+import { LOCAL_MINE_PREFER_RADIUS, shouldCooldownGatherTile } from '../api/TargetPick.js';
+import { Trade } from '../api/hud/Trade.js';
+import { Players } from '../api/queries/Players.js';
+import {
+    DEFAULT_TRADE_RANGE,
+    countOfferMatching,
+    decideGiverOfferScreen,
+    decideReceiverOfferScreen,
+    isConfiguredPartner,
+    muleGathererHandoffActive,
+    muleReceiverActive,
+    parseMuleMode,
+    parsePartnerList,
+    type MuleMode,
+    MULE_MODE_OPTIONS
+} from '../api/mule/PartnerTrade.js';
 import { resolveMiningLocation } from '../api/MiningLocations.js';
 import { resolveWoodcuttingLocation } from '../api/WoodcuttingLocations.js';
 import { BROKEN_PICKAXE, GAS_ROCK_IDS, GAS_ROCK_TICKS, ROCK_OPTIONS, resolveRockIds } from '../api/MiningRocks.js';
@@ -142,187 +174,28 @@ import {
 /** Default half-size of the Auto (start) burn box around the script start tile. */
 const LOCAL_BURN_HALF = 8;
 
-/**
- * Soft home arrive radius after bank/shop/repair.
- * Humans re-enter the camp disk — they do not pin the exact location.spot tile.
- */
-export const HOME_ARRIVE_RADIUS = 8;
-
-/**
- * Floor for non-Auto location modes (named camps + power None).
- * This is **camp membership** (ReturnToAnchor / wander bound from the home pin),
- * not the fishing-spot search disk. Spot hops use player-relative chase inside camp.
- * Auto keeps the raw setting so freeform / unverified snaps stay conservative.
- */
-export const NAMED_CAMP_LEASH_FLOOR = DEFAULT_CAMP_RADIUS;
-
-/** @deprecated Prefer {@link NAMED_CAMP_LEASH_FLOOR} — same value, kept for imports. */
-export const START_TILE_LEASH_FLOOR = NAMED_CAMP_LEASH_FLOOR;
-
-/** Default player-relative fish chase for named camps (re-export for tests). */
-export { DEFAULT_CHASE_RADIUS };
-
-/**
- * Effective gather leash from the UI value + location mode.
- * - Auto → respect setting (freeform / unverified chunk snaps).
- * - Named camp or None → at least {@link NAMED_CAMP_LEASH_FLOOR} (camp membership).
- */
-export function effectiveGatherLeash(settingLeash: number, locationSetting: string): number {
-    const raw = Math.max(2, Math.floor(Number.isFinite(settingLeash) ? settingLeash : 10));
-    if (locationSetting.trim().toLowerCase() === 'auto') {
-        return raw;
-    }
-    return Math.max(NAMED_CAMP_LEASH_FLOOR, raw);
-}
-
-/** True when Location is Auto — expert freeform; no mob-flee babysitting. */
-export function isAutoLocation(locationSetting: string): boolean {
-    return locationSetting.trim().toLowerCase() === 'auto';
-}
-
-/**
- * Origin for fishing-spot distance checks.
- *
- * - **Named camp**: measure from the **player** so pier/river hops beside the bot
- *   stay valid even when far from the home pin (resource fence is camp membership).
- * - **Freeform fish** (Auto with no preset / power None): same player origin —
- *   river hops after a hunt walk must not idle on "no spots near start-tile anchor".
- * - No player tile → fall back to anchor/home.
- */
-export function gatherSpotRangeOrigin(
-    freeformFish: boolean,
-    hasPlayerTile: boolean,
-    namedCamp = false
-): 'player' | 'anchor' {
-    if (!hasPlayerTile) {
-        return 'anchor';
-    }
-    if (namedCamp || freeformFish) {
-        return 'player';
-    }
-    return 'anchor';
-}
-
-/** Spot is inside the gather/hunt disk measured from {@link gatherSpotRangeOrigin}. */
-export function spotWithinGatherRange(distFromOrigin: number, maxDist: number): boolean {
-    return Number.isFinite(distFromOrigin) && distFromOrigin <= maxDist;
-}
-
-/**
- * Resource still belongs to the named camp (Chebyshev from home pin).
- * Freeform has no camp fence — callers skip this check.
- */
-export function resourceWithinCamp(distFromHome: number, campRadius: number): boolean {
-    const R = Math.max(2, Math.floor(Number.isFinite(campRadius) ? campRadius : NAMED_CAMP_LEASH_FLOOR));
-    return Number.isFinite(distFromHome) && distFromHome <= R;
-}
-
-/**
- * Freeform hunt radius past the UI/start leash.
- * Generous pad so river hops beyond the old "leash+12" wall still walk-to
- * (status used to idle on "no spots within 40 of you" with leash 28).
- * Named camps do not use this — they accept any spot in camp membership.
- */
-export function gatherHuntRadius(primaryDisk: number): number {
-    const L = Math.max(2, Math.floor(Number.isFinite(primaryDisk) ? primaryDisk : 10));
-    return Math.max(L + 24, 48);
-}
-
-/**
- * Prefer rocks/trees within this Chebyshev of the player when any match.
- * Dwarven / multi-tunnel mines: membership can be 64+ tiles with iron on both
- * wings — pure membership nearest still path-walks around walls to a slightly
- * nearer tile. Local prefer keeps the bot on the cluster underfoot.
- * Server iron rocks (ids 2092/2093) respawn on ~6t; see skill_mining mine.dbrow.
- */
-export const LOCAL_MINE_PREFER_RADIUS = 12;
-
-/**
- * Pick the best gather loc from candidates already filtered (type, camp, usable).
- * When any candidate sits within {@link preferRadius} of the player, ignore the rest
- * so we do not path across a mine for a far ore while a local one is up.
- */
-export function pickNearestPreferLocal<T>(
-    candidates: readonly T[],
-    distToPlayer: (c: T) => number,
-    preferRadius = LOCAL_MINE_PREFER_RADIUS
-): T | null {
-    if (candidates.length === 0) {
-        return null;
-    }
-    const r = Math.max(0, Math.floor(Number.isFinite(preferRadius) ? preferRadius : LOCAL_MINE_PREFER_RADIUS));
-    let pool = candidates;
-    if (r > 0) {
-        const local = candidates.filter(c => distToPlayer(c) <= r);
-        if (local.length > 0) {
-            pool = local;
-        }
-    }
-    let best: T | null = null;
-    let bestD = Infinity;
-    for (const c of pool) {
-        const d = distToPlayer(c);
-        if (d < bestD) {
-            best = c;
-            bestD = d;
-        }
-    }
-    return best;
-}
-
-/**
- * Whether to soft-cooldown a mine/chop tile after a session ends with no ore/log.
- * Successful depletes must NOT cool the tile — empty/stump already drops out of
- * matchesRock/name filters, and iron respawns (~6t) faster than the old 8t cooldown
- * (bot walked across Dwarven/SE Varrock while a nearby iron was already up).
- */
-export function shouldCooldownGatherTile(gotProduct: boolean, stillHasOtherTargets: boolean): boolean {
-    // Only soft-skip a tile after a failed click when other targets exist.
-    return !gotProduct && stillHasOtherTargets;
-}
-
-/**
- * Whether post-bank / no-target gather should walk toward the camp anchor.
- *
- * "Already home" is the soft {@link HOME_ARRIVE_RADIUS} disk — not camp membership.
- * Bank stands often sit inside the membership disk but far from resources
- * (Catherby bank→pier ≈ 36). Treating full membership as home left Fisher idling
- * on "no spots" at the bank (#154).
- */
-export function shouldWalkHomeToGatherAnchor(
-    distToAnchor: number | null | undefined,
-    arriveRadius = HOME_ARRIVE_RADIUS
-): boolean {
-    if (distToAnchor == null || !Number.isFinite(distToAnchor)) {
-        return false;
-    }
-    const r = Math.max(0, Math.floor(Number.isFinite(arriveRadius) ? arriveRadius : HOME_ARRIVE_RADIUS));
-    return distToAnchor > r;
-}
-
-/**
- * Backup soft-home from a gather miss (no spot/rock in scene).
- *
- * BankCatch / restock use the tight {@link HOME_ARRIVE_RADIUS} disk via
- * {@link shouldWalkHomeToGatherAnchor}. Gather must **not** — freeform pier-hops and
- * brief spot despawns sit just outside the 8-tile disk and thrash hunt↔home.
- * Only pull home when clearly off the resource pad (bank square / long wander).
- *
- * Uses a soft threshold (~20–28), not full camp membership — bank at ~36 must
- * still soft-home even when membership is 64.
- */
-export function shouldSoftHomeFromGatherMiss(
-    distToAnchor: number | null | undefined,
-    leash = NAMED_CAMP_LEASH_FLOOR
-): boolean {
-    if (distToAnchor == null || !Number.isFinite(distToAnchor)) {
-        return false;
-    }
-    const L = Math.max(2, Math.floor(Number.isFinite(leash) ? leash : NAMED_CAMP_LEASH_FLOOR));
-    // ≥20 tiles off anchor, or past half a tight freeform leash — not the soft arrive disk.
-    const threshold = Math.max(HOME_ARRIVE_RADIUS + 12, Math.min(L, 28));
-    return distToAnchor > threshold;
-}
+// Re-export pure policy from api/ so existing `#/bot/scripts/GatheringBot` imports keep working.
+export {
+    HOME_ARRIVE_RADIUS,
+    shouldSoftHomeFromGatherMiss,
+    shouldWalkHomeToGatherAnchor
+} from '../api/Anchor.js';
+export {
+    effectiveGatherLeash,
+    gatherHuntRadius,
+    gatherSpotRangeOrigin,
+    isAutoLocation,
+    NAMED_CAMP_LEASH_FLOOR,
+    resourceWithinCamp,
+    spotWithinGatherRange,
+    START_TILE_LEASH_FLOOR
+} from '../api/GatherCamp.js';
+export { DEFAULT_CHASE_RADIUS } from '../api/GatheringLocations.js';
+export {
+    LOCAL_MINE_PREFER_RADIUS,
+    pickNearestPreferLocal,
+    shouldCooldownGatherTile
+} from '../api/TargetPick.js';
 
 /** Hostile NPCs that should keep us from re-entering camp after a kite (wildy). */
 export function hostileAttackerNearby(
@@ -354,6 +227,21 @@ export function hostileAttackerNearby(
     });
 }
 
+/**
+ * Whether FleeCombat should take the loop (multi-combat kite).
+ *
+ * Sticky `inCombat` with no face target is common after randoms / login and used
+ * to trigger blind east walks that bung gather for tens of seconds. Only kite
+ * when a real attacker is in play; yield to random-event handling otherwise.
+ */
+export function shouldFleeCombat(opts: {
+    inCombat: boolean;
+    eventPending: boolean;
+    hasAttacker: boolean;
+}): boolean {
+    return opts.inCombat && !opts.eventPending && opts.hasAttacker;
+}
+
 export const GATHERING_SETTINGS: SettingsSchema = {
     targetType: { type: 'string', default: 'loc', label: "Target type ('loc' or 'npc')", help: 'loc = scenery (rocks/trees), npc = fishing spots' },
     target: { type: 'string', default: 'Rocks', label: 'Target name', help: 'in-game name, e.g. Rocks / Tree / Fishing spot' },
@@ -369,6 +257,22 @@ export const GATHERING_SETTINGS: SettingsSchema = {
         label: 'Leash radius (tiles)',
         help:
             'Camp/start membership radius (ReturnToAnchor). Only Location Auto uses this as-is (freeform and unverified chunk snaps). Named camps and None floor to 64. Fishing spots at named camps chase from the player inside the camp, not from this pin disk alone.'
+    },
+    muleMode: {
+        type: 'string',
+        default: 'Off',
+        options: [...MULE_MODE_OPTIONS],
+        label: 'Mule mode',
+        group: 'Mule',
+        help:
+            'Off = bank/drop as usual. Gatherer = full pack trades product to partner instead of banking. Mule = wait at camp meet, accept product trades, bank, return. Needs Partner name(s). Disabled under location None (power).'
+    },
+    mulePartner: {
+        type: 'string',
+        default: '',
+        label: 'Mule partner name(s)',
+        group: 'Mule',
+        help: 'Comma-separated in-game names. Gatherer: the mule. Mule: gatherer name(s) to accept from.'
     }
 };
 
@@ -499,6 +403,11 @@ export default class GatheringBot extends TaskBot {
     /** Buy/withdraw target for bait & feathers when the method needs them. */
     private baitQty = 1000;
 
+    /** Off / gatherer (handoff) / mule (bank-side). See muleMode settings. */
+    private muleMode: MuleMode = 'off';
+    private mulePartners: string[] = [];
+    private muleTrades = 0;
+
     private xpStart: Record<string, number> = {};
 
     private rejected = new Set<string>();
@@ -619,6 +528,24 @@ export default class GatheringBot extends TaskBot {
         }
 
         this.powerMode = locSetting.toLowerCase() === 'none';
+
+        // Mule / partner trade (NatureCrafter-style). Power mode forces Off.
+        {
+            this.muleMode = parseMuleMode(this.settings.str('muleMode', 'Off'));
+            this.mulePartners = parsePartnerList(this.settings.str('mulePartner', ''));
+            if (this.muleMode !== 'off' && this.powerMode) {
+                this.log(`mule: '${this.muleMode}' disabled under location None (drop-only)`);
+                this.muleMode = 'off';
+            } else if (this.muleMode !== 'off' && this.mulePartners.length === 0) {
+                this.log('mule: no partner names — falling back to Off (bank/drop)');
+                this.muleMode = 'off';
+            } else if (this.muleMode !== 'off') {
+                this.log(
+                    `mule: ${this.muleMode} with [${this.mulePartners.join(', ')}] ` +
+                        `meet=${this.getMeetTile()}`
+                );
+            }
+        }
 
         // Tick manip (#160) — per-skill dropdown; forced Off under power mode.
         {
@@ -807,35 +734,48 @@ export default class GatheringBot extends TaskBot {
 
         const cookOn = this.fishing && this.cookMode !== 'off' && this.rangeStand !== null;
         const burnOn = this.burnEnabled();
-        const gatherTools = (this.mining() || this.woodcutting() || this.toolReqs.length > 0) && !this.fishing;
+        // Bank-side mule only trades/banks — no pickaxe/axe restock thrash.
+        const muleRecv = this.isMuleReceiver();
+        const gatherTools =
+            !muleRecv && (this.mining() || this.woodcutting() || this.toolReqs.length > 0) && !this.fishing;
         // Flee only for AFK named/None — Auto and retaliate tick-manip skip FleeCombat.
-        const mobFlee = !isAutoLocation(this.locationSetting) && !this.tickManip.allowCombat;
+        const mobFlee = !muleRecv && !isAutoLocation(this.locationSetting) && !this.tickManip.allowCombat;
         // Tannerfishing is a power-train (cook/eat on the pier) — drop haul, no bank loop.
         const tannerPower = this.tickManip.cookEatInterleave;
         this.add(
             new ContinueDialog(),
+            // Sticky combatCycle (no face target) — wait; do not thrash-walk.
+            ...(mobFlee ? [new WaitStickyCombat(this), new FleeCombat(this)] : []),
             // Named/None only: break multi-combat pulls (wildy spiders) by walking off.
             // Auto / retaliate tick-manip = may-die — no mob flee.
-            ...(mobFlee ? [new FleeCombat(this)] : []),
-            ...(this.tickManip.shortbowRapid ? [new EnsureShortbowRapid(this)] : []),
-            ...(this.tickManip.cookEatInterleave ? [new TannerfishSustain(this)] : []),
-            ...(this.tickManip.useKnifeDelay ? [new TrimKnifeDelayLogs(this)] : []),
-            ...(this.mining() || this.woodcutting() ? [new RepairBrokenGatherTool(this)] : []),
-            ...(this.fishing ? [new RestockFishingGear(this)] : []),
+            ...(!muleRecv && this.tickManip.shortbowRapid ? [new EnsureShortbowRapid(this)] : []),
+            ...(!muleRecv && this.tickManip.cookEatInterleave ? [new TannerfishSustain(this)] : []),
+            ...(!muleRecv && this.tickManip.useKnifeDelay ? [new TrimKnifeDelayLogs(this)] : []),
+            ...(!muleRecv && (this.mining() || this.woodcutting()) ? [new RepairBrokenGatherTool(this)] : []),
+            ...(!muleRecv && this.fishing ? [new RestockFishingGear(this)] : []),
             ...(gatherTools
                 ? [new EnsureGatherToolEquipped(this), new RestockGatherTool(this), new UpgradeGatherTool(this)]
                 : []),
-            ...(cookOn ? [new FishCookDialog(this), new FishCookLoad(this), new FishBankCooked(this), new FishWithdrawCookBatch(this)] : []),
-            ...(burnOn ? createChopBurnTasks(this) : []),
+            ...(!muleRecv && cookOn
+                ? [new FishCookDialog(this), new FishCookLoad(this), new FishBankCooked(this), new FishWithdrawCookBatch(this)]
+                : []),
+            ...(!muleRecv && burnOn ? createChopBurnTasks(this) : []),
+            // Mule trade owns the loop while the modal is open (movement cancels trade).
+            ...(this.muleMode !== 'off' ? [new HandleGatherMuleTrade(this)] : []),
+            ...(muleRecv ? [new MuleBankHaul(this), new MuleGoMeet(this), new MuleRequestOrWait(this)] : []),
+            ...(this.isMuleGatherer() ? [new MuleGoMeet(this), new MuleRequestOrWait(this)] : []),
             this.powerMode || tannerPower ? new DropProduct(this) : new BankCatch(this),
-            new Gather(this),
+            // Mule receiver does not gather.
+            ...(muleRecv ? [] : [new Gather(this)]),
 
             createReturnToAnchorTask(this, {
                 slack: 4,
                 // Long bank→camp legs (Varrock W → SW mine ≈ 60+) need web path first.
                 longRangeTiles: 24,
                 suppress: () =>
-                    (this.burnEnabled() && this.isBurningLoad()) || this.shouldSuppressCampReentry()
+                    (this.burnEnabled() && this.isBurningLoad()) ||
+                    this.shouldSuppressCampReentry() ||
+                    this.muleMode !== 'off'
             })
         );
     }
@@ -2959,6 +2899,62 @@ export default class GatheringBot extends TaskBot {
         return this.location === null;
     }
 
+    /** Meet tile for mule handoff — camp spot when set, else run anchor. */
+    getMeetTile(): Tile {
+        return this.location?.spot ?? this.getAnchor();
+    }
+
+    getMuleMode(): MuleMode {
+        return this.muleMode;
+    }
+
+    getMulePartners(): readonly string[] {
+        return this.mulePartners;
+    }
+
+    isMuleGatherer(): boolean {
+        return muleGathererHandoffActive(this.muleMode, this.mulePartners, this.powerMode);
+    }
+
+    isMuleReceiver(): boolean {
+        return muleReceiverActive(this.muleMode, this.mulePartners);
+    }
+
+    atMuleMeet(radius = 2): boolean {
+        const here = Game.tile();
+        if (!here) {
+            return false;
+        }
+        return this.getMeetTile().distanceTo(here) <= radius;
+    }
+
+    nearestMulePartner() {
+        if (this.mulePartners.length === 0) {
+            return null;
+        }
+        return Players.query().name(...this.mulePartners).within(DEFAULT_TRADE_RANGE + 6).nearest();
+    }
+
+    noteMuleTrade(): void {
+        this.muleTrades++;
+    }
+
+    muleTradeCount(): number {
+        return this.muleTrades;
+    }
+
+    /** Product names currently held that should go to the mule / bank. */
+    depositableProductNames(): string[] {
+        const names = new Set<string>();
+        for (const i of Inventory.items()) {
+            const n = i.name ?? '';
+            if (n && this.shouldDeposit(n)) {
+                names.add(n);
+            }
+        }
+        return [...names];
+    }
+
     countTrip(n: number): void {
         this.trips++;
         this.banked += n;
@@ -3343,17 +3339,67 @@ class TannerfishSustain implements Task {
 }
 
 /**
+ * Sticky combatCycle with no face-target attacker: wait (do not east-kite).
+ * Lets burn/gather resume once the cycle drains instead of deadlocking the loop.
+ */
+class WaitStickyCombat implements Task {
+    constructor(private bot: GatheringBot) {}
+
+    validate(): boolean {
+        return (
+            Game.inCombat()
+            && !EventSignal.pending()
+            && !shouldFleeCombat({
+                inCombat: true,
+                eventPending: false,
+                hasAttacker: this.hasAttacker()
+            })
+        );
+    }
+
+    private hasAttacker(): boolean {
+        return (
+            Npcs.query()
+                .where(n => n.inCombat && n.targetsMe() && n.actions().includes('Attack'))
+                .nearest() !== null
+            || Npcs.query()
+                .where(
+                    n =>
+                        n.inCombat
+                        && !n.targetsAnotherPlayer()
+                        && n.actions().includes('Attack')
+                        && n.distance() <= 2
+                )
+                .nearest() !== null
+        );
+    }
+
+    async execute(): Promise<void> {
+        Game.setAutoRetaliate(false);
+        this.bot.setStatus('combat: waiting clear (no attacker)');
+        await Execution.delayUntil(() => !Game.inCombat() || this.hasAttacker(), 3_000);
+    }
+}
+
+/**
  * Break multi-combat pulls from aggressive NPCs (lava-maze spiders, dark wizards, etc.).
- * Not for random events — those are handled elsewhere.
+ * Not for random events — those are handled by Supervisor / RandomEvents first.
  * Auto Retaliate is off at start — walking away ends the fight instead of trading hits.
  * Always kite *away* from the attacker (never walk back onto the camp anchor while
  * spiders sit on it). Prefer east when the vector is ambiguous (Lava Maze exit).
+ *
+ * Sticky combatCycle with no face target: {@link WaitStickyCombat} — do not blind-kite east
+ * (that used to freeze chop-then-burn / pier gather for 60–90s).
  */
 class FleeCombat implements Task {
     constructor(private bot: GatheringBot) {}
 
     validate(): boolean {
-        return Game.inCombat();
+        return shouldFleeCombat({
+            inCombat: Game.inCombat(),
+            eventPending: EventSignal.pending(),
+            hasAttacker: this.attacker() !== null
+        });
     }
 
     private attacker(): Npc | null {
@@ -3395,8 +3441,6 @@ class FleeCombat implements Task {
     async execute(): Promise<void> {
         // Re-assert off in case a death/relog restored the default.
         Game.setAutoRetaliate(false);
-        // Hold ReturnToAnchor / gather re-entry so we don't walk back onto the pack.
-        this.bot.noteCombatFlee(16_000);
 
         const here = Game.tile();
         if (!here) {
@@ -3404,22 +3448,33 @@ class FleeCombat implements Task {
             return;
         }
         const attacker = this.attacker();
+        if (!attacker) {
+            // validate should have filtered this; still avoid a blind kite.
+            this.bot.setStatus('combat: waiting clear (no attacker)');
+            await Execution.delayUntil(() => !Game.inCombat() || this.attacker() !== null, 4_000);
+            return;
+        }
+
+        // Hold ReturnToAnchor / gather re-entry so we don't walk back onto the pack.
+        this.bot.noteCombatFlee(12_000);
+
         const dest = this.fleeTile(here, attacker, FLEE_STEP);
-        const who = attacker?.name ?? 'attacker';
+        const who = attacker.name ?? 'attacker';
         this.bot.setStatus(`combat: fleeing ${who} → ${dest.x},${dest.z}`);
         this.bot.log(`combat: under attack by ${who} — walking off to ${dest.x},${dest.z}`);
 
-        await Traversal.walkTo(dest, { radius: 2, timeoutMs: 20_000 });
-        await Execution.delayUntil(() => !Game.inCombat(), 12_000);
+        await Traversal.walkTo(dest, { radius: 2, timeoutMs: 16_000 });
+        await Execution.delayUntil(() => !Game.inCombat(), 10_000);
         if (Game.inCombat()) {
             // Still stuck — longer kite away from whoever is on us.
             const still = Game.tile();
-            if (still) {
-                const again = this.fleeTile(still, this.attacker(), FLEE_STEP_HARD);
+            const againAtk = this.attacker();
+            if (still && againAtk) {
+                const again = this.fleeTile(still, againAtk, FLEE_STEP_HARD);
                 this.bot.log(`combat: still in combat — second kite to ${again.x},${again.z}`);
-                this.bot.noteCombatFlee(18_000);
-                await Traversal.walkTo(again, { radius: 2, timeoutMs: 15_000 });
-                await Execution.delayUntil(() => !Game.inCombat(), 10_000);
+                this.bot.noteCombatFlee(14_000);
+                await Traversal.walkTo(again, { radius: 2, timeoutMs: 12_000 });
+                await Execution.delayUntil(() => !Game.inCombat(), 8_000);
             }
         }
         // If hostiles are still stacked on us after the kite, hold camp longer.
@@ -3427,7 +3482,7 @@ class FleeCombat implements Task {
             Game.inCombat() ||
             hostileAttackerNearby(Npcs.query().action('Attack').within(6).results(), 6)
         ) {
-            this.bot.noteCombatFlee(12_000);
+            this.bot.noteCombatFlee(10_000);
         }
     }
 }
@@ -3443,6 +3498,188 @@ function isFletchByproductName(name: string | null | undefined): boolean {
         (n.includes('shortbow') && n.includes('(u)')) ||
         (n.includes('longbow') && n.includes('(u)'))
     );
+}
+
+// ── Mule / partner trade (shared policy: api/mule/PartnerTrade) ───────────────
+
+class HandleGatherMuleTrade implements Task {
+    constructor(private bot: GatheringBot) {}
+
+    validate(): boolean {
+        return this.bot.getMuleMode() !== 'off' && Trade.active();
+    }
+
+    async execute(): Promise<void> {
+        if (Trade.onConfirmScreen()) {
+            this.bot.setStatus('mule: confirming trade');
+            const before = Inventory.used();
+            await Trade.accept();
+            if (await Execution.delayUntil(() => !Trade.active(), 4000)) {
+                this.bot.noteMuleTrade();
+                const delta = Inventory.used() - before;
+                this.bot.log(
+                    `mule: trade complete (inv Δ${delta >= 0 ? '+' : ''}${delta}, trades=${this.bot.muleTradeCount()})`
+                );
+            }
+            return;
+        }
+
+        if (!Trade.onOfferScreen()) {
+            return;
+        }
+
+        if (this.bot.isMuleReceiver()) {
+            const decision = decideReceiverOfferScreen({
+                partnerHeader: Trade.partner(),
+                partners: this.bot.getMulePartners(),
+                myOfferSlots: Trade.myOffer().length,
+                theirProductCount: countOfferMatching(Trade.theirOffer(), n => this.bot.shouldDeposit(n))
+            });
+            if (decision.action === 'wait-header' || decision.action === 'wait-offer') {
+                this.bot.setStatus(
+                    decision.action === 'wait-header' ? 'mule: reading partner' : 'mule: waiting for product offer'
+                );
+                await Execution.delayTicks(1);
+                return;
+            }
+            if (decision.action === 'decline') {
+                this.bot.setStatus('mule: declining trade');
+                this.bot.log(`mule: ${decision.reason}`);
+                await Trade.decline();
+                return;
+            }
+            this.bot.setStatus('mule: accepting product');
+            await Trade.accept();
+            return;
+        }
+
+        // Gatherer: offer haul then accept.
+        const step = decideGiverOfferScreen(Trade.myOffer().length);
+        if (step === 'offer') {
+            const names = this.bot.depositableProductNames();
+            if (names.length === 0) {
+                this.bot.setStatus('mule: nothing to offer — declining');
+                await Trade.decline();
+                return;
+            }
+            this.bot.setStatus(`mule: offering ${names.join(', ')}`);
+            for (const name of names) {
+                await Trade.offerAll(name);
+            }
+            await Execution.delayUntil(
+                () => Trade.myOffer().length > 0 || Trade.onConfirmScreen() || !Trade.active(),
+                4000
+            );
+            return;
+        }
+        this.bot.setStatus('mule: accepting handoff');
+        await Trade.accept();
+        await Execution.delayUntil(() => Trade.onConfirmScreen() || !Trade.active(), 4000);
+    }
+}
+
+class MuleGoMeet implements Task {
+    constructor(private bot: GatheringBot) {}
+
+    validate(): boolean {
+        if (Trade.active() || EventSignal.pending()) {
+            return false;
+        }
+        if (this.bot.atMuleMeet()) {
+            return false;
+        }
+        if (this.bot.isMuleGatherer()) {
+            return Inventory.isFull() && this.bot.hasDepositable();
+        }
+        if (this.bot.isMuleReceiver()) {
+            // Mule returns to meet when pack empty (after bank) or still empty.
+            return !this.bot.hasDepositable() || !Inventory.isFull();
+        }
+        return false;
+    }
+
+    async execute(): Promise<void> {
+        const meet = this.bot.getMeetTile();
+        this.bot.setStatus(`mule: walking to meet ${meet}`);
+        await Traversal.walkResilient(meet, {
+            radius: 2,
+            timeoutMs: 90_000,
+            log: m => this.bot.log(`  ${m}`)
+        });
+    }
+}
+
+class MuleRequestOrWait implements Task {
+    constructor(private bot: GatheringBot) {}
+
+    validate(): boolean {
+        if (Trade.active() || EventSignal.pending()) {
+            return false;
+        }
+        if (!this.bot.atMuleMeet()) {
+            return false;
+        }
+        if (this.bot.isMuleGatherer()) {
+            return Inventory.isFull() && this.bot.hasDepositable();
+        }
+        if (this.bot.isMuleReceiver()) {
+            // Idle at meet waiting for gatherer (bank when we hold product).
+            return !this.bot.hasDepositable();
+        }
+        return false;
+    }
+
+    async execute(): Promise<void> {
+        const partner = this.bot.nearestMulePartner();
+        if (!partner || partner.distance() > DEFAULT_TRADE_RANGE) {
+            const msg = this.bot.isMuleGatherer()
+                ? 'mule: waiting for partner at meet'
+                : 'mule: waiting for gatherer';
+            this.bot.setStatus(msg);
+            // Log once every few waits so harness/single-account smokes can assert.
+            this.bot.log(msg);
+            await Execution.delayTicks(2);
+            return;
+        }
+        const name = partner.name ?? this.bot.getMulePartners()[0] ?? '';
+        if (!isConfiguredPartner(name, this.bot.getMulePartners()) && name) {
+            // name from query should match
+        }
+        this.bot.setStatus(`mule: requesting trade with ${name || 'partner'}`);
+        await Trade.request(name);
+        await Execution.delayUntil(() => Trade.active() || EventSignal.pending(), 4000);
+    }
+}
+
+class MuleBankHaul implements Task {
+    constructor(private bot: GatheringBot) {}
+
+    validate(): boolean {
+        if (!this.bot.isMuleReceiver() || Trade.active() || EventSignal.pending()) {
+            return false;
+        }
+        return this.bot.hasDepositable();
+    }
+
+    async execute(): Promise<void> {
+        const log = (m: string) => this.bot.log(`  ${m}`);
+        const had = this.bot.products().length;
+        this.bot.setStatus('mule: banking haul');
+        if (!(await this.bot.openScriptBank(log))) {
+            this.bot.log('mule: bank open failed — will retry');
+            return;
+        }
+        await Execution.delayTicks(1);
+        await Bank.depositAllMatching(name => this.bot.shouldDeposit(name));
+        await Execution.delayUntil(() => !this.bot.hasDepositable() || !Bank.isOpen(), 5000);
+        if (Bank.isOpen()) {
+            await Bank.close();
+        }
+        this.bot.countTrip(had);
+        this.bot.log(`mule: deposited haul (${had} stacks, trades=${this.bot.muleTradeCount()})`);
+        // Walk back toward meet (camp).
+        await this.bot.walkHomeIfNeeded(log);
+    }
 }
 
 class DropProduct implements Task {
@@ -3574,6 +3811,14 @@ class BankCatch implements Task {
 
     validate(): boolean {
         if (this.bot.bankCatchBlockedByCook() || this.bot.bankCatchBlockedByBurn()) {
+            return false;
+        }
+        // Gatherer mule: hand off via trade, do not bank the haul.
+        if (this.bot.isMuleGatherer()) {
+            return false;
+        }
+        // Mule receiver banks via MuleBankHaul when not full-pack gathering.
+        if (this.bot.isMuleReceiver()) {
             return false;
         }
         return Inventory.isFull() && this.bot.hasDepositable();
@@ -4623,7 +4868,7 @@ class Gather implements Task {
         // Camp membership fence (anchor leash) + ore/tree type filters, then prefer
         // rocks near the player so we do not path across Dwarven tunnels / SE Varrock
         // while a matching ore is already underfoot.
-        const candidates = Locs.query()
+        return Locs.query()
             .name(this.bot.targetName())
             .action(this.bot.actionName())
             .where(
@@ -4634,8 +4879,7 @@ class Gather implements Task {
                     !GAS_ROCK_IDS.has(l.id) &&
                     this.bot.usable(keyOf(l.tile()))
             )
-            .results();
-        return pickNearestPreferLocal(candidates, l => l.distance(), LOCAL_MINE_PREFER_RADIUS);
+            .nearestPreferLocal(LOCAL_MINE_PREFER_RADIUS);
     }
 
     validate(): boolean {

@@ -9,9 +9,9 @@
  *   - tool acquire with bank isolation (no leftover bank tools → false PASS)
  *   - smith rune axe when bar + hammer + levels are ready
  *
- * Item seed uses engine cheat `give <obj> <qty>` (not maintainer-content
- * `~item` / `~bankitem`, which this Server tree does not ship). Inventory wipe
- * is `~clearinv` (debugproc). Bank tool purge walks a booth and withdraws
+ * Inventory seed: engine cheat `give <obj> <qty>`. Bank seed: `givebank`
+ * via {@link seedItemsToBank} (verify at a booth; optional `~bankitem` fallback).
+ * Inventory wipe is `~clearinv`. Bank tool purge walks a booth and withdraws
  * matching gear so acquire tests cannot withdraw leftovers.
  *
  * Requires a deployed bot client and a running engine (default http://localhost:8890).
@@ -34,7 +34,13 @@
  */
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs } from './lib/harness.js';
-import { cheatQuiet, mainlandAccount, startScript } from './tutorial/harness.js';
+import {
+    cheatQuiet,
+    mainlandAccount,
+    seedItemsToBank,
+    startScript,
+    type BankSeedItem
+} from './tutorial/harness.js';
 
 const { base, rest } = parseArgs(process.argv.slice(2), { base: process.env.BASE ?? 'http://localhost:8890' });
 const filters = rest.map(s => s.toLowerCase());
@@ -219,7 +225,17 @@ async function stopScript(page: Page): Promise<void> {
     await page.waitForTimeout(400);
 }
 
+/**
+ * Persist scenario settings for a script. Always clears mule keys first so a prior
+ * mule scenario cannot leak Gatherer/Mule into bank/path tests via sessionStorage.
+ */
 async function setSettings(page: Page, script: string, map: Record<string, string | number | boolean>): Promise<void> {
+    // Defaults for optional keys every Miner/Fisher/Woodcutter run should reset.
+    const withDefaults: Record<string, string | number | boolean> = {
+        muleMode: 'Off',
+        mulePartner: '',
+        ...map
+    };
     await page.evaluate(([name, entries]) => {
         for (const [k, v] of Object.entries(entries)) {
             sessionStorage.setItem(`rs2b0t:set:${name}:${k}`, String(v));
@@ -229,7 +245,7 @@ async function setSettings(page: Page, script: string, map: Record<string, strin
                 /* private mode */
             }
         }
-    }, [script, map] as const);
+    }, [script, withDefaults] as const);
 }
 
 /**
@@ -930,19 +946,23 @@ type Scenario = {
     settings: Record<string, string | number | boolean>;
     /** Held items to seed via `give` (debug name → display name, qty). */
     seed?: { debug: string; name: string; qty?: number }[];
+    /**
+     * Direct bank seed via engine `givebank` ({@link seedItemsToBank}).
+     * Prefer this over give→deposit — bulk unstackables fill the pack and stall.
+     */
+    bankSeed?: { items: BankSeedItem[]; stand: Tile };
     /** Skill levels to advance before start. End-game uses ~90 for success rolls. */
     stats?: { skill: string; level: number }[];
     /** Before seed: open this bank and withdraw matching tools, then clearinv. */
     purgeBank?: { stand: Tile; match: RegExp; label: string };
     /**
-     * After seed: open this bank, deposit the named held items, close.
-     * Forces the script to withdraw (bank path) instead of materials-held short-circuit.
-     * Notes (`cert_*`) share the unnoted display name and un-note on deposit.
+     * @deprecated Prefer {@link bankSeed} (`givebank`). Kept only for rare cases
+     * where give→deposit is intentional; bulk fixtures must use bankSeed.
      */
     depositSeedToBank?: { stand: Tile; names: string[]; label: string };
     /**
-     * After {@link depositSeedToBank}: give more held items (tool + near-full pack)
-     * that must stay in inv — used when bank seed and inv seed share a display name.
+     * After bank seed (or deposit): give held items (tool + near-full pack).
+     * Prefer putting inv-only gear in {@link seed} and bank fixtures in {@link bankSeed}.
      */
     seedAfterDeposit?: { debug: string; name: string; qty?: number }[];
     /** Scene readiness after tele. Path-from-bank uses 'bank' or 'skip'. */
@@ -1027,6 +1047,13 @@ const SPOT = {
     edgevilleBank: { x: 3094, z: 3493, level: 0 },
     /** Barbarian Village fly/bait river (location bank = Edgeville). */
     barbVillageFish: { x: 3104, z: 3430, level: 0 },
+    /** Barbarian Village tin/coal rocks (catalog seed; bank Edgeville). */
+    barbVillageMine: { x: 3084, z: 3417, level: 0 },
+    /** Rimmington mine seed (Doric cluster; bank Falador East — long soft-home leg). */
+    rimmingtonMine: { x: 2978, z: 3247, level: 0 },
+    /** Seers normal trees south of bank. */
+    seersTrees: { x: 2724, z: 3474, level: 0 },
+    seersBank: { x: 2725, z: 3491, level: 0 },
     /** Willows NW of Crafting Guild — Auto freeform WC (outside every WC camp chunk). */
     // Was 2910,3328 (~25N of the stand); willows sit closer to the guild wall.
     willowsNwCg: { x: 2910, z: 3303, level: 0 },
@@ -1231,6 +1258,124 @@ const SCENARIOS: Scenario[] = [
             `peak=${productPeak} distCamp ${minDistToCamp}..${maxDistToCamp} ` +
             `tile=${cur.tile ? `${cur.tile.x},${cur.tile.z}` : '?'}`
     },
+    /**
+     * Single-account mule gatherer smoke: full pack + muleMode Gatherer must NOT bank;
+     * hold at meet and wait for partner. Full Gatherer↔Mule trade needs two harnesses
+     * (separate multi-box smoke — coordinate via PM / ready file later).
+     */
+    {
+        id: 'mine-mule-gatherer-meet',
+        tags: ['mining', 'mine', 'mule', 'early'],
+        script: 'Miner',
+        start: offsetTile(SPOT.seVarrockIron, -2, -1),
+        camp: SPOT.seVarrockIron,
+        bank: { x: 3253, z: 3420, level: 0 }, // Varrock East — must NOT visit for handoff
+        settings: {
+            rocks: 'Iron',
+            location: 'Southeast Varrock Mine',
+            toolAcquire: 'Off',
+            forgetfulBank: false,
+            leashRadius: 18,
+            muleMode: 'Gatherer',
+            mulePartner: 'HarnessMulePartner'
+        },
+        seed: [
+            { debug: 'rune_pickaxe', name: 'Rune pickaxe', qty: 1 },
+            { debug: 'iron_ore', name: 'Iron ore', qty: 27 }
+        ],
+        scene: 'rocks',
+        budgetMs: 90_000,
+        check: ({ cur, productPeak, minDistToBank, minDistToCamp, elapsedMs }) => {
+            if (cur.runner === 'crashed') {
+                return 'fail';
+            }
+            // Startup log always includes mode line; waiting/trade lines are status-only.
+            const muleOn = logHas(cur, /mule:\s*gatherer with/i);
+            const nearMeet = minDistToCamp <= 4;
+            const stillHolding = invMatch(cur, /ore/i) >= 20 || productPeak >= 20;
+            // Must not complete a bank deposit of the haul.
+            if (logHas(cur, /bank:\s*deposited/i) && elapsedMs >= 12_000) {
+                return 'fail';
+            }
+            if (muleOn && nearMeet && stillHolding && minDistToBank > 12 && elapsedMs >= 8_000) {
+                return 'pass';
+            }
+            return 'wait';
+        },
+        failMsg: ({ cur, minDistToCamp, minDistToBank, productPeak }) =>
+            `mule-gatherer ore=${invMatch(cur, /ore/i)} peak=${productPeak} ` +
+            `distCamp=${minDistToCamp} distBank=${minDistToBank} ` +
+            `muleOn=${logHas(cur, /mule:\s*gatherer with/i)} bankedLog=${logHas(cur, /bank:\s*deposited/i)} ` +
+            `tile=${cur.tile ? `${cur.tile.x},${cur.tile.z}` : '?'}`
+    },
+    /**
+     * Second mine bank loop + long soft-home: Rimmington iron → Falador East (~100+ tiles).
+     * Catches bank preference / post-deposit return regressions not covered by SW Varrock.
+     */
+    {
+        id: 'mine-bank-rimmington',
+        tags: ['mining', 'mine', 'bank', 'camp', 'early'],
+        script: 'Miner',
+        start: offsetTile(SPOT.rimmingtonMine, -6, 3),
+        camp: SPOT.rimmingtonMine,
+        bank: SPOT.faladorEast,
+        settings: {
+            rocks: 'Iron',
+            location: 'Rimmington Mine',
+            toolAcquire: 'Off',
+            forgetfulBank: false,
+            leashRadius: 18
+        },
+        seed: [
+            { debug: 'rune_pickaxe', name: 'Rune pickaxe', qty: 1 },
+            { debug: 'iron_ore', name: 'Iron ore', qty: 26 }
+        ],
+        scene: 'skip',
+        budgetMs: 210_000,
+        check: ({
+            start,
+            cur,
+            productPeak,
+            bankedHint,
+            sawNearBank,
+            returnedToCampAfterBank,
+            minDistToBank,
+            minDistToCampAfterBank
+        }) => {
+            const xpGain = cur.xp.mining - start.xp.mining;
+            const ore = invMatch(cur, /ore/i);
+            if (cur.runner === 'crashed') {
+                return 'fail';
+            }
+            if (
+                xpGain > 0
+                && productPeak >= 26
+                && bankedHint
+                && sawNearBank
+                && ore <= 2
+                && minDistToBank <= 12
+                && returnedToCampAfterBank
+                && minDistToCampAfterBank <= 14
+            ) {
+                return 'pass';
+            }
+            return 'wait';
+        },
+        failMsg: ({
+            start,
+            cur,
+            minDistToCamp,
+            minDistToBank,
+            minDistToCampAfterBank,
+            productPeak,
+            bankedHint,
+            sawNearBank,
+            returnedToCampAfterBank
+        }) =>
+            `rimmington xp ${start.xp.mining}→${cur.xp.mining} distCamp=${minDistToCamp} distBank=${minDistToBank} ` +
+            `ore=${invMatch(cur, /ore/i)} peak=${productPeak} banked=${bankedHint} nearBank=${sawNearBank} ` +
+            `homeAfterBank=${returnedToCampAfterBank} distCampAfterBank=${minDistToCampAfterBank}`
+    },
     {
         id: 'fish-bank',
         tags: ['fishing', 'fish', 'bank', 'early'],
@@ -1297,6 +1442,124 @@ const SCENARIOS: Scenario[] = [
             returnedToCampAfterBank
         }) =>
             `fishing xp ${start.xp.fishing}->${cur.xp.fishing}, distCamp=${minDistToCamp}, distBank=${minDistToBank}, raw=${invMatch(cur, /^raw /i)}, peak=${productPeak}, banked=${bankedHint}, nearBank=${sawNearBank} homeAfterBank=${returnedToCampAfterBank} distCampAfterBank=${minDistToCampAfterBank}`
+    },
+    /**
+     * Barbarian Village fly → Edgeville bank. Wide campRadius (72) + off-camp bank:
+     * membership + soft home without Catherby cook complexity.
+     */
+    {
+        id: 'fish-bank-barb',
+        tags: ['fishing', 'fish', 'bank', 'camp', 'early'],
+        script: 'Fisher',
+        start: offsetTile(SPOT.barbVillageFish, -5, 4),
+        camp: SPOT.barbVillageFish,
+        bank: SPOT.edgevilleBank,
+        settings: {
+            fishMethod: 'Fly fishing — trout/salmon',
+            location: 'Barbarian Village',
+            cookMode: 'Off',
+            toolAcquire: 'Off',
+            forgetfulBank: false,
+            leashRadius: 18
+        },
+        seed: [
+            { debug: 'fly_fishing_rod', name: 'Fly fishing rod', qty: 1 },
+            { debug: 'feather', name: 'Feather', qty: 100 },
+            { debug: 'raw_trout', name: 'Raw trout', qty: 25 }
+        ],
+        scene: 'skip',
+        budgetMs: 200_000,
+        check: ({
+            start,
+            cur,
+            productPeak,
+            bankedHint,
+            sawNearBank,
+            returnedToCampAfterBank,
+            minDistToBank,
+            minDistToCampAfterBank
+        }) => {
+            const xpGain = cur.xp.fishing - start.xp.fishing;
+            const raw = invMatch(cur, /^raw /i);
+            if (cur.runner === 'crashed') {
+                return 'fail';
+            }
+            if (
+                xpGain > 0
+                && productPeak >= 25
+                && bankedHint
+                && sawNearBank
+                && raw <= 3
+                && minDistToBank <= 12
+                && returnedToCampAfterBank
+                && minDistToCampAfterBank <= 14
+            ) {
+                return 'pass';
+            }
+            return 'wait';
+        },
+        failMsg: ({
+            start,
+            cur,
+            minDistToCamp,
+            minDistToBank,
+            minDistToCampAfterBank,
+            productPeak,
+            bankedHint,
+            sawNearBank,
+            returnedToCampAfterBank
+        }) =>
+            `barb-fish xp ${start.xp.fishing}→${cur.xp.fishing} distCamp=${minDistToCamp} distBank=${minDistToBank} ` +
+            `raw=${invMatch(cur, /^raw /i)} peak=${productPeak} banked=${bankedHint} nearBank=${sawNearBank} ` +
+            `homeAfterBank=${returnedToCampAfterBank} distCampAfterBank=${minDistToCampAfterBank}`
+    },
+    /**
+     * Fisher gatherer mule smoke (Draynor): full raw haul → meet + hold, must not bank.
+     * Complements mine-mule-gatherer-meet so product keywords / depositable paths differ.
+     */
+    {
+        id: 'fish-mule-gatherer-meet',
+        tags: ['fishing', 'fish', 'mule', 'early'],
+        script: 'Fisher',
+        start: offsetTile(SPOT.draynorFish, 4, 3),
+        camp: SPOT.draynorFish,
+        bank: SPOT.draynorBank,
+        settings: {
+            fishMethod: 'Small net — shrimp/anchovy',
+            location: 'Draynor Village',
+            cookMode: 'Off',
+            toolAcquire: 'Off',
+            forgetfulBank: false,
+            leashRadius: 18,
+            muleMode: 'Gatherer',
+            mulePartner: 'HarnessMulePartner'
+        },
+        seed: [
+            { debug: 'net', name: 'Small fishing net', qty: 1 },
+            { debug: 'raw_shrimp', name: 'Raw shrimps', qty: 27 }
+        ],
+        scene: 'skip',
+        budgetMs: 90_000,
+        check: ({ cur, productPeak, minDistToBank, minDistToCamp, elapsedMs }) => {
+            if (cur.runner === 'crashed') {
+                return 'fail';
+            }
+            const muleOn = logHas(cur, /mule:\s*gatherer with/i);
+            const nearMeet = minDistToCamp <= 6;
+            const stillHolding = invMatch(cur, /^raw /i) >= 20 || productPeak >= 20;
+            if (logHas(cur, /bank:\s*deposited/i) && elapsedMs >= 12_000) {
+                return 'fail';
+            }
+            if (muleOn && nearMeet && stillHolding && minDistToBank > 8 && elapsedMs >= 8_000) {
+                return 'pass';
+            }
+            return 'wait';
+        },
+        failMsg: ({ cur, minDistToCamp, minDistToBank, productPeak }) =>
+            `fish-mule-gatherer raw=${invMatch(cur, /^raw /i)} peak=${productPeak} ` +
+            `distCamp=${minDistToCamp} distBank=${minDistToBank} ` +
+            `muleOn=${logHas(cur, /mule:\s*gatherer with/i)} bankedLog=${logHas(cur, /bank:\s*deposited/i)} ` +
+            `tile=${cur.tile ? `${cur.tile.x},${cur.tile.z}` : '?'}`
     },
     {
         // Cook then bank: seed cooked (not raw) so one catch fills the pack with
@@ -1378,8 +1641,8 @@ const SCENARIOS: Scenario[] = [
             `homeAfterBank=${returnedToCampAfterBank} distCampAfterBank=${minDistToCampAfterBank}`
     },
     {
-        // Bank raw then cook: seed bank with noted raw (un-notes on deposit),
-        // inv = pot + 26 raw → catch last → bank hits N → withdraw/cook batch.
+        // Bank raw then cook: givebank 973 raw + inv pot + 26 raw → catch last →
+        // bank hits N → withdraw/cook batch.
         // 973 bank + 27 deposited = 1000 (explicit bankRawBeforeCook; product default is 56).
         id: 'fish-bank-raw-cook',
         tags: ['fishing', 'fish', 'cook', 'bank', 'early'],
@@ -1399,14 +1662,12 @@ const SCENARIOS: Scenario[] = [
             forgetfulBank: false,
             leashRadius: 18
         },
-        // cert_* is stackable; deposit un-notes into bank as Raw lobster.
-        seed: [{ debug: 'cert_raw_lobster', name: 'Raw lobster', qty: 973 }],
-        depositSeedToBank: {
+        // Direct bank seed — do not give→deposit 973 (pack thrash / noted preflight).
+        bankSeed: {
             stand: SPOT.catherbyBank,
-            names: ['Raw lobster'],
-            label: 'raw-lob@catherby'
+            items: [{ debugName: 'raw_lobster', displayName: 'Raw lobster', qty: 973 }]
         },
-        seedAfterDeposit: [
+        seed: [
             { debug: 'lobster_pot', name: 'Lobster pot', qty: 1 },
             { debug: 'raw_lobster', name: 'Raw lobster', qty: 26 }
         ],
@@ -1505,6 +1766,75 @@ const SCENARIOS: Scenario[] = [
         }) =>
             `wc xp ${start.xp.woodcutting}->${cur.xp.woodcutting}, distCamp=${minDistToCamp}, distBank=${minDistToBank}, logs=${invMatch(cur, /logs/i)}, peak=${productPeak}, banked=${bankedHint}, nearBank=${sawNearBank} homeAfterBank=${returnedToCampAfterBank} distCampAfterBank=${minDistToCampAfterBank}`
     },
+    /**
+     * Second WC bank camp (Seers normal trees → Seers booth). Catches location table
+     * / bank stand regressions outside Draynor.
+     */
+    {
+        id: 'wc-bank-seers',
+        tags: ['woodcutting', 'wc', 'bank', 'camp', 'early'],
+        script: 'Woodcutter',
+        start: offsetTile(SPOT.seersTrees, -5, 3),
+        camp: SPOT.seersTrees,
+        bank: SPOT.seersBank,
+        settings: {
+            treeName: 'Tree',
+            location: 'Seers (trees)',
+            burnMode: 'Off',
+            toolAcquire: 'Off',
+            forgetfulBank: false,
+            leashRadius: 12
+        },
+        seed: [
+            { debug: 'rune_axe', name: 'Rune axe', qty: 1 },
+            { debug: 'logs', name: 'Logs', qty: 26 }
+        ],
+        scene: 'skip',
+        budgetMs: 180_000,
+        check: ({
+            start,
+            cur,
+            productPeak,
+            bankedHint,
+            sawNearBank,
+            returnedToCampAfterBank,
+            minDistToBank,
+            minDistToCampAfterBank
+        }) => {
+            const xpGain = cur.xp.woodcutting - start.xp.woodcutting;
+            const logs = invMatch(cur, /logs/i);
+            if (cur.runner === 'crashed') {
+                return 'fail';
+            }
+            if (
+                xpGain > 0
+                && productPeak >= 26
+                && bankedHint
+                && sawNearBank
+                && logs <= 2
+                && minDistToBank <= 12
+                && returnedToCampAfterBank
+                && minDistToCampAfterBank <= 14
+            ) {
+                return 'pass';
+            }
+            return 'wait';
+        },
+        failMsg: ({
+            start,
+            cur,
+            minDistToCamp,
+            minDistToBank,
+            minDistToCampAfterBank,
+            productPeak,
+            bankedHint,
+            sawNearBank,
+            returnedToCampAfterBank
+        }) =>
+            `seers-wc xp ${start.xp.woodcutting}→${cur.xp.woodcutting} distCamp=${minDistToCamp} distBank=${minDistToBank} ` +
+            `logs=${invMatch(cur, /logs/i)} peak=${productPeak} banked=${bankedHint} nearBank=${sawNearBank} ` +
+            `homeAfterBank=${returnedToCampAfterBank} distCampAfterBank=${minDistToCampAfterBank}`
+    },
     {
         id: 'wc-burn',
         tags: ['woodcutting', 'wc', 'burn', 'firemaking', 'early'],
@@ -1548,7 +1878,7 @@ const SCENARIOS: Scenario[] = [
         id: 'mine-path-runite',
         tags: ['mining', 'mine', 'endgame', 'path', 'wildy'],
         script: 'Miner',
-        // Brief walk into the lava-maze runite pocket (not standing on the rocks).
+        // Walk into the lava-maze runite pocket (not standing on the rocks).
         start: offsetTile(SPOT.lavaRunite, -14, -10),
         camp: SPOT.lavaRunite,
         settings: {
@@ -1561,31 +1891,31 @@ const SCENARIOS: Scenario[] = [
         // Independent path loop: rune pick; acquire scenarios wipe/buy separately.
         seed: [{ debug: 'rune_pickaxe', name: 'Rune pickaxe', qty: 1 }],
         scene: 'skip',
-        // Spiders + flee can eat wall-clock; keep room after redeployed combat fix.
-        budgetMs: 180_000,
-        check: ({ start, cur, sawProduct, minDistToCamp, startDistToCamp, elapsedMs }) => {
+        // Spiders + flee can eat wall-clock; must still land a real ore before pass.
+        budgetMs: 300_000,
+        check: ({ start, cur, sawProduct, productPeak, minDistToCamp, startDistToCamp }) => {
             if (cur.runner === 'crashed') {
                 return 'fail';
             }
             const xpGain = cur.xp.mining - start.xp.mining;
-            const pathed = startDistToCamp >= 8 && minDistToCamp <= startDistToCamp - 5;
-            const nearCamp = minDistToCamp <= 10;
-            // Wildy: approach camp and either gather or show combat kite (not elapsed-only).
-            const fled = logHas(cur, /combat:\s*under attack|combat:\s*still in combat/i);
-            if (pathed && nearCamp && (xpGain > 0 || sawProduct || fled)) {
-                return 'pass';
+            const runite = invMatch(cur, /runite ore/i);
+            // Must actually mine — flee/near-camp alone used to false-PASS with 0 XP.
+            const gathered = xpGain > 0 || sawProduct || runite > 0 || productPeak > 0;
+            if (!gathered) {
+                return 'wait';
             }
-            if (xpGain > 0 && nearCamp) {
-                return 'pass';
-            }
-            // Pathed into camp and held for a while without crashing — still require flee or gather signal.
-            if (pathed && nearCamp && fled && elapsedMs >= 40_000) {
+            // Path into the pocket (or already near after kite).
+            const pathed = startDistToCamp >= 8 && minDistToCamp <= startDistToCamp - 3;
+            const nearCamp = minDistToCamp <= 14;
+            if (nearCamp || pathed) {
                 return 'pass';
             }
             return 'wait';
         },
-        failMsg: ({ start, cur, minDistToCamp }) =>
-            `runite path xp ${start.xp.mining}→${cur.xp.mining}, distCamp=${minDistToCamp}, tile=${cur.tile ? `${cur.tile.x},${cur.tile.z}` : '?'}`
+        failMsg: ({ start, cur, minDistToCamp, productPeak }) =>
+            `runite path xp ${start.xp.mining}→${cur.xp.mining} ore=${invMatch(cur, /runite ore/i)} ` +
+            `peak=${productPeak} distCamp=${minDistToCamp} fled=${logHas(cur, /combat:\s*under attack/i)} ` +
+            `tile=${cur.tile ? `${cur.tile.x},${cur.tile.z}` : '?'}`
     },
     {
         id: 'fish-path-shark',
@@ -2047,15 +2377,13 @@ const SCENARIOS: Scenario[] = [
             leashRadius: 12
         },
         purgeBank: { stand: SPOT.varrockWestBank, match: TOOL_RE.axe, label: 'axes@varrock-w' },
-        // give → deposit via preflight bot → pack empty; restock must bank-withdraw.
-        seed: [
-            { debug: 'hammer', name: 'Hammer', qty: 1 },
-            { debug: 'runite_bar', name: 'Runite bar', qty: 1 }
-        ],
-        depositSeedToBank: {
+        // Bank mats via givebank so restock must withdraw (not materials-held short-circuit).
+        bankSeed: {
             stand: SPOT.varrockWestBank,
-            names: ['Hammer', 'Runite bar'],
-            label: 'smith-mats@varrock-w'
+            items: [
+                { debugName: 'hammer', displayName: 'Hammer', qty: 1 },
+                { debugName: 'runite_bar', displayName: 'Runite bar', qty: 1 }
+            ]
         },
         scene: 'bank',
         budgetMs: 210_000,
@@ -2147,14 +2475,20 @@ try {
                 await purgeBankTools(page, sc.purgeBank.stand, sc.purgeBank.match, sc.purgeBank.label);
             }
 
-            // Seed items BEFORE any higher stat bumps (same lesson as firegiant-test).
+            // Bank fixtures first (givebank) so pack never holds bulk stackables.
+            if (sc.bankSeed) {
+                console.log(
+                    `  bankSeed @ (${sc.bankSeed.stand.x},${sc.bankSeed.stand.z}): ` +
+                        sc.bankSeed.items.map(i => `${i.debugName}×${i.qty}`).join(', ')
+                );
+                await seedItemsToBank(page, sc.bankSeed.items, sc.bankSeed.stand);
+            }
+            // Held gear / near-full pack AFTER bank seed (same lesson as firegiant-test).
             for (const it of sc.seed ?? []) {
                 await seedItem(page, it.debug, it.name, it.qty ?? 1);
                 console.log(`  seeded ${it.qty ?? 1}x ${it.name}`);
             }
-            // Optional: park seeded mats in the bank so the script must withdraw
-            // (smith-rune-axe — exercises bank path, not materials-held short-circuit).
-            // cert_* notes share the unnoted name and un-note on deposit.
+            // Legacy give→deposit path (prefer bankSeed for new scenarios).
             if (sc.depositSeedToBank) {
                 await depositHeldToBank(
                     page,
@@ -2163,7 +2497,6 @@ try {
                     sc.depositSeedToBank.label
                 );
             }
-            // Inv gear/pack after bank seed (fish-bank-raw-cook: pot + 26 raw).
             for (const it of sc.seedAfterDeposit ?? []) {
                 await seedItem(page, it.debug, it.name, it.qty ?? 1);
                 console.log(`  seeded after deposit ${it.qty ?? 1}x ${it.name}`);
@@ -2235,20 +2568,20 @@ try {
                     throw new Error('precondition: no coins after seed');
                 }
                 if (sc.id === 'smith-rune-axe') {
-                    // Mats were deposited — pack must be empty of them so restock banks.
+                    // Mats live in bank only — pack empty so restock must withdraw.
                     if (invCount(pre, 'Runite bar') > 0 || invCount(pre, 'Hammer') > 0) {
                         throw new Error(
-                            'precondition: hammer/bar still in pack after deposit ' +
+                            'precondition: hammer/bar still in pack after bankSeed ' +
                                 `(bar=${invCount(pre, 'Runite bar')} hammer=${invCount(pre, 'Hammer')})`
                         );
                     }
                     if (hasAnyAxe(pre)) {
-                        throw new Error('precondition: already holding an axe after purge+deposit');
+                        throw new Error('precondition: already holding an axe after purge+bankSeed');
                     }
                 }
                 if (sc.id === 'fish-bank-raw-cook') {
                     if (invCount(pre, 'Lobster pot') < 1) {
-                        throw new Error('precondition: need Lobster pot after seedAfterDeposit');
+                        throw new Error('precondition: need Lobster pot after inv seed');
                     }
                     if (invCount(pre, 'Raw lobster') < 26) {
                         throw new Error(
@@ -2283,7 +2616,16 @@ try {
 
             await setSettings(page, sc.script, sc.settings);
             const applied = await page.evaluate(name => {
-                const keys = ['rocks', 'treeName', 'fishMethod', 'location', 'leashRadius', 'toolAcquire'];
+                const keys = [
+                    'rocks',
+                    'treeName',
+                    'fishMethod',
+                    'location',
+                    'leashRadius',
+                    'toolAcquire',
+                    'muleMode',
+                    'mulePartner'
+                ];
                 const out: Record<string, string | null> = {};
                 for (const k of keys) {
                     out[k] = sessionStorage.getItem(`rs2b0t:set:${name}:${k}`);
