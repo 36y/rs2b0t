@@ -50,11 +50,12 @@ describe('route data integrity vs generated shopdb', () => {
         expect(byId.get('magicguild')!.gates).toEqual([{ skill: { name: 'magic', level: 66 } }]);
         expect(byId.get('magearena')!.gates).toEqual([]);
     });
-    test('the Mage Arena cluster carries the full wilderness protocol', () => {
+    test('the Mage Arena cluster carries the knife-only wilderness protocol', () => {
         const ma = ROUTE.clusters.find(c => c.id === 'magearena')!;
         expect(ma.setting).toBe('mageArena');
-        expect(ma.keep).toEqual(['Rune scimitar']);
-        expect(ma.wield).toEqual(['Rune scimitar']);
+        expect(ma.keep).toEqual(['Knife']);
+        expect(ma.wield).toBeUndefined();
+        expect(ma.keepFallback).toEqual({ item: 'Knife', spawn: { x: 3218, z: 3418, level: 1 } });
         expect(ma.haulBank).toEqual({ stand: { x: 2533, z: 4714, level: 0 }, banker: 'Gundai' });
         expect(ma.waypoints?.length ?? 0).toBeGreaterThan(0);
         expect(ma.bank.banker).toBeUndefined();

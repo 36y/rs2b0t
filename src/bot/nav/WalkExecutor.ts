@@ -542,7 +542,14 @@ class WalkExecutorImpl {
             }
             if (shut) {
                 const mark = GameMessages.mark();
-                if (!shut.interact(transport.action)) {
+                // This era's servers only honour a Slash click from an equipped
+                // slash weapon; a carried knife must be used on the web instead.
+                const knife = transport.action === 'Slash' ? Inventory.first('Knife') : null;
+                if (knife !== null) {
+                    log(`using the ${knife.name} on ${transport.locName} at (${transport.locX},${transport.locZ})`);
+                }
+                const sent = knife !== null ? await Promise.resolve(knife.useOn(shut)) : shut.interact(transport.action);
+                if (!sent) {
                     log(`'${transport.action}' not offered by ${transport.locName} (ops: ${shut.actions().join(', ')})`);
                     return false;
                 }

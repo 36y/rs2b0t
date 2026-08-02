@@ -43,6 +43,8 @@ export interface RouteCluster {
     shops: RouteShop[];
     gates: GateSpec[];
     keep?: string[];
+    /** free ground spawn to fetch a keep item from when the bank has none */
+    keepFallback?: { item: string; spawn: NavPointLike };
     wield?: string[];
     waypoints?: NavPointLike[];
     setting?: string;

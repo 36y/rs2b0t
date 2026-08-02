@@ -78,8 +78,9 @@ export const ROUTE: Route = {
             ],
             gates: [],
             haulBank: { stand: { x: 2533, z: 4714, level: 0 }, banker: 'Gundai' },
-            keep: ['Rune scimitar'],
-            wield: ['Rune scimitar'],
+            keep: ['Knife'],
+            // free kitchen spawn upstairs in Varrock's Blue Moon Inn
+            keepFallback: { item: 'Knife', spawn: { x: 3218, z: 3418, level: 1 } },
             waypoints: [{ x: 3092, z: 3760, level: 0 }, { x: 3092, z: 3900, level: 0 }],
             setting: 'mageArena'
         }

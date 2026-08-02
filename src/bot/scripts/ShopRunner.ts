@@ -10,6 +10,7 @@ import { Execution } from '../api/Execution.js';
 import { Game } from '../api/Game.js';
 import { Traversal } from '../api/Traversal.js';
 import { TaskBot, type Task } from '../api/Bot.js';
+import { AcquireTask } from '../api/ItemAcquisition.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
@@ -204,6 +205,18 @@ class RunCluster implements Task {
         for (const item of cluster.keep ?? []) {
             if (!Inventory.contains(item) && !Equipment.contains(item)) {
                 if (!(await Bank.withdrawX(item, 1))) {
+                    const fallback = cluster.keepFallback;
+                    if (fallback && fallback.item.toLowerCase() === item.toLowerCase()) {
+                        bot.log(`[shoprun] bank has no ${item} — fetching the free ${item} spawn`);
+                        await Bank.close();
+                        bot.status = `fetching a ${item}`;
+                        await new AcquireTask(bot, [{ name: fallback.item, count: 1, source: { kind: 'ground', at: fallback.spawn } }]).execute();
+                        if (Inventory.contains(item)) {
+                            bot.log(`[shoprun] picked up the ${item} — heading back to the bank`);
+                        }
+                        // re-run the cluster from the top: bank again with the item in hand
+                        return;
+                    }
                     bot.log(`[shoprun] ${cluster.id} needs a ${item} and the bank has none — skipping the cluster`);
                     bot.lastClusterId = cluster.id;
                     bot.saveState();
