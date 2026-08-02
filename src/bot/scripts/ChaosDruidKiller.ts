@@ -4,6 +4,7 @@ import { Execution } from '../api/Execution.js';
 import { Game } from '../api/Game.js';
 import { Bank } from '../api/hud/Bank.js';
 import { ChatDialog } from '../api/hud/ChatDialog.js';
+import { Equipment } from '../api/hud/Equipment.js';
 import { Inventory, type InvItem } from '../api/hud/Inventory.js';
 import { Paint } from '../api/hud/Paint.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
@@ -16,9 +17,8 @@ import Tile from '../api/Tile.js';
 import { Traversal } from '../api/Traversal.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
+import { GameMessages } from '../events/gameMessages.js';
 import {
-    CHAOS_DRUID_FIELD,
-    CHAOS_DRUID_FIELD_RADIUS,
     chaosDruidArea,
     chaosDruidBankReason,
     chaosDruidBankRunReady,
@@ -27,13 +27,26 @@ import {
     chaosDruidFoodShortfall,
     chaosDruidLootSpaceAction,
     chaosDruidRespawned,
+    DRUID_LOCATION_NAMES,
+    DRUID_SPOTS,
     inChaosDruidField,
     inEdgevilleDungeon,
     isChaosDruidLoot,
-    type ChaosDruidBankReason
+    yanilleZone,
+    type ChaosDruidBankReason,
+    type DruidLocationName,
+    type DruidSpot
 } from './ChaosDruidLogic.js';
 
 export const SETTINGS: SettingsSchema = {
+    location: {
+        type: 'string',
+        default: 'Edgeville Dungeon',
+        options: DRUID_LOCATION_NAMES,
+        label: 'Location',
+        help: 'Tower: picklock the door (46 Thieving). Yanille: Chaos druid warriors past the 40 Agility ledge — bring a slash weapon or knife for the entrance web',
+        group: 'Location'
+    },
     food: {
         type: 'string',
         default: 'Lobster',
@@ -68,13 +81,17 @@ export const SETTINGS: SettingsSchema = {
     }
 };
 
-const DRUID = 'Chaos druid';
-const FIELD = new Tile(CHAOS_DRUID_FIELD.x, CHAOS_DRUID_FIELD.z, CHAOS_DRUID_FIELD.level);
 const LADDER = { name: 'Ladder', op: 'Climb-up', stand: new Tile(3096, 9868, 0) };
 const TRAPDOOR = { name: 'Trapdoor', stand: new Tile(3096, 3468, 0) };
-const BANK = { name: 'Bank booth', op: 'Use-quickly', stand: new Tile(3094, 3491, 0) };
+const BANK_BOOTH = { name: 'Bank booth', op: 'Use-quickly' };
 const INTERMEDIATE_GATE = new Tile(3103, 9909, 0);
 const WILDERNESS_GATE = new Tile(3130, 9914, 0);
+const TOWER_DOOR = { name: 'Door', op: 'Pick Lock', stand: new Tile(2565, 3356, 0) };
+const TOWER_BOUNDS = { minX: 2560, maxX: 2564, minZ: 3352, maxZ: 3360 };
+const LEDGE = { name: 'Balancing ledge', op: 'Walk-across' };
+const LEDGE_NORTH_STAND = new Tile(2580, 9520, 0);
+const LEDGE_SOUTH_STAND = new Tile(2580, 9512, 0);
+const MAX_LEDGE_FALL_STREAK = 8;
 const COMBAT_SKILLS = ['attack', 'strength', 'defence', 'hitpoints'];
 
 function hpFraction(): number {
@@ -88,7 +105,7 @@ function bankReason(bot: ChaosDruidKiller): ChaosDruidBankReason | null {
         inventoryFull: Inventory.isFull(),
         wantedLootVisible: GroundItems.query()
             .where(item => isChaosDruidLoot(item.name))
-            .within(CHAOS_DRUID_FIELD_RADIUS + 3)
+            .within(bot.spot.radius + 3)
             .nearest() !== null,
         foodCount: bot.foodCount(),
         hpFraction: hpFraction(),
@@ -144,12 +161,15 @@ export default class ChaosDruidKiller extends TaskBot {
     tripPrepared = false;
     parked = false;
     died = false;
+    locationName: DruidLocationName = 'Edgeville Dungeon';
+    spot: DruidSpot = DRUID_SPOTS['Edgeville Dungeon'];
 
     private kills = 0;
     private looted = 0;
     private trips = 0;
     private deaths = 0;
     private foodSacrificed = 0;
+    private ledgeFallStreak = 0;
     private status = 'starting';
     private startedAt = Date.now();
     private xpAtStart = 0;
@@ -158,19 +178,34 @@ export default class ChaosDruidKiller extends TaskBot {
     override async onStart(): Promise<void> {
         await Execution.delayUntil(() => Game.ingame() && Game.tile() !== null, 0);
 
+        const locationName = this.settings.str('location', 'Edgeville Dungeon') as DruidLocationName;
+        if (!DRUID_SPOTS[locationName]) {
+            this.park(`unknown location '${locationName}' — pick one of: ${DRUID_LOCATION_NAMES.join(', ')}`);
+            return;
+        }
+        this.locationName = locationName;
+        this.spot = DRUID_SPOTS[locationName];
         this.foodName = this.settings.str('food', 'Lobster');
         this.foodWithdraw = this.settings.num('foodWithdraw', 12);
         this.eatHpFraction = this.settings.num('eatAtHp', 55) / 100;
         this.panicHpFraction = this.settings.num('panicHp', 35) / 100;
         this.startedAt = Date.now();
         this.xpAtStart = COMBAT_SKILLS.reduce((sum, skill) => sum + Skills.xp(skill), 0);
-        const startingArea = chaosDruidArea(Game.tile());
+        const startingArea = chaosDruidArea(Game.tile(), this.spot.dungeon);
         this.lastArea = startingArea;
-        this.tripPrepared = startingArea === 'edgeville-dungeon' && this.foodCount() >= this.foodWithdraw;
+        this.tripPrepared = this.inField() && this.foodCount() >= this.foodWithdraw;
 
-        this.log(`ChaosDruidKiller starting — ${this.foodWithdraw} ${this.foodName}, eat <${Math.round(this.eatHpFraction * 100)}%, bank without food <${Math.round(this.panicHpFraction * 100)}%, field ${FIELD.x},${FIELD.z}`);
+        this.log(`ChaosDruidKiller starting — ${this.locationName} (${this.spot.npc}), ${this.foodWithdraw} ${this.foodName}, eat <${Math.round(this.eatHpFraction * 100)}%, bank without food <${Math.round(this.panicHpFraction * 100)}%, field ${this.spot.field.x},${this.spot.field.z}`);
+        const req = this.spot.requires;
+        if (req && Skills.level(req.skill) < req.level) {
+            this.park(`${this.locationName} needs ${req.level} ${req.skill} — you have ${Skills.level(req.skill)}. Train it or pick another location, then restart.`);
+        }
         if (startingArea === 'other-underground') {
-            this.park('started in a different underground map. Reach the surface or Edgeville dungeon, then restart; the Edgeville ladder cannot exit this dungeon.');
+            this.park(`started in an underground map this route cannot exit. Reach the surface or the ${this.locationName} field, then restart.`);
+        }
+        if (this.locationName === 'Yanille Dungeon'
+            && !Equipment.items().some(item => /scimitar|sword|dagger|axe|halberd/i.test(item.name ?? ''))) {
+            this.log('warning: no slash weapon wielded — the entrance web needs one (a carried knife is deposited every bank trip)');
         }
 
         this.on('chat.message', event => {
@@ -194,16 +229,25 @@ export default class ChaosDruidKiller extends TaskBot {
     }
 
     override grindTargets(): string[] {
-        return [DRUID];
+        return [this.spot.npc];
     }
 
     override recoveryAnchor(): Tile | null {
-        return FIELD;
+        return this.fieldTile();
+    }
+
+    fieldTile(): Tile {
+        return new Tile(this.spot.field.x, this.spot.field.z, this.spot.field.level);
+    }
+
+    inField(): boolean {
+        return inChaosDruidField(Game.tile(), this.spot);
     }
 
     override onPaint(ctx: CanvasRenderingContext2D): void {
         const p = Paint.begin(ctx, { dock: 'chatbox', accent: '#9be05b' });
         p.title(`ChaosDruidKiller — ${this.status}`);
+        p.row(`${this.locationName} — ${this.spot.npc}`);
         const mins = (Date.now() - this.startedAt) / 60_000;
         const gained = COMBAT_SKILLS.reduce((sum, skill) => sum + Skills.xp(skill), 0) - this.xpAtStart;
         const xph = mins > 0.5 ? `${((gained / mins) * 60 / 1000).toFixed(1)}k` : '—';
@@ -250,7 +294,7 @@ export default class ChaosDruidKiller extends TaskBot {
     }
 
     observeLifecycle(): void {
-        const area = chaosDruidArea(Game.tile());
+        const area = chaosDruidArea(Game.tile(), this.spot.dungeon);
         if (chaosDruidRespawned(this.lastArea, area, this.tripPrepared)) {
             this.noteDeath('surface respawn detected after leaving the dungeon unexpectedly');
         }
@@ -349,11 +393,11 @@ export default class ChaosDruidKiller extends TaskBot {
     }
 
     async ascendToSurface(): Promise<boolean> {
-        const area = chaosDruidArea(Game.tile());
+        const area = chaosDruidArea(Game.tile(), this.spot.dungeon);
         if (area === 'surface') {
             return true;
         }
-        if (area !== 'edgeville-dungeon') {
+        if (area !== 'druid-dungeon') {
             this.park('cannot use the Edgeville ladder from a different underground map. Reach the surface, then restart.');
             return false;
         }
@@ -380,8 +424,8 @@ export default class ChaosDruidKiller extends TaskBot {
     }
 
     async descendToDungeon(): Promise<boolean> {
-        const area = chaosDruidArea(Game.tile());
-        if (area === 'edgeville-dungeon') {
+        const area = chaosDruidArea(Game.tile(), this.spot.dungeon);
+        if (area === 'druid-dungeon') {
             return true;
         }
         if (area !== 'surface') {
@@ -414,22 +458,214 @@ export default class ChaosDruidKiller extends TaskBot {
         return inEdgevilleDungeon(Game.tile());
     }
 
+    insideTower(): boolean {
+        const here = Game.tile();
+        return here !== null && here.level === 0
+            && here.x >= TOWER_BOUNDS.minX && here.x <= TOWER_BOUNDS.maxX
+            && here.z >= TOWER_BOUNDS.minZ && here.z <= TOWER_BOUNDS.maxZ;
+    }
+
+    private async eatIfLow(): Promise<void> {
+        if (hpFraction() < this.eatHpFraction && this.foodCount() > 0) {
+            await eatOnce(this);
+        }
+    }
+
+    /** The tower door only yields to op2 "Pick Lock"; success walks the player through. */
+    private async pickTowerDoor(): Promise<boolean> {
+        this.setStatus('picking the tower door lock');
+        for (let attempt = 0; attempt < 20; attempt++) {
+            if (this.insideTower()) {
+                this.log('picked the tower lock — inside');
+                return true;
+            }
+            await this.eatIfLow();
+            const door = Locs.query().name(TOWER_DOOR.name).action(TOWER_DOOR.op).within(5).nearest();
+            if (!door) {
+                await Execution.delayTicks(2);
+                continue;
+            }
+            const mark = GameMessages.mark();
+            if (!(await door.interact(TOWER_DOOR.op))) {
+                await Execution.delayTicks(2);
+                continue;
+            }
+            await Execution.delayUntil(
+                () => this.insideTower() || GameMessages.sawSince(mark, /fail to pick|trap on the lock|need level|members/i),
+                8000
+            );
+            if (GameMessages.sawSince(mark, /need level \d+ thieving/i)) {
+                this.park('the server refused the picklock (needs 46 Thieving). Train Thieving, then restart.');
+                return false;
+            }
+            if (GameMessages.sawSince(mark, /members/i)) {
+                this.park('the tower door is members-only on this world.');
+                return false;
+            }
+            if (GameMessages.sawSince(mark, /trap on the lock/i)) {
+                this.log('lock trap triggered — took damage, trying again');
+            } else if (GameMessages.sawSince(mark, /fail to pick the lock/i)) {
+                this.log('picklock failed — trying again');
+            }
+        }
+        this.log('could not pick the tower lock after 20 tries — will retry');
+        return this.insideTower();
+    }
+
+    private async towerToField(): Promise<boolean> {
+        if (this.insideTower()) {
+            this.died = false;
+            return true;
+        }
+        this.setStatus('walking to the Chaos Druid Tower');
+        if (!(await this.walkOpening(TOWER_DOOR.stand, 1))) {
+            this.log('could not reach the tower door');
+            return false;
+        }
+        return this.pickTowerDoor();
+    }
+
+    private async walkExact(dest: Tile): Promise<boolean> {
+        const here = (): boolean => {
+            const t = Game.tile();
+            return t !== null && t.x === dest.x && t.z === dest.z && t.level === dest.level;
+        };
+        for (let attempt = 0; attempt < 4 && !here(); attempt++) {
+            await Traversal.walkResilient(dest, {
+                radius: 0,
+                attempts: 6,
+                timeoutMs: 25_000,
+                log: message => this.log(`  ${message}`)
+            });
+        }
+        return here();
+    }
+
+    /**
+     * Cross the balancing ledge. A fail drops into the m40_149 pit for 20% of
+     * current HP; the walker knows the pit stairs, so recovery is a plain walk.
+     */
+    private async crossLedge(dir: 'south' | 'north'): Promise<boolean> {
+        const stand = dir === 'south' ? LEDGE_NORTH_STAND : LEDGE_SOUTH_STAND;
+        this.setStatus('crossing the balancing ledge');
+        await this.eatIfLow();
+        if (!(await this.walkExact(stand))) {
+            await Execution.delayTicks(2);
+            return false;
+        }
+        const ledge = Locs.query().name(LEDGE.name).action(LEDGE.op).within(4).nearest();
+        if (!ledge || !(await ledge.interact(LEDGE.op))) {
+            await Execution.delayTicks(2);
+            return false;
+        }
+        const farZone = dir === 'south' ? 'warrior' : 'north';
+        const zone = (): string => {
+            const t = Game.tile();
+            return t === null ? 'unknown' : yanilleZone(t);
+        };
+        await Execution.delayUntil(() => zone() === farZone || zone() === 'pit', 15_000);
+        if (zone() === farZone) {
+            this.ledgeFallStreak = 0;
+            this.log('crossed the balancing ledge');
+            return true;
+        }
+        if (zone() === 'pit') {
+            this.ledgeFallStreak++;
+            this.log(`slipped off the ledge into the pit (fall ${this.ledgeFallStreak}) — recovering via the pit stairs`);
+            if (this.ledgeFallStreak >= MAX_LEDGE_FALL_STREAK) {
+                this.park(`fell off the balancing ledge ${MAX_LEDGE_FALL_STREAK} times in a row — is Agility high enough for this route?`);
+            }
+        }
+        return false;
+    }
+
+    private async yanilleToField(): Promise<boolean> {
+        for (let attempt = 0; attempt < 10 && !this.parked; attempt++) {
+            const here = Game.tile();
+            if (here === null) {
+                return false;
+            }
+            if (this.inField()) {
+                this.died = false;
+                return true;
+            }
+            await this.eatIfLow();
+            if (chaosDruidArea(here, this.spot.dungeon) === 'other-underground') {
+                this.park('cannot route to Yanille from a different underground map. Reach the surface, then restart.');
+                return false;
+            }
+            const zone = yanilleZone(here);
+            if (zone === 'warrior') {
+                this.setStatus('walking to the Chaos druid warriors');
+                if (await Traversal.walkResilient(this.fieldTile(), {
+                    radius: 4,
+                    attempts: 8,
+                    timeoutMs: 25_000,
+                    log: message => this.log(`  ${message}`)
+                })) {
+                    this.died = false;
+                    return true;
+                }
+                continue;
+            }
+            if (zone === 'north') {
+                await this.crossLedge('south');
+                continue;
+            }
+            // surface or pit: the walker knows the entrance web + staircase and the pit stairs
+            this.setStatus(zone === 'pit' ? 'climbing out of the ledge pit' : 'walking to the Yanille dungeon');
+            await Traversal.walkResilient(LEDGE_NORTH_STAND, {
+                radius: 1,
+                attempts: 8,
+                timeoutMs: 60_000,
+                log: message => this.log(`  ${message}`)
+            });
+        }
+        return false;
+    }
+
+    /** Get to ground the webwalker can plan a bank route from. */
+    private async leaveFieldForBank(): Promise<boolean> {
+        if (this.locationName === 'Edgeville Dungeon') {
+            return this.ascendToSurface();
+        }
+        if (this.locationName === 'Yanille Dungeon') {
+            // Surfacing on purpose — without this the dungeon→surface jump reads
+            // as a missed death (chaosDruidRespawned).
+            this.tripPrepared = false;
+            this.setStatus('leaving the Yanille dungeon');
+            for (let attempt = 0; attempt < 10 && !this.parked; attempt++) {
+                const here = Game.tile();
+                if (here === null) {
+                    return false;
+                }
+                if (yanilleZone(here) !== 'warrior') {
+                    return true;
+                }
+                await this.crossLedge('north');
+            }
+            return false;
+        }
+        return true;
+    }
+
     async bankAndRestock(reason: ChaosDruidBankReason): Promise<boolean> {
         this.setStatus(`banking — ${reason.replace('-', ' ')}`);
         this.log(`trip ended (${reason.replace('-', ' ')}) — preparing the next trip`);
+        const bankStand = new Tile(this.spot.bankStand.x, this.spot.bankStand.z, this.spot.bankStand.level);
         if (Bank.isOpen()) {
             this.tripPrepared = false;
             this.log('bank was already open — resuming the interrupted restock');
         } else {
-            if (!(await this.ascendToSurface())) {
+            if (!(await this.leaveFieldForBank())) {
                 return false;
             }
-            if (!(await this.walkOpening(BANK.stand, 2))) {
-                this.log('could not reach Edgeville bank');
+            if (!(await this.walkOpening(bankStand, 2))) {
+                this.log('could not reach the bank');
                 return false;
             }
-            if (!(await Bank.openBooth(BANK.stand, BANK.name, BANK.op, message => this.log(`  ${message}`)))) {
-                this.log('could not open Edgeville bank');
+            if (!(await Bank.openBooth(bankStand, BANK_BOOTH.name, BANK_BOOTH.op, message => this.log(`  ${message}`)))) {
+                this.log('could not open the bank');
                 return false;
             }
         }
@@ -475,7 +711,13 @@ export default class ChaosDruidKiller extends TaskBot {
     }
 
     async goToField(): Promise<boolean> {
-        if (chaosDruidArea(Game.tile()) === 'other-underground') {
+        if (this.locationName === 'Chaos Druid Tower') {
+            return this.towerToField();
+        }
+        if (this.locationName === 'Yanille Dungeon') {
+            return this.yanilleToField();
+        }
+        if (chaosDruidArea(Game.tile(), this.spot.dungeon) === 'other-underground') {
             this.park('cannot route to Edgeville from a different underground map. Reach the surface, then restart.');
             return false;
         }
@@ -484,7 +726,7 @@ export default class ChaosDruidKiller extends TaskBot {
         }
         this.setStatus('walking to the Chaos druids');
         await this.crossDungeonGates(true);
-        const arrived = await Traversal.walkResilient(FIELD, {
+        const arrived = await Traversal.walkResilient(this.fieldTile(), {
             radius: 4,
             attempts: 8,
             timeoutMs: 25_000,
@@ -492,7 +734,7 @@ export default class ChaosDruidKiller extends TaskBot {
         });
         if (arrived) {
             this.died = false;
-            this.log(`arrived at the Chaos-druid field (${FIELD.x},${FIELD.z})`);
+            this.log(`arrived at the Chaos-druid field (${this.spot.field.x},${this.spot.field.z})`);
         } else {
             this.log('could not reach the Chaos-druid field — will retry');
         }
@@ -513,10 +755,10 @@ class Parked implements Task {
 class LocationGuard implements Task {
     constructor(private bot: ChaosDruidKiller) {}
     validate(): boolean {
-        return chaosDruidArea(Game.tile()) === 'other-underground';
+        return chaosDruidArea(Game.tile(), this.bot.spot.dungeon) === 'other-underground';
     }
     execute(): void {
-        this.bot.park('entered a different underground map. Reach the surface or Edgeville dungeon, then restart.');
+        this.bot.park('entered an underground map this route cannot exit. Reach the surface or the druid field, then restart.');
     }
 }
 
@@ -548,7 +790,7 @@ class BankRun implements Task {
 class GoToField implements Task {
     constructor(private bot: ChaosDruidKiller) {}
     validate(): boolean {
-        return !inChaosDruidField(Game.tile());
+        return !this.bot.inField();
     }
     async execute(): Promise<void> {
         await this.bot.goToField();
@@ -561,7 +803,7 @@ class Loot implements Task {
     private find() {
         return GroundItems.query()
             .where(item => isChaosDruidLoot(item.name))
-            .within(CHAOS_DRUID_FIELD_RADIUS + 3)
+            .within(this.bot.spot.radius + 3)
             .nearest();
     }
 
@@ -622,11 +864,11 @@ class Regroup implements Task {
     constructor(private bot: ChaosDruidKiller) {}
     validate(): boolean {
         const here = Game.tile();
-        return here !== null && inChaosDruidField(here) && FIELD.distanceTo(here) > 5;
+        return here !== null && this.bot.inField() && this.bot.fieldTile().distanceTo(here) > Math.min(5, this.bot.spot.radius);
     }
     async execute(): Promise<void> {
         this.bot.setStatus('returning to the druid camp');
-        await this.bot.walkOpening(FIELD, 4);
+        await this.bot.walkOpening(this.bot.fieldTile(), Math.min(4, this.bot.spot.radius - 1));
     }
 }
 
@@ -635,7 +877,7 @@ class Fight implements Task {
 
     validate(): boolean {
         return !Game.inCombat()
-            && inChaosDruidField(Game.tile())
+            && this.bot.inField()
             && bankReason(this.bot) === null
             && this.findDruid() !== null;
     }
@@ -646,7 +888,7 @@ class Fight implements Task {
             return;
         }
 
-        this.bot.setStatus(`attacking ${DRUID} at ${druid.tile()}`);
+        this.bot.setStatus(`attacking ${this.bot.spot.npc} at ${druid.tile()}`);
         if (!(await druid.interact('Attack'))) {
             await Execution.delayTicks(2);
             return;
@@ -655,7 +897,7 @@ class Fight implements Task {
             return;
         }
 
-        this.bot.setStatus('fighting Chaos druid');
+        this.bot.setStatus(`fighting ${this.bot.spot.npc}`);
         const deadline = performance.now() + 90_000;
         let reattacks = 0;
         while (performance.now() < deadline) {
@@ -673,13 +915,13 @@ class Fight implements Task {
             const target = this.target(druid);
             if (!target) {
                 this.bot.countKill();
-                this.bot.log('Chaos druid down');
+                this.bot.log(`${this.bot.spot.npc} down`);
                 return;
             }
             if (target.health === 0 && target.snap.totalHealth > 0) {
                 await Execution.delayUntil(() => this.target(druid) === null, 10_000);
                 this.bot.countKill();
-                this.bot.log('Chaos druid down');
+                this.bot.log(`${this.bot.spot.npc} down`);
                 return;
             }
             if (!Game.inCombat() && !target.inCombat) {
@@ -694,14 +936,15 @@ class Fight implements Task {
     }
 
     private target(druid: Npc): Npc | null {
-        return Npcs.all().find(npc => npc.index === druid.index && npc.name === DRUID) ?? null;
+        return Npcs.all().find(npc => npc.index === druid.index && npc.name === this.bot.spot.npc) ?? null;
     }
 
     private findDruid(): Npc | null {
+        const field = this.bot.fieldTile();
         return Npcs.query()
-            .name(DRUID)
+            .name(this.bot.spot.npc)
             .action('Attack')
-            .where(npc => !npc.inCombat && npc.tile().distanceTo(FIELD) <= CHAOS_DRUID_FIELD_RADIUS)
+            .where(npc => !npc.inCombat && npc.tile().distanceTo(field) <= this.bot.spot.radius)
             .nearest();
     }
 }

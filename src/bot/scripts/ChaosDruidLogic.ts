@@ -11,7 +11,76 @@ export const EDGEVILLE_DUNGEON_BOUNDS = {
     maxZ: 10047
 } as const;
 
-export type ChaosDruidArea = 'surface' | 'edgeville-dungeon' | 'other-underground' | 'unknown';
+export interface DungeonBounds {
+    minX: number;
+    maxX: number;
+    minZ: number;
+    maxZ: number;
+}
+
+// m40_148 (warrior/ledge levels) plus m40_149 (the pit under the ledge)
+export const YANILLE_DUNGEON_BOUNDS: DungeonBounds = {
+    minX: 2560,
+    maxX: 2623,
+    minZ: 9472,
+    maxZ: 9599
+} as const;
+
+export interface DruidSpot {
+    npc: string;
+    field: WorldTile;
+    radius: number;
+    bankStand: WorldTile;
+    /** underground bbox a trip legitimately occupies; null = surface camp */
+    dungeon: DungeonBounds | null;
+    requires: { skill: string; level: number } | null;
+}
+
+export const DRUID_SPOTS = {
+    'Edgeville Dungeon': {
+        npc: 'Chaos druid',
+        field: CHAOS_DRUID_FIELD,
+        radius: CHAOS_DRUID_FIELD_RADIUS,
+        bankStand: { x: 3094, z: 3491, level: 0 },
+        dungeon: EDGEVILLE_DUNGEON_BOUNDS,
+        requires: null
+    },
+    'Chaos Druid Tower': {
+        npc: 'Chaos druid',
+        field: { x: 2562, z: 3356, level: 0 },
+        radius: 4,
+        bankStand: { x: 2616, z: 3332, level: 0 },
+        dungeon: null,
+        requires: { skill: 'thieving', level: 46 }
+    },
+    'Yanille Dungeon': {
+        npc: 'Chaos druid warrior',
+        field: { x: 2580, z: 9501, level: 0 },
+        radius: 8,
+        bankStand: { x: 2612, z: 3092, level: 0 },
+        dungeon: YANILLE_DUNGEON_BOUNDS,
+        requires: { skill: 'agility', level: 40 }
+    }
+} as const satisfies Record<string, DruidSpot>;
+
+export type DruidLocationName = keyof typeof DRUID_SPOTS;
+export const DRUID_LOCATION_NAMES = Object.keys(DRUID_SPOTS) as DruidLocationName[];
+
+export type ChaosDruidArea = 'surface' | 'druid-dungeon' | 'other-underground' | 'unknown';
+
+/** The Yanille ledge splits the dungeon into zones the route must treat differently. */
+export type YanilleZone = 'north' | 'warrior' | 'pit' | 'outside';
+
+export function yanilleZone(tile: WorldTile): YanilleZone {
+    const b = YANILLE_DUNGEON_BOUNDS;
+    if (tile.x < b.minX || tile.x > b.maxX || tile.z < b.minZ || tile.z > b.maxZ) {
+        return 'outside';
+    }
+    if (tile.z >= 9536) {
+        return 'pit';
+    }
+    return tile.z >= 9519 ? 'north' : 'warrior';
+}
 
 export type ChaosDruidBankReason = 'prepare-trip' | 'loot-full' | 'low-health';
 
@@ -86,35 +155,38 @@ export function chaosDruidFoodShortfall(configured: number, carried: number): nu
 
 export function isChaosDruidLoot(name: string | null | undefined): boolean {
     const normalized = (name ?? '').trim().toLowerCase();
-    return normalized === 'herb' || normalized === 'law rune';
+    return normalized === 'herb' || normalized === 'law rune' || normalized === 'nature rune';
 }
 
-export function chaosDruidArea(tile: WorldTile | null): ChaosDruidArea {
+export function chaosDruidArea(tile: WorldTile | null, dungeon: DungeonBounds | null = EDGEVILLE_DUNGEON_BOUNDS): ChaosDruidArea {
     if (tile === null) {
         return 'unknown';
     }
-    const bounds = EDGEVILLE_DUNGEON_BOUNDS;
-    if (tile.x >= bounds.minX && tile.x <= bounds.maxX && tile.z >= bounds.minZ && tile.z <= bounds.maxZ) {
-        return 'edgeville-dungeon';
+    if (dungeon && tile.x >= dungeon.minX && tile.x <= dungeon.maxX && tile.z >= dungeon.minZ && tile.z <= dungeon.maxZ) {
+        return 'druid-dungeon';
     }
     return tile.z > 6400 ? 'other-underground' : 'surface';
 }
 
 /** Detect a missed death message from the otherwise impossible dungeon-to-surface jump. */
 export function chaosDruidRespawned(previous: ChaosDruidArea, current: ChaosDruidArea, tripPrepared: boolean): boolean {
-    return tripPrepared && previous === 'edgeville-dungeon' && current === 'surface';
+    return tripPrepared && previous === 'druid-dungeon' && current === 'surface';
 }
 
 export function inEdgevilleDungeon(tile: WorldTile | null): boolean {
-    return chaosDruidArea(tile) === 'edgeville-dungeon';
+    return chaosDruidArea(tile, EDGEVILLE_DUNGEON_BOUNDS) === 'druid-dungeon';
 }
 
-export function inChaosDruidField(tile: WorldTile | null): boolean {
-    if (tile === null || !inEdgevilleDungeon(tile)) {
+export function inChaosDruidField(tile: WorldTile | null, spot: DruidSpot = DRUID_SPOTS['Edgeville Dungeon']): boolean {
+    if (tile === null) {
+        return false;
+    }
+    const area = chaosDruidArea(tile, spot.dungeon);
+    if (spot.dungeon ? area !== 'druid-dungeon' : area !== 'surface' || tile.level !== spot.field.level) {
         return false;
     }
     return Math.max(
-        Math.abs(tile.x - CHAOS_DRUID_FIELD.x),
-        Math.abs(tile.z - CHAOS_DRUID_FIELD.z)
-    ) <= CHAOS_DRUID_FIELD_RADIUS;
+        Math.abs(tile.x - spot.field.x),
+        Math.abs(tile.z - spot.field.z)
+    ) <= spot.radius;
 }

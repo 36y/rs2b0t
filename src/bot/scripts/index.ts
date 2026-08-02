@@ -105,9 +105,9 @@ ScriptRegistry.register({
 
 ScriptRegistry.register({
     name: 'ChaosDruidKiller',
-    description: 'Kills Chaos druids in the Edgeville dungeon, loots exact Herb/Law rune names, banks them',
+    description: 'Kills Chaos druids — Edgeville dungeon, the picklocked Chaos Druid Tower (46 Thieving), or Yanille dungeon Chaos druid warriors past the 40 Agility ledge — loots Herb/Law/Nature rune drops, banks them',
     category: 'Combat',
-    tags: ['wilderness', 'edgeville', 'herbs', 'banking'],
+    tags: ['wilderness', 'edgeville', 'ardougne', 'yanille', 'herbs', 'banking'],
     settingsSchema: CHAOSDRUID_SETTINGS,
     create: () => new ChaosDruidKiller()
 });

@@ -141,12 +141,13 @@ Tags: `combat`, `clues`, `banking`, `afk`
 
 ### ChaosDruidKiller
 
-Kills Chaos druids in the Edgeville dungeon, loots exact Herb/Law rune names, banks them
+Kills Chaos druids — Edgeville dungeon, the picklocked Chaos Druid Tower (46 Thieving), or Yanille dungeon Chaos druid warriors past the 40 Agility ledge — loots Herb/Law/Nature rune drops, banks them
 
-Tags: `wilderness`, `edgeville`, `herbs`, `banking`
+Tags: `wilderness`, `edgeville`, `ardougne`, `yanille`, `herbs`, `banking`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
+| `location` | string | `"Edgeville Dungeon"` | Location — one of: Edgeville Dungeon, Chaos Druid Tower, Yanille Dungeon |
 | `food` | string | `"Lobster"` | Food — one of: Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
 | `foodWithdraw` | number (1–27) | `12` | Food per trip |
 | `eatAtHp` | number (1–99) | `55` | Eat below HP% |
@@ -447,6 +448,8 @@ Tags: `gathering`, `drop`, `banking`, `cooking`
 | `burntPolicy` | string | `"Drop"` | Burnt fish — one of: Drop, Bank |
 | `bankRawBeforeCook` | number (1–) | `56` | Bank N raw before cook |
 | `afterCookCycle` | string | `"Stop"` | After cook cycle — one of: Stop, Continue |
+| `muleMode` | string | `"Off"` | Mule mode — one of: Off, Gatherer, Mule |
+| `mulePartner` | string | `""` | Mule partner name(s) |
 | `toolAcquire` | string | `"Off"` | Acquire tools — one of: Off, Buy / repair |
 | `forgetfulBank` | boolean | `false` | Forgetful bank exits |
 
@@ -515,6 +518,8 @@ Tags: `gathering`, `banking`, `drop`
 | `leashRadius` | number (2–64) | `10` | Leash radius (tiles) |
 | `location` | string | `"Auto"` | Location / full inventory — one of: Auto, Southwest Varrock Mine, Southeast Varrock Mine, Rimmington Mine, Dwarven Mine, Fight Arena Mine, Al Kharid Mine, Mining Guild, Crafting Guild, Coal Trucks, Barbarian Village, North Brimhaven Mine, Shilo Village, West Lumbridge Swamp Mine, Grand Tree Mine, Desert Mining Camp, Lava Maze Runite Mine, Heroes Guild, Legends Guild Iron (west), Legends Guild Iron (east), None |
 | `tickManip` | string | `"Off"` | Tick manip — one of: Off |
+| `muleMode` | string | `"Off"` | Mule mode — one of: Off, Gatherer, Mule |
+| `mulePartner` | string | `""` | Mule partner name(s) |
 | `toolAcquire` | string | `"Off"` | Acquire tools — one of: Off, Buy / repair |
 | `forgetfulBank` | boolean | `false` | Forgetful bank exits |
 
@@ -543,7 +548,7 @@ Tags: `shopping`, `banking`, `worldwalker`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
-| `buyItems` | string[] | `["Adamant arrow","Adamant arrowtips","Air rune","Body rune","Bronze arrow","Bronze arrowtips","Chaos rune","Cosmic rune","Death rune","Earth rune","Feather","Fire rune","Iron arrow","Iron arrowtips","Law rune","Mind rune","Mithril arrow","Mithril arrowtips","Nature rune","Rune arrow","Rune arrowtips","Soul rune","Steel arrow","Steel arrowtips","Water rune"]` | Items to buy — one of: Adamant arrow, Adamant arrowtips, Air rune, Body rune, Bronze arrow, Bronze arrowtips, Chaos rune, Cosmic rune, Death rune, Earth rune, Feather, Fire rune, Iron arrow, Iron arrowtips, Law rune, Mind rune, Mithril arrow, Mithril arrowtips, Nature rune, Rune arrow, Rune arrowtips, Soul rune, Steel arrow, Steel arrowtips, Water rune |
+| `buyItems` | string[] | `["Adamant arrow","Adamant arrowtips","Air rune","Body rune","Bronze arrow","Bronze arrowtips","Chaos rune","Cosmic rune","Death rune","Earth rune","Eye of newt","Feather","Fire rune","Iron arrow","Iron arrowtips","Law rune","Mind rune","Mithril arrow","Mithril arrowtips","Nature rune","Rune arrow","Rune arrowtips","Soul rune","Steel arrow","Steel arrowtips","Vial","Water rune"]` | Items to buy — one of: Adamant arrow, Adamant arrowtips, Air rune, Body rune, Bronze arrow, Bronze arrowtips, Chaos rune, Cosmic rune, Death rune, Earth rune, Eye of newt, Feather, Fire rune, Iron arrow, Iron arrowtips, Law rune, Mind rune, Mithril arrow, Mithril arrowtips, Nature rune, Rune arrow, Rune arrowtips, Soul rune, Steel arrow, Steel arrowtips, Vial, Water rune |
 | `gpBufferPct` | number (0–100) | `25` | Gp buffer % |
 | `maxGpPerLeg` | number (1000–) | `100000` | Max gp per withdrawal |
 | `stopFloorGp` | number (0–) | `5000` | Stop below bank gp |
@@ -586,7 +591,7 @@ Tags: `quest`, `queue`, `aio`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
-| `quests` | string[] | `[]` | Quest queue (empty = all) — one of: Rune Mysteries Quest, Doric's Quest, Sheep Shearer, The Restless Ghost, Cook's Assistant, Witch's Potion, Romeo & Juliet, Prince Ali Rescue, Waterfall Quest, Goblin Diplomacy, Demon Slayer, Witch's House, Merlin's Crystal, Priest in Peril, Black Knight's Fortress, Druidic Ritual, Lost City, The Tourist Trap, Watch Tower, Vampire Slayer, Jungle Potion, Shilo Village |
+| `quests` | string[] | `[]` | Quest queue (empty = all) — one of: Rune Mysteries Quest, Doric's Quest, Sheep Shearer, The Restless Ghost, Cook's Assistant, Witch's Potion, Romeo & Juliet, Prince Ali Rescue, Waterfall Quest, Goblin Diplomacy, Demon Slayer, Witch's House, Merlin's Crystal, Priest in Peril, Black Knight's Fortress, Druidic Ritual, Lost City, The Tourist Trap, Watch Tower, Vampire Slayer, Jungle Potion, Shilo Village, Elemental Workshop |
 | `food` | string | `"Trout"` | Food item |
 | `eatAtHp` | number (1–99) | `50` | Eat below HP% |
 
@@ -769,6 +774,8 @@ Tags: `gathering`, `banking`, `drop`, `firemaking`
 | `tickManip` | string | `"Off"` | Tick manip — one of: Off |
 | `burnMode` | string | `"Off"` | Burn mode — one of: Off, Chop then burn |
 | `fireSpot` | string | `"Auto"` | Fire spot — one of: Auto, Varrock East, Varrock West, Draynor, Seers |
+| `muleMode` | string | `"Off"` | Mule mode — one of: Off, Gatherer, Mule |
+| `mulePartner` | string | `""` | Mule partner name(s) |
 | `toolAcquire` | string | `"Off"` | Acquire tools — one of: Off, Buy / repair |
 | `forgetfulBank` | boolean | `false` | Forgetful bank exits |
 

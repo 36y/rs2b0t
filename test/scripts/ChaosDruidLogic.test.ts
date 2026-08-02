@@ -12,9 +12,11 @@ import {
     chaosDruidFoodShortfall,
     chaosDruidLootSpaceAction,
     chaosDruidRespawned,
+    DRUID_SPOTS,
     inChaosDruidField,
     inEdgevilleDungeon,
-    isChaosDruidLoot
+    isChaosDruidLoot,
+    yanilleZone
 } from '#/bot/scripts/ChaosDruidLogic.js';
 
 const trip = (overrides: Partial<Parameters<typeof chaosDruidBankReason>[0]> = {}) => ({
@@ -138,10 +140,10 @@ describe('restock arithmetic', () => {
 });
 
 describe('Chaos-druid loot and field', () => {
-    test('only the requested herbs and law runes count as trip loot', () => {
+    test('herbs and the stackable rune drops count as trip loot', () => {
         expect(isChaosDruidLoot('Herb')).toBe(true);
         expect(isChaosDruidLoot('law RUNE')).toBe(true);
-        expect(isChaosDruidLoot('Nature rune')).toBe(false);
+        expect(isChaosDruidLoot('Nature rune')).toBe(true);
         expect(isChaosDruidLoot('Uncut emerald')).toBe(false);
         expect(isChaosDruidLoot(null)).toBe(false);
     });
@@ -177,8 +179,46 @@ describe('Chaos-druid loot and field', () => {
     });
 
     test('detects a missed death message from an unexpected surface respawn', () => {
-        expect(chaosDruidRespawned('edgeville-dungeon', 'surface', true)).toBe(true);
-        expect(chaosDruidRespawned('edgeville-dungeon', 'surface', false)).toBe(false);
-        expect(chaosDruidRespawned('edgeville-dungeon', 'edgeville-dungeon', true)).toBe(false);
+        expect(chaosDruidRespawned('druid-dungeon', 'surface', true)).toBe(true);
+        expect(chaosDruidRespawned('druid-dungeon', 'surface', false)).toBe(false);
+        expect(chaosDruidRespawned('druid-dungeon', 'druid-dungeon', true)).toBe(false);
+    });
+});
+
+describe('alternate druid locations', () => {
+    test('offers the three locations with their entry requirements', () => {
+        expect(SETTINGS.location).toMatchObject({ default: 'Edgeville Dungeon' });
+        expect(SETTINGS.location.options).toEqual(['Edgeville Dungeon', 'Chaos Druid Tower', 'Yanille Dungeon']);
+        expect(DRUID_SPOTS['Edgeville Dungeon'].requires).toBeNull();
+        expect(DRUID_SPOTS['Chaos Druid Tower'].requires).toEqual({ skill: 'thieving', level: 46 });
+        expect(DRUID_SPOTS['Yanille Dungeon'].requires).toEqual({ skill: 'agility', level: 40 });
+    });
+
+    test('the tower camp covers all four ground-floor spawns behind the picklocked door', () => {
+        const spot = DRUID_SPOTS['Chaos Druid Tower'];
+        for (const [x, z] of [[2561, 3355], [2561, 3357], [2563, 3355], [2563, 3358]]) {
+            expect(inChaosDruidField({ x, z, level: 0 }, spot)).toBe(true);
+        }
+        expect(spot.npc).toBe('Chaos druid');
+        expect(inChaosDruidField({ x: 2561, z: 9855, level: 0 }, spot)).toBe(false);
+    });
+
+    test('the Yanille camp covers the dense western Chaos-druid-warrior cluster', () => {
+        const spot = DRUID_SPOTS['Yanille Dungeon'];
+        for (const [x, z] of [[2576, 9501], [2578, 9500], [2579, 9508], [2580, 9497], [2580, 9502], [2583, 9499], [2588, 9498]]) {
+            expect(inChaosDruidField({ x, z, level: 0 }, spot)).toBe(true);
+        }
+        expect(spot.npc).toBe('Chaos druid warrior');
+        expect(chaosDruidArea({ x: 2580, z: 9501, level: 0 }, spot.dungeon)).toBe('druid-dungeon');
+    });
+
+    test('splits the Yanille dungeon into ledge-defined zones including the fall pit', () => {
+        expect(yanilleZone({ x: 2569, z: 9525, level: 0 })).toBe('north');
+        expect(yanilleZone({ x: 2580, z: 9520, level: 0 })).toBe('north');
+        expect(yanilleZone({ x: 2580, z: 9512, level: 0 })).toBe('warrior');
+        expect(yanilleZone({ x: 2580, z: 9501, level: 0 })).toBe('warrior');
+        expect(yanilleZone({ x: 2578, z: 9580, level: 0 })).toBe('pit');
+        expect(yanilleZone({ x: 2612, z: 3092, level: 0 })).toBe('outside');
+        expect(yanilleZone({ x: 3110, z: 9936, level: 0 })).toBe('outside');
     });
 });
