@@ -92,7 +92,7 @@ export const TRANSPORT_QUEST_SEEDS: readonly QuestVarSeed[] = [
             'baxtorian_log_raft (Board — refuses if not started)',
             'baxtorian rope rock/tree approach after raft crash (#369)'
         ]
-    }
+    },
     {
         // Post-quest Crandor: secret wall + rock/rope (ship is one-shot during the quest).
         journal: 'Dragon Slayer',
