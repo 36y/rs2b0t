@@ -6,7 +6,13 @@ import { worldStateFromData } from './v2/worldStateData.js';
 import { meetsRequires } from './v2/requires.js';
 import { kindAllowedByPolicy, routeSpanChebyshev, teleportAllowedByPolicy } from './v2/policy.js';
 import { hopsFromWaypoints } from './v2/hops.js';
-import { SPELL_TELEPORTS, inventoryNameMatchesJewellery, JEWELLERY_TELEPORTS } from './v2/teleportCatalog.js';
+import {
+    SPELL_TELEPORTS,
+    inventoryNameMatchesJewellery,
+    JEWELLERY_TELEPORTS,
+    teleportAllowedFromOrigin
+} from './v2/teleportCatalog.js';
+import { wildernessLevelAt } from './v2/wilderness.js';
 import { specialRequiresAt } from './v2/specialRequires.js';
 import { activateTransportRows } from './v2/activateStateAware.js';
 import { tileInDangerZones, type DangerZoneRect } from './data/dangerZones.js';
@@ -549,6 +555,13 @@ export class PathFinder {
                     requires: dest.requires
                 };
                 if (!teleportAllowedByPolicy(edgeProbe, policy, routeSpan).ok) {
+                    continue;
+                }
+                // Origin gates (wildy thresholds): always evaluate at the **path start**
+                // tile. Preferring live state.wildernessLevel would poison bank→dest
+                // plans that reuse a deep-wildy snapshot while `from` is a bank stand (#339).
+                const wildy = wildernessLevelAt(from);
+                if (!teleportAllowedFromOrigin(dest, from, wildy).ok) {
                     continue;
                 }
                 // Fail closed: spell/jewellery requires (magic level, runes, quests, …)

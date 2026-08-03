@@ -12,6 +12,7 @@ import { namesHaveEntranaRestrictedGear } from '../exec/specialCrossing.js';
 import type { QuestProgress, WorldState } from './types.js';
 import type { WorldStateData } from './worldStateData.js';
 import { worldStateFromData } from './worldStateData.js';
+import { wildernessLevelAt } from './wilderness.js';
 
 function mapQuest(status: QuestStatus): QuestProgress {
     switch (status) {
@@ -78,6 +79,11 @@ export function snapshotWorldStateData(): WorldStateData {
     const invNames = Inventory.items().map(i => i.name ?? '').filter(Boolean);
     const entranaRestrictedGear = namesHaveEntranaRestrictedGear([...invNames, ...wornNames]);
 
+    const here = reader.worldTile();
+    // Omit wildernessLevel when tile is unknown so planners fall back to
+    // wildernessLevelAt(from) rather than treating missing as safe level 0.
+    const wildernessLevel = here ? wildernessLevelAt(here) : undefined;
+
     return {
         // Client.memServer is set at boot from world config (members vs free world).
         // Never hardcode true — free-world snapshots must fail members-gated edges.
@@ -87,7 +93,8 @@ export function snapshotWorldStateData(): WorldStateData {
         items,
         worn,
         freeSlots: Inventory.free(),
-        entranaRestrictedGear
+        entranaRestrictedGear,
+        ...(wildernessLevel !== undefined ? { wildernessLevel } : {})
     };
 }
 
