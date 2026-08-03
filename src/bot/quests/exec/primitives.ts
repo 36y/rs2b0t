@@ -212,7 +212,7 @@ export async function driveDialog(prefer: string[], log: (m: string) => void): P
 
 const DIALOGUE_OPEN_MS = 8000;
 
-async function openDialogue(npcName: string, log: (m: string) => void): Promise<boolean> {
+export async function openDialogue(npcName: string, log: (m: string) => void): Promise<boolean> {
     const dialogReady = (): boolean => ChatDialog.isOpen() || ChatDialog.canContinue();
     if (dialogReady()) {
         return true;

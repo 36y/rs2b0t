@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { BANK_LOCATIONS, nearestBank, nearestUsableBank } from '#/bot/api/BankLocations.js';
+import { BANK_LOCATIONS, bankDistance, nearestBank, nearestBanks, nearestUsableBank } from '#/bot/api/BankLocations.js';
 import type { BankLocation } from '#/bot/api/BankLocations.js';
 
 test('bank names are unique', () => {
@@ -123,5 +123,37 @@ describe('nearestUsableBank', () => {
     test('on Grand Tree 1F, banks at Grand Tree without a quest gate', () => {
         expect(nearestUsableBank({ x: 2449, z: 3482, level: 1 }, openOnly)?.name).toBe('Grand Tree');
         expect(nearestUsableBank({ x: 2449, z: 3482, level: 1 }, all)?.name).toBe('Grand Tree');
+    });
+});
+
+describe('nearestBanks', () => {
+    test('is a shortlist in straight-line order, not an answer', () => {
+        // The Lumbridge respawn is the case that matters. Al Kharid, Shantay
+        // Pass and the Duel Arena are all behind the same 10gp toll gate, and the
+        // navigator prunes a fare it cannot pay — so to a bot that has just died
+        // the three nearest banks by air are the three it cannot reach, and
+        // Draynor, the first it can, is only third. Callers probe this list for
+        // real path costs; the order alone is not the answer.
+        const order = nearestBanks({ x: 3222, z: 3218, level: 0 }).map(b => b.name);
+        expect(order.slice(0, 4)).toEqual(['Al Kharid', 'Shantay Pass', 'Draynor', 'Duel Arena']);
+    });
+
+    test('agrees with nearestBank on the head, and covers the same banks', () => {
+        for (const from of [
+            { x: 3013, z: 3355, level: 0 },
+            { x: 2660, z: 3300, level: 0 },
+            { x: 3222, z: 3218, level: 0 }
+        ]) {
+            const list = nearestBanks(from);
+            expect(list[0]?.name ?? '').toBe(nearestBank(from)?.name ?? '');
+            for (let i = 1; i < list.length; i++) {
+                expect(bankDistance(from, list[i - 1].tile)).toBeLessThanOrEqual(bankDistance(from, list[i].tile));
+            }
+        }
+    });
+
+    test('leaves out banks on another plane', () => {
+        const upstairs = nearestBanks({ x: 2449, z: 3482, level: 1 }).map(b => b.name);
+        expect(upstairs).toEqual(['Grand Tree']);
     });
 });

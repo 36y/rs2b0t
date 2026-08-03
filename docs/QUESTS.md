@@ -431,6 +431,29 @@ Prince Ali Rescue added four more, and each is a class of bug rather than a one-
   impossible, a missing key is unambiguously a loss to be re-issued, and every clay leg
   can go quiet. Reading a stage for what it *proves* replaces the varp you cannot see.
 
+Dragon Slayer added four, all of which came from reading the engine rather than a guide:
+
+- **A locked door baked as an ordinary edge is worse than no edge at all.** Every one of
+  Melzar's seven coloured doors advertises `op1=Open` and answers "This door is securely
+  locked", so `derive-doors` baked all seven. The navigator then routed straight at them
+  and the walker looped forever a tile short. They belong in `SCRIPT_REFUSED`, with the
+  quest driving them by key — as do the Oracle's magic door, Elvarg's gates and Crandor's
+  secret wall.
+- **A key is not a door opener.** `open_and_close_door` `p_teleport`s the player through
+  and deletes the key in the same script. "Open it, then walk through" never happens, so
+  a leg is done when the key is *gone* and the player has *landed on the far side* —
+  neither test alone is enough.
+- **Derive the route from the collision pack, not from a guide.** Melzar's Maze is eleven
+  unclimbable ladders, four floors and three decoy doors per colour. BFSing the baked
+  exit masks with each colour as a gate produced the exact chain in seconds, and it is
+  not the route any wiki describes.
+- **Same-named monsters are the rule inside a quest area, not the exception.** Six
+  ordinary `giantrat1` share the display name "Giant rat" with the one
+  `dragonslayer_giantrat` that drops the red key, and every other floor is stocked the
+  same way. Worse, they are aggressive: `Game.inCombat()` reads *our* health bar, so a
+  decoy landing one hit parks a "wait until out of combat" guard indefinitely. Target by
+  npc id, and wait only on being locked onto the right one.
+
 Two habits about verification, both of which cost live runs here:
 
 - **A live harness runs the built bundle, not your source.** The page loads

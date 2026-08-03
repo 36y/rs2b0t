@@ -55,7 +55,19 @@ function main(): void {
             'zombiequeengateclosedl', 'zombiequeengateclosedr',
             // McGrubor's Wood: locked from inside, the Forester turns you away from
             // outside. The Loose Railing is the way in, curated in transports.json.
-            'mcgruborgatel', 'mcgruborgater'
+            'mcgruborgatel', 'mcgruborgater',
+            // Melzar's Maze. Every one of these opens only to its own coloured key,
+            // which the maze hands out one kill at a time, and the key teleports you
+            // through rather than leaving the door open. Baked as ordinary edges the
+            // pathfinder routes straight at them and the walker loops on "This door
+            // is securely locked". funexit is the one-way way out.
+            'melzardoor', 'reddoor', 'orangedoor', 'yellowdoor', 'bluedoor', 'magentadoor', 'greendoor', 'funexit',
+            // The Oracle's door: silk, an unfired bowl, a lobster pot and a mind bomb,
+            // and only after she has been asked about the map.
+            'dragon_slayer_magic_door',
+            // Elvarg's lair, locked until the ship has sailed, and Crandor's secret
+            // door, which only opens from the island side.
+            'elvarg_gate_right', 'elvarg_gate_left', 'dragonsecretdoor'
         ]);
         const label = `${type.name ?? ''} ${type.debugname ?? ''}`.toLowerCase();
         if (label.includes('locked') || (type.debugname ?? '').startsWith('macro_') || SCRIPT_REFUSED.has(type.debugname ?? '')) {

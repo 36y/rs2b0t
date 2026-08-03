@@ -275,15 +275,30 @@ export const QUESTS: QuestRecord[] = [
         id: 'dragon', name: 'Dragon Slayer', questPoints: 2,
         requirements: { minQuestPoints: 32 },
         items: [
-            { name: 'Coins', qty: 10000, kind: 'mustHave' },
-            { name: "Wizard's mind bomb", qty: 1, kind: 'mustHave' },
-            { name: 'Silk', qty: 1, kind: 'mustHave' },
-            { name: 'Lobster pot', qty: 1, kind: 'mustHave' },
-            { name: 'Unfired bowl', qty: 1, kind: 'mustHave' },
-            { name: 'Plank', qty: 3, kind: 'mustHave' },
-            { name: 'Nails', qty: 12, kind: 'mustHave' },
-            { name: 'Hammer', qty: 1, kind: 'mustHave' },
-            { name: 'Dragonfire shield', qty: 1, kind: 'acquirable' }
+            // Deliberately 1, not the quest's real 12k bill. Provisioning re-checks
+            // every mustHave each loop while anything is outstanding, so a coin
+            // requirement of any size sends the bot back to the bank after every
+            // single purchase — a Dwarven Mine round trip to collect one coin, in
+            // the run that found this. The float covers the shopping; the module
+            // withdraws Wormbrain's 10k and the ship's 2k when it needs them.
+            { name: 'Coins', qty: 1, kind: 'mustHave' },
+            // Ordered as a geographic sweep, because provisioning walks this list
+            // in order and the bot otherwise crosses Asgarnia between each item:
+            // Port Sarim, then Falador, then Varrock, then the wilderness.
+            //
+            // Nails are deliberately NOT here. Six steel bars is eighteen slots of
+            // ore, which will not fit behind the rest of the shopping, so that leg
+            // runs from decide() once provisioning is done — late enough to bank
+            // the shopping first without the engine withdrawing it straight back.
+            //
+            // Melee kit is not here either: what the player fights in is their
+            // own business, and the quest takes the account as it finds it.
+            { name: 'Lobster pot', qty: 1, kind: 'acquirable' },   // Gerrant, Port Sarim
+            { name: 'Hammer', qty: 1, kind: 'acquirable' },        // Falador general store
+            { name: "Wizard's mind bomb", qty: 1, kind: 'acquirable' }, // Rising Sun, Falador
+            { name: 'Unfired bowl', qty: 1, kind: 'acquirable' },  // jug + fountain + Varrock clay
+            { name: 'Silk', qty: 1, kind: 'acquirable' },          // Thessalia, Varrock
+            { name: 'Plank', qty: 3, kind: 'acquirable' }          // Graveyard of Shadows
         ]
     },
     {

@@ -1,4 +1,5 @@
 import { actions } from '../../adapter/ClientAdapter.js';
+import type { WorldTile } from '../../adapter/ClientAdapter.js';
 import { Execution } from '../../api/Execution.js';
 import { Game } from '../../api/Game.js';
 import Tile from '../../api/Tile.js';
@@ -6,7 +7,8 @@ import { Bank } from '../../api/hud/Bank.js';
 import { Equipment } from '../../api/hud/Equipment.js';
 import { Inventory } from '../../api/hud/Inventory.js';
 import { Shop } from '../../api/hud/Shop.js';
-import { nearestBank } from '../../api/BankLocations.js';
+import { bankDistance, nearestBanks } from '../../api/BankLocations.js';
+import { Navigator } from '../../nav/Navigator.js';
 import { GroundItems } from '../../api/queries/GroundItems.js';
 import { Locs } from '../../api/queries/Locs.js';
 import { Npcs } from '../../api/queries/Npcs.js';
@@ -18,9 +20,46 @@ import { gotoNpc, talkThrough, type LadderHop } from './primitives.js';
 const BANK_NAME = 'Bank booth';
 const BANK_OP = 'Use-quickly';
 
+/** How deep into the straight-line shortlist to look before giving up. */
+const BANK_CANDIDATES = 6;
+
+/**
+ * The nearest bank by the walk, not by the crow.
+ *
+ * From the Lumbridge respawn the three closest banks by air — Al Kharid, Shantay
+ * Pass and the Duel Arena — are all behind the same 10gp toll gate, and the
+ * navigator prunes a fare it cannot pay. So to a bot that has just died, every
+ * bank it can see is one it cannot reach, and the first it can walk to is only
+ * third on the list. Ask the navigator for real path costs instead.
+ */
+async function reachableBank(from: WorldTile, log: (m: string) => void): Promise<Tile | undefined> {
+    const candidates = nearestBanks(from).slice(0, BANK_CANDIDATES);
+    let best: { tile: Tile; cost: number } | null = null;
+    for (const bank of candidates) {
+        // Stop once a known route beats the next candidate's crow-flight. On open
+        // ground that is exact, since a walk is never shorter than the line it
+        // covers; a ladder or a ship can beat it, so this can settle for a bank
+        // that is not quite the cheapest. It can never settle for an unreachable
+        // one — nothing breaks the loop until a path has already been found — and
+        // it keeps the common case to one or two pathfinds instead of six.
+        if (best !== null && bankDistance(from, bank.tile) >= best.cost) {
+            break;
+        }
+        const path = await Navigator.findPath(from, bank.tile);
+        if (path.ok && (best === null || path.cost < best.cost)) {
+            best = { tile: bank.tile, cost: path.cost };
+        }
+    }
+    if (best) {
+        return best.tile;
+    }
+    log(`no bank answered a path from (${from.x},${from.z}) — trying the closest anyway`);
+    return candidates[0]?.tile;
+}
+
 export async function openBankLeg(noBankMsg: string, override: Tile | undefined, log: (m: string) => void): Promise<boolean> {
     const here = Game.tile();
-    const bankTile = override ?? (here ? nearestBank(here)?.tile : undefined);
+    const bankTile = override ?? (here ? await reachableBank(here, log) : undefined);
     if (!bankTile) {
         log(noBankMsg);
         return false;

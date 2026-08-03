@@ -132,8 +132,13 @@ export default class AIOQuester extends TaskBot {
         return this.runningId ? defById(this.runningId)?.grind ?? [] : [];
     }
 
-    firstQuestBank(): Tile {
-        return QUEST_DEFS.find(d => this.picked.has(d.record.id))?.bank ?? PROVISION_BANK;
+    /** Undefined when the first quest banks wherever it happens to be standing. */
+    firstQuestBank(): Tile | undefined {
+        const bank = QUEST_DEFS.find(d => this.picked.has(d.record.id))?.bank;
+        if (bank === 'nearest') {
+            return undefined;
+        }
+        return bank ?? PROVISION_BANK;
     }
 
     firstIncompleteQuestOwnsInventory(): boolean {

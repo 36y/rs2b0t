@@ -75,6 +75,19 @@ export function bankDistance(from: WorldTile, bank: WorldTile): number {
     return Math.hypot(dx, dz);
 }
 
+/**
+ * Every bank this account can use, nearest first by straight line.
+ *
+ * Straight-line order is a shortlist, not an answer: it cannot see a toll gate
+ * or a fare, so a caller that needs the bank it can actually walk to should
+ * probe these in order rather than take the head.
+ */
+export function nearestBanks(from: WorldTile): BankLocation[] {
+    return BANK_LOCATIONS
+        .filter(bank => bank.tile.level === from.level && meetsRequirement(bank))
+        .sort((a, b) => bankDistance(from, a.tile) - bankDistance(from, b.tile));
+}
+
 export function nearestUsableBank(from: WorldTile, usable: (bank: BankLocation) => boolean): BankLocation | null {
     let best: BankLocation | null = null;
     let bestD = Infinity;

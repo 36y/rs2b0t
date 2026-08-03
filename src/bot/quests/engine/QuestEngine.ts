@@ -25,11 +25,19 @@ const PARK_GIVE_UP = 3;
 
 const WAIT_PARK = 15;
 
+/** Walks back to a bank to try before leaving the character where it finished. */
+const RETREAT_GIVE_UP = 4;
+
 export const COIN_FLOAT = 1000;
 
 export const PROVISION_BANK = new Tile(3093, 3243, 0);
 
 import { Skills } from '../../api/hud/Skills.js';
+
+/** `'nearest'` means "let the step work it out from where the bot is standing". */
+function bankFor(module: QuestModule): Tile | undefined {
+    return module.bank === 'nearest' ? undefined : (module.bank ?? PROVISION_BANK);
+}
 
 function advancesWorld(step: QuestStep): boolean {
     return step.kind !== 'wait' && step.kind !== 'done';
@@ -65,6 +73,8 @@ export class QuestEngine implements Task {
     private readonly parkCounts = new Map<string, number>();
     private readonly parkedReasons = new Map<string, string[]>();
     private readonly provisioned = new Set<string>();
+    private readonly retreated = new Set<string>();
+    private readonly retreatTries = new Map<string, number>();
     private readonly deposited = new Set<string>();
     private readonly blocked = new Map<string, string[]>();
     /** Modules that have already emitted {@link QuestModule.warnReadiness}. */
@@ -185,6 +195,13 @@ export class QuestEngine implements Task {
         }
 
         if (snap.journal === 'complete') {
+            // A finished quest is not a finished job. These end in a dragon's
+            // lair, a wilderness, a dungeon — and a bot that is dropped where it
+            // stood logs out there, or does not, and dies there. The quest is
+            // done when the character is standing at a bank.
+            if (!this.retreated.has(id) && !(await this.retreatToBank(module, id, rows))) {
+                return;
+            }
             this.host.log(`${module.record.name} COMPLETE — ${Quests.points()} QP`);
             this.parked.delete(id);
             this.parkedReasons.delete(id);
@@ -210,7 +227,7 @@ export class QuestEngine implements Task {
                 this.deposited.add(id);
             } else {
                 this.host.noteState(rows, id, 'banking spillover', this.noProgressCount, this.parked.size);
-                const banked = await executeStep({ kind: 'deposit', keep, bank: module.bank ?? PROVISION_BANK, leaveOpen: true }, module.hops ?? [], m => this.host.log(`  ${m}`));
+                const banked = await executeStep({ kind: 'deposit', keep, bank: bankFor(module), leaveOpen: true }, module.hops ?? [], m => this.host.log(`  ${m}`));
                 if (banked) {
                     this.deposited.add(id);
                 }
@@ -225,7 +242,10 @@ export class QuestEngine implements Task {
         }
         if (!this.provisioned.has(id)) {
             const plan = planProvisioning(module.record.items, snap.inv, this.lastBankCounts);
-            const coinFloat = coinFloatWithdraw(snap.inv, this.lastBankCounts, COIN_FLOAT);
+            // A quest that fetches coins at the point of sale wants no float at
+            // all: this runs every loop while anything is still outstanding, so
+            // a standing balance is restored after every single purchase.
+            const coinFloat = coinFloatWithdraw(snap.inv, this.lastBankCounts, module.coinFloat ?? COIN_FLOAT);
             const foodItem = this.host.foodItem();
             const packFood = foodItem ? (snap.inv.get(foodItem.toLowerCase()) ?? 0) : 0;
             const foodFloat = (module.food && foodItem)
@@ -244,7 +264,7 @@ export class QuestEngine implements Task {
                 this.host.noteState(blk, null, `parked: ${plan.blocked.join(', ')}`, this.noProgressCount, this.parked.size);
                 return;
             } else if (plan.withdraw.length > 0 || extras.length > 0) {
-                step = { kind: 'withdraw', items: [...plan.withdraw, ...extras], bank: module.bank ?? PROVISION_BANK };
+                step = { kind: 'withdraw', items: [...plan.withdraw, ...extras], bank: bankFor(module) };
             } else if (plan.satisfied) {
                 this.provisioned.add(id);
                 step = module.decide(snap);
@@ -324,6 +344,36 @@ export class QuestEngine implements Task {
 
         this.refreshBankCounts();
         await Execution.delayTicks(1);
+    }
+
+    /**
+     * Drives a finished quest's character back to a bank before the queue moves
+     * on. `exit` comes first for the quests whose last step leaves them somewhere
+     * the navigator has no route out of; the bank walk itself is a `scanBank`, so
+     * it picks the nearest reachable bank exactly like every other bank leg.
+     *
+     * Bounded: a bot standing safely on the wrong side of a broken route is a
+     * better outcome than one that never finishes its queue.
+     */
+    private async retreatToBank(module: QuestModule, id: string, rows: QueueRow[]): Promise<boolean> {
+        const tries = (this.retreatTries.get(id) ?? 0) + 1;
+        this.retreatTries.set(id, tries);
+        if (tries > RETREAT_GIVE_UP) {
+            this.host.log(`${module.record.name}: no way back to a bank after ${RETREAT_GIVE_UP} tries — leaving the character where it finished`);
+            this.retreated.add(id);
+            return true;
+        }
+        this.host.noteState(rows, id, 'walking back to a bank', this.noProgressCount, this.parked.size);
+        this.host.log(`${module.record.name} finished — walking back to a bank (${tries}/${RETREAT_GIVE_UP})`);
+        const log = (m: string): void => this.host.log(`  ${m}`);
+        if (module.exit && !(await module.exit(log))) {
+            return false;
+        }
+        if (!(await executeStep({ kind: 'scanBank', bank: bankFor(module) }, module.hops ?? [], log))) {
+            return false;
+        }
+        this.retreated.add(id);
+        return true;
     }
 
     private resetWatchdog(): void {

@@ -14,6 +14,9 @@ import type { QuestModule, QuestSnapshot, QuestStep } from '../engine/types.js';
 import { QUESTS } from '../data/quests.js';
 import { QuestFood } from '../food.js';
 
+/** Named, so the step literals below get a Tile and not the module's wider type. */
+const DRAYNOR_BANK = new Tile(3093, 3243, 0);
+
 const BARTENDER: NpcStop = { npc: 'Bartender', anchor: new Tile(3045, 3257, 0), leash: 8, prefer: ['Not very busy in here today, is it?'] };
 
 const GENERAL: NpcStop = { npc: 'General Wartface', anchor: new Tile(2957, 3510, 0), leash: 6, prefer: ['Do you want me to pick an armour colour for you?'] };
@@ -321,7 +324,7 @@ function foodAcquisitionSpace(snap: QuestSnapshot, slots: number): QuestStep | n
     return {
         kind: 'deposit',
         keep: hasSpillover ? withFood : ['coins', ...mail],
-        bank: goblindiplomacy.bank,
+        bank: DRAYNOR_BANK,
         exactKeep: true
     };
 }
@@ -343,7 +346,7 @@ export function goblinMailGatherStep(snap: QuestSnapshot, need = 1): QuestStep {
         }
     }
     if (!snap.bankKnown) {
-        return { kind: 'scanBank', bank: goblindiplomacy.bank };
+        return { kind: 'scanBank', bank: DRAYNOR_BANK };
     }
 
     const missingFood = Math.max(0, GOBLIN_MAIL_FOOD_TARGET - carriedFood);
@@ -357,7 +360,7 @@ export function goblinMailGatherStep(snap: QuestSnapshot, need = 1): QuestStep {
             return {
                 kind: 'withdraw',
                 items: [{ name: food, qty: Math.min(missingFood, banked) }],
-                bank: goblindiplomacy.bank
+                bank: DRAYNOR_BANK
             };
         }
     }
@@ -370,7 +373,7 @@ export function goblinMailGatherStep(snap: QuestSnapshot, need = 1): QuestStep {
                     qty: Math.min(GOBLIN_DIPLOMACY_COIN_TARGET - heldCoins, snap.bankCoins)
                 }
             ],
-            bank: goblindiplomacy.bank
+            bank: DRAYNOR_BANK
         };
     }
     return {
@@ -605,7 +608,7 @@ export function decide(snap: QuestSnapshot): QuestStep {
 
 export const goblindiplomacy: QuestModule = {
     record: QUESTS.find(r => r.id === 'gobdip')!,
-    bank: new Tile(3093, 3243, 0),
+    bank: DRAYNOR_BANK,
     sustain: { foods: [FALLBACK_FOOD], eatBelowHp: 0.6 },
     get tools() {
         return ['goblin mail', 'dye', 'woad', 'redberries', 'onion', 'coins', ...combatFoodNames().map(name => name.toLowerCase())];

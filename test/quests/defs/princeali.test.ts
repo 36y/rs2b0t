@@ -46,9 +46,7 @@ const kitted = (stage: number, extra: [number, number][] = []): QuestSnapshot =>
 
 describe('module shape', () => {
     test('declares the Draynor bank at level 0', () => {
-        expect(princeali.bank?.x).toBe(3093);
-        expect(princeali.bank?.z).toBe(3243);
-        expect(princeali.bank?.level).toBe(0);
+        expect(princeali.bank).toMatchObject({ x: 3093, z: 3243, level: 0 });
     });
 
     test('owns its own inventory and reads progress, with no gather map', () => {

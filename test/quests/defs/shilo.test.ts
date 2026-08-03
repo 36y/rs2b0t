@@ -579,8 +579,7 @@ describe('shilo module', () => {
     });
 
     test('it banks at Ardougne West, the nearest bank to the Brimhaven ship', () => {
-        expect(shilo.bank?.x).toBe(2616);
-        expect(shilo.bank?.z).toBe(3332);
+        expect(shilo.bank).toMatchObject({ x: 2616, z: 3332 });
     });
 
     test('the record carries the Jungle Potion prerequisite the engine enforces', () => {
