@@ -340,6 +340,17 @@ rings/glories (bank-cache API is separate). **Quest-lock doors:** mesbox → ses
 (`travelCatalog.ts`); quest seeds (`transportQuestReqs.ts`); guild skill doors + mining ladder
 (`specialRequires.ts`). Matrix: [docs/nav-v2/TRANSPORTS-2004.md](nav-v2/TRANSPORTS-2004.md).
 
+**Essence mine multiloc (litmus):** multi-entry, **same-origin exit only**. Entering
+via a wizard sets the session return; every exit portal telejumps to that return — not
+to a fixed Sedridor stand. Nav must **never route a surface OD *through* the mine** as
+a shortcut (entry at A + exit as if at B). Implementation: entry edges set
+`essenceEntrySetsReturn`; PathFinder carries return in the A\* key; exit edges require
+matching `essenceExitReturn`; live `EssenceSession` (server varp 64 is not on the wire).
+
+**Door placement (stall open):** when stuck, `tryNearbyDoor` prefers a closed door on
+the **path corridor** ahead of the player, not merely the nearest Open-door within 3
+tiles (wrong doorway / same loc type).
+
 **Code map:** shared stack under `src/bot/nav/` (`PathFinder`, `WalkExecutor`, `exec/`, `data/`).
 Folder `v2/` holds tele catalog, travel catalog, WorldState helpers, bank plan — **most of
 that is used by classic too**; only tele inject / bank-for-route / hop logs are mode-gated.
@@ -382,25 +393,32 @@ are **generated and gitignored** — regenerate before `HARD=1` live runs.
 **Generate (requires collision pack):**
 
 ```bash
-bun --preload ./test/setup-dom.ts tools/nav/script-route-corpus.ts
+bun --preload ./test/setup-dom.ts tools/nav/script-route-corpus.ts --write --hardest=25
 # optional: --no-tele for pure-walk ranking; tele ranking is default (full runes)
 ```
+
+Probe WorldState is a **maxed members account** (skills 99 for guild doors, transport
+quests complete, runes + charged jewellery). Magic-only was insufficient: Fishing
+Guild doors need fishing 68, so BANK_* → Fishing Guild exhausted the expansion
+budget instead of opening the guild doors.
 
 **Dedupe stages** (see `tools/nav/script-route-corpus.ts`):
 
 1. **Endpoint near-dedupe** (`dedupePaths`) — drop generator twins with nearly the
    same directed from→to.
-2. **Corridor / journey fingerprint** (`pathCorridorSignature` + `dedupeByCorridor`)
-   — fingerprint is start map-square + end map-square + hop sequence (tele vs
-   pure-walk and distinct starts stay separate); keep the highest-difficulty row
-   per signature.
+2. **Journey fingerprint** (`pathCorridorSignature` + `dedupeByCorridor`) —
+   fingerprint is **end map-square + hop sequence** only (not start). Pure-walks
+   into the same region collapse (one *→Rellekka walk); tele vs walk stay
+   separate. Keep the highest-difficulty row per signature.
 3. **HARD top-N** (`rankHardest`) — score cost / expansions / hop count for the
    live sample list.
 
 **Live HARD:** `tools/nav-script-routes-live.ts` with `HARD=1` reads
-`tools/nav/script-routes.hardest.json`. Fresh checkouts without the pack or
-generated JSON will not exercise collision-backed corpus coverage; unit tests that
-need the pack use `test.skipIf` rather than silent pass.
+`tools/nav/script-routes.hardest.json`. Seeds runes + charged jewellery at start so
+long OD legs may Rub naturally (no fake end-of-run jewellery allowlist). Fresh
+checkouts without the pack or generated JSON will not exercise collision-backed
+corpus coverage; unit tests that need the pack use `test.skipIf` rather than silent
+pass.
 
 ## Level-change loc lag
 
