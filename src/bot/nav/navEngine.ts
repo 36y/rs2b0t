@@ -1,5 +1,16 @@
 /**
- * Classic (v1) vs Nav v2 walker selection for end users.
+ * World-walker mode selection (`classic` | `v2`).
+ *
+ * There is **one** PathFinder + WalkExecutor + transport graph. This flag is a
+ * feature gate, not two engines — most of the “nav v2” program landed shared
+ * (travelCatalog, requires, ship/plank exec, path paint). See docs/NAV.md and
+ * docs/nav-v2/CLASSIC-PARITY.md.
+ *
+ * **Shared:** doors, transports.json, travelCatalog, stairs, specialCrossings,
+ * live WorldState gates (skill/quest/coin), danger zones, paint/camera.
+ * Offline / no-state finds fail open on requires; live walks fail closed.
+ *
+ * **v2-only:** spell/jewellery tele inject, path-scoped bank, hop logs.
  *
  * Resolution order (first wins):
  * 1. Explicit WalkOptions.navEngine / PathFinder call site
