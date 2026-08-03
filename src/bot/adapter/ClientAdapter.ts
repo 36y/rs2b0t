@@ -976,6 +976,24 @@ export const reader = {
         return map.flags[CollisionMap.index(lx, lz)];
     },
 
+    /**
+     * World tiles for the last successful walkTo/tryMove (src→dest inclusive).
+     * Empty when the last walk failed or the client has no path buffer.
+     */
+    lastWalkPathWorld(): { x: number; z: number; level: number }[] {
+        if (!raw || !raw.lastWalkPathLocal || raw.lastWalkPathLocal.length === 0) {
+            return [];
+        }
+        const baseX = raw.mapBuildBaseX;
+        const baseZ = raw.mapBuildBaseZ;
+        const level = raw.minusedlevel;
+        return raw.lastWalkPathLocal.map(p => ({
+            x: baseX + p.x,
+            z: baseZ + p.z,
+            level
+        }));
+    },
+
     localPlayerName(): string | null {
         return raw?.localPlayer?.name ?? null;
     },

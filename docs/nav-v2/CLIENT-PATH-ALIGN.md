@@ -1,9 +1,10 @@
-# Client path vs pack path / ground paint (notes)
+# Client path vs pack path / ground paint
 
-**Status:** exploration notes for follow-up work (not a shipped design).  
+**Status:** experimental debug features (opt-in Global settings under Show nav path).  
 **Date:** 2026-08-03  
-**Context:** operators see the painted webwalker route diverge from the tiles the
-client actually walks after a click.
+
+Operators see the painted webwalker route diverge from the tiles the client actually
+walks after a click. This doc tracks root cause and the experimental dual-paint work.
 
 ## Two different pathfinders
 
@@ -16,58 +17,80 @@ Walk clicks go through `ActionRouter.driver.walk` → `actions.walkTo` →
 `raw.tryMove(..., tryNearest=true, type=0)`. That is the **only** path the server
 accepts for gameclick movement.
 
-Paint draws `PathPublish` tiles, which come from **pack** waypoints expanded by
-`expandWaypoints` (Chebyshev diagonal steps between waypoints) — **not** the
-client BFS polyline from `tryMove`.
-
 ## Why they disagree
 
-1. **Different maps** — pack is full-world snapshot; client only knows the loaded
-   scene and its loc-built flags. A door open/closed mid-walk changes scene flags
-   but not the pack path until repath.
-2. **expandWaypoints ≠ route** — between pack waypoints we draw a Chebyshev
-   diagonal corridor. Client BFS prefers open 8-connected steps with wall tests
-   (`CollisionFlag.PL_WALK_*`); it often takes a different polyline around a wall.
-3. **Click horizon** — walker clicks ~20 path steps ahead; client may only route
-   partway (`tryNearest`) or refuse the tile entirely (`tryMove` → false).
-4. **Projection paint is scene-aligned** — `pathScenePaint` uses the same camera
-   projection as the 3D world (so the quads sit on the ground). Remaining visual
-   “offset” is usually **wrong tile sequence**, not wrong screen projection.
+1. **Different maps** — pack is full-world snapshot; client only knows the loaded scene.
+2. **Chebyshev expand quirk** — `expandChebyshevSegment` uses `sign(dx)*step` for
+   `max(|dx|,|dz|)` steps, so uneven diagonals **overshoot** the waypoint (documented
+   in `pathExpand.test.ts`).
+3. **Click horizon** — walker clicks ~20 path steps ahead; client may only route partway.
+4. **Projection is fine** — `pathScenePaint` is camera-aligned; the bug is **tile sequence**.
 
-## "I can't reach that!"
+## Explore implementation (this branch)
 
-- Server gamechat `I can't reach that!` is emitted when an **interaction** cannot
-  be pathed (loc/npc ops). Transport/door execute already fail-fast on
-  `GameMessages` + `CANT_REACH` (since `d001764`).
-- **Plain walk clicks never listened** for that line historically — not a
-  regression from nav-v2, just a gap. Client-side, `tryMove` returns `false`
-  without chat when scene BFS fails (no packet).
-- Fix direction (this branch): honor `walk()` false by trying closer path tiles,
-  then repath immediately; also repath if `CANT_REACH` appears after a walk click.
+| Control | Default | Effect |
+|---|---|---|
+| `Global.navPathSceneExpand` | **false** (opt-in) | Pack path segments expanded with scene-flag BFS when both ends are in the loaded scene |
+| `Global.navPathClientSegment` | **false** (opt-in) | After each successful walk click, paint the **exact** `tryMove` tiles |
+| `Global.navPathColorClient` | `#00D4FF` | Solid trail colour when walking |
+| `Global.navPathColorClientRunAlt` | `#FFFF00` | When run is on, alternate tiles use this (yellow) |
 
-## Follow-ups (not in this change)
+**How to try live**
 
-1. **Paint client route after click** — after successful `tryMove`, read
-   reconstructed steps from client route buffers (if exposed via adapter) and
-   paint those as the “active segment”.
-2. **Expand waypoints with local BFS** — for same-level segments inside the scene,
-   replace Chebyshev fill with `canStepLocal` / flag-aware BFS so paint matches
-   what `tryMove` would walk.
-3. **Prefer tryMove when choosing click** — walk clicks use `selectClientWalkTarget`
-   (far→near until `tryMove` accepts). Stall recovery still issues a single recovery
-   walk and repaths if the client rejects it.
-4. **Scene-flag repath triggers** — on door open/close packets, invalidate pack
-   path if the current click target becomes unwalkable in scene flags.
-5. **Optional clone of engine client** under `/tmp` for side-by-side `tryMove`
-   vs pack A\* dumps (this repo already vendors `src/client/Client.ts` tryMove).
+```text
+?Global.showNavPath=true
+# optional: &Global.navPathSceneExpand=true&Global.navPathClientSegment=true
+```
+
+- **Red** = pack path (scene-expanded when possible).
+- **Client trail** = last walk-click route as the **client** routed it
+  (`Client.lastWalkPathLocal` from `tryMove`), trimmed to the player as you move.
+  **Walk:** solid primary colour. **Run:** alternating primary / yellow tiles.
+  No centre-line. Falls back to scene-flag BFS if the client buffer is empty.
+- **Green** = transports; **white outline** = pack click target.
+
+### Live harnesses (operator)
+
+```bash
+~/redeploy.sh   # branch explore/client-path-paint
+
+# Focused paint compare (default classic pure-walk, dual paint ON)
+HEADED=1 bun tools/nav-path-paint-live.ts
+HEADED=1 CASES=lumb-dray,varrock-edge bun tools/nav-path-paint-live.ts
+HEADED=1 LIMIT=1 PATH_PAINT_SCENE_EXPAND=0 bun tools/nav-path-paint-live.ts
+
+# Stress suite paint cases only
+HEADED=1 CASES=path-paint,paint-compare bun tools/nav-v2-stress-live.ts
+
+# Script routes with paint (default PATH_PAINT=1)
+HEADED=1 LIMIT=2 NAV_ENGINE=classic bun tools/nav-script-routes-live.ts
+HEADED=1 LIMIT=2 PATH_PAINT=0 bun tools/nav-script-routes-live.ts   # paint off
+```
+
+Env toggles (all three harnesses): `PATH_PAINT_SCENE_EXPAND=0|1`, `PATH_PAINT_CLIENT_SEG=0|1`.
+
+### Known limits
+
+1. Client trail is the **current walk-click** only (not the entire remaining pack path).
+2. Scene expand also feeds **corridor snap** (not paint-only) — keep off unless debugging.
+3. Off-scene / multi-level / transport pack segments still Chebyshev.
+4. `tryMove` records at most the scene-local path (104×104).
+
+## Follow-ups
+
+1. Paint the full remaining plan as one continuous trail.
+2. Scene expand that only affects paint, not corridor snap.
+3. Diff metric: pack vs client trail overlap for automated probes.
 
 ## Code map
 
 | Concern | File |
 |---|---|
-| Client BFS walk | `src/client/Client.ts` `tryMove` |
-| Collision flags | `src/dash3d/CollisionMap.ts` |
-| Walk click | `src/bot/input/DirectInputDriver.ts` → `actions.walkTo` |
-| Pack path expand + follow | `src/bot/nav/WalkExecutor.ts` `expandWaypoints` / `followPath` |
-| Scene paint | `src/bot/nav/pathScenePaint.ts` |
-| Cant-reach chat | `src/bot/events/gameMessages.ts` `CANT_REACH` |
+| Scene/Chebyshev expand | `src/bot/nav/pathExpand.ts` |
+| Publish + client segment | `src/bot/nav/pathPublish.ts` |
+| Walk expand + segment publish | `src/bot/nav/WalkExecutor.ts` |
+| Scene cyan paint + path line | `src/bot/nav/pathScenePaint.ts` |
+| Settings | `src/bot/runtime/Settings.ts` (`navPathSceneExpand`, …) |
+| Client walk + path capture | `src/client/Client.ts` `tryMove` / `lastWalkPathLocal` |
+| Adapter world path | `src/bot/adapter/ClientAdapter.ts` `lastWalkPathWorld` |
+| Step flags (fallback BFS) | `src/bot/nav/localReach.ts` `canStepLocal` |

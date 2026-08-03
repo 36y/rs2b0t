@@ -16,17 +16,21 @@ import { SettingsStore } from '../runtime/Settings.js';
 import { matchesTransportLoc } from './exec/transportLoc.js';
 import { PathPublish, type PublishedPathTile } from './pathPublish.js';
 import {
+    parseHtmlColor,
     resolveNavPathPaintTheme,
+    rgba,
     type NavPathPaintTheme
 } from './pathPaintTheme.js';
+import { remainingPathFromPlayer } from './pathExpand.js';
+import { Game } from '../api/Game.js';
 
 /** areaGame surface blitted at (4,4) — see Client.overlayPos. */
 export const GAME_VIEW_CLIP = { x: 4, y: 4, w: 512, h: 334 } as const;
 
-/** Max tile quads to draw (far path is subsampled). */
-const MAX_DRAW_TILES = 80;
+/** Max tile quads to draw (far path is subsampled). Explore: denser for continuous look. */
+const MAX_DRAW_TILES = 160;
 /** Always paint this many steps ahead of pathIdx at full density. */
-const NEAR_FULL_DENSITY = 24;
+const NEAR_FULL_DENSITY = 48;
 
 export type ProjectCorner = (x: number, z: number, u: number, v: number) => { x: number; y: number } | null;
 
@@ -485,6 +489,35 @@ export function paintNavPath(
                         ctx.lineWidth = 2.5;
                         ctx.stroke();
                     }
+                }
+            }
+
+            // Experimental: client-walk trail. Solid when walking; checkerboard when running.
+            const segRaw = path.clientSegment;
+            if (segRaw && segRaw.length > 0) {
+                let clientColor = '#00D4FF';
+                let runAltColor = '#FFFF00';
+                try {
+                    const bag = SettingsStore.globalBag();
+                    clientColor = bag.str('navPathColorClient', '#00D4FF');
+                    runAltColor = bag.str('navPathColorClientRunAlt', '#FFFF00');
+                } catch {
+                    /* default */
+                }
+                const primary = parseHtmlColor(clientColor, '#00D4FF');
+                const runAlt = parseHtmlColor(runAltColor, '#FFFF00');
+                const runOn = Game.runEnabled();
+                const seg = remainingPathFromPlayer(segRaw, me);
+                for (const t of seg) {
+                    if (t.level !== me.level) {
+                        continue;
+                    }
+                    const corners = projectTileQuad(t, project);
+                    if (!corners) {
+                        continue;
+                    }
+                    const c = runOn && ((t.x + t.z) & 1) === 1 ? runAlt : primary;
+                    fillQuad(ctx, corners, rgba(c, 0.45), rgba(c, 0.95), 1.5);
                 }
             }
         }

@@ -224,6 +224,49 @@ export const GLOBAL_SETTINGS: SettingsSchema = {
         group: 'Nav path paint',
         showIf: { key: 'showNavPath', anyOf: ['true'] },
         help: 'HTML #RGB / #RRGGBB — transport captions (default white)'
+    },
+    // ── Experimental path-paint debug (opt-in; only when showNavPath) ──
+    navPathSceneExpand: {
+        type: 'boolean',
+        default: false,
+        label: 'Scene-aware path expand (experimental)',
+        group: 'Nav path paint',
+        showIf: { key: 'showNavPath', anyOf: ['true'] },
+        help:
+            'Experimental debug: fill pack path segments with live scene collision '
+            + 'BFS when both ends are on-screen (instead of Chebyshev diagonals). '
+            + 'Can change corridor snap. Off by default.'
+    },
+    navPathClientSegment: {
+        type: 'boolean',
+        default: false,
+        label: 'Paint client walk trail (experimental)',
+        group: 'Nav path paint',
+        showIf: { key: 'showNavPath', anyOf: ['true'] },
+        help:
+            'Experimental debug: after each walk click, paint the exact client '
+            + 'tryMove tiles (solid when walking; alternate colours when run is on). '
+            + 'Compare to the pack path. Off by default.'
+    },
+    navPathColorClient: {
+        type: 'string',
+        default: '#00D4FF',
+        label: 'Client trail colour (experimental)',
+        group: 'Nav path paint',
+        showIf: { key: 'showNavPath', anyOf: ['true'] },
+        help:
+            'Primary colour for the experimental client-walk trail (solid when walking). '
+            + 'Default cyan #00D4FF.'
+    },
+    navPathColorClientRunAlt: {
+        type: 'string',
+        default: '#FFFF00',
+        label: 'Client run alt colour (experimental)',
+        group: 'Nav path paint',
+        showIf: { key: 'showNavPath', anyOf: ['true'] },
+        help:
+            'When run is on, client-walk tiles alternate primary / this colour. '
+            + 'Default yellow #FFFF00.'
     }
 };
 

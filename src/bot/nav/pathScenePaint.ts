@@ -19,7 +19,9 @@ import {
 } from './pathOverlay.js';
 import { parseHtmlColor, NAV_PATH_PAINT_DEFAULTS } from './pathPaintTheme.js';
 import { PathPublish } from './pathPublish.js';
+import { remainingPathFromPlayer } from './pathExpand.js';
 import { SettingsStore } from '../runtime/Settings.js';
+import { Game } from '../api/Game.js';
 
 function rgbInt(c: { r: number; g: number; b: number }): number {
     return ((c.r & 0xff) << 16) | ((c.g & 0xff) << 8) | (c.b & 0xff);
@@ -170,6 +172,14 @@ export function paintNavPathInGame(_client: Client): void {
         parseHtmlColor(SettingsStore.globalBag().str('navPathColorTransport', NAV_PATH_PAINT_DEFAULTS.transport))
     );
     const clickRgb = rgbInt(parseHtmlColor(SettingsStore.globalBag().str('navPathColorClick', NAV_PATH_PAINT_DEFAULTS.click)));
+    // Explore: client walk trail colour (solid when walking; alternate when running).
+    const g = SettingsStore.globalBag();
+    const clientSegRgb = rgbInt(parseHtmlColor(g.str('navPathColorClient', '#00D4FF'), '#00D4FF'));
+    // Run-alt: yellow (user-facing); hex default #FFFF00.
+    const clientRunAltRgb = rgbInt(
+        parseHtmlColor(g.str('navPathColorClientRunAlt', '#FFFF00'), '#FFFF00')
+    );
+    const runOn = Game.runEnabled();
 
     const project: ProjectCorner = (x, z, u, v) => reader.projectAreaGameWorld(x, z, 0, u, v);
 
@@ -190,6 +200,25 @@ export function paintNavPathInGame(_client: Client): void {
         } else {
             fillQuadPix(q.corners, pathRgb, 0.28);
             strokeQuadPix(q.corners, pathRgb, 0.85);
+        }
+    }
+
+    // Experimental: client walk trail (exact tryMove tiles). No centre-line.
+    // Walk: solid primary. Run: checkerboard by world tile (stable as path trims).
+    const segRaw = path.clientSegment;
+    if (segRaw && segRaw.length > 0) {
+        const seg = remainingPathFromPlayer(segRaw, me);
+        for (const t of seg) {
+            if (t.level !== me.level) {
+                continue;
+            }
+            const corners = projectTileQuad(t, project);
+            if (!corners) {
+                continue;
+            }
+            const rgb = runOn && ((t.x + t.z) & 1) === 1 ? clientRunAltRgb : clientSegRgb;
+            fillQuadPix(corners, rgb, 0.5);
+            strokeQuadPix(corners, rgb, 0.95);
         }
     }
 
