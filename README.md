@@ -52,10 +52,16 @@ deploy into (for development — production use is against **rs2b2t**).
 
 ```bash
 bun install
-ENGINE_DIR=/path/to/engine sh tools/deploy-local.sh
+./tools/deploy-local-key.sh /path/to/engine
 ```
 
 Then open that engine's `/bot.html`, log in, and pick a script from the library.
+
+The deployment helper reads the engine's generated RSA key from
+`data/config/private.pem`, derives the public modulus and exponent, and passes
+them to the client build automatically. This is required when deploying against
+a fresh upstream Lost City engine, whose RSA key differs from the one used by
+the hosted build.
 
 **[docs/RUNNING.md](docs/RUNNING.md)** walks the whole path from a cold clone —
 including getting an engine, the login-key mismatch that otherwise ends in login
