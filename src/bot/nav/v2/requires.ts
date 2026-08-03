@@ -56,6 +56,19 @@ export function meetsRequires(requires: TransportRequires | undefined, state: Wo
         }
     }
 
+    if (requires.worn) {
+        for (const it of requires.worn) {
+            const have = state.wornCount(it.name);
+            if (have < it.count) {
+                return { ok: false, reason: `need to wear ${it.name} (have ${have})` };
+            }
+        }
+    }
+
+    if (requires.forbidEntranaRestricted === true && state.entranaRestrictedGear) {
+        return { ok: false, reason: 'remove weapons/armour before Entrana' };
+    }
+
     if (requires.quests) {
         for (const q of requires.quests) {
             const status = state.questStatus(q.quest);
@@ -71,10 +84,34 @@ export function meetsRequires(requires: TransportRequires | undefined, state: Wo
     return { ok: true };
 }
 
-/** Convenience for PathFinder filters. */
+/** True when `requires` has at least one real gate (not `{}`). */
+export function hasGatingRequires(requires: TransportRequires | undefined): boolean {
+    if (!requires) {
+        return false;
+    }
+    return (
+        requires.members === true
+        || requires.freeSlots !== undefined
+        || (requires.skills !== undefined && requires.skills.length > 0)
+        || (requires.items !== undefined && requires.items.length > 0)
+        || (requires.worn !== undefined && requires.worn.length > 0)
+        || requires.currency !== undefined
+        || (requires.quests !== undefined && requires.quests.length > 0)
+        || requires.forbidEntranaRestricted === true
+    );
+}
+
+/**
+ * Convenience for PathFinder filters.
+ * Matches search policy: no gates → allowed; gated without state → fail closed
+ * (same as PathFinder skipping gated edges when WorldState is omitted).
+ */
 export function isEdgeAllowed(requires: TransportRequires | undefined, state: WorldState | undefined): boolean {
-    if (!state || !requires) {
+    if (!hasGatingRequires(requires)) {
         return true;
+    }
+    if (!state) {
+        return false;
     }
     return meetsRequires(requires, state).ok;
 }

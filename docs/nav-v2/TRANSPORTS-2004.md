@@ -68,8 +68,7 @@ Audit: `CONTENT_DIR=… bun tools/nav/content-transport-audit.ts` prints disable
 | Full agility *courses* | Training loops — only OD shortcuts |
 | Random-event teles | Supervisor, not planner |
 | Decorative broken ladders | No movement dest in content |
-| Ranging Guild door | Not in `doors.json` yet (content minigame; add when mapped) |
-| Cooking Guild chef’s hat | Execute-time worn check; plan-time is cooking 32 only |
+
 
 ---
 
@@ -110,7 +109,7 @@ Audit: `CONTENT_DIR=… bun tools/nav/content-transport-audit.ts` prints disable
 
 - Ship fares (30 coins) attach via `specialRequiresAt` even when SC is keyed at deck L1 and the graph stand is pier L0 (same x/z).
 - Mort Myre `freeSlots: 6` is **execute-only** (Drezel pies when starting Nature Spirit) — not a permanent plan gate.
-- Entrana restricted gear is **execute-only** (plan has members; strip before boarding or hop fails closed).
+- Entrana restricted gear is plan + execute (`forbidEntranaRestricted` + live heuristic).
 
 ### Object highlighter (path paint)
 
@@ -136,7 +135,7 @@ When Global **Show nav path** is on:
 | Essence entry | **done** |
 | Essence exit portals | **done** (transports.json) |
 | Wildy levers | **done** |
-| Coal log + island ropes | **done** (transports.json + specialCrossing skill) |
+| Coal log + island ropes | **done** (coal log agi 20; outer ropeswings agi 10; softlock swing ungated) |
 | Castle wall / Shilo log / monkeybars | **done** (travelCatalog + transports.json) |
 | Shantay free desert exit | **done** (transports.json) |
 | Shantay pass item northbound | **wont** for free pathing (item gate; desert exit is the OD fix) |
@@ -145,9 +144,11 @@ When Global **Show nav path** is on:
 | Fishing Guild doors | **done** (fishing 68) |
 | Magic Guild doors | **done** (magic 66) |
 | Crafting Guild door | **done** (crafting 40) |
-| Cooking Guild door | **partial** (cooking 32 plan-time; chef’s hat execute) |
-| Mining Guild ladder down | **done** (mining 60 on surface from-tiles) |
-| Ranging Guild door | **not in doors.json** |
+| Cooking Guild door | **done** (cooking 32 + Chef's hat worn) |
+| Mining Guild ladder down | **done** (mining 60 on all four surface stands) |
+| Ranging Guild door | **done** (ranged 40 at 2658,3438) |
+| Entrana gear plan-time | **done** (`forbidEntranaRestricted` on Port Sarim→Entrana) |
+| Live members flag | **done** (`Client.memServer` in WorldState snapshot) |
 | Zanaris / Lost City | **quest path** (out of generic travel catalog) |
 | Path paint + loc hulls | **done** (live scenery only) |
 
@@ -195,8 +196,11 @@ Aliases (`Watchtower` → `Watch Tower`, etc.) resolve in `worldStateData` / `ca
 | Magic Guild | magic 66 | 2584/2597 × 3087/3088 | `magic_guild.rs2` |
 | Crafting Guild | crafting 40 | 2933,3289 | `crafting_guild.rs2` |
 | Cooking Guild | cooking 32 | 3143,3444 | `cooking_guild.rs2` (+ hat) |
-| Mining Guild ladder | mining 60 | 3019,3339 / 3019,3341 / 3020,3340 | `mining_guild.rs2` |
+| Mining Guild ladder | mining 60 | 3018,3340 / 3019,3339 / 3019,3341 / 3020,3340 | `mining_guild.rs2` |
+| Ranging Guild door | ranged 40 | 2658,3438 | `ranging_guild_door.rs2` |
+| Cooking Guild hat | wear Chef's hat | 3143,3444 (with cooking 32) | `cooking_guild.rs2` |
 | Monastery ladder | prayer 31 | stateAware `monasteryladder` | prayer guild |
+| Outer island ropeswing | agility 10 | 2709,3209 / 2511,3091 | `shortcuts.rs2` (not softlock swing) |
 
 ---
 

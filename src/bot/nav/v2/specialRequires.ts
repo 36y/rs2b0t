@@ -7,9 +7,8 @@ import { SPECIAL_CROSSINGS } from '../data/specialCrossings.js';
 import type { TransportRequires } from './types.js';
 
 /**
- * Door tiles with skill gates that live in doors.json (not transports.json).
- * Levels from Server content scripts (skill_*_guild / magic_guild / fishing_guild).
- * Note: Cooking also needs a chef's hat worn at execute — plan-time is skill only.
+ * Door tiles with skill / worn gates that live in doors.json (not transports.json).
+ * Levels from Server content scripts (skill_*_guild / magic_guild / fishing_guild / ranging).
  */
 const DOOR_SKILL_GATES: readonly {
     x: number;
@@ -17,6 +16,8 @@ const DOOR_SKILL_GATES: readonly {
     level: number;
     skill: string;
     levelReq: number;
+    /** Worn equipment required (plan-time). */
+    worn?: { name: string; count: number }[];
     note?: string;
 }[] = [
     // fishing_guild.rs2 loc_2025 — fishing 68
@@ -29,8 +30,19 @@ const DOOR_SKILL_GATES: readonly {
     { x: 2597, z: 3088, level: 0, skill: 'magic', levelReq: 66 },
     // crafting_guild.rs2 crafting_guild_door — crafting 40
     { x: 2933, z: 3289, level: 0, skill: 'crafting', levelReq: 40 },
-    // cooking_guild.rs2 chefdoor — cooking 32 (+ chef's hat at execute)
-    { x: 3143, z: 3444, level: 0, skill: 'cooking', levelReq: 32, note: "chef's hat worn at execute" }
+    // cooking_guild.rs2 chefdoor — cooking 32 + Chef's hat worn
+    {
+        x: 3143,
+        z: 3444,
+        level: 0,
+        skill: 'cooking',
+        levelReq: 32,
+        worn: [{ name: "Chef's hat", count: 1 }],
+        note: "chef's hat worn"
+    },
+    // ranging_guild_door.rs2 — ranged 40 (map loc 2658,3438). doors.json uses loc tile;
+    // transports.json uses diagonal stands — gate both so PathFinder from-tile attach works.
+    { x: 2658, z: 3438, level: 0, skill: 'ranged', levelReq: 40 }
 ];
 
 /**
@@ -49,7 +61,15 @@ const TRANSPORT_SKILL_GATES: readonly {
     { x: 3018, z: 3340, level: 0, skill: 'mining', levelReq: 60 },
     { x: 3019, z: 3339, level: 0, skill: 'mining', levelReq: 60 },
     { x: 3019, z: 3341, level: 0, skill: 'mining', levelReq: 60 },
-    { x: 3020, z: 3340, level: 0, skill: 'mining', levelReq: 60 }
+    { x: 3020, z: 3340, level: 0, skill: 'mining', levelReq: 60 },
+    // skill_agility/shortcuts.rs2 _island_rope_swing — agility 10 on outer swings.
+    // tree_ropeswing2 (brim south, from 2705,3205) intentionally has NO level check
+    // so players cannot softlock on the island (content: loc_type ! tree_ropeswing2).
+    { x: 2709, z: 3209, level: 0, skill: 'agility', levelReq: 10 }, // tree_ropeswing1 north
+    { x: 2511, z: 3091, level: 0, skill: 'agility', levelReq: 10 }, // tree_ropeswing3 ogre
+    // ranging_guild_door diagonal stands (transports.json from-tiles; loc at 2658,3438)
+    { x: 2657, z: 3439, level: 0, skill: 'ranged', levelReq: 40 },
+    { x: 2659, z: 3437, level: 0, skill: 'ranged', levelReq: 40 }
 ];
 
 /**
@@ -84,7 +104,13 @@ export function specialRequiresAt(x: number, z: number, level: number): Transpor
 
     const door = DOOR_SKILL_GATES.find(d => d.x === x && d.z === z && d.level === level);
     if (door) {
-        return { skills: [{ name: door.skill, level: door.levelReq }] };
+        const requires: TransportRequires = {
+            skills: [{ name: door.skill, level: door.levelReq }]
+        };
+        if (door.worn && door.worn.length > 0) {
+            requires.worn = door.worn.map(w => ({ name: w.name, count: w.count }));
+        }
+        return requires;
     }
     const tr = TRANSPORT_SKILL_GATES.find(d => d.x === x && d.z === z && d.level === level);
     if (tr) {

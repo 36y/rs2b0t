@@ -16,8 +16,19 @@ describe('specialRequiresAt — guild skill gates (content-backed)', () => {
         expect(specialRequiresAt(2933, 3289, 0)?.skills).toEqual([{ name: 'crafting', level: 40 }]);
     });
 
-    test('Cooking Guild door requires cooking 32 (hat is execute-time)', () => {
-        expect(specialRequiresAt(3143, 3444, 0)?.skills).toEqual([{ name: 'cooking', level: 32 }]);
+    test('Cooking Guild door requires cooking 32 and Chef hat worn', () => {
+        const r = specialRequiresAt(3143, 3444, 0);
+        expect(r?.skills).toEqual([{ name: 'cooking', level: 32 }]);
+        expect(r?.worn).toEqual([{ name: "Chef's hat", count: 1 }]);
+    });
+
+    test('Ranging Guild door requires ranged 40 on loc and transport stands', () => {
+        const r40 = [{ name: 'ranged', level: 40 }];
+        // doors.json loc tile
+        expect(specialRequiresAt(2658, 3438, 0)?.skills).toEqual(r40);
+        // transports.json from-stands (PathFinder attaches via edge.from)
+        expect(specialRequiresAt(2657, 3439, 0)?.skills).toEqual(r40);
+        expect(specialRequiresAt(2659, 3437, 0)?.skills).toEqual(r40);
     });
 
     test('Mining Guild ladder descent requires mining 60 on all four surface stands', () => {
@@ -51,5 +62,12 @@ describe('specialRequiresAt — guild skill gates (content-backed)', () => {
         // freeSlots only matter when starting Nature Spirit (execute unlock path)
         expect(specialRequiresAt(3443, 3458, 0)).toBeUndefined();
         expect(specialRequiresAt(3444, 3458, 0)).toBeUndefined();
+    });
+
+    test('outer island ropeswings need agility 10; softlock swing does not', () => {
+        expect(specialRequiresAt(2709, 3209, 0)?.skills).toEqual([{ name: 'agility', level: 10 }]);
+        expect(specialRequiresAt(2511, 3091, 0)?.skills).toEqual([{ name: 'agility', level: 10 }]);
+        // tree_ropeswing2 — content skips level check to prevent island softlock
+        expect(specialRequiresAt(2705, 3205, 0)).toBeUndefined();
     });
 });
