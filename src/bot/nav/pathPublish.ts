@@ -14,6 +14,19 @@ export interface PublishedPathTile {
      * Only set on transport tiles.
      */
     label?: string;
+    /** Loc placement the executor will interact with (may differ from stand tile). */
+    locX?: number;
+    locZ?: number;
+    /** Map loc id when known (for object-hull highlight). */
+    locId?: number;
+    /** Loc display name for scene lookup when id is missing. */
+    locName?: string;
+    /** Interact action (Open, Climb-up, …) for live Loc query. */
+    action?: string;
+    /** Hop kind when known (door, ladder, teleport, …). */
+    kind?: string;
+    /** Spell/jewellery tele id — no scenery hull for these. */
+    teleportId?: string;
 }
 
 export interface PublishedPath {

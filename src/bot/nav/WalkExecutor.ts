@@ -290,7 +290,15 @@ class WalkExecutorImpl {
                     z: t.z,
                     level: t.level,
                     transport: true,
-                    label: formatHopLabel(tr)
+                    label: formatHopLabel(tr),
+                    // Loc placement + identity for object-hull highlighter
+                    locX: tr.locX,
+                    locZ: tr.locZ,
+                    locId: tr.locId,
+                    locName: tr.locName,
+                    action: tr.action,
+                    kind: tr.kind,
+                    teleportId: tr.teleportId
                 };
             }),
             pathIdx,

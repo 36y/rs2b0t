@@ -22,8 +22,14 @@ export function matchesTransportLoc(
     if (!idOk) {
         return false;
     }
+    // Prefer exact placement when known, but allow a small slack: ship teleports
+    // land a tile off the stand, and content pack locX/Z for gangplanks is often
+    // one tile from the walkable approach. Live combo failed with exact-only.
     if (loc.id === transport.locId) {
-        return tile.x === transport.locX && tile.z === transport.locZ;
+        return (
+            (tile.x === transport.locX && tile.z === transport.locZ)
+            || near
+        );
     }
     return near;
 }
@@ -48,11 +54,43 @@ export function matchesTransportLanding(
 }
 
 export function findTransportLoc(transport: TransportInfo): Loc | null {
-    return Locs.query()
+    const byMeta = Locs.query()
         .name(transport.locName)
         .action(transport.action)
         .where(loc => matchesTransportLoc(transport, loc))
         .nearest();
+    if (byMeta) {
+        return byMeta;
+    }
+    // Fallback: name+action near the recorded placement (scene lag / id drift after
+    // ship hops — gangplanks on Brimhaven deck after Barnaby).
+    const nearName = Locs.query()
+        .name(transport.locName)
+        .action(transport.action)
+        .where(loc => {
+            const t = loc.tile();
+            return Math.max(Math.abs(t.x - transport.locX), Math.abs(t.z - transport.locZ)) <= 5;
+        })
+        .nearest();
+    if (nearName) {
+        return nearName;
+    }
+    // Closed→open transform: doors keep the same name but swap Open↔Close and id.
+    // Nearby open leaf ⇒ treat as not-shut so the walker steps through.
+    if (/^open$/i.test(transport.action)) {
+        const openLeaf = Locs.query()
+            .name(transport.locName)
+            .where(loc => {
+                const t = loc.tile();
+                const near = Math.max(Math.abs(t.x - transport.locX), Math.abs(t.z - transport.locZ)) <= 3;
+                return near && loc.actions().some(a => a !== null && /^close$/i.test(a));
+            })
+            .nearest();
+        if (openLeaf) {
+            return null; // open — caller should walk through, not re-Open
+        }
+    }
+    return null;
 }
 
 export async function openShutTrapdoor(

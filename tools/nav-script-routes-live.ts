@@ -12,17 +12,24 @@
  *
  *   ~/redeploy.sh
  *   HEADED=1 HARD=1 ENERGY_REFILL_AT=25 bun tools/nav-script-routes-live.ts
+ *   HEADED=1 TRANSPORT_HEAVY=1 LIMIT=12 bun tools/nav-script-routes-live.ts
  *   HEADED=1 LIMIT=8 BUDGET_S=180 bun tools/nav-script-routes-live.ts
  *
  * HARD=1 reads tools/nav/script-routes.hardest.json only (no DOM preload).
+ * TRANSPORT_HEAVY=1 reads tools/nav/transport-heavy.routes.json
+ *   (regenerate: bun tools/nav/transport-heavy-routes.ts --write --n=12).
  * Non-HARD builds seeds from script-route-corpus (happy-dom registered on demand).
  * Pack-only: bun --preload ./test/setup-dom.ts tools/nav/script-route-corpus.ts --hardest=25
  */
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs, setSettings } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';
-import { cheatQuiet, mainlandAccount, maxmeAndClearDialogs } from './tutorial/harness.js';
+import { cheatQuiet, mainlandAccount, maxmeAndClearDialogs, relog } from './tutorial/harness.js';
 import type { ScriptRoute } from './nav/script-route-corpus.ts';
+import {
+    transportQuestJournalNames,
+    transportQuestSetvarCommands
+} from '../src/bot/nav/v2/transportQuestReqs.ts';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -32,10 +39,14 @@ const BUDGET_MS = (Number(process.env.BUDGET_S) || 180) * 1000;
 const LIVE_LIMIT = Number(process.env.LIMIT) || 14;
 /** HARD=1 → walk precalc hardest list (tools/nav/script-routes.hardest.json; ranked with teles by default). */
 const USE_HARDEST = process.env.HARD === '1' || process.env.HARD === 'true';
+/** TRANSPORT_HEAVY=1 → curated transport-heavy OD list (tools/nav/transport-heavy.routes.json). */
+const USE_TRANSPORT_HEAVY =
+    process.env.TRANSPORT_HEAVY === '1' || process.env.TRANSPORT_HEAVY === 'true';
 const ARRIVAL = 8;
 /** Client run energy is 0–100; refill via `energy` cheat when at or below this. */
 const ENERGY_REFILL_AT = Number(process.env.ENERGY_REFILL_AT ?? 25);
 const HARDEST_JSON = path.join(process.cwd(), 'tools/nav/script-routes.hardest.json');
+const TRANSPORT_HEAVY_JSON = path.join(process.cwd(), 'tools/nav/transport-heavy.routes.json');
 
 const { base } = parseArgs(process.argv.slice(2), {
     base: process.env.BASE ?? 'http://localhost:8890'
@@ -199,6 +210,22 @@ export function loadHardestRoutes(limit: number, file = HARDEST_JSON): ScriptRou
         throw new Error(
             `missing ${file} — run:\n` +
                 `  bun --preload ./test/setup-dom.ts tools/nav/script-route-corpus.ts --hardest=${limit || 25}`
+        );
+    }
+    const raw = JSON.parse(fs.readFileSync(file, 'utf8')) as { routes: ScriptRoute[] };
+    const list = raw.routes ?? [];
+    if (list.length === 0) {
+        throw new Error(`${file} has no routes`);
+    }
+    return limit > 0 ? list.slice(0, limit) : list;
+}
+
+/** Load transport-heavy list from `tools/nav/transport-heavy-routes.ts --write`. */
+export function loadTransportHeavyRoutes(limit: number, file = TRANSPORT_HEAVY_JSON): ScriptRoute[] {
+    if (!fs.existsSync(file)) {
+        throw new Error(
+            `missing ${file} — run:\n` +
+                `  bun tools/nav/transport-heavy-routes.ts --write --n=${limit || 12}`
         );
     }
     const raw = JSON.parse(fs.readFileSync(file, 'utf8')) as { routes: ScriptRoute[] };
@@ -397,16 +424,22 @@ async function runJewelleryLegs(page: Page, budget: number): Promise<{ id: strin
     return out;
 }
 
-const all = USE_HARDEST ? [] : await loadSeedRoutes();
-const routes = USE_HARDEST ? loadHardestRoutes(LIVE_LIMIT || 25) : pickLiveRoutes(all, LIVE_LIMIT);
+const all = USE_HARDEST || USE_TRANSPORT_HEAVY ? [] : await loadSeedRoutes();
+const routes = USE_TRANSPORT_HEAVY
+    ? loadTransportHeavyRoutes(LIVE_LIMIT || 12)
+    : USE_HARDEST
+      ? loadHardestRoutes(LIVE_LIMIT || 25)
+      : pickLiveRoutes(all, LIVE_LIMIT);
 
 console.log(
-    `nav-script-routes-live base=${base} tick=${TICK_MS}ms energy≤${ENERGY_REFILL_AT}% refill limit=${LIVE_LIMIT} hard=${USE_HARDEST} budget≈${Math.round(BUDGET_MS / 1000)}s`
+    `nav-script-routes-live base=${base} tick=${TICK_MS}ms energy≤${ENERGY_REFILL_AT}% refill limit=${LIVE_LIMIT} hard=${USE_HARDEST} transportHeavy=${USE_TRANSPORT_HEAVY} budget≈${Math.round(BUDGET_MS / 1000)}s`
 );
 console.log(
-    USE_HARDEST
-        ? `  HARD=1 → ${routes.length} precalc hardest from ${HARDEST_JSON}`
-        : `  selected ${routes.length} of ${all.length} script-ripped routes (hub score)`
+    USE_TRANSPORT_HEAVY
+        ? `  TRANSPORT_HEAVY=1 → ${routes.length} routes from ${TRANSPORT_HEAVY_JSON}`
+        : USE_HARDEST
+          ? `  HARD=1 → ${routes.length} precalc hardest from ${HARDEST_JSON}`
+          : `  selected ${routes.length} of ${all.length} script-ripped routes (hub score)`
 );
 
 await proof.ensureDirs();
@@ -447,9 +480,59 @@ try {
     });
 
     await maxmeAndClearDialogs(page);
+
+    // Transport-heavy / HARD: seed quest varps then relog so quest-list colours update
+    // (content only recolours via ~update_questlist at login).
+    if (USE_TRANSPORT_HEAVY || USE_HARDEST) {
+        const setvars = transportQuestSetvarCommands();
+        console.log(`${stamp()} seeding ${setvars.length} transport quest varps…`);
+        for (const cmd of setvars) {
+            if (!(await cheatQuiet(page, cmd))) {
+                console.warn(`${stamp()} WARN setvar failed: ${cmd}`);
+            }
+        }
+        // Coins for cart / tolls
+        await cheatQuiet(page, '~item coins 5000');
+        console.log(`${stamp()} relog so quest journal colours match setvar`);
+        await relog(page, user);
+        // Re-apply settings after relog
+        await setSettings(page, 'Global', { showNavPath: true, navEngine: 'v2', navCameraFollow: true });
+        await page.evaluate(() => {
+            const g = globalThis as never as Abi;
+            g.__rs2b0t.SettingsStore.save('Global', 'showNavPath', 'true');
+            g.__rs2b0t.SettingsStore.save('Global', 'navEngine', 'v2');
+            g.__rs2b0t.SettingsStore.save('Global', 'navCameraFollow', 'true');
+        });
+        await maxmeAndClearDialogs(page);
+
+        type QStatus = 'notStarted' | 'inProgress' | 'complete' | 'unknown';
+        const statuses = await page.evaluate((names: string[]) => {
+            const g = globalThis as never as {
+                __rs2b0t: { Quests: { status(n: string): QStatus } };
+            };
+            return names.map(n => ({ name: n, status: g.__rs2b0t.Quests.status(n) }));
+        }, transportQuestJournalNames());
+        let bad = 0;
+        for (const q of statuses) {
+            const ok = q.status === 'complete';
+            console.log(`${stamp()} quest ${ok ? 'OK' : 'FAIL'}  ${q.name} → ${q.status}`);
+            if (!ok) {
+                bad++;
+            }
+        }
+        if (bad > 0) {
+            throw new Error(
+                `${bad} transport quest(s) not complete after setvar+relog — check varp names/values`
+            );
+        }
+    }
+
     // Tele runes so v2 can collapse long hub legs (still pure-walk when no tele).
     for (const cmd of ['~item lawrune 80', '~item airrune 200', '~item firerune 80', '~item waterrune 80', '~item earthrune 80']) {
         await cheatQuiet(page, cmd);
+    }
+    if (USE_TRANSPORT_HEAVY) {
+        await cheatQuiet(page, '~item coins 5000');
     }
     console.log(`${stamp()} set tick ${TICK_MS}ms + full run energy`);
     await setTickRate(page, TICK_MS);

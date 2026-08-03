@@ -3,14 +3,16 @@
  */
 
 import type { WorldTile } from '../../adapter/ClientAdapter.js';
-import { reader } from '../../adapter/ClientAdapter.js';
+import { actions, reader } from '../../adapter/ClientAdapter.js';
 import { Banking, isDisposableGatherJunk } from '../../api/Banking.js';
 import { Execution } from '../../api/Execution.js';
 import { Bank } from '../../api/hud/Bank.js';
 import { ChatDialog } from '../../api/hud/ChatDialog.js';
+import { Equipment } from '../../api/hud/Equipment.js';
 import { Inventory } from '../../api/hud/Inventory.js';
 import { Quests } from '../../api/hud/Quests.js';
 import { Skills } from '../../api/hud/Skills.js';
+import { Locs } from '../../api/queries/Locs.js';
 import { Npcs } from '../../api/queries/Npcs.js';
 import {
     matchesUseItem,
@@ -36,6 +38,18 @@ export type WalkToFn = (
     opts?: { radius?: number; timeoutMs?: number; log?: (msg: string) => void }
 ) => Promise<boolean>;
 
+/** Approx content category bans for Entrana (monk_of_entrana.rs2 has_entrana_restricted_items). */
+const ENTRANA_RESTRICTED =
+    /\b(sword|dagger|scimitar|longsword|2h|two.handed|mace|warhammer|battleaxe|axe|pickaxe|spear|hasta|halberd|maul|claws|whip|bow|crossbow|javelin|dart|thrownaxe|knife|staff|wand|battlestaff|halberd|cannon|helmet|full helm|med helm|coif|platebody|chainbody|platelegs|plateskirt|skirt of|kiteshield|square shield|sq shield|dragon square|god cape|fire cape|obsidian cape|defender)\b/i;
+
+export function hasEntranaRestrictedGear(): boolean {
+    const names = [
+        ...Inventory.items().map(i => i.name ?? ''),
+        ...Equipment.items().map(i => i.name ?? '')
+    ];
+    return names.some(n => n.length > 0 && ENTRANA_RESTRICTED.test(n));
+}
+
 export async function handleSpecialCrossing(
     approach: PathStepTile,
     step: PathStepTile,
@@ -53,6 +67,12 @@ export async function handleSpecialCrossing(
         return false;
     }
 
+    // Port Sarim → Entrana: monks refuse weapons/armour (content category check).
+    if (/port sarim.*entrana/i.test(sc.label) && hasEntranaRestrictedGear()) {
+        log(`${sc.label}: remove weapons/armour before boarding Entrana`);
+        return false;
+    }
+
     if (sc.unlockQuest) {
         const st = Quests.status(sc.unlockQuest.quest);
         if (st === 'notStarted' || st === 'unknown') {
@@ -62,18 +82,22 @@ export async function handleSpecialCrossing(
         }
     }
 
-    if (sc.npc) {
-        const npc = Npcs.query().name(sc.npc).action('Talk-to').nearest();
-        if (!npc || !(await npc.interact('Talk-to'))) {
-            log(`${sc.label}: '${sc.npc}' not talkable`);
+    // Loc-backed multi-dest hubs (spirit trees): interact loc then dialog, no NPC.
+    if (!sc.npc && sc.dialogue && sc.toTile && /spirit/i.test(sc.locName)) {
+        const loc =
+            Locs.query().name(sc.locName).action(sc.action).within(3).nearest()
+            ?? Locs.query().name(sc.locName).within(3).nearest();
+        if (!loc || !(await loc.interact(sc.action))) {
+            log(`${sc.label}: '${sc.locName}' not interactable`);
             return false;
         }
+        const rad = sc.arrivalRadius ?? 3;
         const arrived = (): boolean => {
             const me = reader.worldTile();
-            return me !== null && sc.toTile !== undefined && me.level === sc.toTile.level && isNear(me, sc.toTile, 2);
+            return me !== null && sc.toTile !== undefined && me.level === sc.toTile.level && isNear(me, sc.toTile, rad);
         };
         for (let i = 0; i < SHIP_DIALOGUE_STEPS && !arrived(); i++) {
-            const pick = sc.dialogue ? pickChoice(ChatDialog.options(), sc.dialogue.choose) : null;
+            const pick = pickChoice(ChatDialog.options(), sc.dialogue.choose);
             if (pick) {
                 await ChatDialog.chooseOption(pick);
             } else if (ChatDialog.canContinue()) {
@@ -83,10 +107,69 @@ export async function handleSpecialCrossing(
             }
         }
         if (arrived()) {
-            log(`${sc.label}: sailed`);
+            log(`${sc.label}: arrived`);
             return true;
         }
-        log(`${sc.label}: voyage did not resolve — repathing`);
+        log(`${sc.label}: spirit hop did not resolve — repathing`);
+        return false;
+    }
+
+    if (sc.npc) {
+        // Prefer the crossing action when it is a real NPC op (Teleport, Pay-fare, …).
+        const preferred =
+            sc.action && sc.action !== 'Open' && sc.action !== 'Go-through' && sc.action !== 'Pull'
+                ? sc.action
+                : 'Talk-to';
+        const tryActs = preferred === 'Talk-to' ? (['Talk-to'] as const) : ([preferred, 'Talk-to'] as const);
+        let interacted = false;
+        for (const act of tryActs) {
+            const npc = Npcs.query().name(sc.npc).action(act).nearest();
+            if (npc && (await npc.interact(act))) {
+                interacted = true;
+                break;
+            }
+        }
+        if (!interacted) {
+            log(`${sc.label}: '${sc.npc}' not interactable (${preferred})`);
+            return false;
+        }
+        const rad = sc.arrivalRadius ?? 2;
+        const arrived = (): boolean => {
+            const me = reader.worldTile();
+            return me !== null && sc.toTile !== undefined && me.level === sc.toTile.level && isNear(me, sc.toTile, rad);
+        };
+        let mapClicked = false;
+        for (let i = 0; i < SHIP_DIALOGUE_STEPS && !arrived(); i++) {
+            const pick = sc.dialogue ? pickChoice(ChatDialog.options(), sc.dialogue.choose) : null;
+            if (pick) {
+                await ChatDialog.chooseOption(pick);
+            } else if (ChatDialog.canContinue()) {
+                await ChatDialog.continue();
+            } else if (sc.mapChoice && !mapClicked) {
+                // Glidermap (and similar): click dest button nearest label after dialog closes.
+                const comId = reader.mainModalButtonNearText(sc.mapChoice);
+                if (comId !== -1 && actions.ifButton(comId)) {
+                    mapClicked = true;
+                    log(`${sc.label}: map → ${sc.mapChoice}`);
+                } else {
+                    await Execution.delayTicks(1);
+                }
+            } else {
+                await Execution.delayTicks(1);
+            }
+        }
+        if (arrived()) {
+            // Ship/tele landings rebuild the scene (gangplanks on deck). Wait so
+            // Locs.query can see the disembark plank before the next hop.
+            if (sc.toTile && approach.level !== sc.toTile.level) {
+                await Execution.delayTicks(2);
+            } else if (sc.toTile) {
+                await Execution.delayTicks(1);
+            }
+            log(`${sc.label}: arrived`);
+            return true;
+        }
+        log(`${sc.label}: hop did not resolve — repathing`);
         return false;
     }
 

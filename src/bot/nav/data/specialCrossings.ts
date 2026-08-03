@@ -11,6 +11,16 @@ export interface SpecialCrossing {
     dialogue?: { choose: string[] };
     npc?: string;
     toTile?: { x: number; z: number; level: number };
+    /**
+     * After dialogue opens a main-modal map (e.g. glidermap), click the button
+     * nearest the label matching this text (case-insensitive substring).
+     */
+    mapChoice?: string;
+    /**
+     * Chebyshev radius for toTile arrival (default 2). Larger for random landings
+     * (e.g. essence mine pads).
+     */
+    arrivalRadius?: number;
     reopenAfterDialogue?: boolean;
     /**
      * When `quest` is notStarted, walk to `npc` at `stand`, run `dialogue`, then
@@ -101,13 +111,356 @@ export const SPECIAL_CROSSINGS: SpecialCrossing[] = [
     },
 
     { x: 2598, z: 3477, level: 0, locName: 'Log balance', action: 'Walk-across', requiresSkill: { name: 'agility', level: 20 }, label: 'Coal trucks log balance' },
-    { x: 2603, z: 3477, level: 0, locName: 'Log balance', action: 'Walk-across', requiresSkill: { name: 'agility', level: 20 }, label: 'Coal trucks log balance' }
+    { x: 2603, z: 3477, level: 0, locName: 'Log balance', action: 'Walk-across', requiresSkill: { name: 'agility', level: 20 }, label: 'Coal trucks log balance' },
+
+    // Entrana ferry — content: areas/area_port_sarim|entrana/monk_of_entrana.rs2 (Talk-to, members, weapon strip).
+    {
+        x: 3048,
+        z: 3236,
+        level: 0,
+        npc: 'Monk of Entrana',
+        locName: 'Monk of Entrana',
+        action: 'Talk-to',
+        dialogue: { choose: ["Yes, okay, I'm ready to go."] },
+        toTile: { x: 2834, z: 3331, level: 1 },
+        label: 'Port Sarim → Entrana'
+    },
+    {
+        x: 2834,
+        z: 3335,
+        level: 0,
+        npc: 'Monk of Entrana',
+        locName: 'Monk of Entrana',
+        action: 'Talk-to',
+        dialogue: { choose: ["Yes, I'm ready to go."] },
+        toTile: { x: 3048, z: 3231, level: 1 },
+        label: 'Entrana → Port Sarim'
+    },
+
+    // Shilo ↔ Brimhaven cart — vigroy.rs2 / hajedy.rs2 (fare 10–200 coins).
+    {
+        x: 2834,
+        z: 2954,
+        level: 0,
+        npc: 'Vigroy',
+        locName: 'Vigroy',
+        action: 'Talk-to',
+        requires: { item: 'Coins', count: 10 },
+        dialogue: { choose: ["Yes please, I'd like to go to Brimhaven."] },
+        toTile: { x: 2776, z: 3214, level: 0 },
+        label: 'Shilo → Brimhaven cart'
+    },
+    {
+        x: 2779,
+        z: 3212,
+        level: 0,
+        npc: 'Hajedy',
+        locName: 'Hajedy',
+        action: 'Talk-to',
+        requires: { item: 'Coins', count: 10 },
+        dialogue: { choose: ["Yes please, I'd like to go to Shilo Village."] },
+        toTile: { x: 2834, z: 2951, level: 0 },
+        label: 'Brimhaven → Shilo cart'
+    },
+
+    // Essence mine entry — right-click Teleport after Rune Mysteries (content runecraft.constant stands).
+    {
+        x: 3253,
+        z: 3401,
+        level: 0,
+        npc: 'Aubury',
+        locName: 'Aubury',
+        action: 'Teleport',
+        toTile: { x: 2912, z: 4833, level: 0 },
+        arrivalRadius: 64,
+        dialogue: { choose: ['Can you teleport me to the Rune Essence?'] },
+        label: 'Aubury → essence mine'
+    },
+    {
+        x: 3106,
+        z: 9572,
+        level: 0,
+        npc: 'Sedridor',
+        locName: 'Sedridor',
+        action: 'Teleport',
+        toTile: { x: 2912, z: 4833, level: 0 },
+        arrivalRadius: 64,
+        dialogue: { choose: ['Can you teleport me to the Rune Essence?'] },
+        label: 'Sedridor → essence mine'
+    },
+    {
+        x: 2591,
+        z: 3086,
+        level: 0,
+        npc: 'Wizard Distentor',
+        locName: 'Wizard Distentor',
+        action: 'Teleport',
+        toTile: { x: 2912, z: 4833, level: 0 },
+        arrivalRadius: 64,
+        dialogue: { choose: ['Can you teleport me to the Rune Essence?'] },
+        label: 'Distentor → essence mine'
+    },
+    {
+        x: 2684,
+        z: 3322,
+        level: 0,
+        npc: 'Wizard Cromperty',
+        locName: 'Wizard Cromperty',
+        action: 'Teleport',
+        toTile: { x: 2912, z: 4833, level: 0 },
+        arrivalRadius: 64,
+        dialogue: { choose: ['Can you teleport me to the Rune Essence?'] },
+        label: 'Cromperty → essence mine'
+    },
+    {
+        x: 2390,
+        z: 9810,
+        level: 0,
+        npc: 'Brimstail',
+        locName: 'Brimstail',
+        action: 'Teleport',
+        toTile: { x: 2912, z: 4833, level: 0 },
+        arrivalRadius: 64,
+        dialogue: { choose: ['Can you teleport me to the Rune Essence?'] },
+        label: 'Brimstail → essence mine'
+    },
+
+    // Spirit trees — one crossing per destination (dialog option); multi-dest match uses toTile.
+    // Stronghold tree (Grand Tree complete): village / varrock forest / khazard battlefield.
+    {
+        x: 2461,
+        z: 3444,
+        level: 0,
+        locName: 'Spirit Tree',
+        action: 'Talk-to',
+        dialogue: { choose: ['Where can I go?', 'Tree Gnome Village'] },
+        toTile: { x: 2542, z: 3169, level: 0 },
+        label: 'Spirit tree → Gnome Village'
+    },
+    {
+        x: 2461,
+        z: 3444,
+        level: 0,
+        locName: 'Spirit Tree',
+        action: 'Talk-to',
+        dialogue: { choose: ['Where can I go?', 'Forest north of Varrock'] },
+        toTile: { x: 3179, z: 3507, level: 0 },
+        label: 'Spirit tree → Varrock forest'
+    },
+    {
+        x: 2461,
+        z: 3444,
+        level: 0,
+        locName: 'Spirit Tree',
+        action: 'Talk-to',
+        dialogue: { choose: ['Where can I go?', 'Battlefield of Khazard'] },
+        toTile: { x: 2555, z: 3259, level: 0 },
+        label: 'Spirit tree → Khazard battlefield'
+    },
+    // Village tree → others
+    {
+        x: 2542,
+        z: 3169,
+        level: 0,
+        locName: 'Spirit Tree',
+        action: 'Talk-to',
+        dialogue: { choose: ['Where can I go?', 'Battlefield of Khazard'] },
+        toTile: { x: 2555, z: 3259, level: 0 },
+        label: 'Village spirit → Khazard'
+    },
+    {
+        x: 2542,
+        z: 3169,
+        level: 0,
+        locName: 'Spirit Tree',
+        action: 'Talk-to',
+        dialogue: { choose: ['Where can I go?', 'Forest north of Varrock'] },
+        toTile: { x: 3179, z: 3507, level: 0 },
+        label: 'Village spirit → Varrock forest'
+    },
+    {
+        x: 2542,
+        z: 3169,
+        level: 0,
+        locName: 'Spirit Tree',
+        action: 'Talk-to',
+        dialogue: { choose: ['Where can I go?', 'Gnome stronghold'] },
+        toTile: { x: 2461, z: 3444, level: 0 },
+        label: 'Village spirit → Stronghold'
+    },
+    // Young trees → village only
+    {
+        x: 3179,
+        z: 3507,
+        level: 0,
+        locName: 'Spirit Tree',
+        action: 'Talk-to',
+        dialogue: { choose: ['Yes please'] },
+        toTile: { x: 2542, z: 3169, level: 0 },
+        label: 'Varrock young spirit → Village'
+    },
+    {
+        x: 2555,
+        z: 3259,
+        level: 0,
+        locName: 'Spirit Tree',
+        action: 'Talk-to',
+        dialogue: { choose: ['Yes please'] },
+        toTile: { x: 2542, z: 3169, level: 0 },
+        label: 'Khazard young spirit → Village'
+    },
+
+    // Gnome glider (gnome_glider.rs2): Talk-to Gnome pilot → glidermap destination click.
+    // Content only allows hub↔pad (not pad↔pad). Labels match glidermap.if text.
+    {
+        x: 2465,
+        z: 3501,
+        level: 3,
+        npc: 'Gnome pilot',
+        locName: 'Gnome pilot',
+        action: 'Talk-to',
+        dialogue: { choose: ['Can you take me on the glider?'] },
+        mapChoice: 'Gandius',
+        toTile: { x: 2971, z: 2969, level: 0 },
+        arrivalRadius: 4,
+        label: 'Glider hub → Gandius'
+    },
+    {
+        x: 2465,
+        z: 3501,
+        level: 3,
+        npc: 'Gnome pilot',
+        locName: 'Gnome pilot',
+        action: 'Talk-to',
+        dialogue: { choose: ['Can you take me on the glider?'] },
+        mapChoice: 'Sindarpos',
+        toTile: { x: 2850, z: 3497, level: 0 },
+        arrivalRadius: 4,
+        label: 'Glider hub → Sindarpos'
+    },
+    {
+        x: 2465,
+        z: 3501,
+        level: 3,
+        npc: 'Gnome pilot',
+        locName: 'Gnome pilot',
+        action: 'Talk-to',
+        dialogue: { choose: ['Can you take me on the glider?'] },
+        mapChoice: 'Lemanto Andra',
+        toTile: { x: 3320, z: 3430, level: 0 },
+        arrivalRadius: 4,
+        label: 'Glider hub → Lemanto Andra'
+    },
+    {
+        x: 2465,
+        z: 3501,
+        level: 3,
+        npc: 'Gnome pilot',
+        locName: 'Gnome pilot',
+        action: 'Talk-to',
+        dialogue: { choose: ['Can you take me on the glider?'] },
+        mapChoice: 'Kar-Hewo',
+        toTile: { x: 3284, z: 3211, level: 0 },
+        arrivalRadius: 4,
+        label: 'Glider hub → Kar-Hewo'
+    },
+    {
+        x: 2971,
+        z: 2969,
+        level: 0,
+        npc: 'Gnome pilot',
+        locName: 'Gnome pilot',
+        action: 'Talk-to',
+        dialogue: { choose: ['Can you take me on the glider?'] },
+        mapChoice: 'Ta Quir Priw',
+        toTile: { x: 2465, z: 3501, level: 3 },
+        arrivalRadius: 4,
+        label: 'Glider Gandius → hub'
+    },
+    {
+        x: 2850,
+        z: 3497,
+        level: 0,
+        npc: 'Gnome pilot',
+        locName: 'Gnome pilot',
+        action: 'Talk-to',
+        dialogue: { choose: ['Can you take me on the glider?'] },
+        mapChoice: 'Ta Quir Priw',
+        toTile: { x: 2465, z: 3501, level: 3 },
+        arrivalRadius: 4,
+        label: 'Glider Sindarpos → hub'
+    },
+    {
+        x: 3320,
+        z: 3430,
+        level: 0,
+        npc: 'Gnome pilot',
+        locName: 'Gnome pilot',
+        action: 'Talk-to',
+        dialogue: { choose: ['Can you take me on the glider?'] },
+        mapChoice: 'Ta Quir Priw',
+        toTile: { x: 2465, z: 3501, level: 3 },
+        arrivalRadius: 4,
+        label: 'Glider Lemanto Andra → hub'
+    },
+    {
+        x: 3284,
+        z: 3211,
+        level: 0,
+        npc: 'Gnome pilot',
+        locName: 'Gnome pilot',
+        action: 'Talk-to',
+        dialogue: { choose: ['Can you take me on the glider?'] },
+        mapChoice: 'Ta Quir Priw',
+        toTile: { x: 2465, z: 3501, level: 3 },
+        arrivalRadius: 4,
+        label: 'Glider Kar-Hewo → hub'
+    },
+
+    // Wilderness levers (wilderness_lever.rs2). Ardougne→deep wild shows a confirm
+    // the first time (%warning_wilderness_teleport_lever); reverse has no dialog.
+    {
+        x: 2561,
+        z: 3311,
+        level: 0,
+        locName: 'Lever',
+        action: 'Pull',
+        dialogue: {
+            choose: ["Yes I'm brave.", "Yes please, don't show this message again."]
+        },
+        toTile: { x: 3154, z: 3924, level: 0 },
+        arrivalRadius: 3,
+        label: 'Ardougne → deep wilderness lever'
+    },
+    {
+        x: 3153,
+        z: 3923,
+        level: 0,
+        locName: 'Lever',
+        action: 'Pull',
+        toTile: { x: 2562, z: 3311, level: 0 },
+        arrivalRadius: 3,
+        label: 'Deep wilderness → Ardougne lever'
+    }
 ];
 
 export function specialCrossingAt(x: number, z: number, level: number): SpecialCrossing | null {
     return SPECIAL_CROSSINGS.find(c => c.x === x && c.z === z && c.level === level) ?? null;
 }
 
+function toTileMatches(
+    sc: SpecialCrossing,
+    step: { x: number; z: number; level: number }
+): boolean {
+    if (!sc.toTile) {
+        return true;
+    }
+    return (
+        sc.toTile.x === step.x
+        && sc.toTile.z === step.z
+        && (sc.toTile.level === undefined || sc.toTile.level === step.level)
+    );
+}
 
 /**
  * Resolve a special crossing for a path transport hop.
@@ -115,9 +468,13 @@ export function specialCrossingAt(x: number, z: number, level: number): SpecialC
  * Try both approach and destination levels: ships (and similar) are stored as
  * from L0 → to L1 while SPECIAL_CROSSINGS are keyed at the stand/boarding level
  * (often 1). Pre-refactor matching used step.level; approach-only missed ships.
+ *
+ * When a candidate has `toTile`, it must match the hop destination — otherwise
+ * a reverse ship (Customs on the Brimhaven deck) can steal a gangplank hop that
+ * lands on the same pier tile at a different level (#live transport-heavy).
  */
 export function specialCrossingForTransport(
-    transport: { locX: number; locZ: number },
+    transport: { locX: number; locZ: number; locName?: string },
     approach: { x: number; z: number; level: number },
     step?: { x: number; z: number; level: number }
 ): SpecialCrossing | null {
@@ -125,16 +482,63 @@ export function specialCrossingForTransport(
     if (step !== undefined) {
         levels.add(step.level);
     }
+
+    const matchesOrigin = (sc: SpecialCrossing, level: number): boolean => {
+        if (sc.level !== level) {
+            return false;
+        }
+        return (
+            (sc.x === transport.locX && sc.z === transport.locZ)
+            || (sc.x === approach.x && sc.z === approach.z)
+            || (step !== undefined && sc.x === step.x && sc.z === step.z)
+        );
+    };
+
+    let candidates: SpecialCrossing[] = [];
     for (const level of levels) {
-        const hit =
-            specialCrossingAt(transport.locX, transport.locZ, level)
-            ?? specialCrossingAt(approach.x, approach.z, level)
-            ?? (step !== undefined ? specialCrossingAt(step.x, step.z, level) : null);
-        if (hit) {
-            return hit;
+        for (const sc of SPECIAL_CROSSINGS) {
+            if (matchesOrigin(sc, level)) {
+                candidates.push(sc);
+            }
         }
     }
-    return null;
+    if (candidates.length === 0) {
+        return null;
+    }
+
+    // Prefer loc/npc name match when the transport carries a name.
+    const tname = (transport.locName ?? '').toLowerCase();
+    if (tname) {
+        const byName = candidates.filter(
+            sc =>
+                sc.locName.toLowerCase() === tname
+                || (sc.npc !== undefined && sc.npc.toLowerCase() === tname)
+        );
+        if (byName.length > 0) {
+            candidates = byName;
+        }
+    }
+
+    // Drop ship/tele SC whose landing does not match this hop's destination.
+    // Keeps loc-only gates (no toTile) for doors/tolls.
+    if (step !== undefined) {
+        const destOk = candidates.filter(sc => toTileMatches(sc, step));
+        if (destOk.length > 0) {
+            candidates = destOk;
+        } else if (candidates.some(sc => sc.toTile !== undefined)) {
+            // Only mismatched landings — do not steal a gangplank/loc hop.
+            return null;
+        }
+    }
+
+    // Multi-dest hubs: exact toTile match wins.
+    if (step !== undefined && candidates.length > 1) {
+        const byDest = candidates.find(sc => sc.toTile !== undefined && toTileMatches(sc, step));
+        if (byDest) {
+            return byDest;
+        }
+    }
+    return candidates[0] ?? null;
 }
 
 export function pickChoice(options: string[], choose: string[]): string | null {
