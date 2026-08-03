@@ -1,9 +1,15 @@
 import { describe, expect, test } from 'bun:test';
 import {
     buildScriptRoutes,
+    dedupeByCorridor,
+    dedupePaths,
     difficultyScore,
+    pathCorridorSignature,
     rankHardest,
-    type RankedScriptRoute
+    sameDirectedPath,
+    sourcePriority,
+    type RankedScriptRoute,
+    type ScriptRoute
 } from '../../tools/nav/script-route-corpus.ts';
 
 describe('buildScriptRoutes', () => {
@@ -18,6 +24,113 @@ describe('buildScriptRoutes', () => {
         for (const r of routes) {
             expect(r.from.x === r.to.x && r.from.z === r.to.z && r.from.level === r.to.level).toBe(false);
         }
+    });
+
+    test('path dedupe removes near-duplicate directed legs across sources', () => {
+        const raw = buildScriptRoutes({ maxBankPairs: 24, pathDedupeRadius: 0 });
+        const deduped = buildScriptRoutes({ maxBankPairs: 24, pathDedupeRadius: 3 });
+        expect(deduped.length).toBeLessThan(raw.length);
+        // No two kept routes should be the same directed path within radius 3.
+        for (let i = 0; i < deduped.length; i++) {
+            for (let j = i + 1; j < deduped.length; j++) {
+                expect(sameDirectedPath(deduped[i]!, deduped[j]!, 3)).toBe(false);
+            }
+        }
+    });
+});
+
+describe('dedupePaths (endpoints only)', () => {
+    const leg = (
+        id: string,
+        source: string,
+        from: { x: number; z: number; level: number },
+        to: { x: number; z: number; level: number }
+    ): ScriptRoute => ({ id, source, from, to, note: id });
+
+    test('keeps higher-priority source when endpoints are near', () => {
+        const a = leg('commute', 'NAV_TARGETS→BANK', { x: 100, z: 100, level: 0 }, { x: 200, z: 200, level: 0 });
+        const b = leg('bot', 'NAV_TARGETS', { x: 101, z: 100, level: 0 }, { x: 200, z: 201, level: 0 });
+        const out = dedupePaths([b, a], 3);
+        expect(out).toHaveLength(1);
+        expect(out[0]!.id).toBe('commute');
+        expect(sourcePriority('NAV_TARGETS→BANK')).toBeGreaterThan(sourcePriority('NAV_TARGETS'));
+    });
+
+    test('does not collapse reverse directions', () => {
+        const fwd = leg('f', 'WALK_DESTINATIONS', { x: 0, z: 0, level: 0 }, { x: 50, z: 0, level: 0 });
+        const rev = leg('r', 'WALK_DESTINATIONS', { x: 50, z: 0, level: 0 }, { x: 0, z: 0, level: 0 });
+        expect(dedupePaths([fwd, rev], 3)).toHaveLength(2);
+    });
+});
+
+describe('pathCorridorSignature / dedupeByCorridor', () => {
+    test('same end map-square shares a journey (ignores approach and teles)', () => {
+        // Seers tele-in vs Ardougne pure-walk into Grand Tree bank.
+        const seersTele = [
+            { x: 2716, z: 3473, level: 1 },
+            { x: 2662, z: 3305, level: 0 },
+            { x: 2449, z: 3482, level: 1 }
+        ];
+        const ardyWalk = [
+            { x: 2656, z: 3322, level: 1 },
+            { x: 2455, z: 3488, level: 1 }
+        ];
+        const teleHops = [
+            {
+                kind: 'teleport',
+                locName: 'Ardougne teleport',
+                from: { x: 2716, z: 3473, level: 1 },
+                to: { x: 2662, z: 3305, level: 0 }
+            }
+        ];
+        const sa = pathCorridorSignature(seersTele, teleHops, { grid: 64 });
+        const sb = pathCorridorSignature(ardyWalk, [], { grid: 64 });
+        expect(sa).toBe(sb);
+        expect(sa).toBe('end:1:38:54');
+    });
+
+    test('different end map-squares get different signatures', () => {
+        const rellekka = pathCorridorSignature(
+            [{ x: 0, z: 0, level: 0 }, { x: 2668, z: 3660, level: 0 }],
+            [{ kind: 'teleport', locName: 'Camelot teleport', from: { x: 0, z: 0, level: 0 }, to: { x: 2757, z: 3478, level: 0 } }],
+            { grid: 64 }
+        );
+        const varrock = pathCorridorSignature(
+            [{ x: 0, z: 0, level: 0 }, { x: 3213, z: 3424, level: 0 }],
+            [{ kind: 'teleport', locName: 'Varrock teleport', from: { x: 0, z: 0, level: 0 }, to: { x: 3213, z: 3424, level: 0 } }],
+            { grid: 64 }
+        );
+        expect(rellekka).toBe('end:0:41:57');
+        expect(varrock).toBe('end:0:50:53');
+        expect(rellekka).not.toBe(varrock);
+    });
+
+    test('reverse direction is a different journey (different end)', () => {
+        const toGt = pathCorridorSignature([{ x: 2716, z: 3473, level: 1 }, { x: 2449, z: 3482, level: 1 }], []);
+        const fromGt = pathCorridorSignature([{ x: 2449, z: 3482, level: 1 }, { x: 2716, z: 3473, level: 1 }], []);
+        expect(toGt).not.toBe(fromGt);
+    });
+
+    test('dedupeByCorridor keeps the harder row per signature', () => {
+        const base = {
+            from: { x: 0, z: 0, level: 0 },
+            to: { x: 1, z: 0, level: 0 },
+            note: 'n',
+            corridor: 'end:0:41:57',
+            cost: 10,
+            expanded: 1,
+            hops: 0,
+            cheb: 1,
+            ms: 1,
+            difficulty: 10
+        };
+        const rows = [
+            { ...base, id: 'hard', source: 'NAV_TARGETS', difficulty: 10 },
+            { ...base, id: 'easy-mainland', source: 'mainland-routes.json', difficulty: 5 }
+        ];
+        const out = dedupeByCorridor(rows);
+        expect(out).toHaveLength(1);
+        expect(out[0]!.id).toBe('hard'); // difficulty beats source priority
     });
 });
 

@@ -36,6 +36,7 @@ import { virtualizeWithItems } from './v2/virtualState.js';
 import { findForwardRecoveryIndex } from './v2/routeRecovery.js';
 import { RouteState } from './v2/routeState.js';
 import { PathPublish, formatHopLabel } from './pathPublish.js';
+import { PathCameraFollow, pathFacingYaw } from './cameraFollow.js';
 import {
     crossMultiTileDoor,
     isOpenableBarrier,
@@ -137,7 +138,7 @@ class WalkExecutorImpl {
 
     private doorStrikes = new Map<string, number>();
 
-    /** Session blacklist for quest-locked doors (Microbot pattern). */
+    /** Session blacklist for quest-locked doors. */
     private sessionBlacklistDoors = new Set<string>();
 
     private walkPolicy: PathPolicy | undefined;
@@ -261,6 +262,7 @@ class WalkExecutorImpl {
             this.remaining = 0;
             PathPublish.clear();
             RouteState.reset();
+            PathCameraFollow.release();
         }
     }
 
@@ -288,6 +290,18 @@ class WalkExecutorImpl {
         } else {
             RouteState.setInterimClick(null);
         }
+    }
+
+    /**
+     * Publish desired path-facing yaw; PathCameraFollow eases on the frame loop
+     * while Global.navCameraFollow is on (smooth, not walk-tick snap).
+     */
+    private maybeFacePathCamera(me: WorldTile, tiles: PathStep[], pathIdx: number): void {
+        const yaw = pathFacingYaw(me, tiles, pathIdx, 12);
+        if (yaw === null) {
+            return;
+        }
+        PathCameraFollow.samplePathYaw(yaw);
     }
 
     /**
@@ -600,6 +614,7 @@ class WalkExecutorImpl {
             this.remaining = tiles.length - 1 - pathIdx;
             RouteState.setPathIdx(pathIdx);
             this.publishPath(tiles, pathIdx, clickIdx);
+            this.maybeFacePathCamera(me, tiles, pathIdx);
 
             const moved = !lastTile || me.x !== lastTile.x || me.z !== lastTile.z || me.level !== lastTile.level;
             stillIters = moved ? 0 : stillIters + 1;

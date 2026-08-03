@@ -3,19 +3,26 @@
  *
  * Always:
  *   - server tick 300ms (`speed 300`) — restored to 600 on exit
- *   - full run energy + run on before each leg (`energy` debugproc)
+ *   - full run energy + run on before each leg (`~energy` content debugproc)
+ *   - mid-walk energy watch (~1s): refill when run energy ≤ ENERGY_REFILL_AT (default 25)
+ *
+ * Note: `energy` alone is a no-op — engine has no native energy cheat. Content
+ * `[debugproc,energy]` is `~energy` (healenergy 10000 + run on). Needs p_finduid
+ * (player not mid protected script); refill retries a few times if busy.
  *
  *   ~/redeploy.sh
- *   HEADED=1 bun tools/nav-script-routes-live.ts
+ *   HEADED=1 HARD=1 ENERGY_REFILL_AT=25 bun tools/nav-script-routes-live.ts
  *   HEADED=1 LIMIT=8 BUDGET_S=180 bun tools/nav-script-routes-live.ts
  *
- * Pack-only (no browser): bun --preload ./test/setup-dom.ts tools/nav/script-route-corpus.ts
+ * HARD=1 reads tools/nav/script-routes.hardest.json only (no DOM preload).
+ * Non-HARD builds seeds from script-route-corpus (happy-dom registered on demand).
+ * Pack-only: bun --preload ./test/setup-dom.ts tools/nav/script-route-corpus.ts --hardest=25
  */
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs, setSettings } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';
 import { cheatQuiet, mainlandAccount, maxmeAndClearDialogs } from './tutorial/harness.js';
-import { buildScriptRoutes, type ScriptRoute } from './nav/script-route-corpus.ts';
+import type { ScriptRoute } from './nav/script-route-corpus.ts';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -23,9 +30,11 @@ const TICK_MS = 300;
 const TICK_RESTORE_MS = 600;
 const BUDGET_MS = (Number(process.env.BUDGET_S) || 180) * 1000;
 const LIVE_LIMIT = Number(process.env.LIMIT) || 14;
-/** HARD=1 → walk precalc hardest list (tools/nav/script-routes.hardest.json). */
+/** HARD=1 → walk precalc hardest list (tools/nav/script-routes.hardest.json; ranked with teles by default). */
 const USE_HARDEST = process.env.HARD === '1' || process.env.HARD === 'true';
 const ARRIVAL = 8;
+/** Client run energy is 0–100; refill via `energy` cheat when at or below this. */
+const ENERGY_REFILL_AT = Number(process.env.ENERGY_REFILL_AT ?? 25);
 const HARDEST_JSON = path.join(process.cwd(), 'tools/nav/script-routes.hardest.json');
 
 const { base } = parseArgs(process.argv.slice(2), {
@@ -41,7 +50,10 @@ type Abi = {
         reader: {
             worldTile(): Tile | null;
             chat(n: number): { text: string }[];
+            /** Client run energy 0–100 (packet g1). */
+            energy(): number;
         };
+        Game: { energy(): number };
         LoopingBot: new () => { loop(): unknown; log(m: string): void };
         Inventory: { items(): { name: string | null }[] };
         Traversal: {
@@ -104,11 +116,54 @@ async function setTickRate(page: Page, ms: number): Promise<void> {
     console.log(`  tick rate → ${ms}ms`);
 }
 
-/** Full energy + run orb on (Server ::energy / debugproc energy). */
-async function restoreRunEnergy(page: Page): Promise<void> {
-    if (!(await cheatQuiet(page, 'energy'))) {
-        throw new Error('could not send energy cheat');
+/**
+ * Full energy + run on via content debugproc `[debugproc,energy]`.
+ * Command must be `~energy` (NODE_DEBUGPROC_CHAR default `~`); plain `energy`
+ * is not an engine cheat and is silently ignored.
+ */
+async function restoreRunEnergy(page: Page): Promise<boolean> {
+    if (!(await cheatQuiet(page, '~energy', 400))) {
+        return false;
     }
+    // Allow UPDATE_RUNENERGY to land (and a retry if p_finduid was busy).
+    for (let attempt = 0; attempt < 4; attempt++) {
+        await page.waitForTimeout(250);
+        const e = await readRunEnergy(page);
+        if (e >= 90) {
+            return true;
+        }
+        await cheatQuiet(page, '~energy', 300);
+    }
+    return (await readRunEnergy(page)) >= 90;
+}
+
+/** Client energy is 0–100 (packet g1 = server runenergy/100). Prefer Game. */
+async function readRunEnergy(page: Page): Promise<number> {
+    return page.evaluate(() => {
+        const g = globalThis as never as Abi;
+        try {
+            return g.__rs2b0t.Game.energy();
+        } catch {
+            return g.__rs2b0t.reader.energy();
+        }
+    });
+}
+
+/**
+ * While a walk is in flight, poll energy each second and top up at ENERGY_REFILL_AT.
+ * `~energy` only — no LC/engine changes. Retries if p_finduid fails mid-walk.
+ */
+async function maybeRefillEnergy(page: Page, lowAt = ENERGY_REFILL_AT): Promise<boolean> {
+    const e = await readRunEnergy(page);
+    if (e > lowAt) {
+        return false;
+    }
+    const ok = await restoreRunEnergy(page);
+    const after = await readRunEnergy(page);
+    console.log(
+        `    energy refill: ${e}% → ${after}% (threshold ≤${lowAt}${ok ? '' : ', ~energy may have been busy/p_finduid'})`
+    );
+    return ok;
 }
 
 /**
@@ -152,6 +207,19 @@ export function loadHardestRoutes(limit: number, file = HARDEST_JSON): ScriptRou
         throw new Error(`${file} has no routes`);
     }
     return limit > 0 ? list.slice(0, limit) : list;
+}
+
+/**
+ * Seed list for non-HARD runs. Registers happy-dom when needed so BankLocations
+ * (and friends) can import without a manual --preload.
+ */
+async function loadSeedRoutes(): Promise<ScriptRoute[]> {
+    if (typeof globalThis.document === 'undefined') {
+        const { GlobalRegistrator } = await import('@happy-dom/global-registrator');
+        GlobalRegistrator.register();
+    }
+    const { buildScriptRoutes } = await import('./nav/script-route-corpus.ts');
+    return buildScriptRoutes();
 }
 
 type WalkOpts = {
@@ -223,9 +291,12 @@ async function runWalk(page: Page, opts: WalkOpts): Promise<{ walkOk: boolean; t
         if (done) {
             break;
         }
+        // Periodic energy watch (~1s): refill at low run so long pure-walk legs keep running.
+        await maybeRefillEnergy(page).catch(() => undefined);
         if (i > 0 && i % 20 === 0) {
             const mid = await page.evaluate(() => (globalThis as never as Abi).__rs2b0t.reader.worldTile());
-            console.log(`    …walking ${mid ? `${mid.x},${mid.z}` : '?'}`);
+            const e = await readRunEnergy(page).catch(() => -1);
+            console.log(`    …walking ${mid ? `${mid.x},${mid.z}` : '?'} energy=${e}%`);
         }
         await page.waitForTimeout(1000);
     }
@@ -326,11 +397,11 @@ async function runJewelleryLegs(page: Page, budget: number): Promise<{ id: strin
     return out;
 }
 
-const all = buildScriptRoutes();
+const all = USE_HARDEST ? [] : await loadSeedRoutes();
 const routes = USE_HARDEST ? loadHardestRoutes(LIVE_LIMIT || 25) : pickLiveRoutes(all, LIVE_LIMIT);
 
 console.log(
-    `nav-script-routes-live base=${base} tick=${TICK_MS}ms energy=full limit=${LIVE_LIMIT} hard=${USE_HARDEST} budget≈${Math.round(BUDGET_MS / 1000)}s`
+    `nav-script-routes-live base=${base} tick=${TICK_MS}ms energy≤${ENERGY_REFILL_AT}% refill limit=${LIVE_LIMIT} hard=${USE_HARDEST} budget≈${Math.round(BUDGET_MS / 1000)}s`
 );
 console.log(
     USE_HARDEST
@@ -367,11 +438,12 @@ try {
     console.log(`${stamp()} boot '${user}'`);
     await mainlandAccount(page, base, user);
 
-    await setSettings(page, 'Global', { showNavPath: true, navEngine: 'v2' });
+    await setSettings(page, 'Global', { showNavPath: true, navEngine: 'v2', navCameraFollow: true });
     await page.evaluate(() => {
         const g = globalThis as never as Abi;
         g.__rs2b0t.SettingsStore.save('Global', 'showNavPath', 'true');
         g.__rs2b0t.SettingsStore.save('Global', 'navEngine', 'v2');
+        g.__rs2b0t.SettingsStore.save('Global', 'navCameraFollow', 'true');
     });
 
     await maxmeAndClearDialogs(page);
@@ -410,7 +482,9 @@ try {
     }
 
     const passed = results.filter(x => x.ok).length;
-    console.log(`\n── summary ${passed}/${results.length} pass (tick ${TICK_MS}ms, energy restored per leg) ──`);
+    console.log(
+        `\n── summary ${passed}/${results.length} pass (tick ${TICK_MS}ms, energy full/leg + watch ≤${ENERGY_REFILL_AT}%) ──`
+    );
     for (const r of results) {
         console.log(`  ${r.ok ? 'PASS' : 'FAIL'}  ${r.id}: ${r.detail}`);
     }
@@ -419,7 +493,8 @@ try {
         base,
         user,
         tickMs: TICK_MS,
-        energyCheat: 'energy',
+        energyCheat: '~energy',
+        energyRefillAt: ENERGY_REFILL_AT,
         passed,
         total: results.length,
         results
