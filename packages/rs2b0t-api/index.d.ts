@@ -692,6 +692,15 @@ export interface WalkOptions {
      * (tests / when bank is not open).
      */
     bankItemCounts?: Record<string, number>;
+    /**
+     * Danger / no-go zones the pathfinder must not enter.
+     * Known ids (e.g. `'white-wolf-mountain'`) and/or ad-hoc axis-aligned rects.
+     * Idea credit: @lolwut.
+     */
+    avoidZones?: readonly (
+        | string
+        | { minX: number; maxX: number; minZ: number; maxZ: number; level?: number }
+    )[];
 }
 
 /**
@@ -712,6 +721,11 @@ export interface WalkResilientOptions {
     log?: (msg: string) => void;
     /** Forwarded to WalkExecutor (classic | v2). Default: Global `navEngine`. */
     navEngine?: 'classic' | 'v2';
+    /**
+     * Danger / no-go zones for every baked repath (same as WalkOptions.avoidZones).
+     * Known ids (e.g. `'white-wolf-mountain'`) and/or ad-hoc axis-aligned rects.
+     */
+    avoidZones?: WalkOptions['avoidZones'];
 }
 
 /**
