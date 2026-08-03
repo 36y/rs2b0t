@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import { chromium, type Browser, type Page } from 'playwright-core';
 import { CLUE_DB } from '#/bot/clues/data/cluedb.js';
+import { PACK_UNREACHABLE } from '#/bot/clues/data/unreachable.js';
 
 const base = process.env.CLUE_BASE ?? 'http://localhost:8890';
 const argv = process.argv.slice(2);
@@ -9,16 +10,22 @@ const arg = (name: string): string | null => {
     return i !== -1 ? argv[i + 1] : null;
 };
 const WORKERS = Number(arg('workers') ?? 5);
-const CLUE_DEADLINE_MS = Number(arg('mins') ?? 8) * 60_000;
+const tier = arg('tier');
+// Hard trails run up to 6 legs, several through the deep Wilderness, and a
+// guarded dig adds a lvl-108 fight, so they need a longer default deadline.
+const CLUE_DEADLINE_MS = Number(arg('mins') ?? (tier === 'hard' ? 16 : 8)) * 60_000;
 const only = arg('ids')?.split(',').map(Number);
-const EXPECTED_ABANDON = new Set([2811, 2815]);
+// World.TICKRATE is 600ms; ::speed floors at 20.
+const tickMs = arg('speed') !== null ? Math.max(20, Number(arg('speed'))) : null;
+const EXPECTED_ABANDON = new Set(Object.keys(PACK_UNREACHABLE).map(Number));
 
-const ids = (only ?? Object.keys(CLUE_DB).map(Number)).sort((a, b) => a - b);
+const inTier = (id: number): boolean => tier === null || CLUE_DB[id].obj.includes(`_${tier}_`);
+const ids = (only ?? Object.keys(CLUE_DB).map(Number).filter(inTier)).sort((a, b) => a - b);
 const queue = [...ids];
 type Verdict = 'pass' | 'abandon' | 'stuck' | 'slow';
 const results: { id: number; obj: string; type: string; ok: boolean; verdict: Verdict; expected?: boolean; ms: number; reason?: string; tail?: string[] }[] = [];
 
-const PROGRESS_RE = /step done|arrived|leg \d+ —|crossed '|Climb-(up|down)|Enter .* at|acquiring|Swim to|sailed|got a spade|banking loot/;
+const PROGRESS_RE = /step done|arrived|leg \d+ —|crossed '|Climb-(up|down)|Enter .* at|acquiring|Swim to|sailed|got a spade|banking loot|guards this dig|Wizard killed|puzzle: \d+ moves|puzzle solved|praying at the/;
 const STALL_LOG_RE = /blocked live — as close as reachable|stuck at .* — repathing|giving up after/;
 
 type R = {
@@ -78,6 +85,45 @@ async function bootWorker(browser: Browser, w: number): Promise<Page> {
         }
     }
     await cheatBoot(page, 'give coins 2000');
+    // Hard coordinate digs spawn a lvl-65 or lvl-108 wizard. The solver assumes
+    // the account arrives geared, so the sweep equips it the same way a player
+    // would before starting a hard trail.
+    if (tier === 'hard' || tier === null) {
+        // Chainbody, not platebody: rune_platebody is gated behind Dragon Slayer
+        // and silently refuses to equip on a fresh account.
+        for (const item of ['rune_chainbody', 'rune_platelegs', 'rune_full_helm', 'rune_kiteshield', 'rune_scimitar', 'amulet_of_glory']) {
+            await cheatBoot(page, `give ${item}`);
+        }
+        await page.evaluate(async () => {
+            const abi = (globalThis as never as { __rs2b0t: { Inventory: { items(): { name: string | null; interact(op: string): Promise<boolean> | boolean }[] } } }).__rs2b0t;
+            for (const it of abi.Inventory.items()) {
+                if (/rune |amulet/i.test(it.name ?? '')) {
+                    await it.interact('Wear');
+                    await it.interact('Wield');
+                    await new Promise(r => setTimeout(r, 250));
+                }
+            }
+        });
+        await cheatBoot(page, 'give lobster 20');
+    }
+
+    // Without this the solver's bank stop treats the food as loot and deposits
+    // it, because ClueSolver's `food` setting defaults to blank.
+    await page.evaluate(entries => {
+        for (const [k, v] of Object.entries(entries)) {
+            sessionStorage.setItem(`rs2b0t:set:ClueSolver:${k}`, String(v));
+            try {
+                localStorage.setItem(`rs2b0t:set:ClueSolver:${k}`, String(v));
+            } catch {
+                // private mode
+            }
+        }
+    }, { food: 'Lobster', foodWithdraw: 12, eatAtHp: 60 } as Record<string, string | number>);
+
+    if (tickMs !== null) {
+        await cheatBoot(page, `speed ${tickMs}`);
+    }
+
     log(`worker ${w} ready (${username})`);
     return page;
 }

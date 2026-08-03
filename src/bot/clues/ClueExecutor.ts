@@ -15,8 +15,11 @@ import { identifyStep } from '#/bot/clues/ClueLogic.js';
 import { ClueTrace, pushTraceRing } from '#/bot/clues/ClueTrace.js';
 import { CASKET_IDS, CLUE_DB } from '#/bot/clues/data/cluedb.js';
 import { challengeAnswer } from '#/bot/clues/data/challengeAnswers.js';
+import { clueGate } from '#/bot/clues/data/clueGates.js';
 import { KILL_ANCHORS } from '#/bot/clues/data/killAnchors.js';
 import { ensureSpade, ensureCoordTools } from '#/bot/clues/AcquireTools.js';
+import { fightGuardian } from '#/bot/clues/Guardian.js';
+import { PuzzleBox } from '#/bot/clues/PuzzleBox.js';
 import type { ClueRow, ClueStep } from '#/bot/clues/types.js';
 import type { NavPoint } from '#/bot/nav/PathFinder.js';
 import { talkThrough } from '#/bot/quests/exec/primitives.js';
@@ -31,6 +34,10 @@ const SEARCH_OPS = ['Search', 'Open'];
 const ARRIVE_RADIUS = 1;
 const WALK_ATTEMPTS = 4;
 const WALK_TIMEOUT_MS = 45_000;
+// Trails cross the map — Varrock to Feldip, Varrock to level-50 Wilderness — so
+// they route through the teleport catalog when the kit is held. Short hops stay
+// on foot: a tele is only admitted once the route is longer than this.
+const TELEPORT_MIN_SPAN = 40;
 const STEP_ATTEMPTS = 4;
 const PROGRESS_MS = 6000;
 const MAX_STEPS = 20;
@@ -54,10 +61,49 @@ export interface ClueProgress {
     leg: number;
     attempt: number;
     startedAt: number;
+    /** Where this leg is headed — a dig/search coord, or a talk NPC's anchor. */
+    target: NavPoint | null;
+    /** Distance to `target` when the leg began, so travel can be shown as a bar. */
+    startDist: number;
 }
 
 function shortClueName(obj: string): string {
     return obj.replace(/^trail_clue_/, '').replace(/_/g, ' ');
+}
+
+function stepTarget(step: ClueStep): NavPoint | null {
+    if (step.type === 'open-casket') {
+        return null;
+    }
+    if (step.type === 'talk') {
+        const a = TALK_ANCHORS[step.id];
+        return a ? { x: a.x, z: a.z, level: a.level } : null;
+    }
+    return step.coord ?? null;
+}
+
+export function tilesTo(target: NavPoint | null): number | null {
+    const me = target ? reader.worldTile() : null;
+    return me && target ? Math.max(Math.abs(me.x - target.x), Math.abs(me.z - target.z)) : null;
+}
+
+let teleportsEnabled = true;
+
+/**
+ * Options for a cross-map clue leg, so the teleport policy lives in one place.
+ * Close-in walks (stepping onto an NPC or a dropped key) do not use this — a
+ * tele would be absurd at two tiles, and the span gate would refuse it anyway.
+ */
+function walkOpts(log: (m: string) => void, radius = ARRIVE_RADIUS): Parameters<typeof Traversal.walkResilient>[1] {
+    return {
+        radius,
+        attempts: WALK_ATTEMPTS,
+        timeoutMs: WALK_TIMEOUT_MS,
+        log,
+        ...(teleportsEnabled
+            ? { navEngine: 'v2' as const, useTeleportCatalog: true, policy: { useTeleports: true, distanceBeforeTeleport: TELEPORT_MIN_SPAN } }
+            : {})
+    };
 }
 
 const trace = new ClueTrace({
@@ -150,7 +196,7 @@ async function acquireRiddleKey(kf: NonNullable<ClueRow['keyFrom']>, huntTile: N
     if (haveKey()) {
         return true;
     }
-    await Traversal.walkResilient(huntTile, { radius: KEY_WALK_RADIUS, attempts: WALK_ATTEMPTS, timeoutMs: WALK_TIMEOUT_MS, log });
+    await Traversal.walkResilient(huntTile, walkOpts(log, KEY_WALK_RADIUS));
     let target = Npcs.query().name(kf.npc).action('Attack').nearest();
     if (!target) {
         log(`kill-for-key: no '${kf.npc}' near (${huntTile.x},${huntTile.z}) — abandoning riddle`);
@@ -187,7 +233,7 @@ async function dispatch(step: ClueStep, log: (m: string) => void): Promise<void>
                     return;
                 }
             }
-            if (!(await Traversal.walkResilient(step.coord, { radius: ARRIVE_RADIUS, attempts: WALK_ATTEMPTS, timeoutMs: WALK_TIMEOUT_MS, log }))) {
+            if (!(await Traversal.walkResilient(step.coord, walkOpts(log)))) {
                 return;
             }
             const pick = pickSearchLoc(step.coord);
@@ -202,12 +248,30 @@ async function dispatch(step: ClueStep, log: (m: string) => void): Promise<void>
             if (!step.coord) {
                 return;
             }
-            if (!(await Traversal.walkResilient(step.coord, { radius: ARRIVE_RADIUS, attempts: WALK_ATTEMPTS, timeoutMs: WALK_TIMEOUT_MS, log }))) {
+            const coord = step.coord;
+            const standOnIt = (): Promise<boolean> =>
+                Traversal.walkResilient(coord, walkOpts(log));
+            const dig = async (): Promise<void> => {
+                const spade = Inventory.first(SPADE);
+                if (spade) {
+                    await spade.interact('Dig');
+                }
+            };
+
+            if (!(await standOnIt())) {
                 return;
             }
-            const spade = Inventory.first(SPADE);
-            if (spade) {
-                await spade.interact('Dig');
+            await dig();
+
+            // A guarded coord yields the wizard on the first dig and the casket
+            // only on a dig after it dies, so both happen in one attempt. The
+            // fight chases, so walk back before the second dig.
+            const guardian = (step as ClueRow).guardian;
+            if (guardian) {
+                const outcome = await fightGuardian(guardian, log);
+                if (outcome.killed && (await standOnIt())) {
+                    await dig();
+                }
             }
             return;
         }
@@ -215,6 +279,11 @@ async function dispatch(step: ClueStep, log: (m: string) => void): Promise<void>
             const anchor = TALK_ANCHORS[step.id];
             if (!anchor || !step.npc) {
                 return;
+            }
+            const puzzle = (step as ClueRow).puzzle;
+            if (puzzle && Inventory.items().some(i => i.id === puzzle.id)) {
+                await PuzzleBox.solveHeld(puzzle.id, log);
+                // Fall through: the solved box is handed back by re-talking.
             }
             if (ChatDialog.isOpen() || ChatDialog.canContinue()) {
                 await talkThrough(step.npc, [], log);
@@ -237,6 +306,12 @@ async function dispatch(step: ClueStep, log: (m: string) => void): Promise<void>
 }
 
 function blockReason(step: ClueStep): string | null {
+    if (step.type !== 'open-casket') {
+        const gated = clueGate(step.id);
+        if (gated) {
+            return gated;
+        }
+    }
     if (step.type === 'dig' && !Inventory.first(SPADE)) {
         return 'no Spade held';
     }
@@ -305,6 +380,11 @@ async function dismissRewardModal(): Promise<void> {
 export const ClueExecutor = {
     current: null as ClueProgress | null,
 
+    /** Route clue legs through the teleport catalog (spells, ring of dueling). */
+    setTeleports(on: boolean): void {
+        teleportsEnabled = on;
+    },
+
     async solveHeldClue(log: (m: string) => void): Promise<'done' | 'abandon' | 'yield'> {
         const tlog = (m: string): void => {
             trace.note(m);
@@ -344,7 +424,20 @@ export const ClueExecutor = {
                 sessionLegs = 0;
                 acquireTries = 0;
             }
-            ClueExecutor.current = { clueId, name, step: describeStep(step), leg: sessionLegs + 1, attempt: 0, startedAt: ClueExecutor.current?.startedAt ?? Date.now() };
+            const target = stepTarget(step);
+            const sameLeg = ClueExecutor.current?.clueId === clueId;
+            ClueExecutor.current = {
+                clueId,
+                name,
+                step: describeStep(step),
+                leg: sessionLegs + 1,
+                attempt: 0,
+                startedAt: ClueExecutor.current?.startedAt ?? Date.now(),
+                target,
+                // Keep the leg's original distance across retries so the bar
+                // does not reset every attempt.
+                startDist: sameLeg ? (ClueExecutor.current?.startDist ?? 0) : (tilesTo(target) ?? 0)
+            };
 
             if (sessionLegs >= MAX_STEPS) {
                 const reason = `exceeded ${MAX_STEPS} steps`;

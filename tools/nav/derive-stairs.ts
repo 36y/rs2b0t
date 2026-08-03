@@ -64,18 +64,98 @@ function reverseAction(action: string): string {
     return action;
 }
 
-function snapWalkable(finder: PathFinder, x: number, z: number, level: number): NavPoint | null {
-    for (const [dx, dz] of SNAP_OFFSETS) {
-        if (finder.walkable(x + dx, z + dz, level)) return { x: x + dx, z: z + dz, level };
+// Underground is not another level — the engine p_telejumps you to the same
+// level 6400 squares north (`movecoord(coord, 0, 0, 6400)`). So a cellar hop
+// looks like a same-level walk to anything that only inspects `level`, which is
+// why these were never auto-reversed and every cellar could be climbed out of
+// but not into.
+const UNDERGROUND_SHIFT = 6400;
+
+function underground(p: NavPoint): boolean {
+    return p.z >= UNDERGROUND_SHIFT;
+}
+
+/** A hop that changes floor, whether by level or by the underground band. */
+function changesFloor(e: TransportEdgeData): boolean {
+    return e.from.level !== e.to.level || underground(e.from) !== underground(e.to);
+}
+
+/**
+ * Same-level underground hops must be `dungeon`, not `stair`: PathFinder only
+ * hands the executor a `toTile` for dungeon-kind edges, and without one it has
+ * no arrival condition and cannot drive the Open-then-descend two-step that a
+ * shut trapdoor or manhole needs.
+ */
+function edgeKind(e: TransportEdgeData): TransportEdgeData['kind'] {
+    return e.from.level === e.to.level && underground(e.from) !== underground(e.to) ? 'dungeon' : e.kind;
+}
+
+// Walkable is not the same as reachable. build-collision leaves sealed tiles
+// behind — a lone square with no exits at all, or a one-tile-wide strip whose
+// only exits run along itself — and snapping a ladder onto one lands the walker
+// somewhere it can never leave. Measuring the local component is enough to tell
+// them apart without a whole-map flood.
+const LOCAL_FLOOD_CAP = 192;
+const DX8 = [0, 1, 0, -1, 1, 1, -1, -1];
+const DZ8 = [1, 0, -1, 0, 1, -1, -1, 1];
+
+function localComponentSize(finder: PathFinder, p: NavPoint): number {
+    const key = (x: number, z: number): number => (x << 14) | z;
+    const seen = new Set<number>([key(p.x, p.z)]);
+    const stack: NavPoint[] = [p];
+    while (stack.length > 0 && seen.size < LOCAL_FLOOD_CAP) {
+        const cur = stack.pop()!;
+        const exits = finder.exitMask(cur.x, cur.z, cur.level);
+        for (let d = 0; d < 8; d++) {
+            if ((exits & (1 << d)) === 0) {
+                continue;
+            }
+            const nx = cur.x + DX8[d];
+            const nz = cur.z + DZ8[d];
+            if (seen.has(key(nx, nz)) || !finder.walkable(nx, nz, cur.level)) {
+                continue;
+            }
+            seen.add(key(nx, nz));
+            stack.push({ x: nx, z: nz, level: cur.level });
+        }
     }
-    return null;
+    return seen.size;
+}
+
+function snapWalkable(finder: PathFinder, x: number, z: number, level: number): NavPoint | null {
+    let fallback: NavPoint | null = null;
+    for (const [dx, dz] of SNAP_OFFSETS) {
+        const p = { x: x + dx, z: z + dz, level };
+        if (!finder.walkable(p.x, p.z, level)) {
+            continue;
+        }
+        fallback ??= p;
+        // A tile with no exits at all can be stood on and never left. Landing a
+        // ladder there strands the walker, so keep looking; the first ordinary
+        // candidate still wins, leaving every other ladder untouched.
+        if (localComponentSize(finder, p) > 1) {
+            return p;
+        }
+    }
+    return fallback;
 }
 
 function pivotBoth(finder: PathFinder, x: number, z: number, a: number, b: number): { x: number; z: number } | null {
+    let fallback: { x: number; z: number } | null = null;
     for (const [dx, dz] of SNAP_OFFSETS) {
-        if (finder.walkable(x + dx, z + dz, a) && finder.walkable(x + dx, z + dz, b)) return { x: x + dx, z: z + dz };
+        const px = x + dx;
+        const pz = z + dz;
+        if (!finder.walkable(px, pz, a) || !finder.walkable(px, pz, b)) {
+            continue;
+        }
+        fallback ??= { x: px, z: pz };
+        // Same rule as snapWalkable: a tile with no exits on either floor is a
+        // place the walker can reach and never leave.
+        if (localComponentSize(finder, { x: px, z: pz, level: a }) > 1 && localComponentSize(finder, { x: px, z: pz, level: b }) > 1) {
+            return { x: px, z: pz };
+        }
     }
-    return null;
+    return fallback;
 }
 
 function snapAndReverse(finder: PathFinder, curated: TransportEdgeData[], raw: TransportEdgeData[]): { edges: TransportEdgeData[]; dropped: number; supersededDropped: number } {
@@ -109,11 +189,11 @@ function snapAndReverse(finder: PathFinder, curated: TransportEdgeData[], raw: T
         }
     };
     for (const e of snapped) {
-        add(e);
+        add({ ...e, kind: edgeKind(e) });
     }
     for (const e of snapped) {
-        if (e.from.level !== e.to.level && /-(up|down)/i.test(e.action)) {
-            const reverse: TransportEdgeData = { from: e.to, to: e.from, locName: e.locName, action: reverseAction(e.action), kind: e.kind };
+        if (changesFloor(e) && /-(up|down)/i.test(e.action)) {
+            const reverse: TransportEdgeData = { from: e.to, to: e.from, locName: e.locName, action: reverseAction(e.action), kind: edgeKind(e) };
             const disabledReason = DISABLED_AUTO_REVERSES.get(key(reverse));
             add(disabledReason ? { ...reverse, disabledReason } : reverse);
         }
