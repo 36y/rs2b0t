@@ -37,6 +37,11 @@ export interface TransportInfo {
     kind?: string;
     /** nav-v2: spell/jewellery teleport id (varrock, dueling_arena, …). */
     teleportId?: string;
+    /**
+     * Graph edge cost when known (set during A* reconstruction). Used by
+     * hopsFromWaypoints so explain/corpus costs match the real edge (#337).
+     */
+    edgeCost?: number;
 }
 
 export interface Waypoint extends NavPoint {
@@ -592,7 +597,8 @@ export class PathFinder {
 
         const gScore = new Map<number, number>();
         const cameFrom = new Map<number, number>();
-        const viaEdge = new Map<number, TransportInfo>();
+        /** Arrival node → transport metadata + real edge cost for hop reconstruct. */
+        const viaEdge = new Map<number, { transport: TransportInfo; cost: number }>();
         const closed = new Set<number>();
         const open = new MinHeap();
         // Chebyshev is admissible only for unit-cost walk steps. Graph transports
@@ -692,7 +698,7 @@ export class PathFinder {
                 }
                 gScore.set(edge.to, tentative);
                 cameFrom.set(edge.to, current);
-                viaEdge.set(edge.to, edge.transport);
+                viaEdge.set(edge.to, { transport: edge.transport, cost: edge.cost });
                 open.push((tentative + heuristic(nodeX(edge.to), nodeZ(edge.to))) * 1048576 - tentative, edge.to);
             }
         }
@@ -700,7 +706,14 @@ export class PathFinder {
         return { ok: false, reason: 'unreachable', expanded };
     }
 
-    private reconstruct(start: number, goal: number, cost: number, expanded: number, cameFrom: Map<number, number>, viaEdge: Map<number, TransportInfo>): PathOutcome {
+    private reconstruct(
+        start: number,
+        goal: number,
+        cost: number,
+        expanded: number,
+        cameFrom: Map<number, number>,
+        viaEdge: Map<number, { transport: TransportInfo; cost: number }>
+    ): PathOutcome {
         const chain: number[] = [];
         for (let node = goal; ; ) {
             chain.push(node);
@@ -732,7 +745,8 @@ export class PathFinder {
             if (via || viaNext || turn || last) {
                 const wp: Waypoint = point(chain[i]);
                 if (via) {
-                    wp.transport = via;
+                    // Preserve real graph cost on the arrival waypoint's transport.
+                    wp.transport = { ...via.transport, edgeCost: via.cost };
                 }
                 waypoints.push(wp);
             }
