@@ -58,6 +58,7 @@ import RuneCrafter, { SETTINGS as RUNECRAFTER_SETTINGS } from './RuneCrafter.js'
 import NatureCrafter, { SETTINGS as NATURECRAFTER_SETTINGS } from './NatureCrafter.js';
 import MuleCrafter, { SETTINGS as MULECRAFTER_SETTINGS } from './MuleCrafter.js';
 import RoguesPurse from './RoguesPurse.js';
+import HerbloreSecondaries, { HERBLORE_SECONDARIES_SETTINGS } from './HerbloreSecondaries.js';
 import ShopBuyout, { SHOPBUYOUT_SETTINGS } from './ShopBuyout.js';
 import FlaxRunner, { SETTINGS as FLAXRUNNER_SETTINGS } from './FlaxRunner.js';
 import { ShopRunner, SHOPRUNNER_SETTINGS } from './ShopRunner.js';
@@ -448,6 +449,16 @@ ScriptRegistry.register({
     category: 'Herblore',
     tags: ['herblore', 'karamja', 'members', 'afk'],
     create: () => new RoguesPurse()
+});
+
+ScriptRegistry.register({
+    name: 'HerbloreSecondaries',
+    description:
+        "Collects one herblore secondary — red spiders' eggs, snape grass, eye of newt, chocolate dust (buy+grind), white berries (dragonfire shield), or toad's legs — with food on dangerous routes and a 5k coin cap for shops",
+    category: 'Herblore',
+    tags: ['herblore', 'secondaries', 'banking', 'shopping', 'loot'],
+    settingsSchema: HERBLORE_SECONDARIES_SETTINGS,
+    create: () => new HerbloreSecondaries()
 });
 
 ScriptRegistry.register({

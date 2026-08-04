@@ -5,7 +5,7 @@
 
 # Bundled scripts
 
-The client ships **46 scripts** across 20 categories. They double as worked
+The client ships **47 scripts** across 20 categories. They double as worked
 examples of the [scripting API](API.md) — the source for each is under
 [`src/bot/scripts/`](../src/bot/scripts/).
 
@@ -20,7 +20,7 @@ Settings listed here are the parameters the panel exposes before you start a scr
 - [Firemaking](#firemaking) — 1
 - [Fishing](#fishing) — 1
 - [Fletching](#fletching) — 2
-- [Herblore](#herblore) — 2
+- [Herblore](#herblore) — 3
 - [Magic](#magic) — 1
 - [Mining](#mining) — 3
 - [Money making](#money-making) — 2
@@ -271,7 +271,7 @@ Tags: `wilderness`, `dragons`, `hides`
 
 ### HillGiant
 
-Edgeville dungeon hill giants — fetches the brass key if the bank has none, unlocks the hut, and banks limpwurt roots and big bones at Varrock East
+Edgeville dungeon hill giants — fetches the brass key if the bank has none, unlocks the hut, and banks limpwurt roots and big bones at Varrock West
 
 Tags: `combat`, `giants`, `edgeville`, `varrock`, `banking`, `looting`
 
@@ -516,6 +516,18 @@ Tags: `fletching`, `darts`, `members`, `fast`
 
 ## Herblore
 
+### HerbloreSecondaries
+
+Collects one herblore secondary — red spiders' eggs, snape grass, eye of newt, chocolate dust (buy+grind), white berries (dragonfire shield), or toad's legs — with food on dangerous routes and a 5k coin cap for shops
+
+Tags: `herblore`, `secondaries`, `banking`, `shopping`, `loot`
+
+| Setting | Type | Default | Notes |
+|---|---|---|---|
+| `secondary` | string | `"Red spiders' eggs"` | Secondary — one of: Red spiders' eggs, Snape grass, Eye of newt, Chocolate dust, White berries, Toad's legs |
+| `food` | string | `"Lobster"` | Food — one of: Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
+| `foodWithdraw` | number (0–27) | `10` | Food to withdraw |
+
 ### RoguesPurse
 
 Infinite Herblore grind at the fungus-covered cavern wall under the Karamja jungle — searches, identifies, and drops Rogues purse on the tick. Walks itself there; needs Herblore 3 and Jungle Potion past the point where Trufitus asks for the purse
@@ -724,6 +736,8 @@ Tags: `smithing`, `smelting`, `banking`, `afk`
 | `bankBooth` | string | `"Bank booth"` | Bank booth loc name |
 | `obstacle` | string | `"door, gate"` | Openable obstacles (contains) |
 | `leashRadius` | number (2–20) | `8` | Furnace search radius (tiles) |
+| `food` | string | `"Trout"` | Food (blank = none) — one of: Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
+| `eatAtHp` | number (1–99) | `50` | Eat below HP% |
 
 ### SmithingBot
 
