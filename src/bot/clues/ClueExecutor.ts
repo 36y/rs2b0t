@@ -18,14 +18,14 @@ import { challengeAnswer } from '#/bot/clues/data/challengeAnswers.js';
 import { clueGate } from '#/bot/clues/data/clueGates.js';
 import { KILL_ANCHORS } from '#/bot/clues/data/killAnchors.js';
 import { ensureSpade, ensureCoordTools } from '#/bot/clues/AcquireTools.js';
+import { SPADE_NAME } from '#/bot/clues/data/toolAcquire.js';
 import { fightGuardian } from '#/bot/clues/Guardian.js';
 import { PuzzleBox } from '#/bot/clues/PuzzleBox.js';
+import { casketRewardSlots } from '#/bot/clues/packPlan.js';
 import type { ClueRow, ClueStep } from '#/bot/clues/types.js';
 import type { NavPoint } from '#/bot/nav/PathFinder.js';
 import { talkThrough } from '#/bot/quests/exec/primitives.js';
 import { Reach } from '#/bot/api/Reach.js';
-
-const SPADE = 'Spade';
 
 const COORD_ITEMS = ['Sextant', 'Watch', 'Chart'];
 
@@ -172,6 +172,74 @@ async function drainChat(): Promise<void> {
     }
 }
 
+/**
+ * A casket rolls its reward into a side inv and then moves it in one slot at a
+ * time — anything that does not fit lands on the floor. Eat food to clear the
+ * space first; nothing else in a trail pack is safe to shed.
+ */
+async function makeRoomForReward(casketObj: string, log: (m: string) => void): Promise<void> {
+    const want = casketRewardSlots(casketObj);
+    if (Inventory.free() >= want) {
+        return;
+    }
+    log(`casket needs ${want} free slots, pack has ${Inventory.free()} — eating to make room`);
+    for (let guard = 0; guard < 28 && Inventory.free() < want; guard++) {
+        const edible = Inventory.items().find(i => i.actions().some(a => a.toLowerCase() === 'eat'));
+        if (!edible) {
+            break;
+        }
+        const before = Inventory.used();
+        await edible.interact('Eat');
+        if (!(await Execution.delayUntil(() => Inventory.used() < before, 3000))) {
+            break;
+        }
+    }
+    if (Inventory.free() < want) {
+        log(`only ${Inventory.free()}/${want} slots free and nothing left to eat — will retrieve anything that spills`);
+    }
+}
+
+/**
+ * Whatever the reward could not fit lands under us. Take it back, eating for
+ * room as we go, so a tight pack costs nothing. Restricted to our own tile so
+ * this never hoovers up unrelated drops.
+ */
+async function collectSpilledReward(log: (m: string) => void): Promise<void> {
+    const here = reader.worldTile();
+    if (!here) {
+        return;
+    }
+    for (let guard = 0; guard < 28; guard++) {
+        const spill = GroundItems.query()
+            .where(g => {
+                const t = g.tile();
+                return t.x === here.x && t.z === here.z && t.level === here.level;
+            })
+            .nearest();
+        if (!spill) {
+            return;
+        }
+        if (Inventory.isFull()) {
+            const edible = Inventory.items().find(i => i.actions().some(a => a.toLowerCase() === 'eat'));
+            if (!edible) {
+                log(`WARNING: '${spill.name}' spilled from the casket and the pack is full with nothing to eat — leaving it on the ground`);
+                return;
+            }
+            const used = Inventory.used();
+            await edible.interact('Eat');
+            if (!(await Execution.delayUntil(() => Inventory.used() < used, 3000))) {
+                return;
+            }
+        }
+        const before = Inventory.used();
+        await spill.interact('Take');
+        if (!(await Execution.delayUntil(() => Inventory.used() > before, LOOT_WAIT_MS))) {
+            return;
+        }
+        log(`picked spilled reward '${spill.name}' back up`);
+    }
+}
+
 async function answerChallengeIfOpen(step: ClueStep, log: (m: string) => void): Promise<boolean> {
     if (step.type !== 'talk' || !reader.countDialogOpen()) {
         return false;
@@ -252,7 +320,7 @@ async function dispatch(step: ClueStep, log: (m: string) => void): Promise<void>
             const standOnIt = (): Promise<boolean> =>
                 Traversal.walkResilient(coord, walkOpts(log));
             const dig = async (): Promise<void> => {
-                const spade = Inventory.first(SPADE);
+                const spade = Inventory.first(SPADE_NAME);
                 if (spade) {
                     await spade.interact('Dig');
                 }
@@ -298,7 +366,10 @@ async function dispatch(step: ClueStep, log: (m: string) => void): Promise<void>
         case 'open-casket': {
             const casket = Inventory.items().find(i => i.id === step.casketId);
             if (casket) {
+                await makeRoomForReward(step.casketObj, log);
                 await casket.interact('Open');
+                await Execution.delayUntil(() => Inventory.items().every(i => i.id !== step.casketId), REWARD_WAIT_MS);
+                await collectSpilledReward(log);
             }
             return;
         }
@@ -312,7 +383,7 @@ function blockReason(step: ClueStep): string | null {
             return gated;
         }
     }
-    if (step.type === 'dig' && !Inventory.first(SPADE)) {
+    if (step.type === 'dig' && !Inventory.first(SPADE_NAME)) {
         return 'no Spade held';
     }
     if (step.type === 'talk' && (!step.npc || !TALK_ANCHORS[step.id])) {
@@ -335,7 +406,7 @@ async function tryAcquire(step: ClueStep, log: (m: string) => void): Promise<boo
     if (step.type !== 'dig') {
         return false;
     }
-    if (!Inventory.first(SPADE)) {
+    if (!Inventory.first(SPADE_NAME)) {
         return ensureSpade(log);
     }
     if ((step as ClueRow).needsSextant && COORD_ITEMS.some(n => !Inventory.first(n))) {

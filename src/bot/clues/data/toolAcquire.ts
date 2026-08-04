@@ -5,11 +5,11 @@ import type { NpcStop } from '#/bot/quests/exec/primitives.js';
 export const SPADE_NAME = 'Spade';
 export const TRIO = ['Sextant', 'Watch', 'Chart'] as const;
 
-export function trailKit(scrollId: number | null, spade: string = SPADE_NAME): string[] {
+export function trailKit(scrollId: number | null): string[] {
     if (scrollId === null) {
         return [];
     }
-    return [spade, ...TRIO, ...(CLUE_DB[scrollId]?.items ?? [])];
+    return [SPADE_NAME, ...TRIO, ...(CLUE_DB[scrollId]?.items ?? [])];
 }
 
 export const SPADE_SPAWNS: Tile[] = [

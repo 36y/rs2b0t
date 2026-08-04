@@ -197,7 +197,6 @@ export default class AutoFighter extends TaskBot {
             isFood: n => matchesAny(n, [FOOD]),
             foodName: () => FOOD,
             foodWithdraw: () => FOOD_WITHDRAW,
-            spadeName: () => 'Spade',
             enabled: () => SOLVE_CLUES
         });
 

@@ -13,7 +13,8 @@ import { Inventory } from '#/bot/api/hud/Inventory.js';
 import { ClueExecutor } from '#/bot/clues/ClueExecutor.js';
 import { CASKET_IDS, CLUE_DB } from '#/bot/clues/data/cluedb.js';
 import { ensureCoordTools, hasAllTrio, hasCoordClueHeld } from '#/bot/clues/AcquireTools.js';
-import { trailKit } from '#/bot/clues/data/toolAcquire.js';
+import { SPADE_NAME, trailKit } from '#/bot/clues/data/toolAcquire.js';
+import { COORD_TOOL_SLOTS, trailFoodTarget, weaponNeeded } from '#/bot/clues/packPlan.js';
 import { isTeleportItem, teleportRunes } from '#/bot/clues/teleportKit.js';
 import {
     ENTRANA_RESTRICTED_GEAR_RE,
@@ -62,7 +63,6 @@ export interface SolveClueHost {
     isFood(name: string): boolean;
     foodName(): string;
     foodWithdraw(): number;
-    spadeName(): string;
     weaponName?(): string;
     enabled?(): boolean;
     /** Hard-clue dig guardians are fought under Protect from Magic. */
@@ -170,7 +170,6 @@ export class SolveClue implements Task {
                 protectedNames.add(it.name.toLowerCase());
             }
         }
-        const spade = this.host.spadeName().toLowerCase();
         const weapon = (this.host.weaponName?.() ?? '').toLowerCase();
         const coordItems = new Set(['sextant', 'watch', 'chart']);
         const rowItems = scrollId !== null ? (CLUE_DB[scrollId]?.items ?? []) : [];
@@ -184,15 +183,18 @@ export class SolveClue implements Task {
             if (entranaStrip && ENTRANA_RESTRICTED_GEAR_RE.test(name)) {
                 return false;
             }
-            return protectedNames.has(n) || n.includes('clue') || n.includes('casket') || this.host.isFood(name)
-                || n === spade || n === 'coins' || n === SHANTAY_PASS.toLowerCase() || coordItems.has(n)
-                || rowItemNames.has(n)
+            // Food is deliberately NOT kept: a bot arriving from a grind holds a
+            // grind-sized load, which fills the pack and starves the trail kit.
+            // It goes to the bank here and comes back capped below.
+            return protectedNames.has(n) || n.includes('clue') || n.includes('casket')
+                || n === SPADE_NAME.toLowerCase() || n === 'coins' || n === SHANTAY_PASS.toLowerCase()
+                || coordItems.has(n) || rowItemNames.has(n)
                 || (!entranaStrip && weapon !== '' && n === weapon)
                 || (keepTeleports && isTeleportItem(name));
         };
-        await Bank.depositAllMatching(name => !isKeep(name));
+        await Bank.depositAllMatching(name => !isKeep(name), m => this.host.log(`[clue] deposit: ${m}`));
 
-        for (const item of trailKit(scrollId, this.host.spadeName())) {
+        for (const item of trailKit(scrollId)) {
             if (entranaStrip && ENTRANA_RESTRICTED_GEAR_RE.test(item)) {
                 continue;
             }
@@ -205,7 +207,10 @@ export class SolveClue implements Task {
         }
 
         const weaponName = this.host.weaponName?.() ?? '';
-        if (!entranaStrip && weaponName !== '' && !Inventory.first(weaponName)) {
+        if (
+            !entranaStrip
+            && weaponNeeded(weaponName, Inventory.first(weaponName) !== null, Equipment.contains(weaponName))
+        ) {
             await Bank.withdraw(weaponName, 'Withdraw-1');
             await Execution.delayUntil(() => Inventory.first(weaponName) !== null, 2500);
         }
@@ -233,12 +238,24 @@ export class SolveClue implements Task {
         }
 
         const scrollIsCoord = scrollId !== null && CLUE_DB[scrollId]?.needsSextant === true;
+        const fetchingCoordTools = scrollIsCoord && !hasAllTrio() && hasCoordClueHeld();
+
+        // Runes before food: both loops stop on a full pack, and food is the
+        // bulky item, so it must be last or the trail leaves with no teleports.
+        await this.stockTeleports();
 
         const food = this.host.foodName();
         if (food !== '') {
+            const target = trailFoodTarget({
+                hostWant: this.host.foodWithdraw(),
+                heldFood: Inventory.count(food),
+                freeSlots: Inventory.free(),
+                reserveSlots: fetchingCoordTools ? COORD_TOOL_SLOTS : 0
+            });
             this.host.setStatus(`clue — withdrawing ${food}`);
-            for (let guard = 0; guard < 12 && Inventory.count(food) < this.host.foodWithdraw() && !Inventory.isFull(); guard++) {
-                const need = this.host.foodWithdraw() - Inventory.count(food);
+            this.host.log(`[clue] taking ${target} ${food} for the trail (a grind load is ${this.host.foodWithdraw()})`);
+            for (let guard = 0; guard < 12 && Inventory.count(food) < target && !Inventory.isFull(); guard++) {
+                const need = target - Inventory.count(food);
                 const op = need >= 10 ? 'Withdraw-10' : need >= 5 ? 'Withdraw-5' : 'Withdraw-1';
                 const before = Inventory.count(food);
                 await Bank.withdraw(food, op);
@@ -246,14 +263,17 @@ export class SolveClue implements Task {
                     break;
                 }
             }
+            if (Inventory.count(food) === 0 && target > 0) {
+                this.host.log(`[clue] WARNING: no '${food}' came back out of the bank — running the trail without food`);
+            }
         }
+        this.host.log(`[clue] trail pack: ${Inventory.count(food)} ${food}, ${teleportRunes().filter(r => Inventory.count(r.name) > 0).length}/${teleportRunes().length} teleport runes, ${Inventory.free()} slots free`);
 
-        if (scrollIsCoord && !hasAllTrio() && hasCoordClueHeld()) {
+        if (fetchingCoordTools) {
             this.host.setStatus('clue — acquiring coordinate tools');
             await ensureCoordTools(m => this.host.log(`[clue] ${m}`));
         }
 
-        await this.stockTeleports();
         await this.topUpPrayer(scrollId);
 
         return true;

@@ -1,0 +1,130 @@
+import { matchesCommonBankLoot } from '../api/bankRules.js';
+import { CASKET_IDS, CLUE_DB } from '../clues/data/cluedb.js';
+
+/** First wilderness row north of the Edgeville ditch. */
+export const WILDY_MIN_Z = 3520;
+
+/** Hold before walking back after a threat-driven escape. */
+export const RETURN_HOLD_MS = 60_000;
+
+export function inWilderness(z: number): boolean {
+    return z > WILDY_MIN_Z;
+}
+
+/**
+ * Players only count as a threat above the ditch. A clue trail walks through
+ * Varrock and Falador, and treating those crowds as PKers aborts every trail.
+ */
+export function threatApplies(z: number | null, playersNear: number): boolean {
+    return z !== null && playersNear > 0 && inWilderness(z);
+}
+
+/**
+ * Matched by id, not name: every hard trail is a distinct obj all displaying as
+ * "Clue scroll".
+ */
+export function isClueLike(id: number): boolean {
+    return CLUE_DB[id] !== undefined || CASKET_IDS[id] !== undefined;
+}
+
+export interface LootFilter {
+    lootSet: ReadonlySet<string>;
+    bankCommon: boolean;
+    solveClues: boolean;
+    buryBones?: boolean;
+    boneName?: string;
+}
+
+/**
+ * Clues and burial bones ignore lootSet — unchecking a loot box must not
+ * silently disable clue solving or leave the bones you asked to bury.
+ */
+export function wantsGroundItem(item: { id: number; name: string | null }, f: LootFilter): boolean {
+    if (f.solveClues && isClueLike(item.id)) {
+        return true;
+    }
+    const name = item.name ?? '';
+    if (name.length === 0) {
+        return false;
+    }
+    const n = name.toLowerCase();
+    if (f.buryBones === true && f.boneName !== undefined && n === f.boneName.toLowerCase()) {
+        return true;
+    }
+    return f.lootSet.has(n) || (f.bankCommon && matchesCommonBankLoot(name, item.id));
+}
+
+/** Chebyshev radius around the bank stand that counts as "the flee finished". */
+export const AT_BANK_RADIUS = 8;
+
+export interface EscapeState {
+    threat: boolean;
+    hpFraction: number;
+    panicHp: number;
+    hasFood: boolean;
+    atBank: boolean;
+}
+
+/**
+ * A flee ENDS at the bank. Low hp and no food stay true after arriving, so
+ * re-validating there re-walks a zero-tile path forever and wedges the bot on
+ * the spot — restocking is the bank run's job, which sits below this task.
+ */
+export function escapeNeeded(s: EscapeState): boolean {
+    if (s.threat) {
+        return true;
+    }
+    return !s.atBank && s.hpFraction < s.panicHp && !s.hasFood;
+}
+
+/**
+ * A pack full of food is not a reason to bank — food is a resource the bot
+ * spends, and slot-freeing turns it into room. Only a pack we can no longer
+ * free ourselves forces the trip.
+ */
+export function packForcesBank(packFull: boolean, foodCount: number, foodReserve: number): boolean {
+    return packFull && foodCount <= foodReserve;
+}
+
+/**
+ * Items that are neither grind kit nor intended loot — a trail's spade,
+ * sextant, watch, chart, god page or stray runes. Carrying them back to the
+ * dragons wastes slots, so holding any forces a bank-and-restock.
+ */
+export function isGrindForeign(item: { id: number; name: string | null }, ctx: { keep: ReadonlySet<string>; loot: LootFilter }): boolean {
+    const name = item.name ?? '';
+    if (name.length === 0 || isClueLike(item.id)) {
+        return false;
+    }
+    if (ctx.keep.has(name.toLowerCase())) {
+        return false;
+    }
+    return !wantsGroundItem(item, ctx.loot);
+}
+
+export type SlotAction = 'eat' | 'drop' | 'none';
+
+export interface SlotFreeingState {
+    packFull: boolean;
+    lootPresent: boolean;
+    foodCount: number;
+    foodReserve: number;
+    hpFraction: number;
+    /** Loot merges into a stack already held, so no slot is needed. */
+    lootStacksIntoPack: boolean;
+}
+
+/**
+ * Trade a food slot for a loot slot instead of walking to the bank. Eating wins
+ * whenever the heal is not wasted; at full hp the food is dropped. Never digs
+ * into the reserve — below it the caller falls through to its bank run.
+ */
+export function slotFreeingAction(s: SlotFreeingState): SlotAction {
+    if (!s.packFull || !s.lootPresent || s.lootStacksIntoPack) {
+        return 'none';
+    }
+    if (s.foodCount <= s.foodReserve) {
+        return 'none';
+    }
+    return s.hpFraction < 1 ? 'eat' : 'drop';
+}

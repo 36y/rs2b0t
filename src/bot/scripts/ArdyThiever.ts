@@ -126,7 +126,6 @@ export default class ArdyThiever extends TaskBot {
             isFood: n => matchesAny(n, FOOD),
             foodName: () => 'Cake',
             foodWithdraw: () => FOOD_TARGET,
-            spadeName: () => 'Spade',
             enabled: () => SOLVE_CLUES
         });
         Sustain.set(async () => {

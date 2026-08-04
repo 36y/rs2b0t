@@ -91,8 +91,7 @@ export const SETTINGS: SettingsSchema = {
     loot: { type: 'string[]', default: DEFAULT_LOOT.split(',').map(s => s.trim()), label: 'Loot item names', group: 'Banking & loot' },
     ...Object.fromEntries(Object.entries(PERIODIC_BANK_SETTINGS).map(([key, def]) => [key, { ...def, group: 'Banking & loot' }])),
 
-    solveClues: { type: 'boolean', default: true, label: 'Solve easy clues', group: 'Clues' },
-    spade: { type: 'string', default: 'Spade', label: 'Spade item (dig clues)', group: 'Clues' }
+    solveClues: { type: 'boolean', default: true, label: 'Solve easy clues', group: 'Clues' }
 };
 
 let LOCS: Tile[] = [...DEFAULT_SPOTS];
@@ -109,7 +108,6 @@ let FOOD_WITHDRAW = 20;
 let LOOT_NAMES = DEFAULT_LOOT.split(',').map(s => s.trim());
 let BANK_COMMON = true;
 let SOLVE_CLUES = true;
-let SPADE_NAME = 'Spade';
 let STYLE: 'melee' | 'mage' | 'range' = 'melee';
 let MELEE_STYLE: MeleeCombatStyle = 'strength';
 let RANGE_MODE = 1;
@@ -171,7 +169,6 @@ export default class RockCrab extends TaskBot {
         LOOT_NAMES = this.settings.list('loot', LOOT_NAMES).map(s => s.toLowerCase());
         BANK_COMMON = this.settings.bool('bankCommonJunk', true);
         SOLVE_CLUES = this.settings.bool('solveClues', true);
-        SPADE_NAME = this.settings.str('spade', 'Spade');
         STYLE = this.settings.str('combatStyle', 'melee').toLowerCase() as typeof STYLE;
         MELEE_STYLE = parseCombatStyle(this.settings.str('meleeStyle', 'strength'));
         RANGE_MODE = parseRangeStyle(this.settings.str('rangeStyle', 'rapid'));
@@ -194,7 +191,6 @@ export default class RockCrab extends TaskBot {
             isFood: isFoodItem,
             foodName: () => FOOD_NAME,
             foodWithdraw: () => FOOD_WITHDRAW,
-            spadeName: () => SPADE_NAME,
             weaponName: () => WEAPON,
             enabled: () => SOLVE_CLUES
         });

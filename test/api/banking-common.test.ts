@@ -71,10 +71,11 @@ describe('isDisposableGatherJunk', () => {
         expect(isDisposableGatherJunk('Strange fruit', -1)).toBe(true);
         expect(isDisposableGatherJunk('Casket', RANDOM_EVENT_CASKET_ID)).toBe(true);
     });
-    test('includes other event leftovers', () => {
+    test('includes other event leftovers that this content actually has', () => {
         expect(isDisposableGatherJunk('Flier', -1)).toBe(true);
-        expect(isDisposableGatherJunk('Spin ticket', -1)).toBe(true);
         expect(isDisposableGatherJunk('Half a meat pie', -1)).toBe(true);
+        expect(isDisposableGatherJunk('Half a redberry pie', -1)).toBe(true);
+        expect(isDisposableGatherJunk('Half an apple pie', -1)).toBe(true);
     });
     test('rejects tools, coins, logs', () => {
         expect(isDisposableGatherJunk('Rune axe', -1)).toBe(false);

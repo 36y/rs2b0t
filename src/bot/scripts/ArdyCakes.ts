@@ -86,7 +86,6 @@ export default class ArdyCakes extends TaskBot {
             isFood: n => matchesAny(n, CAKE_ITEMS),
             foodName: () => 'Cake',
             foodWithdraw: () => 10,
-            spadeName: () => 'Spade',
             enabled: () => SOLVE_CLUES
         });
         Sustain.set(async () => {

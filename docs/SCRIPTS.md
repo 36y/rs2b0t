@@ -259,11 +259,15 @@ Tags: `wilderness`, `dragons`, `hides`
 | `foodWithdraw` | number (1–27) | `20` | Food to withdraw per bank run |
 | `eatHp` | number (1–99) | `50` | Eat below HP% |
 | `panicHp` | number (1–98) | `30` | Escape below HP% |
+| `foodReserve` | number (0–27) | `4` | Food kept back from slot-freeing |
+| `solveClues` | boolean | `true` | Solve clue drops |
 | `escape` | string | `"Flee to bank"` | Escape mode — one of: Flee to bank, Teleport to Varrock |
 | `loot` | string[] | `["Adamant full helm","Adamantite ore","Chaos talisman","Coins","Dragon bones","Dragon spear","Dragonhide","Fire rune","Half of a key","Herb","Law rune","Mithril axe","Mithril kiteshield","Mithril spear","Nature rune","Nature talisman","Rune dagger","Rune javelin","Rune spear","Shield left half","Steel battleaxe","Steel platelegs","Uncut diamond","Uncut emerald","Uncut ruby","Uncut sapphire","Water rune"]` | Loot to pick up (drop table) — one of: Adamant full helm, Adamantite ore, Bass, Chaos talisman, Coins, Dragon bones, Dragon spear, Dragonhide, Fire rune, Half of a key, Herb, Law rune, Mithril axe, Mithril kiteshield, Mithril spear, Nature rune, Nature talisman, Rune dagger, Rune javelin, Rune spear, Shield left half, Steel battleaxe, Steel platelegs, Uncut diamond, Uncut emerald, Uncut ruby, Uncut sapphire, Water rune |
+| `buryBones` | boolean | `false` | Bury dragon bones |
 | `bankCommonJunk` | boolean | `true` | Also grab shared gems/junk |
 | `anchorTile` | tile | `{"x":3096,"z":3814,"level":0}` | Dragon field tile |
 | `bankTile` | tile | `{"x":3094,"z":3493,"level":0}` | Bank stand tile (Edgeville) |
+| `logDetail` | string | `"Normal"` | Log detail — one of: Normal, Verbose |
 
 ### HillGiant
 
@@ -349,7 +353,6 @@ Tags: `rellekka`, `keys`, `afk`
 | `bankEveryMinutes` | number (1–120) | `10` | Bank every N minutes |
 | `bankCommonJunk` | boolean | `true` | Also bank gems/fruit/beer/kebabs/caskets |
 | `solveClues` | boolean | `true` | Solve easy clues |
-| `spade` | string | `"Spade"` | Spade item (dig clues) |
 
 ## Cooking
 
@@ -809,7 +812,6 @@ Tags: `clues`, `banking`, `utility`
 | `food` | string | `""` | Food item name |
 | `foodWithdraw` | number (1–27) | `8` | Food to withdraw |
 | `eatAtHp` | number (1–99) | `50` | Eat below HP% |
-| `spade` | string | `"Spade"` | Spade item (dig clues) |
 | `restorePrayer` | boolean | `true` | Top up prayer between trails |
 | `useTeleports` | boolean | `true` | Use teleports |
 
