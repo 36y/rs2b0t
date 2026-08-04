@@ -634,31 +634,36 @@ export default class ClientBuild {
         }
     }
 
-    // A region's answer only changes when a model it wants finishes downloading, and a
-    // model never unloads. So the loc stream is decoded once and later ticks watch the
-    // shrinking id set instead of re-walking every loc and re-decoding its LocType --
-    // which the loading screen used to do on every tick, for every region on screen.
-    private static locWaiting: WeakMap<Uint8Array, { xOffset: number; zOffset: number; models: Set<number> }> = new WeakMap();
+    // Decoding a region's loc stream to find which models it needs costs a LocType decode
+    // per loc, and the loading screen used to redo it every tick for every region on
+    // screen. The set of models a region needs never changes, so decode once and cache it.
+    //
+    // Cache the whole set, not just what was missing: mapBuild() calls Model.unload() on
+    // every scene build under lowMem, so a model present now can be gone after the next
+    // build (a floor change forces one). Re-checking every id each tick means eviction is
+    // always noticed and re-requested, exactly as the per-tick rescan used to do.
+    private static locModels: WeakMap<Uint8Array, { xOffset: number; zOffset: number; models: Set<number> }> = new WeakMap();
 
     static checkLocations(src: Uint8Array, xOffset: number, zOffset: number): boolean {
-        const cached = ClientBuild.locWaiting.get(src);
-        if (cached && cached.xOffset === xOffset && cached.zOffset === zOffset) {
-            for (const model of cached.models) {
-                if (Model.requestDownload(model)) {
-                    cached.models.delete(model);
-                }
-            }
-
-            return cached.models.size === 0;
+        let cached = ClientBuild.locModels.get(src);
+        if (!cached || cached.xOffset !== xOffset || cached.zOffset !== zOffset) {
+            const models: Set<number> = new Set();
+            ClientBuild.scanLocations(src, xOffset, zOffset, models);
+            cached = { xOffset, zOffset, models };
+            ClientBuild.locModels.set(src, cached);
         }
 
-        const models: Set<number> = new Set();
-        ClientBuild.scanLocations(src, xOffset, zOffset, models);
-        ClientBuild.locWaiting.set(src, { xOffset, zOffset, models });
-        return models.size === 0;
+        let ready = true;
+        for (const model of cached.models) {
+            if (!Model.requestDownload(model)) {
+                ready = false;
+            }
+        }
+
+        return ready;
     }
 
-    private static scanLocations(src: Uint8Array, xOffset: number, zOffset: number, missing: Set<number>): void {
+    private static scanLocations(src: Uint8Array, xOffset: number, zOffset: number, needed: Set<number>): void {
         const buf = new Packet(src);
         let locId = -1;
 
@@ -699,7 +704,7 @@ export default class ClientBuild {
                     if (stx > 0 && stz > 0 && stx < 103 && stz < 103) {
                         const loc = LocType.list(locId);
                         if (shape != 22 || !ClientBuild.lowMem || loc.active || loc.forcedecor) {
-                            loc.checkModelAll(missing);
+                            loc.collectModels(needed);
                             skip = true;
                         }
                     }

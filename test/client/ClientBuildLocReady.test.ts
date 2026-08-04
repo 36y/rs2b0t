@@ -14,6 +14,8 @@ const { default: ClientBuild } = await import('#/client/ClientBuild.js');
 const { default: LocType } = await import('#/config/LocType.js');
 const { default: Model } = await import('#/dash3d/Model.js');
 
+type Loc = InstanceType<typeof LocType>;
+
 // deltaId, then per position: deltaPos, shape byte; 0 terminates each list.
 // loc 5 and loc 9 each sit at tile (1,2) with one model apiece.
 const LOC_STREAM = (): Uint8Array => new Uint8Array([6, 67, 0, 0, 4, 67, 0, 0, 0]);
@@ -34,10 +36,10 @@ describe('checkLocations model readiness', () => {
         origList = LocType.list;
         origRequest = Model.requestDownload;
 
-        LocType.list = (id: number): LocType => {
+        LocType.list = (id: number): Loc => {
             listCalls++;
-            const loc = Object.create(LocType.prototype) as LocType;
-            loc.model = [MODEL_OF[id]];
+            const loc = Object.create(LocType.prototype) as Loc;
+            loc.model = Int32Array.of(MODEL_OF[id]);
             loc.active = false;
             loc.forcedecor = false;
             return loc;
@@ -57,24 +59,43 @@ describe('checkLocations model readiness', () => {
         Model.requestDownload = origRequest;
     });
 
-    test('decodes the loc stream once, then watches only the missing models', () => {
+    test('decodes the loc stream once, then re-checks the cached model set', () => {
         const src = LOC_STREAM();
 
         expect(ClientBuild.checkLocations(src, 0, 0)).toBe(false);
         expect(listCalls).toBe(2);
         expect(requested).toEqual([100, 200]);
 
-        // second tick: same answer, without walking the stream again
+        // later ticks answer without walking the stream again
         expect(ClientBuild.checkLocations(src, 0, 0)).toBe(false);
         expect(listCalls).toBe(2);
 
         loaded.add(100);
         expect(ClientBuild.checkLocations(src, 0, 0)).toBe(false);
-        expect(listCalls).toBe(2);
 
         loaded.add(200);
         expect(ClientBuild.checkLocations(src, 0, 0)).toBe(true);
         expect(listCalls).toBe(2);
+    });
+
+    test('re-requests a model evicted after the region was already ready', () => {
+        const src = LOC_STREAM();
+        loaded.add(100);
+        loaded.add(200);
+
+        expect(ClientBuild.checkLocations(src, 0, 0)).toBe(true);
+        expect(requested).toEqual([]);
+
+        // mapBuild() calls Model.unload() on every scene build under lowMem, and a floor
+        // change forces a build -- the region must stop reporting ready and re-fetch
+        loaded.delete(200);
+
+        expect(ClientBuild.checkLocations(src, 0, 0)).toBe(false);
+        expect(requested).toEqual([200]);
+        expect(listCalls).toBe(2);
+
+        loaded.add(200);
+        expect(ClientBuild.checkLocations(src, 0, 0)).toBe(true);
     });
 
     test('a region whose models are already loaded is ready with nothing requested', () => {
@@ -93,18 +114,5 @@ describe('checkLocations model readiness', () => {
 
         expect(ClientBuild.checkLocations(src, 8, 8)).toBe(false);
         expect(listCalls).toBe(4);
-    });
-
-    test('keeps re-requesting a model that has not arrived yet', () => {
-        const src = LOC_STREAM();
-
-        ClientBuild.checkLocations(src, 0, 0);
-        loaded.add(100);
-        ClientBuild.checkLocations(src, 0, 0);
-        ClientBuild.checkLocations(src, 0, 0);
-
-        // 200 stays armed for re-request; 100 drops out once it lands
-        expect(requested.filter(id => id === 200).length).toBe(3);
-        expect(requested.filter(id => id === 100).length).toBe(1);
     });
 });

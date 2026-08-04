@@ -293,20 +293,31 @@ export default class LocType {
         return true;
     }
 
-    checkModelAll(missing?: Set<number>): boolean {
+    checkModelAll(): boolean {
         if (this.model == null) {
             return true;
         }
 
         let ready = true;
         for (let i = 0; i < this.model.length; i++) {
-            const model = this.model[i] & 0xFFFF;
-            if (!Model.requestDownload(model)) {
+            const model = this.model[i];
+            if (!Model.requestDownload(model & 0xFFFF)) {
                 ready = false;
-                missing?.add(model);
             }
         }
         return ready;
+    }
+
+    /** Model ids this loc needs. Readiness is checked against these every tick, because
+     *  Model.unload() can evict a model that was already present. */
+    collectModels(out: Set<number>): void {
+        if (this.model == null) {
+            return;
+        }
+
+        for (let i = 0; i < this.model.length; i++) {
+            out.add(this.model[i] & 0xFFFF);
+        }
     }
 
     prefetchModelAll(od: OnDemand) {
