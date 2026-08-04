@@ -93,9 +93,21 @@ export const SPECIAL_CROSSINGS: SpecialCrossing[] = [
         label: 'West Ardougne manhole → sewer (#366)'
     },
 
-    // Gu'Tanoth chasm (#364 dig 3546) — Jump-From rock, 25 Agility, 20gp to guard.
+    // Gu'Tanoth chasm (#364 dig 3546) — two separate Jump-From rocks, one per side.
+    //
+    // Content (quest_itwatchtower.rs2), verified against maps/m39_47.jm2:
+    //   tanothjump1 (loc 2830) @ (2530,3026) south — Agility 25, then ogre_guard4
+    //     within 8 tiles demands 20gp; p_teleport(0_39_47_34_21) = (2530,3029).
+    //   tanothjump2 (loc 2831) @ (2531,3029) north — no skill, no toll, no dialogue;
+    //     p_teleport(0_39_47_35_18) = (2531,3026). "I'm glad that was easier on the
+    //     way back!" The return really is ungated (#398).
+    //
+    // x/z here is the **stand tile**, not the loc: both rocks are shape 10 and block
+    // walking, so the stand is the adjacent tile, and it must equal the transport
+    // edge's `from` or the skill-gated-crossing invariant cannot prune the edge.
+    // Each landing is the opposite rock's stand, so the pair is a closed round trip.
     {
-        x: 2530,
+        x: 2531,
         z: 3026,
         level: 0,
         locName: 'Rock',
@@ -108,7 +120,7 @@ export const SPECIAL_CROSSINGS: SpecialCrossing[] = [
         label: "Gu'Tanoth chasm jump in (#364)"
     },
     {
-        x: 2531,
+        x: 2530,
         z: 3029,
         level: 0,
         locName: 'Rock',

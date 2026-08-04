@@ -36,8 +36,20 @@ export const PACK_UNREACHABLE: Record<number, string> = {
     3548: "Gu'Tanoth Toban camp: cave/ladder baked — hill access may need Watch Tower",
     3522: 'West Ardougne: baked sewer pipe path — requires Plague City complete and Gas mask worn',
     2815: 'Crandor: baked secret wall + rock/rope — requires Dragon Slayer complete',
-    3526: 'Trollheim/Death Plateau: death_climbingrocks need climbing boots worn — requires Death Plateau',
-    3528: 'Trollheim/Death Plateau: death_climbingrocks need climbing boots worn — requires Death Plateau',
+    // Corrected against Content @ 088ca5e (#365). The previous note named
+    // death_climbingrocks / Death Plateau; both are wrong. death_climbingrocks_top
+    // (3722) / _bottom (3723) sit at (2880..2881, 3594..3595) — the Death Plateau,
+    // ~80 tiles south of these digs and not on the route. The crossings that
+    // actually border them are in quest_troll.rs2:
+    //   troll_mountain_shortcut_climbingrocks1/2 (3803/3804) @ (2885,3683+3684)
+    //     and (2887..2888,3661) — Agility 15 only. No quest, no boots.
+    //   troll_climbingrocks (3748) @ (2910,3686+3687) — Agility 15 AND
+    //     %troll_quest >= ^troll_started (Troll Stronghold *started*, not Death
+    //     Plateau). Climbing boots are demanded only when coordz(coord) = 3611,
+    //     i.e. from the far southern approach, not from these tiles.
+    // So the shortcut rocks look bakeable today behind Agility 15 alone.
+    3526: 'Trollheim: troll_mountain_shortcut_climbingrocks1/2 @ (2885,3683) not baked — Agility 15, no quest gate',
+    3528: 'Trollheim: troll_mountain_shortcut_climbingrocks1/2 @ (2885,3683) not baked — Agility 15, no quest gate',
 
     // ---- KIT: an item or skill, no quest -----------------------------------
     // 2811 Baxtorian rope baked (#369); 2790 sewer web baked (#370); 3579 Entrana ferry+planks (#368).
