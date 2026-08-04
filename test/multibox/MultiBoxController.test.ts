@@ -261,14 +261,58 @@ describe('MultiBoxController tabs', () => {
         expect(ops.handles[0].mode).toBe('hidden');
     });
 
-    test('switching back to a populated tab focuses its first bot', () => {
+    test('switching back to a tab restores the bot you were last looking at there', () => {
         const c = new MultiBoxController(new FakeOps());
-        const a = c.add()!;
         c.add();
+        const b = c.add()!;
+        c.focus(b.id);
         c.addTab('empty');
         c.setActiveTab('empty');
         c.setActiveTab('Main');
-        expect(c.focusedId).toBe(a.id);
+        expect(c.focusedId).toBe(b.id);
+    });
+
+    test('each tab remembers its own bot across repeated switches', () => {
+        const c = new MultiBoxController(new FakeOps());
+        c.addTab('alts');
+        c.add();
+        const second = c.add()!;
+        const altsFirst = c.add({ username: 'alt1', password: '', tab: 'alts' })!;
+        const altsSecond = c.add({ username: 'alt2', password: '', tab: 'alts' })!;
+        c.focus(second.id);
+        c.setActiveTab('alts');
+        expect(c.focusedId).toBe(altsFirst.id);
+        c.focus(altsSecond.id);
+
+        c.setActiveTab('Main');
+        expect(c.focusedId).toBe(second.id);
+        c.setActiveTab('alts');
+        expect(c.focusedId).toBe(altsSecond.id);
+    });
+
+    test('a tab falls back to its first bot when the remembered one left it', () => {
+        const c = new MultiBoxController(new FakeOps());
+        c.addTab('alts');
+        const first = c.add()!;
+        const second = c.add()!;
+        c.focus(second.id);
+        c.setActiveTab('alts');
+        c.setSlotTab(second.id, 'alts');
+        c.setActiveTab('Main');
+        expect(c.focusedId).toBe(first.id);
+    });
+
+    test('a renamed tab keeps remembering its bot', () => {
+        const c = new MultiBoxController(new FakeOps());
+        c.addTab('alts');
+        c.add();
+        c.add({ username: 'alt1', password: '', tab: 'alts' });
+        const altsSecond = c.add({ username: 'alt2', password: '', tab: 'alts' })!;
+        c.focus(altsSecond.id);
+        c.setActiveTab('Main');
+        expect(c.renameTab('alts', 'mules')).toBe(true);
+        c.setActiveTab('mules');
+        expect(c.focusedId).toBe(altsSecond.id);
     });
 
     test('a restored bot spawns into its own tab without stealing focus', () => {

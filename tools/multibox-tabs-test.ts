@@ -95,6 +95,53 @@ try {
         return Object.fromEntries(m.slots().map((s, i) => [s.username, tiles[i].offsetParent === null]));
     });
 
+    const clickTile = (username: string) => page.evaluate(user => {
+        const m = (globalThis as never as Mbx).multibox;
+        const idx = m.slots().findIndex(s => s.username === user);
+        const tiles = Array.from(document.querySelectorAll<HTMLElement>('.mbx-slot')).sort((a, b) => (Number.parseInt(a.style.order, 10) || 0) - (Number.parseInt(b.style.order, 10) || 0));
+        const hit = tiles[idx]?.querySelector<HTMLElement>('.mbx-hit');
+        if (!hit) {
+            throw new Error(`no tile for '${user}'`);
+        }
+        hit.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    }, username);
+
+    const focusedUser = async (): Promise<string[]> => (await mbx()).slots.filter(s => s.focused).map(s => s.username);
+
+    // Three software-rendered clients need minutes to hand-shake on a laptop, so
+    // this waits like the other wall harnesses and names the slot that stalled.
+    const waitIngame = (what: string): Promise<void> =>
+        page
+            .waitForFunction(() => (globalThis as never as Mbx).multibox.slots().every(s => s.ingame), undefined, { timeout: 7 * 60_000 })
+            .then(() => undefined)
+            .catch(async () => {
+                const report = await page.evaluate(() => Array.from(document.querySelectorAll<HTMLIFrameElement>('.mbx-frame')).map(el => {
+                    const client = (el.contentWindow as never as { rs2b0t?: { client: { ingame: boolean; constructor: { loopCycle: number } } } })?.rs2b0t?.client;
+                    return `${new URL(el.src).searchParams.get('box')}=${client ? `ingame:${client.ingame} loop:${client.constructor.loopCycle}` : 'no client'}`;
+                }));
+                fail(`${what}: ${report.join(', ')}`);
+            });
+
+    // Park each bot in a different town so the focused pane itself shows which
+    // bot the wall came back to — a screenshot of three Lumbridge spawns proves
+    // nothing about focus.
+    const teleport = async (username: string, tele: string): Promise<void> => {
+        for (const frame of page.frames()) {
+            const who = await frame.evaluate(() => (globalThis as never as { rs2b0t?: { client?: { loginUser?: string } } }).rs2b0t?.client?.loginUser ?? null).catch(() => null);
+            if (who !== username) {
+                continue;
+            }
+            await frame.evaluate(cmd => {
+                const client = (globalThis as never as { rs2b0t: { client: { out: { p1Enc(v: number): void; p1(v: number): void; pjstr(v: string): void } } } }).rs2b0t.client;
+                client.out.p1Enc(224); // ClientProt.CLIENT_CHEAT
+                client.out.p1(cmd.length + 1);
+                client.out.pjstr(cmd);
+            }, tele);
+            return;
+        }
+        fail(`no client frame for '${username}' to teleport`);
+    };
+
     // ---- group bots into a new tab ----
     await page.click('.mbx-tabadd');
     await page.fill('.mbx-tabinput', 'miners');
@@ -117,11 +164,27 @@ try {
     want(await hiddenByUser(), { [users[0]]: true, [users[1]]: false, [users[2]]: false }, 'Main tile hidden while miners is active');
 
     // ---- screenshot 1: grouped wall, bots in game ----
-    await page.waitForFunction(() => (globalThis as never as Mbx).multibox.slots().every(s => s.ingame), undefined, { timeout: 120000 }).catch(() => fail('bots did not reach ingame'));
+    await waitIngame('bots did not reach ingame');
     console.log('all three bots ingame');
     await page.waitForTimeout(3000);
     await page.screenshot({ path: 'docs/e2e/issue-294-tabs.png' });
     console.log('screenshot: docs/e2e/issue-294-tabs.png');
+
+    // ---- issue #407: a tab reopens on the bot you were last looking at ----
+    await teleport(users[0], 'tele 0,50,50,22,18'); // Lumbridge
+    await teleport(users[1], 'tele 0,50,53,13,36'); // Varrock square
+    await teleport(users[2], 'tele 0,51,49,29,48'); // Al Kharid
+    await page.waitForTimeout(4000);
+
+    await clickTile(users[2]);
+    want(await focusedUser(), [users[2]], 'clicking the second miner focuses it');
+    await page.click('.mbx-tabchip[data-tab="Main"]');
+    want(await focusedUser(), [users[0]], 'Main reopens on its own bot');
+    await page.click('.mbx-tabchip[data-tab="miners"]');
+    await page.waitForTimeout(3000);
+    await page.screenshot({ path: 'docs/e2e/issue-407-tab-focus.png' });
+    console.log('screenshot: docs/e2e/issue-407-tab-focus.png');
+    want(await focusedUser(), [users[2]], 'miners reopens on the bot last looked at, not its top slot');
 
     // ---- rename via the gear ----
     await page.click('.mbx-tabgear');
@@ -182,7 +245,7 @@ try {
     want(await hiddenByUser(), { [users[0]]: true, [users[1]]: true, [users[2]]: false }, 'restored visibility matches the active tab');
 
     // ---- screenshot 2: restored wall back in game ----
-    await page.waitForFunction(() => (globalThis as never as Mbx).multibox.slots().every(s => s.ingame), undefined, { timeout: 120000 }).catch(() => fail('bots did not relog after the reload'));
+    await waitIngame('bots did not relog after the reload');
     await page.waitForTimeout(3000);
     await page.screenshot({ path: 'docs/e2e/issue-294-restored.png' });
     console.log('screenshot: docs/e2e/issue-294-restored.png');

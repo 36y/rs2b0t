@@ -74,7 +74,9 @@ to organize bots that are already logged in.
 Tabs are a visibility filter over the one rail: a hidden tile keeps its iframe,
 session, and slot position, because reparenting an iframe reloads its client.
 Focus and Up/Down keyboard navigation stay within the active tab; an empty active
-tab leaves the main pane blank.
+tab leaves the main pane blank. Each tab reopens on the bot you were last looking
+at there (its first bot until you pick one) — that memory is per session, not
+vaulted.
 
 A background tab's bots stop painting altogether — they run at render mode
 `hidden`, which gates the same draw call the renderer switch does. That switch is

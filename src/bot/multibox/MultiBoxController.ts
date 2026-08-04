@@ -21,6 +21,9 @@ export class MultiBoxController {
     private nextId = 1;
     private customTabs: string[] = [];
     private active: string = MAIN_TAB;
+    // tab -> the bot you were last looking at there, so returning to a tab
+    // resumes that bot instead of snapping back to its top slot
+    private lastFocusByTab = new Map<string, number>();
 
     constructor(
         private ops: SlotOps,
@@ -153,6 +156,12 @@ export class MultiBoxController {
                 s.tab = trimmed;
             }
         }
+        // a rename keeps the tab's identity, so its remembered bot rides along
+        const remembered = this.lastFocusByTab.get(oldName);
+        if (remembered !== undefined) {
+            this.lastFocusByTab.delete(oldName);
+            this.lastFocusByTab.set(trimmed, remembered);
+        }
         if (this.active === oldName) {
             this.active = trimmed;
         }
@@ -167,6 +176,7 @@ export class MultiBoxController {
         // Main sits pinned at 0, so every custom tab has a left neighbour
         const prior = this.tabs()[idx];
         this.customTabs.splice(idx, 1);
+        this.lastFocusByTab.delete(name);
         for (const s of this.slots) {
             if (s.tab === name) {
                 s.tab = prior;
@@ -264,7 +274,11 @@ export class MultiBoxController {
         // active tab has any; an empty active tab leaves the main pane blank.
         const visible = this.visibleSlots();
         if (!visible.some(s => s.id === this.focusedId)) {
-            this.focusedId = visible[0]?.id ?? null;
+            const remembered = this.lastFocusByTab.get(this.active);
+            this.focusedId = visible.find(s => s.id === remembered)?.id ?? visible[0]?.id ?? null;
+        }
+        if (this.focusedId !== null) {
+            this.lastFocusByTab.set(this.active, this.focusedId);
         }
         for (const s of this.slots) {
             // A background tab shows nothing, so its bots stop painting entirely.
