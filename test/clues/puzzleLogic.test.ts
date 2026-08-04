@@ -109,7 +109,9 @@ describe('solvePuzzle', () => {
             worst = Math.max(worst, moves!.length);
         }
         expect(worst).toBeLessThan(400);
-    });
+        // 10k solves plus a full replay of each is ~10s of honest work, over the
+        // 5s default. Raised rather than trimmed: the point is the breadth.
+    }, 30_000);
 
     test('solves deeply scrambled boards, not just 101-move ones', () => {
         const rand = mulberry32(7);

@@ -9,6 +9,19 @@ const FIXTURES = new Set(['test/tools/docLinks.test.ts', 'test/docs/links.test.t
 const DOCS = ['README.md', 'desktop/README.md', 'templates/script-template/README.md', ...[...new Glob('docs/*.md').scanSync('.')]].filter(existsSync).sort();
 const SOURCES = [...new Glob('{src,tools,test,packages}/**/*.{ts,sh}').scanSync('.')].filter(f => !f.startsWith('src/3rdparty/') && !FIXTURES.has(f)).sort();
 
+// `git check-ignore` is the authority on what is a build artifact, so the rule
+// lives in .gitignore rather than in a second hand-maintained list here.
+const ignoreCache = new Map<string, boolean>();
+function isGitIgnored(path: string): boolean {
+    let ignored = ignoreCache.get(path);
+    if (ignored === undefined) {
+        const { exitCode } = Bun.spawnSync(['git', 'check-ignore', '-q', '--', path], { stdout: 'ignore', stderr: 'ignore' });
+        ignored = exitCode === 0;
+        ignoreCache.set(path, ignored);
+    }
+    return ignored;
+}
+
 const anchorCache = new Map<string, string[]>();
 function anchorsOf(page: string): string[] {
     let anchors = anchorCache.get(page);
@@ -58,6 +71,12 @@ describe('documentation links', () => {
             for (const { path, line } of extractRepoPaths(readFileSync(doc, 'utf8'))) {
                 // a nested page may name a path relative to itself
                 if (existsSync(path) || (dir !== '' && existsSync(`${dir}/${path}`))) continue;
+                // Generated artifacts are cited on purpose — docs/NAV.md documents
+                // the script-route corpus JSON that tools/nav/script-route-corpus.ts
+                // emits — and they are gitignored precisely because they are built,
+                // not committed. Absent from a fresh checkout is correct, so a
+                // gitignored path is a live reference rather than a broken one.
+                if (isGitIgnored(path)) continue;
                 missing.push(`${doc}:${line} -> ${path}`);
             }
         }
