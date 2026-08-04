@@ -5,10 +5,32 @@ import { BotHost } from './BotHost.js';
 import { paintNavPathInGame } from './nav/pathScenePaint.js';
 import { RenderGate } from './runtime/RenderGate.js';
 
+// The era client runs its logic loop at 50/sec so a human sees smooth animation and
+// instant input. The server ticks every 600ms and a bot reads state, not pixels, so 20/sec
+// is still 12 logic ticks per server tick -- and on a wall, every iframe is spending that
+// budget on one shared main thread.
+//
+// deltime also gates frameDelay, so it caps the draw rate: at 20Hz the focused client
+// falls to ~13 FPS and walk animations visibly crawl. Exactly one client is ever being
+// looked at, so that one keeps the era rate and the rest stay cheap.
+const FOCUSED_LOGIC_HZ = 50;
+const BACKGROUND_LOGIC_HZ = 20;
+
 export default class BotClient extends Client {
     constructor(nodeid: number, lowmem: boolean, members: boolean) {
         super(nodeid, lowmem, members);
+        this.syncLogicRate();
         BotHost.attach(this);
+    }
+
+    /** Cycle-stamped state (combat) is read against deltime, so switching rates can
+     *  misread a stamp made at the old rate for up to one combat window. */
+    private syncLogicRate(): void {
+        const hz = RenderGate.mode === 'focused' ? FOCUSED_LOGIC_HZ : BACKGROUND_LOGIC_HZ;
+        const want = Math.trunc(1000 / hz);
+        if (this.deltime !== want) {
+            this.setFramerate(hz);
+        }
     }
 
     protected override async frameDelay(ms: number): Promise<void> {
@@ -16,6 +38,7 @@ export default class BotClient extends Client {
     }
 
     override async mainloop(): Promise<void> {
+        this.syncLogicRate();
         await super.mainloop();
         BotHost.onFrame();
     }
