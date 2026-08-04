@@ -2327,12 +2327,7 @@ export class Client extends GameShell {
         this.locChangeDoQueue();
         await this.soundsDoQueue();
 
-        // timeoutTimer only advances once a packet has been fully processed, so a client
-        // starved of main-thread time reads its own lag as a dead server and drops a
-        // healthy socket. Reconnecting then costs a login permit and a full scene
-        // rebuild, which starves the wall further. Only the server going quiet counts.
-        const serverSilentMs = this.stream ? this.stream.msSinceData : Number.POSITIVE_INFINITY;
-        if (now - this.timeoutTimer > 15_000 && serverSilentMs > 15_000) {
+        if (now - this.timeoutTimer > 15_000) {
             await this.lostCon();
         }
 

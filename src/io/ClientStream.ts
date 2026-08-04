@@ -47,16 +47,6 @@ export default class ClientStream {
         return this.wsin.available;
     }
 
-    // how long the server has been silent. A live connection is one that is still
-    // sending, not one this client has managed to keep up with.
-    get msSinceData(): number {
-        if (this.dummy || this.remoteClosed) {
-            return Number.POSITIVE_INFINITY;
-        }
-
-        return performance.now() - this.wsin.lastDataAt;
-    }
-
     write(src: Uint8Array, len: number): void {
         if (this.dummy || this.remoteClosed) {
             return;
@@ -205,11 +195,6 @@ class WebSocketReader {
     private closed: boolean = false;
     private total: number = 0;
 
-    // when the server last put bytes on the wire, as opposed to when this client last
-    // managed to process them -- the two diverge badly on a wall, where one starved
-    // main thread is shared by every bot
-    lastDataAt: number = performance.now();
-
     constructor(socket: WebSocket, timeoutMs: number) {
         this.socket = socket;
         this.timeoutMs = timeoutMs;
@@ -231,7 +216,6 @@ class WebSocketReader {
         const event: WebSocketEvent = new WebSocketEvent(new Uint8Array(e.data));
 
         this.total += event.available;
-        this.lastDataAt = performance.now();
         trafficMeter.addReceived(event.len);
 
         if (this.callback) {
