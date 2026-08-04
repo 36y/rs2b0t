@@ -11,15 +11,17 @@ import {
 } from '#/bot/api/CowKillerLocations.js';
 
 describe('CowKiller locations', () => {
-    test('maps the two supported fields to verified cow-spawn centres', () => {
+    test('maps the supported fields to verified cow-spawn centres', () => {
         expect(COW_LOCATIONS.map(location => ({ name: location.name, anchor: location.anchor }))).toEqual([
             { name: 'Lumbridge cow field', anchor: new Tile(3255, 3288, 0) },
+            { name: 'North-west of Lumbridge', anchor: new Tile(3168, 3329, 0) },
             { name: 'South of Falador', anchor: new Tile(3033, 3306, 0) }
         ]);
     });
 
-    test('Auto picks Lumbridge from Al Kharid and Falador from Falador', () => {
+    test('Auto picks Lumbridge from Al Kharid, the north-west field from Varrock West, Falador from Falador', () => {
         expect(resolveCowLocation('Auto', new Tile(3269, 3167, 0))?.name).toBe('Lumbridge cow field');
+        expect(resolveCowLocation('Auto', new Tile(3185, 3440, 0))?.name).toBe('North-west of Lumbridge');
         expect(resolveCowLocation('Auto', new Tile(3013, 3355, 0))?.name).toBe('South of Falador');
     });
 
@@ -28,8 +30,8 @@ describe('CowKiller locations', () => {
         expect(resolveCowLocation('Start tile', new Tile(3255, 3288, 0))).toBeNull();
     });
 
-    test('dropdown contains Auto, both fields, and custom start tile', () => {
-        expect(COW_LOCATION_OPTIONS).toEqual(['Auto', 'Lumbridge cow field', 'South of Falador', 'Start tile']);
+    test('dropdown contains Auto, every field, and custom start tile', () => {
+        expect(COW_LOCATION_OPTIONS).toEqual(['Auto', 'Lumbridge cow field', 'North-west of Lumbridge', 'South of Falador', 'Start tile']);
     });
 
     test('loot stays inside the anchored cow-hunting leash', () => {
@@ -38,19 +40,29 @@ describe('CowKiller locations', () => {
         expect(isCowFieldLootTile(lumbridge, 18, new Tile(3237, 3298, 0))).toBe(true);
         expect(isCowFieldLootTile(lumbridge, 18, new Tile(3255, 3288, 1))).toBe(false);
 
-        const falador = COW_LOCATIONS[1].anchor;
+        const falador = COW_LOCATIONS[2].anchor;
         expect(isCowFieldLootTile(falador, 18, new Tile(3015, 3324, 0))).toBe(true);
         expect(isCowFieldLootTile(falador, 18, new Tile(3014, 3324, 0))).toBe(false);
+    });
+
+    // the scouted spawns run x 3154..3182, z 3316..3342 — the default leash must hold them
+    test('the north-west field leash covers its scouted cow spawns', () => {
+        const northWest = COW_LOCATIONS[1].anchor;
+        for (const cow of [new Tile(3154, 3326, 0), new Tile(3182, 3331, 0), new Tile(3159, 3316, 0), new Tile(3157, 3342, 0)]) {
+            expect(isCowFieldLootTile(northWest, 18, cow)).toBe(true);
+        }
     });
 });
 
 describe('Al Kharid toll float', () => {
     const lumbridge = COW_LOCATIONS[0];
-    const falador = COW_LOCATIONS[1];
+    const northWest = COW_LOCATIONS[1];
+    const falador = COW_LOCATIONS[2];
 
     test('only enabled Lumbridge runs keep toll coins', () => {
         expect(needsTollCoins(lumbridge, true)).toBe(true);
         expect(needsTollCoins(lumbridge, false)).toBe(false);
+        expect(needsTollCoins(northWest, true)).toBe(false);
         expect(needsTollCoins(falador, true)).toBe(false);
         expect(needsTollCoins(null, true)).toBe(false);
     });

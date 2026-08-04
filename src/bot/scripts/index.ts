@@ -110,7 +110,7 @@ ScriptRegistry.register({
 
 ScriptRegistry.register({
     name: 'CowKiller',
-    description: 'Walks to Lumbridge or south-Falador cows, loots hides + bones, and supports Al Kharid toll banking',
+    description: 'Walks to the Lumbridge, north-west Lumbridge, or south-Falador cow fields, loots hides + bones, and supports Al Kharid toll banking',
     category: 'Combat',
     tags: ['lumbridge', 'falador', 'cowhide', 'bones', 'banking', 'afk'],
     settingsSchema: COWKILLER_SETTINGS,

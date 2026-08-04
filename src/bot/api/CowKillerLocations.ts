@@ -14,6 +14,12 @@ export const COW_LOCATIONS: CowLocation[] = [
         usesAlKharidToll: true
     },
     {
+        // West of the river, so it banks at Draynor and never pays the toll gate
+        name: 'North-west of Lumbridge',
+        anchor: new Tile(3168, 3329, 0),
+        usesAlKharidToll: false
+    },
+    {
         name: 'South of Falador',
         anchor: new Tile(3033, 3306, 0),
         usesAlKharidToll: false
