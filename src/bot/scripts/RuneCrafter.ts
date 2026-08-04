@@ -5,7 +5,7 @@ import Tile from '../api/Tile.js';
 import { Bank } from '../api/hud/Bank.js';
 import { withdrawOp } from '../api/hud/bankOps.js';
 import { ChatDialog } from '../api/hud/ChatDialog.js';
-import { Inventory } from '../api/hud/Inventory.js';
+import { Inventory, type InvItem } from '../api/hud/Inventory.js';
 import { Paint } from '../api/hud/Paint.js';
 import { Skills } from '../api/hud/Skills.js';
 import { Trade } from '../api/hud/Trade.js';
@@ -70,7 +70,7 @@ function essCount(): number {
 }
 // everything the pack is allowed to hold; anything else eats a slot essence needs.
 // Nameless items count as junk — a cache miss must not smuggle an item past the deposit.
-function packJunk(keep: string[]): { name: string | null; id: number }[] {
+function packJunk(keep: string[]): InvItem[] {
     const kept = new Set(keep.map(s => s.toLowerCase()));
     return Inventory.items().filter(i => !kept.has((i.name ?? '').toLowerCase()));
 }
@@ -203,7 +203,7 @@ export default class RuneCrafter extends TaskBot {
                 }
             });
             this.log(`RuneCrafter mule recipient starting — camping inside the ${this.choice} altar, crafting whatever essence gets traded in`);
-            this.add(new ContinueDialog(), new MuleTakeTrade(this), new Craft(this, false), new MuleAnswerRequest(this), new MuleGoClean(this), new MuleWait(this), new MulePrepare(this), new Enter(this, () => true));
+            this.add(new ContinueDialog(), new MuleTakeTrade(this), new Craft(this, false), new MuleDropJunk(this), new MuleAnswerRequest(this), new MuleWait(this), new MulePrepare(this), new Enter(this, () => true));
             return;
         }
 
@@ -515,8 +515,8 @@ class MuleTakeTrade implements Task {
             return;
         }
         if (theirEssence > Inventory.free()) {
-            // junk in the pack (random event) — declining lets MuleGoClean bank it before the retry
-            this.bot.log(`can't fit ${theirEssence} essence (${Inventory.free()} slots free) — declining to clean the pack first`);
+            // junk in the pack (random event) — the window has to close before MuleDropJunk can drop it
+            this.bot.log(`can't fit ${theirEssence} essence (${Inventory.free()} slots free) — declining so the pack can be cleared first`);
             await Trade.decline();
             return;
         }
@@ -550,19 +550,30 @@ class MuleAnswerRequest implements Task {
     }
 }
 
-// the recipient's one reason to leave: junk (random-event litter) is eating the slots
-// runners deliver into, and the only way to shed it is a bank trip
-class MuleGoClean implements Task {
+// A random event hands the recipient an item, and that one slot is the difference
+// between a 26-essence delivery fitting and every trade being declined. It goes on
+// the floor: leaving for a bank strands every runner queued at the altar.
+class MuleDropJunk implements Task {
     constructor(private bot: RuneCrafter) {}
-    validate(): boolean { return inTemple() && !Trade.active() && essCount() === 0 && packJunk(this.bot.muleKeep()).length > 0; }
+    // essence is the payload, never junk — a delivery can land between two loops
+    private junk(): InvItem[] { return packJunk([...this.bot.muleKeep(), ESSENCE]); }
+    validate(): boolean { return inTemple() && !Trade.active() && this.junk().length > 0; }
     async execute(): Promise<void> {
-        const junk = packJunk(this.bot.muleKeep());
-        this.bot.setStatus('leaving to bank pack junk');
-        this.bot.log(`${junk.length} item(s) in the pack are not essence (${junk.map(i => i.name ?? 'unnamed').join(', ')}) — bank trip before the next delivery`);
-        const portal = Locs.query().name(PORTAL.name).action(PORTAL.op).nearest();
-        if (!portal) { await Execution.delayTicks(2); return; }
-        if (!(await portal.interact(PORTAL.op))) { await Execution.delayTicks(2); return; }
-        await Execution.delayUntil(() => !inTemple(), 15_000);
+        this.bot.setStatus('dropping random-event junk');
+        for (let guard = 0; guard < 28; guard++) {
+            const item = this.junk()[0];
+            if (!item) { break; }
+            this.bot.log(`dropping ${item.name ?? `item#${item.id}`} — it blocks a full essence delivery`);
+            const before = Inventory.used();
+            if (!(await item.interact('Drop'))) { await Execution.delayTicks(1); return; }
+            await Execution.delayUntil(() => Inventory.used() < before, 3000);
+        }
+        const left = this.junk();
+        if (left.length > 0) {
+            // undroppable junk would loop here forever while runners pile up outside
+            this.bot.log(`RuneCrafter: could not drop ${left.map(i => `${i.name ?? 'unnamed'}#${i.id}`).join(', ')} — it keeps blocking essence deliveries. Stopping.`);
+            ScriptRunner.stop();
+        }
     }
 }
 
