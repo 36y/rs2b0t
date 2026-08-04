@@ -634,8 +634,31 @@ export default class ClientBuild {
         }
     }
 
+    // A region's answer only changes when a model it wants finishes downloading, and a
+    // model never unloads. So the loc stream is decoded once and later ticks watch the
+    // shrinking id set instead of re-walking every loc and re-decoding its LocType --
+    // which the loading screen used to do on every tick, for every region on screen.
+    private static locWaiting: WeakMap<Uint8Array, { xOffset: number; zOffset: number; models: Set<number> }> = new WeakMap();
+
     static checkLocations(src: Uint8Array, xOffset: number, zOffset: number): boolean {
-        let ready = true;
+        const cached = ClientBuild.locWaiting.get(src);
+        if (cached && cached.xOffset === xOffset && cached.zOffset === zOffset) {
+            for (const model of cached.models) {
+                if (Model.requestDownload(model)) {
+                    cached.models.delete(model);
+                }
+            }
+
+            return cached.models.size === 0;
+        }
+
+        const models: Set<number> = new Set();
+        ClientBuild.scanLocations(src, xOffset, zOffset, models);
+        ClientBuild.locWaiting.set(src, { xOffset, zOffset, models });
+        return models.size === 0;
+    }
+
+    private static scanLocations(src: Uint8Array, xOffset: number, zOffset: number, missing: Set<number>): void {
         const buf = new Packet(src);
         let locId = -1;
 
@@ -676,18 +699,13 @@ export default class ClientBuild {
                     if (stx > 0 && stz > 0 && stx < 103 && stz < 103) {
                         const loc = LocType.list(locId);
                         if (shape != 22 || !ClientBuild.lowMem || loc.active || loc.forcedecor) {
-                            if (!loc.checkModelAll()) {
-                                ready = false;
-                            }
-
+                            loc.checkModelAll(missing);
                             skip = true;
                         }
                     }
                 }
             }
         }
-
-        return ready;
     }
 
     static prefetchLocations(buf: Packet, od: OnDemand) {

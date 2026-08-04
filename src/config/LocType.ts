@@ -293,16 +293,17 @@ export default class LocType {
         return true;
     }
 
-    checkModelAll(): boolean {
+    checkModelAll(missing?: Set<number>): boolean {
         if (this.model == null) {
             return true;
         }
 
         let ready = true;
         for (let i = 0; i < this.model.length; i++) {
-            const model = this.model[i];
-            if (!Model.requestDownload(model & 0xFFFF)) {
+            const model = this.model[i] & 0xFFFF;
+            if (!Model.requestDownload(model)) {
                 ready = false;
+                missing?.add(model);
             }
         }
         return ready;
