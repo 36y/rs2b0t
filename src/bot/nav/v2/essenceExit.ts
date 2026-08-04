@@ -109,8 +109,14 @@ export function essenceReturnTile(id: EssenceReturnId): NavPoint {
 
 /**
  * Plan-time edges: each portal placement × each known return.
- * `requires.essenceExitReturn` gates which return is live (see PathFinder + requires).
- * Without WorldState.essenceExitReturn, all returns stay open (pack / offline tools).
+ *
+ * Content (`blankrunestone_exit_portal`): destination is `%exit_essence_mine_coord`
+ * (set by the entry wizard) then `map_findsquare(..., 0, 2, lineofwalk)` — fully
+ * determined by session return, not which of the four portal tiles you click.
+ * That session is modelled via `requires.essenceExitReturn` + PathFinder path-state
+ * (#377). **Not** blacklisted: the landing is fixed given entry wizard (wizard tile ±2).
+ *
+ * Entry *into* the mine remains blacklisted (#388) — random over 22 pads.
  */
 export function essenceExitEdges(): TransportEdgeData[] {
     const out: TransportEdgeData[] = [];

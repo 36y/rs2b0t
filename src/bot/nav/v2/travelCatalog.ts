@@ -138,19 +138,24 @@ export function spiritTreeEdges(): TransportEdgeData[] {
  */
 export function gliderEdges(): TransportEdgeData[] {
     const hub = GLIDER_PAD.taQuirPriw;
-    const pads: { id: string; to: NavPoint }[] = [
+    /** Pads with a return hop in `~calc_glidervar` (gnome_glider.rs2). */
+    const roundTripPads: { id: string; to: NavPoint }[] = [
         { id: 'gandius', to: GLIDER_PAD.gandius },
         { id: 'sindarpos', to: GLIDER_PAD.sindarpos },
-        { id: 'lemanto_andra', to: GLIDER_PAD.lemantoAndra },
         { id: 'kar_hewo', to: GLIDER_PAD.karHewo }
     ];
     // Glider pads open once Grand Tree is finished (content checks complete for free flight).
     const req: TransportRequires = { ...REQ.grandTreeComplete };
     const out: TransportEdgeData[] = [];
-    for (const p of pads) {
+    for (const p of roundTripPads) {
         out.push(edge(hub, p.to, 'Gnome pilot', 'Talk-to', 'ship', `glider_hub_to_${p.id}`, req));
         out.push(edge(p.to, hub, 'Gnome pilot', 'Talk-to', 'ship', `glider_${p.id}_to_hub`, req));
     }
+    // Lemanto Andra (Digsite): hub → pad only. `~calc_glidervar` has no reverse pair;
+    // `~calc_gliderstart` never treats the digsite zone as an origin. One-way sink.
+    out.push(
+        edge(hub, GLIDER_PAD.lemantoAndra, 'Gnome pilot', 'Talk-to', 'ship', 'glider_hub_to_lemanto_andra', req)
+    );
     return out;
 }
 
@@ -224,13 +229,15 @@ export function shiloCartEdges(): TransportEdgeData[] {
 
 /**
  * Rune Mysteries complete → essence mine via wizard Teleport.
- * Landing is random in-content; we plan to a representative pad + acceptAnyLanding.
  *
- * Each entry carries `essenceEntrySetsReturn` so PathFinder path-state updates the
- * session return mid-route (server `%exit_essence_mine_coord` is not client-
- * transmitted). Exit edges require the matching return — entry→wrong-exit is not
- * a surface wormhole (the #377 failure mode). Live: EssenceSession notes the
- * same return when the hop executes.
+ * Content (`essence_mine.rs2`): landing is `random(enum essence_mine_teleports)` over
+ * **22** tiles across mapsquare 45_75, then `map_findsquare(..., 0, 1, lineofsight)`.
+ * That is not a static destination — blacklisted from the path graph (#388). Scripts
+ * that need the mine own the wizard hop (specialCrossings Talk-to for execution).
+ *
+ * `essenceEntrySetsReturn` is kept on the audit rows so docs/tests know which
+ * wizard sets which session return; it is not plan-usable while blacklisted.
+ * Exit edges stay routable and require the matching `essenceExitReturn` (#377).
  */
 export function essenceEntryEdges(): TransportEdgeData[] {
     const f2p: TransportRequires = { ...REQ.runeMysteriesComplete };
@@ -239,17 +246,24 @@ export function essenceEntryEdges(): TransportEdgeData[] {
         ...REQ.runeMysteriesComplete
     };
     const mine = ESSENCE_MINE_PAD;
+    const bl = {
+        blacklist: true as const,
+        blacklistReason:
+            'Essence mine entry: landing is random(enum essence_mine_teleports) over 22 pads + map_findsquare r=1 (content essence_mine.rs2) — not a static destination. Scripts own entry.'
+    };
     const mk = (
         from: NavPoint,
         npc: string,
         debug: string,
         requires: TransportRequires,
         returnId: string
-    ): TransportEdgeData =>
-        edge(from, mine, npc, 'Teleport', 'portal', debug, {
+    ): TransportEdgeData => ({
+        ...edge(from, mine, npc, 'Teleport', 'portal', debug, {
             ...requires,
             essenceEntrySetsReturn: returnId
-        });
+        }),
+        ...bl
+    });
 
     return [
         mk(ESSENCE_RETURN.aubury, 'Aubury', 'ess_entry_aubury', f2p, 'aubury'),
