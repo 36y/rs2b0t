@@ -141,6 +141,11 @@ export const SPECIAL_CROSSINGS: SpecialCrossing[] = [
 
     { x: 2568, z: 9893, level: 0, locName: 'Door', action: 'Open', useItem: { id: 298, name: 'A key' }, label: 'Baxtorian keyed door' },
 
+    // edgeville_dungeon.rs2 brasskeydoor — Open only answers "The door is locked";
+    // the key has to be USED on it (oplocu), in both directions, and the unlock walks
+    // you through. Without a key the graph must route around the hut (#421, #423).
+    { x: 3115, z: 3450, level: 0, locName: 'Door', action: 'Open', useItem: { id: 983, name: 'Brass key' }, requires: { item: 'Brass key', count: 1 }, label: 'Hill giant hut brass key door' },
+
     // Baxtorian Falls approach (#369 / #320) — same stands as FireGiantLogic:
     //   Board Log raft @ ~2510,3493 → crash mound 2512,3481
     //   Walk south to throw stand 2512,3477 (in THROW_ZONE z 3476–3481)

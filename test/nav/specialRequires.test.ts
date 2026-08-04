@@ -58,6 +58,10 @@ describe('specialRequiresAt — guild skill gates (content-backed)', () => {
         expect(barnaby?.currency?.amount).toBe(30);
     });
 
+    test('hill giant hut door requires a Brass key at plan time', () => {
+        expect(specialRequiresAt(3115, 3450, 0)?.items).toEqual([{ name: 'Brass key', count: 1, consumed: true }]);
+    });
+
     test('Mort Myre unlock freeSlots is not a plan-time require', () => {
         // freeSlots only matter when starting Nature Spirit (execute unlock path)
         expect(specialRequiresAt(3443, 3458, 0)).toBeUndefined();

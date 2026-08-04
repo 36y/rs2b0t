@@ -26,6 +26,17 @@ describe('specialCrossingAt', () => {
         expect(matchesUseItem({ id: 298 }, door!.useItem!)).toBe(true);
     });
 
+    test('hill giant hut door is key-used and gated, so a keyless bot routes around it', () => {
+        const door = specialCrossingAt(3115, 3450, 0);
+        expect(door?.label).toBe('Hill giant hut brass key door');
+        expect(door?.locName).toBe('Door');
+        // Open alone only says "The door is locked" (edgeville_dungeon.rs2)
+        expect(door?.useItem).toEqual({ id: 983, name: 'Brass key' });
+        expect(door?.requires).toEqual({ item: 'Brass key', count: 1 });
+        expect(meetsRequirement(0, door!.requires!)).toBe(false);
+        expect(meetsRequirement(1, door!.requires!)).toBe(true);
+    });
+
     test('gnome stronghold gate: reopen-after-dialogue, free, helps with the boxes', () => {
         const g = specialCrossingAt(2461, 3382, 0);
         expect(g?.label).toBe('Gnome Stronghold gate (Femi boxes)');
