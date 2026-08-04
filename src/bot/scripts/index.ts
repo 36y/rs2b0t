@@ -40,6 +40,7 @@ import ThievingBot, { SETTINGS as THIEVING_SETTINGS } from './ThievingBot.js';
 import TutorialBot from './TutorialBot.js';
 import WalkToBot, { WALKTO_SETTINGS } from './WalkToBot.js';
 import WildyAgility, { WILDY_AGILITY_SETTINGS } from './WildyAgility.js';
+import BrimhavenAgility, { BRIMHAVEN_AGILITY_SETTINGS } from './BrimhavenAgility.js';
 import SmelterBot, { SETTINGS as SMELTER_SETTINGS } from './SmelterBot.js';
 import HillGiant, { HILL_GIANT_SETTINGS } from './HillGiant.js';
 import TannerBot, { TANNER_SETTINGS } from './TannerBot.js';
@@ -531,6 +532,16 @@ ScriptRegistry.register({
     tags: ['edgeville', 'dungeon', 'monkey-bars', 'wilderness', 'banking'],
     settingsSchema: EDGEVILLE_MONKEYBARS_SETTINGS,
     create: () => new EdgevilleMonkeyBars()
+});
+
+ScriptRegistry.register({
+    name: 'BrimhavenAgility',
+    description:
+        'Brimhaven Agility Arena — banks food+coins at Ardougne south, ships to Brimhaven, pays Cap\'n Izzy, tags ticket pillars on the level-optimal path, and grinds centre spikes between tags',
+    category: 'Agility',
+    tags: ['brimhaven', 'arena', 'tickets', 'banking', 'food'],
+    settingsSchema: BRIMHAVEN_AGILITY_SETTINGS,
+    create: () => new BrimhavenAgility()
 });
 
 ScriptRegistry.register({

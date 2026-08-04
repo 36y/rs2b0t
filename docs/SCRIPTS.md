@@ -13,7 +13,7 @@ Settings listed here are the parameters the panel exposes before you start a scr
 
 ## Contents
 
-- [Agility](#agility) — 3
+- [Agility](#agility) — 4
 - [Combat](#combat) — 10
 - [Cooking](#cooking) — 1
 - [Crafting](#crafting) — 5
@@ -35,6 +35,18 @@ Settings listed here are the parameters the panel exposes before you start a scr
 - [Woodcutting](#woodcutting) — 1
 
 ## Agility
+
+### BrimhavenAgility
+
+Brimhaven Agility Arena — banks food+coins at Ardougne south, ships to Brimhaven, pays Cap'n Izzy, tags ticket pillars on the level-optimal path, and grinds centre spikes between tags
+
+Tags: `brimhaven`, `arena`, `tickets`, `banking`, `food`
+
+| Setting | Type | Default | Notes |
+|---|---|---|---|
+| `food` | string | `"Lobster"` | Food — one of: Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
+| `foodWithdraw` | number (1–27) | `25` | Food per trip |
+| `bankAtTickets` | number (1–5000) | `1000` | Bank at X tickets |
 
 ### EdgevilleMonkeyBars
 

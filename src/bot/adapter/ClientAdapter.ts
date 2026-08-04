@@ -203,6 +203,33 @@ export const reader = {
         };
     },
 
+    /**
+     * Hint-arrow tile (type 2–6), or null when no tile hint is active.
+     * Used by Brimhaven Agility Arena for the active ticket pillar.
+     * Reads Client private fields that exist on the live instance.
+     */
+    hintTile(): WorldTile | null {
+        if (!raw) {
+            return null;
+        }
+        const c = raw as RawClient & {
+            hintType?: number;
+            hintTileX?: number;
+            hintTileZ?: number;
+        };
+        const t = c.hintType ?? 0;
+        // Client normalises types 2–6 to type 2 after reading the tile coords.
+        if (t !== 2) {
+            return null;
+        }
+        const x = c.hintTileX ?? 0;
+        const z = c.hintTileZ ?? 0;
+        if (x <= 0 || z <= 0) {
+            return null;
+        }
+        return { x, z, level: raw.minusedlevel };
+    },
+
     /** Current map-build origin (world tile of local scene 0,0). */
     mapBuildBase(): { x: number; z: number } | null {
         if (!raw) {
