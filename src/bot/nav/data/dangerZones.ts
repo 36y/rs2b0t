@@ -23,8 +23,33 @@ export interface KnownDangerZone {
     id: string;
     label: string;
     rects: readonly DangerZoneRect[];
+    /** Apply this zone to every walk without requiring an explicit avoidZones id. */
+    automatic?: boolean;
+    /** Only avoid this zone while the player's combat level is at or below this value. */
+    avoidAtOrBelowCombat?: number;
+    /**
+     * Do not apply the zone when either route endpoint is inside it. This makes
+     * the zone a transit exclusion while preserving intentional destinations
+     * and allowing a player already inside to leave.
+     */
+    allowWhenEndpointInside?: boolean;
     /** Operator-facing note (settings help / docs). */
     help?: string;
+}
+
+export interface DangerZoneEndpoint {
+    x: number;
+    z: number;
+    level: number;
+}
+
+export interface DangerZoneResolveContext {
+    /** Include catalog entries marked automatic. Off by default for backwards compatibility. */
+    includeAutomatic?: boolean;
+    /** Current player combat level. Unknown levels fail safe and keep conditional zones active. */
+    combatLevel?: number;
+    start?: DangerZoneEndpoint;
+    destination?: DangerZoneEndpoint;
 }
 
 /**
@@ -40,6 +65,25 @@ export const KNOWN_DANGER_ZONES: readonly KnownDangerZone[] = [
             + 'should avoid and take the long coastal route / ship instead.',
         // Surface + caves: Taverley west slope through summit toward Catherby.
         rects: [{ minX: 2828, maxX: 2878, minZ: 3468, maxZ: 3538 }]
+    },
+    {
+        id: 'draynor-jail-guards',
+        label: 'Draynor jail guards',
+        automatic: true,
+        avoidAtOrBelowCombat: 50,
+        allowWhenEndpointInside: true,
+        help:
+            'Four level-26 jail guards aggressively hunt players around the jail compound. '
+            + 'Avoid as transit for combat 50 and below, but permit quest destinations inside.',
+        // Guard spawns expanded to their conservative max interaction tether
+        // (maxrange 12 + the engine's one-tile op allowance). Rectangles overlap
+        // intentionally; fencing restricts movement but does not block line of sight.
+        rects: [
+            { minX: 3096, maxX: 3122, minZ: 3224, maxZ: 3250, level: 0 },
+            { minX: 3107, maxX: 3133, minZ: 3225, maxZ: 3251, level: 0 },
+            { minX: 3108, maxX: 3134, minZ: 3236, maxZ: 3262, level: 0 },
+            { minX: 3114, maxX: 3140, minZ: 3235, maxZ: 3261, level: 0 }
+        ]
     }
 ];
 
@@ -79,16 +123,48 @@ export function tileInDangerZones(
  * Unknown ids are skipped (logged by caller if desired).
  */
 export function resolveDangerZones(
-    specs: readonly (string | DangerZoneRect)[] | undefined
+    specs: readonly (string | DangerZoneRect)[] | undefined,
+    context?: DangerZoneResolveContext
 ): DangerZoneRect[] {
-    if (!specs || specs.length === 0) {
-        return [];
-    }
     const out: DangerZoneRect[] = [];
-    for (const s of specs) {
+    const requested = [...(specs ?? [])];
+    if (context?.includeAutomatic) {
+        requested.push(...KNOWN_DANGER_ZONES.filter(zone => zone.automatic).map(zone => zone.id));
+    }
+
+    const resolvedIds = new Set<string>();
+    for (const s of requested) {
         if (typeof s === 'string') {
+            if (resolvedIds.has(s)) {
+                continue;
+            }
+            resolvedIds.add(s);
             const known = byId.get(s);
             if (known) {
+                const combat = context?.combatLevel;
+                if (
+                    known.avoidAtOrBelowCombat !== undefined
+                    && combat !== undefined
+                    && combat > known.avoidAtOrBelowCombat
+                ) {
+                    continue;
+                }
+                if (
+                    known.allowWhenEndpointInside &&
+                    (
+                        (context?.start
+                            && tileInDangerZones(context.start.x, context.start.z, context.start.level, known.rects))
+                        || (context?.destination
+                            && tileInDangerZones(
+                                context.destination.x,
+                                context.destination.z,
+                                context.destination.level,
+                                known.rects
+                            ))
+                    )
+                ) {
+                    continue;
+                }
                 out.push(...known.rects);
             }
             continue;

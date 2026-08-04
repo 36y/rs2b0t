@@ -112,6 +112,7 @@ export interface WalkOptions {
     /**
      * Danger / no-go zones the pathfinder must not enter.
      * Pass known ids (`'white-wolf-mountain'`) and/or ad-hoc rects.
+     * Automatic catalog zones are also resolved from live player state.
      * Applies to classic and v2. Idea credit: @lolwut.
      * @see src/bot/nav/data/dangerZones.ts
      */
@@ -186,7 +187,13 @@ class WalkExecutorImpl {
             && opts?.useTeleportCatalog !== false
             && opts?.policy?.useTeleports !== false;
         this.walkBankItemCounts = this.walkEngine === 'v2' ? opts?.bankItemCounts : undefined;
-        this.walkAvoidZones = resolveDangerZones(opts?.avoidZones);
+        const walkStart = reader.worldTile();
+        this.walkAvoidZones = resolveDangerZones(opts?.avoidZones, {
+            includeAutomatic: true,
+            combatLevel: reader.combatLevel(),
+            ...(walkStart ? { start: walkStart } : {}),
+            destination: dest
+        });
         this.bankLegDone = false;
         const outer = this.walkDepth === 0;
         this.walkDepth++;

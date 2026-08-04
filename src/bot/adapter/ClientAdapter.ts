@@ -998,6 +998,10 @@ export const reader = {
         return raw?.localPlayer?.name ?? null;
     },
 
+    combatLevel(): number {
+        return raw?.localPlayer?.combatLevel ?? 0;
+    },
+
     loginMessage(): string {
         if (!raw) {
             return '';

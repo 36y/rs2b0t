@@ -27,6 +27,7 @@ export interface WalkResilientOptions {
     /**
      * Danger / no-go zones for every baked repath (same as WalkOptions.avoidZones).
      * Known ids and/or ad-hoc rects. @see src/bot/nav/data/dangerZones.ts
+     * Automatic catalog zones are resolved by WalkExecutor from live player state.
      */
     avoidZones?: WalkOptions['avoidZones'];
 }

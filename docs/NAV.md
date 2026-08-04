@@ -102,9 +102,22 @@ await Traversal.walkResilient(dest, {
 });
 ```
 
-The pathfinder never expands *into* those tiles (walk or transport landing). A
-start tile already inside a zone can still path *out*. Off by default — no
-routing change unless a script (or future Global setting) opts in.
+The pathfinder never expands *into* resolved danger tiles (walk or transport
+landing). Ad-hoc rects and ordinary catalog zones are strict and opt-in.
+
+Catalog entries may also define live activation policy. `draynor-jail-guards`
+is automatic for players at combat level 50 or below. It is an
+`allowWhenEndpointInside` transit exclusion: ordinary routes avoid the guarded
+compound, while quest destinations inside remain reachable and a player already
+inside can path out. Combat level 51 and above does not activate this bot-safety
+policy. This threshold is navigation policy, not a claim that the guards stop
+being aggressive at that level.
+
+The Draynor bounds conservatively expand the four guard spawns by their maximum
+interaction tether. Background configuration/map references:
+[`draynor.npc`](https://github.com/LostCityRS/Content/blob/274/scripts/areas/area_draynor/configs/draynor.npc),
+[`all.hunt`](https://github.com/LostCityRS/Content/blob/274/scripts/_unpack/225/all.hunt), and
+[`m48_50.jm2`](https://github.com/LostCityRS/Content/blob/274/maps/m48_50.jm2).
 
 **Pack check (baked collision):** Taverley bank ↔ Catherby bank free path crosses
 White Wolf Mountain (~cost 239, dozens of zone tiles). With

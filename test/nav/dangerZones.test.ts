@@ -43,6 +43,16 @@ describe('known danger zones catalog', () => {
         expect(r.maxZ).toBeGreaterThan(r.minZ);
     });
 
+    test('includes an automatic, combat-gated Draynor jail transit zone', () => {
+        const jail = knownDangerZone('draynor-jail-guards');
+        expect(jail?.automatic).toBe(true);
+        expect(jail?.avoidAtOrBelowCombat).toBe(50);
+        expect(jail?.allowWhenEndpointInside).toBe(true);
+        expect(jail?.rects.length).toBe(4);
+        expect(tileInDangerZones(3120, 3238, 0, jail?.rects)).toBe(true);
+        expect(tileInDangerZones(3121, 3249, 0, jail?.rects)).toBe(true);
+    });
+
     test('KNOWN_DANGER_ZONES ids are unique', () => {
         const ids = KNOWN_DANGER_ZONES.map(z => z.id);
         expect(new Set(ids).size).toBe(ids.length);
@@ -82,6 +92,48 @@ describe('resolveDangerZones', () => {
     test('unknown ids alone yield empty list', () => {
         expect(resolveDangerZones(['nope'])).toEqual([]);
         expect(resolveDangerZones(undefined)).toEqual([]);
+    });
+
+    test('automatically applies Draynor jail avoidance through combat 50', () => {
+        const context = {
+            includeAutomatic: true,
+            start: { x: 3080, z: 3240, level: 0 },
+            destination: { x: 3150, z: 3240, level: 0 }
+        };
+        expect(resolveDangerZones(undefined, { ...context, combatLevel: 50 }).length).toBe(4);
+        expect(resolveDangerZones(undefined, { ...context, combatLevel: 51 })).toEqual([]);
+    });
+
+    test('allows routes that start or finish inside the Draynor jail zone', () => {
+        const outside = { x: 3080, z: 3240, level: 0 };
+        const inside = { x: 3120, z: 3238, level: 0 };
+        expect(
+            resolveDangerZones(undefined, {
+                includeAutomatic: true,
+                combatLevel: 20,
+                start: outside,
+                destination: inside
+            })
+        ).toEqual([]);
+        expect(
+            resolveDangerZones(undefined, {
+                includeAutomatic: true,
+                combatLevel: 20,
+                start: inside,
+                destination: outside
+            })
+        ).toEqual([]);
+    });
+
+    test('endpoint exemption is scoped to known zones and leaves ad-hoc rects strict', () => {
+        const custom = { minX: 10, maxX: 20, minZ: 100, maxZ: 110, level: 0 };
+        expect(
+            resolveDangerZones([custom], {
+                includeAutomatic: false,
+                combatLevel: 20,
+                destination: { x: 15, z: 105, level: 0 }
+            })
+        ).toEqual([custom]);
     });
 });
 

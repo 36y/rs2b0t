@@ -695,6 +695,7 @@ export interface WalkOptions {
     /**
      * Danger / no-go zones the pathfinder must not enter.
      * Known ids (e.g. `'white-wolf-mountain'`) and/or ad-hoc axis-aligned rects.
+     * Automatic catalog zones are also resolved from live player state.
      * Idea credit: @lolwut.
      */
     avoidZones?: readonly (
@@ -724,6 +725,7 @@ export interface WalkResilientOptions {
     /**
      * Danger / no-go zones for every baked repath (same as WalkOptions.avoidZones).
      * Known ids (e.g. `'white-wolf-mountain'`) and/or ad-hoc axis-aligned rects.
+     * Automatic catalog zones are resolved from live player state.
      */
     avoidZones?: WalkOptions['avoidZones'];
 }
