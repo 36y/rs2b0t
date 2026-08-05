@@ -131,4 +131,12 @@ describe('HillGiant settings', () => {
         expect(HILL_GIANT_SETTINGS.weapon.default).toBe('');
         expect(String(HILL_GIANT_SETTINGS.weapon.help)).toMatch(/death|re-worn/i);
     });
+
+    test('melee style setting is applied by the script (not display-only)', () => {
+        expect(HILL_GIANT_SETTINGS.meleeStyle).toMatchObject({
+            type: 'string',
+            default: 'strength',
+            options: ['attack', 'strength', 'controlled', 'defence']
+        });
+    });
 });

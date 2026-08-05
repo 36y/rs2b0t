@@ -13,7 +13,7 @@ import { Inventory } from '../api/hud/Inventory.js';
 import { Paint } from '../api/hud/Paint.js';
 import { Skills } from '../api/hud/Skills.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
-import { COMBAT_STYLE_OPTIONS, parseCombatStyle, type MeleeCombatStyle } from '../api/CombatStyle.js';
+import { COMBAT_STYLE_OPTIONS, describeCombatStyle, parseCombatStyle, type MeleeCombatStyle } from '../api/CombatStyle.js';
 import { DROP_DB } from '../api/combat/data/dropdb.js';
 import { FOOD_OPTIONS, foodForms, foodCount as foodCountIn, foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
 import { matchesCommonBankLoot } from '../api/Banking.js';
@@ -110,6 +110,7 @@ export default class HillGiant extends TaskBot {
             }),
             new Eat(this),
             new GearEquip(this),
+            new SetAttackStyle(this),
             new BuryBones(this),
             new BankRun(this),
             new FetchKey(this),
@@ -153,6 +154,10 @@ export default class HillGiant extends TaskBot {
 
     wantsWeapon(): string {
         return this.weapon;
+    }
+
+    targetMeleeStyle(): MeleeCombatStyle {
+        return this.meleeStyle;
     }
 
     cfg() {
@@ -310,6 +315,37 @@ class GearEquip implements Task {
         } else {
             this.fails++;
             this.bot.log(`could not wield ${weapon} (attempt ${this.fails}/5)`);
+        }
+    }
+}
+
+/**
+ * com_mode is not persisted — re-assert the chosen melee style (Accurate/Aggressive/
+ * Controlled/Defensive) whenever the varp disagrees. Style clicks are legal mid-fight.
+ */
+class SetAttackStyle implements Task {
+    private fails = 0;
+    private retryAt = 0;
+    private announced = false;
+    constructor(private bot: HillGiant) {}
+    validate(): boolean {
+        return !Game.hasCombatStyle(this.bot.targetMeleeStyle()) && Date.now() >= this.retryAt;
+    }
+    async execute(): Promise<void> {
+        const style = this.bot.targetMeleeStyle();
+        this.bot.setStatus('setting combat style');
+        Game.setCombatStyle(style);
+        if (await Execution.delayUntil(() => Game.hasCombatStyle(style), 3000)) {
+            this.fails = 0;
+            if (!this.announced) {
+                this.announced = true;
+                const resolution = Game.combatStyleResolution(style);
+                this.bot.log(`combat style: ${resolution ? describeCombatStyle(resolution) : style}`);
+            }
+        } else if (++this.fails >= 5) {
+            this.fails = 0;
+            this.retryAt = Date.now() + 60_000;
+            this.bot.log(`could not set melee style '${style}' (combat tab not ready?) — retrying in 60s`);
         }
     }
 }
