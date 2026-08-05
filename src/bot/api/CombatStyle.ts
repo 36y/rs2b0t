@@ -41,6 +41,44 @@ export function parseCombatStyle(name: string): MeleeCombatStyle {
 }
 
 /**
+ * Parse a melee training style without defaulting. Used to detect legacy
+ * `combatStyle=defence` (etc.) after scripts split that field into
+ * combatStyle=melee|mage|range + meleeStyle.
+ */
+export function tryParseCombatStyle(name: string): MeleeCombatStyle | null {
+    return COMBAT_STYLE[name.trim().toLowerCase()] ?? null;
+}
+
+export type CombatKind = 'melee' | 'mage' | 'range';
+
+/**
+ * Resolve combatStyle + meleeStyle after the melee|mage|range split.
+ * When storage still has the pre-split melee training value in combatStyle
+ * (e.g. "defence"), treat it as melee + that training style so it is not
+ * silently coerced to strength via the meleeStyle default (#461).
+ */
+export function resolveSplitCombatSettings(
+    rawCombatStyle: string,
+    rawMeleeStyle: string | undefined
+): { kind: CombatKind; meleeStyle: MeleeCombatStyle; legacyMigrated: MeleeCombatStyle | null } {
+    const legacy = tryParseCombatStyle(rawCombatStyle);
+    if (legacy !== null) {
+        return {
+            kind: 'melee',
+            meleeStyle: rawMeleeStyle !== undefined ? parseCombatStyle(rawMeleeStyle) : legacy,
+            legacyMigrated: rawMeleeStyle === undefined ? legacy : null
+        };
+    }
+    const kindRaw = rawCombatStyle.trim().toLowerCase();
+    const kind: CombatKind = kindRaw === 'mage' || kindRaw === 'range' ? kindRaw : 'melee';
+    return {
+        kind,
+        meleeStyle: parseCombatStyle(rawMeleeStyle ?? 'strength'),
+        legacyMigrated: null
+    };
+}
+
+/**
  * Resolve a requested training style against the labelled buttons in the
  * current weapon's combat interface. This follows the interface's actual
  * Accurate/Aggressive/Controlled/Defensive metadata: button count and position

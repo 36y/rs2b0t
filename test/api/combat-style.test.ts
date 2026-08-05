@@ -6,7 +6,9 @@ import {
     describeCombatStyle,
     parseCombatStyle,
     parseInterfaceCombatStyle,
-    resolveCombatStyle
+    resolveCombatStyle,
+    resolveSplitCombatSettings,
+    tryParseCombatStyle
 } from '#/bot/api/CombatStyle.js';
 import type { CombatModeLabel } from '#/bot/api/CombatStyle.js';
 
@@ -57,6 +59,50 @@ test('parseCombatStyle is case/space-insensitive and defaults to strength', () =
     expect(parseCombatStyle('CONTROLLED')).toBe('controlled');
     expect(parseCombatStyle('nonsense')).toBe('strength');
     expect(parseCombatStyle('')).toBe('strength');
+});
+
+test('tryParseCombatStyle rejects non-melee combat kinds without defaulting', () => {
+    expect(tryParseCombatStyle('defence')).toBe('defence');
+    expect(tryParseCombatStyle('Aggressive')).toBe('strength');
+    expect(tryParseCombatStyle('melee')).toBeNull();
+    expect(tryParseCombatStyle('mage')).toBeNull();
+    expect(tryParseCombatStyle('range')).toBeNull();
+    expect(tryParseCombatStyle('')).toBeNull();
+});
+
+test('resolveSplitCombatSettings migrates pre-split combatStyle saves (#461)', () => {
+    expect(resolveSplitCombatSettings('defence', undefined)).toEqual({
+        kind: 'melee',
+        meleeStyle: 'defence',
+        legacyMigrated: 'defence'
+    });
+    expect(resolveSplitCombatSettings('strength', undefined)).toEqual({
+        kind: 'melee',
+        meleeStyle: 'strength',
+        legacyMigrated: 'strength'
+    });
+    // explicit meleeStyle wins when both present
+    expect(resolveSplitCombatSettings('defence', 'attack')).toEqual({
+        kind: 'melee',
+        meleeStyle: 'attack',
+        legacyMigrated: null
+    });
+    // modern shape unchanged
+    expect(resolveSplitCombatSettings('melee', 'defence')).toEqual({
+        kind: 'melee',
+        meleeStyle: 'defence',
+        legacyMigrated: null
+    });
+    expect(resolveSplitCombatSettings('range', undefined)).toEqual({
+        kind: 'range',
+        meleeStyle: 'strength',
+        legacyMigrated: null
+    });
+    expect(resolveSplitCombatSettings('mage', 'controlled')).toEqual({
+        kind: 'mage',
+        meleeStyle: 'controlled',
+        legacyMigrated: null
+    });
 });
 
 test('the melee dropdown offers all four semantic training styles', () => {

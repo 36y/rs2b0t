@@ -3,7 +3,15 @@ import { Execution } from '../api/Execution.js';
 import { Game } from '../api/Game.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
 import { DeathRecovery } from '../api/tasks/DeathRecovery.js';
-import { COMBAT_STYLE_OPTIONS, RANGE_STYLE_OPTIONS, parseCombatStyle, parseRangeStyle, type MeleeCombatStyle } from '../api/CombatStyle.js';
+import {
+    COMBAT_STYLE_OPTIONS,
+    RANGE_STYLE_OPTIONS,
+    describeCombatStyle,
+    parseRangeStyle,
+    resolveSplitCombatSettings,
+    tryParseCombatStyle,
+    type MeleeCombatStyle
+} from '../api/CombatStyle.js';
 import { Autocast } from '../api/combat/Autocast.js';
 import { castsAvailable, runeWithdrawList } from '../api/combat/CombatStyleLogic.js';
 import { SPELL_DB } from '../api/combat/data/spelldb.js';
@@ -21,7 +29,7 @@ import { nearestBank } from '../api/BankLocations.js';
 import { GroundItems } from '../api/queries/GroundItems.js';
 import { Npcs, type Npc } from '../api/queries/Npcs.js';
 import { matchesEntityName } from '../api/queries/Query.js';
-import type { SettingsSchema } from '../runtime/Settings.js';
+import { SettingsStore, type SettingsSchema } from '../runtime/Settings.js';
 import Tile from '../api/Tile.js';
 import { countMatching, matchesAny, shouldBank, shouldEat, shouldPanic, slotsMatching } from './ArdyFighterLogic.js';
 import {
@@ -53,7 +61,14 @@ export const SETTINGS: SettingsSchema = {
     spot: { type: 'string', default: START_POSITION, options: SPOT_OPTIONS, label: 'Killing spot', help: 'use the tile where the script starts, or walk to custom coordinates' },
     coordinates: { type: 'tile', default: DEFAULT_CUSTOM_SPOT, label: 'Killing coordinates (x,z)', showIf: { key: 'spot', anyOf: [CUSTOM_COORDINATES] } },
     leashRadius: { type: 'number', default: 8, min: 2, max: 30, label: 'Leash radius (tiles)' },
-    combatStyle: { type: 'string', default: 'melee', options: ['melee', 'mage', 'range'], label: 'Combat style' },
+    combatStyle: {
+        type: 'string',
+        default: 'melee',
+        options: ['melee', 'mage', 'range'],
+        label: 'Combat style',
+        help:
+            'melee / mage / range. Older saves that stored attack/strength/controlled/defence under this key are migrated to Melee style.'
+    },
     meleeStyle: { type: 'string', default: 'strength', options: COMBAT_STYLE_OPTIONS, label: 'Melee style', group: 'Combat', showIf: SHOW_MELEE, help: 'which melee stat to train; re-applied each login since com_mode is not saved' },
     spell: { type: 'string', default: 'Fire Strike', options: Object.keys(SPELL_DB), label: 'Autocast spell', group: 'Combat', showIf: SHOW_MAGE, help: 'kept armed via autocast — a staff must be wielded' },
     runesWithdraw: { type: 'number', default: 150, min: 1, max: 1000, label: 'Casts of runes per bank trip', group: 'Combat', showIf: SHOW_MAGE, help: 'the bot tops runes up to this many casts of the selected spell; runes the wielded staff provides free are skipped' },
@@ -175,8 +190,22 @@ export default class AutoFighter extends TaskBot {
         BANK_AT = this.settings.num('bankAtLootSlots', 12);
         AUTO_BANK = autoBankEnabled(this.settings.str('banking', 'Auto'));
         BANK_COMMON = this.settings.bool('bankCommonJunk', true);
-        STYLE = this.settings.str('combatStyle', 'melee') as 'melee' | 'mage' | 'range';
-        MELEE_STYLE = parseCombatStyle(this.settings.str('meleeStyle', 'strength'));
+        // Pre-#195 saves stored attack/strength/controlled/defence in combatStyle.
+        // Settings option validation would coerce those to default "melee" and leave
+        // meleeStyle at strength — so Defence (etc.) was silently ignored (#461).
+        const rawCombatStyle = SettingsStore.displayString('AutoFighter', 'combatStyle', SETTINGS.combatStyle!);
+        const rawMeleeStyle = SettingsStore.saved('AutoFighter', 'meleeStyle');
+        const split = resolveSplitCombatSettings(rawCombatStyle, rawMeleeStyle);
+        STYLE = split.kind;
+        MELEE_STYLE = split.meleeStyle;
+        if (split.legacyMigrated !== null) {
+            SettingsStore.save('AutoFighter', 'combatStyle', 'melee');
+            SettingsStore.save('AutoFighter', 'meleeStyle', split.legacyMigrated);
+            this.log(`migrated legacy combatStyle='${rawCombatStyle.trim()}' → meleeStyle='${split.legacyMigrated}'`);
+        } else if (tryParseCombatStyle(rawCombatStyle) !== null) {
+            // storage still has a training-style value but meleeStyle already set — rewrite combatStyle only
+            SettingsStore.save('AutoFighter', 'combatStyle', 'melee');
+        }
         SPELL = this.settings.str('spell', 'Fire Strike');
         RUNES_WITHDRAW = this.settings.num('runesWithdraw', 150);
         RANGE_MODE = parseRangeStyle(this.settings.str('rangeStyle', 'rapid'));
@@ -510,12 +539,16 @@ async function withdrawTo(name: string, target: number): Promise<number> {
 class SetAttackStyle implements Task {
     private fails = 0;
     private retryAt = 0;
+    private announced = false;
     constructor(private bot: AutoFighter) {}
     private selected(): boolean {
         return STYLE === 'range' ? Game.combatMode() === RANGE_MODE : Game.hasCombatStyle(MELEE_STYLE);
     }
     validate(): boolean {
-        return STYLE !== 'mage' && !Game.inCombat() && !this.selected() && Date.now() >= this.retryAt;
+        // com_mode is not persisted; re-assert whenever it disagrees. Style clicks
+        // are legal mid-fight — do not gate on !inCombat (RockCrab lesson: continuous
+        // combat starved the out-of-combat-only assert after DCs / failed first clicks).
+        return STYLE !== 'mage' && !this.selected() && Date.now() >= this.retryAt;
     }
     async execute(): Promise<void> {
         this.bot.setStatus('setting combat style');
@@ -526,6 +559,15 @@ class SetAttackStyle implements Task {
         }
         if (await Execution.delayUntil(() => this.selected(), 3000)) {
             this.fails = 0;
+            if (!this.announced) {
+                this.announced = true;
+                if (STYLE === 'range') {
+                    this.bot.log(`ranged style set to ${RANGE_MODE === 0 ? 'accurate' : RANGE_MODE === 1 ? 'rapid' : 'longrange'}`);
+                } else {
+                    const resolution = Game.combatStyleResolution(MELEE_STYLE);
+                    this.bot.log(`combat style: ${resolution ? describeCombatStyle(resolution) : MELEE_STYLE}`);
+                }
+            }
         } else if (++this.fails >= 5) {
             this.fails = 0;
             this.retryAt = Date.now() + 60_000;
