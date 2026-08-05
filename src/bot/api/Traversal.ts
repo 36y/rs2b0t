@@ -22,8 +22,10 @@ export interface WalkResilientOptions {
     sceneRadius?: number;
     maxBudget?: number;
     log?: (msg: string) => void;
-    /** Forwarded to WalkExecutor (classic | v2). Default: Global `navEngine`. */
-    navEngine?: import('../nav/navEngine.js').NavEngineId;
+    /** Forwarded to WalkExecutor on every baked repath. */
+    useTeleportCatalog?: WalkOptions['useTeleportCatalog'];
+    policy?: WalkOptions['policy'];
+    bankItemCounts?: WalkOptions['bankItemCounts'];
     /**
      * Danger / no-go zones for every baked repath (same as WalkOptions.avoidZones).
      * Known ids and/or ad-hoc rects. @see src/bot/nav/data/dangerZones.ts
@@ -37,12 +39,27 @@ const DEFAULT_MAX_BUDGET = 1_200_000;
 const PROGRESS_LOG_MS = 15_000;
 
 /**
+ * Disable nav spell/jewellery tele inject and path-scoped bank-for-tele.
+ * Use on scripts that stock law runes for combat, escape, or magic XP casting
+ * (AIOTeleport, FireGiant, GreenDragon, ChaosDruid, mage fighters) so routing
+ * cannot spend those runes as walk hops.
+ * @see docs/NAV.md#the-world-walker
+ */
+export const NAV_PURE_WALK = {
+    useTeleportCatalog: false as const,
+    policy: { useTeleports: false as const }
+};
+
+/**
  * World-scale movement over the baked collision pack and the door/transport
  * graph.
  * @see docs/API.md#movement
  * @see docs/NAV.md
  */
 export const Traversal = {
+    /** @see NAV_PURE_WALK */
+    pureWalk: NAV_PURE_WALK,
+
     walkTo(dest: WorldTile, opts?: WalkOptions): Promise<boolean> {
         return WalkExecutor.walkTo(dest, opts);
     },
@@ -54,8 +71,10 @@ export const Traversal = {
         const maxBudget = opts.maxBudget ?? DEFAULT_MAX_BUDGET;
         const bakedTimeout = opts.timeoutMs ?? 90000;
         const maxPasses = opts.attempts;
-        const navEngine = opts.navEngine;
         const avoidZones = opts.avoidZones;
+        const useTeleportCatalog = opts.useTeleportCatalog;
+        const policy = opts.policy;
+        const bankItemCounts = opts.bankItemCounts;
 
         const dist = (): number => {
             const me = reader.worldTile();
@@ -108,7 +127,9 @@ export const Traversal = {
                     radius,
                     timeoutMs: bakedTimeout,
                     log,
-                    ...(navEngine ? { navEngine } : {}),
+                    ...(useTeleportCatalog !== undefined ? { useTeleportCatalog } : {}),
+                    ...(policy ? { policy } : {}),
+                    ...(bankItemCounts ? { bankItemCounts } : {}),
                     ...(avoidZones && avoidZones.length > 0 ? { avoidZones } : {}),
                     ...(action.bigBudget ? { maxExpansions: maxBudget } : {})
                 });

@@ -669,12 +669,7 @@ export interface WalkOptions {
     log?: (msg: string) => void;
     /** A* expansion budget override. */
     maxExpansions?: number;
-    /**
-     * Force walker engine for this walk. Default: Global `navEngine`
-     * (`classic` | `v2`). Classic preserves pre–nav-v2 routing.
-     */
-    navEngine?: 'classic' | 'v2';
-    /** nav-v2 only: path policy (tele toggles, distanceBeforeTeleport, …). */
+    /** Path policy (tele toggles, distanceBeforeTeleport, deny lists, …). */
     policy?: {
         useTeleports?: boolean;
         distanceBeforeTeleport?: number;
@@ -683,12 +678,12 @@ export interface WalkOptions {
         useShortcuts?: boolean;
     };
     /**
-     * nav-v2 only: include spell/jewellery tele edges in A*.
-     * When navEngine is v2, defaults to true unless set false or policy.useTeleports is false.
+     * Include spell/jewellery tele edges in A*.
+     * Default true unless set false or `policy.useTeleports` is false.
      */
     useTeleportCatalog?: boolean;
     /**
-     * nav-v2 only: optional known bank item counts for the bank planner
+     * Optional known bank item counts for the bank planner
      * (tests / when bank is not open).
      */
     bankItemCounts?: Record<string, number>;
@@ -720,8 +715,10 @@ export interface WalkResilientOptions {
     /** Big-budget baked retry's node budget (default 1.2M). */
     maxBudget?: number;
     log?: (msg: string) => void;
-    /** Forwarded to WalkExecutor (classic | v2). Default: Global `navEngine`. */
-    navEngine?: 'classic' | 'v2';
+    /** Forwarded to WalkExecutor on every baked repath. */
+    useTeleportCatalog?: WalkOptions['useTeleportCatalog'];
+    policy?: WalkOptions['policy'];
+    bankItemCounts?: WalkOptions['bankItemCounts'];
     /**
      * Danger / no-go zones for every baked repath (same as WalkOptions.avoidZones).
      * Known ids (e.g. `'white-wolf-mountain'`) and/or ad-hoc axis-aligned rects.
@@ -736,7 +733,15 @@ export interface WalkResilientOptions {
  * @see docs/API.md#movement
  * @see docs/NAV.md
  */
+/** Disable nav tele inject — use when scripts stock laws for combat/escape/XP. */
+export const NAV_PURE_WALK: {
+    useTeleportCatalog: false;
+    policy: { useTeleports: false };
+};
+
 export const Traversal: {
+    /** Same as NAV_PURE_WALK — spread into walk opts for pure walking. */
+    pureWalk: typeof NAV_PURE_WALK;
     /**
      * Web-walk across the world (A* over the baked collision pack + door/
      * transport graph; opens doors, recovers from stuck). Resolves false on
