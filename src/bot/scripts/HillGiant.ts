@@ -1,11 +1,13 @@
 import { TaskBot, type Task } from '../api/Bot.js';
 import { Execution } from '../api/Execution.js';
+import { EventSignal } from '../api/EventSignal.js';
 import { Game } from '../api/Game.js';
 import Tile from '../api/Tile.js';
 import { Traversal } from '../api/Traversal.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
 import { DeathRecovery } from '../api/tasks/DeathRecovery.js';
 import { Bank } from '../api/hud/Bank.js';
+import { ChatDialog } from '../api/hud/ChatDialog.js';
 import { Equipment } from '../api/hud/Equipment.js';
 import { Inventory } from '../api/hud/Inventory.js';
 import { Paint } from '../api/hud/Paint.js';
@@ -18,9 +20,10 @@ import { matchesCommonBankLoot } from '../api/Banking.js';
 import { GroundItems } from '../api/queries/GroundItems.js';
 import { Locs } from '../api/queries/Locs.js';
 import { Npcs, type Npc } from '../api/queries/Npcs.js';
+import { matchesEntityName } from '../api/queries/Query.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import { BIG_BONES, BRASS_KEY, LIMPWURT, PIT_SPOTS, bonesAction, keepOnDeposit, pickSpot, shouldEatForSpace, tripNeeds } from './HillGiantLogic.js';
+import { BIG_BONES, BRASS_KEY, LIMPWURT, PIT_SPOTS, bonesAction, isHillGiantKill, keepOnDeposit, pickSpot, shouldEatForSpace, tripNeeds } from './HillGiantLogic.js';
 
 const TARGET = 'Giant';
 
@@ -128,6 +131,10 @@ export default class HillGiant extends TaskBot {
     }
     countKill(): void {
         this.kills++;
+        this.log(`giant down — ${this.kills} kill${this.kills === 1 ? '' : 's'}`);
+    }
+    killCount(): number {
+        return this.kills;
     }
     countLoot(): void {
         this.looted++;
@@ -447,26 +454,90 @@ class LootCorpse implements Task {
 }
 
 class Fight implements Task {
+    /** Engaged giant index — held across Eat/Loot yields so the kill is counted on despawn (#479). */
+    private targetIdx: number | null = null;
+
     constructor(private bot: HillGiant) {}
-    private target(): Npc | null {
+
+    private livingTarget(): Npc | null {
         const { spot } = this.bot.cfg();
         return Npcs.query()
             .name(TARGET)
-            .where(n => spot.distanceTo(new Tile(n.tile().x, n.tile().z, 0)) <= PIT_RADIUS && !n.targetsAnotherPlayer())
+            .action('Attack')
+            .where(n => spot.distanceTo(new Tile(n.tile().x, n.tile().z, 0)) <= PIT_RADIUS && !n.targetsAnotherPlayer() && !n.inCombat)
             .nearest();
     }
-    validate(): boolean {
-        return this.bot.inPit() && !Game.inCombat() && this.target() !== null;
+
+    private byIndex(idx: number): Npc | null {
+        return Npcs.all().find(n => n.index === idx && matchesEntityName(n.name, TARGET)) ?? null;
     }
+
+    validate(): boolean {
+        if (!this.bot.inPit()) {
+            this.targetIdx = null;
+            return false;
+        }
+        // Keep running after we engage so despawn is observed even if Eat/Loot preempted us.
+        if (this.targetIdx !== null) {
+            return true;
+        }
+        return !Game.inCombat() && this.livingTarget() !== null;
+    }
+
     async execute(): Promise<void> {
-        const giant = this.target();
-        if (!giant) {
+        if (this.targetIdx === null) {
+            const giant = this.livingTarget();
+            if (!giant) {
+                return;
+            }
+            this.bot.setStatus(`attacking ${TARGET}`);
+            if (!(await giant.interact('Attack'))) {
+                return;
+            }
+            // Arm tracking only after the click lands — never countKill here (#479).
+            this.targetIdx = giant.index;
+            await Execution.delayUntil(
+                () => Game.inCombat()
+                    || this.byIndex(this.targetIdx!) === null
+                    || ChatDialog.canContinue()
+                    || EventSignal.pending(),
+                5000
+            );
+        }
+
+        if (ChatDialog.canContinue() || EventSignal.pending() || this.bot.died) {
+            this.targetIdx = null;
             return;
         }
-        this.bot.setStatus(`attacking ${TARGET}`);
-        if (await giant.interact('Attack')) {
-            this.bot.countKill();
-            await Execution.delayUntil(() => !Game.inCombat(), 60_000);
+
+        this.bot.setStatus('fighting');
+        const deadline = performance.now() + 90_000;
+        while (performance.now() < deadline) {
+            if (EventSignal.pending() || ChatDialog.canContinue() || this.bot.died) {
+                this.targetIdx = null;
+                return;
+            }
+            if (this.targetIdx !== null && isHillGiantKill(this.byIndex(this.targetIdx) !== null)) {
+                this.bot.countKill();
+                this.targetIdx = null;
+                await Execution.delayTicks(2);
+                return;
+            }
+            // Yield for food — keep targetIdx so the next Fight pass still counts the despawn.
+            if (this.bot.needEat()) {
+                return;
+            }
+            const cur = this.targetIdx !== null ? this.byIndex(this.targetIdx) : null;
+            if (cur && !Game.inCombat() && !cur.inCombat) {
+                await Execution.delayTicks(3);
+                if (this.targetIdx !== null && isHillGiantKill(this.byIndex(this.targetIdx) !== null)) {
+                    this.bot.countKill();
+                }
+                this.targetIdx = null;
+                return;
+            }
+            await Execution.delayTicks(2);
         }
+        this.targetIdx = null;
     }
 }

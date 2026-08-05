@@ -73,3 +73,13 @@ export function bonesAction(buryBones: boolean): 'bury' | 'bank' {
 export function keepOnDeposit(food: string): string[] {
     return [BRASS_KEY, food];
 }
+
+/**
+ * Kill counter gate (#479). Only true when the engaged NPC has left the scene.
+ * Counting on Attack multi-counted: a death anim stayed Attackable for several
+ * ticks and each Fight loop re-clicked Attack. Health bars are often 0/0 until
+ * hit on this client, so presence-by-index is the reliable signal.
+ */
+export function isHillGiantKill(stillPresent: boolean): boolean {
+    return !stillPresent;
+}

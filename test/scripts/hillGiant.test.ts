@@ -1,5 +1,17 @@
 import { describe, expect, test } from 'bun:test';
-import { BIG_BONES, BRASS_KEY, LIMPWURT, PIT_SPOTS, bonesAction, keepOnDeposit, pickSpot, shouldBank, shouldEatForSpace, tripNeeds } from '#/bot/scripts/HillGiantLogic.js';
+import {
+    BIG_BONES,
+    BRASS_KEY,
+    LIMPWURT,
+    PIT_SPOTS,
+    bonesAction,
+    isHillGiantKill,
+    keepOnDeposit,
+    pickSpot,
+    shouldBank,
+    shouldEatForSpace,
+    tripNeeds
+} from '#/bot/scripts/HillGiantLogic.js';
 import { HILL_GIANT_SETTINGS } from '#/bot/scripts/HillGiant.js';
 
 describe('HillGiant pit spots', () => {
@@ -86,6 +98,16 @@ describe('HillGiant pack management', () => {
     test('big bones are buried or banked, never both', () => {
         expect(bonesAction(true)).toBe('bury');
         expect(bonesAction(false)).toBe('bank');
+    });
+});
+
+describe('HillGiant kill counter (#479)', () => {
+    test('despawn (not still present) confirms a kill', () => {
+        expect(isHillGiantKill(false)).toBe(true);
+    });
+
+    test('still on the scene is not a kill — do not count on Attack click', () => {
+        expect(isHillGiantKill(true)).toBe(false);
     });
 });
 
