@@ -17,7 +17,7 @@ import { castsAvailable, runeWithdrawList } from '../api/combat/CombatStyleLogic
 import { SPELL_DB } from '../api/combat/data/spelldb.js';
 import { DROP_DB } from '../api/combat/data/dropdb.js';
 import { MELEE_WEAPONS, STAFFS } from '../api/combat/equipment.js';
-import { FOOD_OPTIONS, foodForms, isFoodItem, foodCount as foodCountIn } from '../api/combat/food.js';
+import { FOOD_OPTIONS, foodForms, isFoodItem, foodCount as foodCountIn, foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
 import { combatKeepNames } from '../api/combat/keepList.js';
 import { depositAllExcept } from '../api/Banking.js';
 import { GroundItems } from '../api/queries/GroundItems.js';
@@ -62,7 +62,7 @@ export const SETTINGS: SettingsSchema = {
 
     food: { type: 'string', default: 'Lobster', options: FOOD_OPTIONS, label: 'Food', group: 'Food & healing' },
     foodWithdraw: { type: 'number', default: 20, min: 1, max: 27, label: 'Food to withdraw per bank run', group: 'Food & healing' },
-    eatHp: { type: 'number', default: 50, min: 1, max: 99, label: 'Eat below HP%', group: 'Food & healing' },
+
     panicHp: { type: 'number', default: 30, min: 1, max: 98, label: 'Escape below HP%', group: 'Food & healing', help: 'when out of food and this low, escape to the bank' },
     foodReserve: { type: 'number', default: 4, min: 0, max: 27, label: 'Food kept back from slot-freeing', group: 'Food & healing', help: 'a full pack spends food to make room for loot instead of banking — never below this many' },
 
@@ -83,7 +83,7 @@ let WEAPON = '';
 let SHIELD = 'Dragonfire shield';
 let SPELL = 'Fire Strike';
 let FOOD_NAME = 'Lobster';
-let EAT_HP = 0.5;
+
 let PANIC_HP = 0.3;
 let RUNES_WITHDRAW = 150;
 let FOOD_WITHDRAW = 20;
@@ -109,6 +109,19 @@ function foodCount(): number {
 function hasFood(): boolean {
     return foodCount() > 0;
 }
+
+function needEat(): boolean {
+    if (!hasFood()) {
+        return false;
+    }
+    return shouldEatToUseFood({
+        hp: Skills.effective('hitpoints'),
+        maxHp: Skills.level('hitpoints'),
+        heal: foodHealAmount(FOOD_NAME),
+        foodCount: 1
+    });
+}
+
 function castsLeft(): number {
     return castsAvailable(SPELL, wieldedNames(), rune => Inventory.count(rune));
 }
@@ -267,7 +280,7 @@ async function castVarrockTele(_bot: GreenDragon): Promise<boolean> {
 class Eat implements Task {
     constructor(private bot: GreenDragon) {}
     validate(): boolean {
-        return hpFrac() < EAT_HP && hasFood();
+        return needEat();
     }
     async execute(): Promise<void> {
         await eatOnce(this.bot);
@@ -665,7 +678,7 @@ class Fight implements Task {
                 this.bot.vlog('out of supplies mid-fight — yielding to the bank run');
                 return;
             }
-            if (hpFrac() < EAT_HP && hasFood()) {
+            if (needEat()) {
                 await eatOnce(this.bot);
                 continue;
             }
@@ -732,7 +745,7 @@ export default class GreenDragon extends TaskBot {
         WEAPON = STYLE === 'mage' ? this.settings.str('staff', 'Staff of fire') : this.settings.str('weapon', 'Rune scimitar');
         SHIELD = this.settings.str('shield', 'Dragonfire shield');
         FOOD_NAME = this.settings.str('food', 'Lobster');
-        EAT_HP = this.settings.num('eatHp', 50) / 100;
+
         PANIC_HP = this.settings.num('panicHp', 30) / 100;
         RUNES_WITHDRAW = this.settings.num('runesWithdraw', 150);
         FOOD_WITHDRAW = this.settings.num('foodWithdraw', 20);

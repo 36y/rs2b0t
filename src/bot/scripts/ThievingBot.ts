@@ -1,3 +1,4 @@
+import { foodHealAmount, shouldEatToUseFood, MIN_EAT_HP } from '../api/combat/food.js';
 import { createReturnToAnchorTask, resolveRunAnchor, tileWithinLeash } from '../api/Anchor.js';
 import { TaskBot, type Task } from '../api/Bot.js';
 import { Execution } from '../api/Execution.js';
@@ -27,7 +28,6 @@ import {
     closeBankAndConfirmCount,
     countFood,
     foodMatches,
-    safeToSteal,
     shouldRestockFood,
     THIEVER_BANKING_OPTIONS,
     withdrawTo
@@ -37,7 +37,7 @@ export const SETTINGS: SettingsSchema = {
     target: { type: 'string', default: 'Man', options: PICKPOCKET_TARGET_NAMES, label: 'Pickpocket target', help: 'pick by exact in-game name (level in parens): Man/Woman 1, Farmer 10, Rogue 32, Guard 40, Knight of Ardougne 55, Paladin 70, Hero 80' },
     action: { type: 'string', default: 'Pickpocket', label: 'Action', help: 'right-click op, e.g. Pickpocket / Steal-from' },
     food: { type: 'string', default: '', label: 'Food to eat (name contains)', help: 'eat this when HP drops from failed steals; Auto banking withdraws the first matching bank item' },
-    eatAtHp: { type: 'number', default: 50, min: 0, max: 100, label: 'Eat below HP%' },
+
     banking: { type: 'string', default: 'None', options: THIEVER_BANKING_OPTIONS, label: 'Food banking', help: 'Auto = bank non-food items, withdraw food, and return to the starting spot' },
     foodWithdraw: { type: 'number', default: 22, min: 1, max: 27, label: 'Food to carry', showIf: { key: 'banking', anyOf: ['Auto'] } },
     bankAtFood: { type: 'number', default: 0, min: 0, max: 26, label: 'Bank at food remaining', showIf: { key: 'banking', anyOf: ['Auto'] } },
@@ -61,7 +61,7 @@ export default class ThievingBot extends TaskBot {
     private target = 'Man';
     private action = 'Pickpocket';
     private food = '';
-    private eatAtHp = 0.5;
+
     private autoBank = false;
     private foodWithdraw = 22;
     private bankAtFood = 0;
@@ -85,7 +85,7 @@ export default class ThievingBot extends TaskBot {
         this.target = this.settings.str('target', 'Man');
         this.action = this.settings.str('action', 'Pickpocket');
         this.food = this.settings.str('food', '').toLowerCase();
-        this.eatAtHp = this.settings.num('eatAtHp', 50) / 100;
+
         this.autoBank = autoFoodBanking(this.settings.str('banking', 'None'));
         this.foodWithdraw = this.settings.num('foodWithdraw', 22);
         this.bankAtFood = Math.min(this.settings.num('bankAtFood', 0), this.foodWithdraw - 1);
@@ -104,7 +104,7 @@ export default class ThievingBot extends TaskBot {
             ScriptRunner.stop();
             return;
         }
-        this.log(`thieving '${this.target}' (${this.action}) within ${this.leash} of ${this.anchor}${this.food ? `, eating *${this.food}* below ${Math.round(this.eatAtHp * 100)}% hp` : ''}, banking ${this.autoBank ? `at ${this.bankAtFood} food (target ${this.foodWithdraw})` : 'off'}`);
+        this.log(`thieving '${this.target}' (${this.action}) within ${this.leash} of ${this.anchor}${this.food ? `, smart-eat *${this.food}*` : ''}, banking ${this.autoBank ? `at ${this.bankAtFood} food (target ${this.foodWithdraw})` : 'off'}`);
 
         this.on('chat.message', e => {
             if (/been stunned|fail to pick/i.test(e.text)) {
@@ -180,11 +180,20 @@ export default class ThievingBot extends TaskBot {
     foodKeyword(): string {
         return this.food;
     }
-    eatGate(): number {
-        return this.eatAtHp;
-    }
     foodCount(): number {
         return countFood(Inventory.items(), this.food);
+    }
+
+    needEat(): boolean {
+        if (!this.food || this.foodCount() <= 0) {
+            return false;
+        }
+        return shouldEatToUseFood({
+            hp: Skills.effective('hitpoints'),
+            maxHp: Skills.level('hitpoints'),
+            heal: foodHealAmount(this.food),
+            foodCount: this.foodCount()
+        });
     }
     isFood(name: string | null): boolean {
         return foodMatches(name, this.food);
@@ -200,7 +209,7 @@ export default class ThievingBot extends TaskBot {
         return this.bankAtFood;
     }
     canSteal(): boolean {
-        return safeToSteal(Skills.hpFraction(), this.eatAtHp, this.foodCount());
+        return this.foodCount() > 0 || Skills.effective('hitpoints') > MIN_EAT_HP;
     }
     stunned(): boolean {
         return Game.tick() <= this.stunnedUntilTick;
@@ -240,7 +249,7 @@ class EatFood implements Task {
     }
     validate(): boolean {
         // Higher priority than Steal — eats during stun when movement is locked.
-        return Skills.hpFraction() < this.bot.eatGate() && this.food() !== null;
+        return this.bot.needEat() && this.food() !== null;
     }
     async execute(): Promise<void> {
         const food = this.food();
@@ -426,7 +435,7 @@ class Steal implements Task {
     validate(): boolean {
         // Own the stun wait so Loot cannot walk us off a guard — but yield when
         // HP is low so EatFood can use the locked ticks.
-        if (this.bot.stunned() && Skills.hpFraction() < this.bot.eatGate()) {
+        if (this.bot.stunned() && this.bot.needEat()) {
             return false;
         }
         return this.bot.canSteal() && !Inventory.isFull() && this.candidates().length > 0;
@@ -436,7 +445,7 @@ class Steal implements Task {
         if (this.bot.stunned()) {
             // Bail as soon as eating is needed; EatFood is higher priority next loop.
             this.bot.setStatus('stunned — waiting');
-            await Execution.delayUntil(() => !this.bot.stunned() || Skills.hpFraction() < this.bot.eatGate(), 9000);
+            await Execution.delayUntil(() => !this.bot.stunned() || this.bot.needEat(), 9000);
             return;
         }
 
@@ -467,7 +476,7 @@ class Steal implements Task {
                 Inventory.used() > usedBefore ||
                 ChatDialog.canContinue() ||
                 this.bot.stunned() ||
-                Skills.hpFraction() < this.bot.eatGate(),
+                this.bot.needEat(),
             2500
         );
         if (Skills.xp('thieving') > xpBefore) {
@@ -475,7 +484,7 @@ class Steal implements Task {
             return;
         }
         if (this.bot.stunned()) {
-            await Execution.delayUntil(() => !this.bot.stunned() || Skills.hpFraction() < this.bot.eatGate(), 9000);
+            await Execution.delayUntil(() => !this.bot.stunned() || this.bot.needEat(), 9000);
         }
     }
 }

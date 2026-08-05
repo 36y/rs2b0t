@@ -21,6 +21,7 @@ import { Npcs, type Npc } from '../api/queries/Npcs.js';
 import { matchesEntityName } from '../api/queries/Query.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import { countMatching, matchesAny, shouldBank, shouldEat, shouldPanic, shouldRestock, slotsMatching } from './ArdyFighterLogic.js';
+import { foodHealAmount } from '../api/combat/food.js';
 import { stealCakes } from './CakeStall.js';
 import { SolveClue } from '../clues/SolveClue.js';
 import { Sustain } from '../api/Sustain.js';
@@ -41,8 +42,7 @@ export const SETTINGS: SettingsSchema = {
     combatStyle: { type: 'string', default: 'strength', options: COMBAT_STYLE_OPTIONS, label: 'Combat style', help: 'which melee stat to train; re-applied each login since com_mode is not saved' },
     bankStand: { type: 'tile', default: DEFAULT_BANK_STAND, label: 'Bank stand tile (x,z)' },
     food: { type: 'string[]', default: DEFAULT_FOOD.split(',').map(s => s.trim()), label: 'Food names (contains)' },
-    eatAtHp: { type: 'number', default: 50, min: 0, max: 100, label: 'Eat below HP%' },
-    eatToHp: { type: 'number', default: 90, min: 1, max: 100, label: 'Eat up to HP%', help: 'keep eating until HP reaches this % — 90 avoids the overheal wasted by eating to full' },
+
     panicHp: { type: 'number', default: 25, min: 0, max: 100, label: 'Panic below HP% (no food)' },
     restUntilHp: { type: 'number', default: 60, min: 0, max: 100, label: 'Regen to HP% when bank empty' },
     foodTarget: { type: 'number', default: 8, min: 1, max: 27, label: 'Keep food stocked to (count)', help: 'after eating to full, restock the Baker\'s stall back up to this many' },
@@ -58,8 +58,8 @@ let TARGET = 'Guard';
 let BANK_STAND = DEFAULT_BANK_STAND;
 let FOOD = DEFAULT_FOOD.split(',').map(s => s.trim().toLowerCase());
 let LOOT = DEFAULT_LOOT.split(',').map(s => s.trim().toLowerCase());
-let EAT_AT = 0.5;
-let EAT_TO = 0.9;
+
+
 let PANIC_AT = 0.25;
 let REST_UNTIL = 0.6;
 let FOOD_TARGET = 8;
@@ -70,6 +70,19 @@ let SOLVE_CLUES = true;
 
 function foodCount(): number {
     return countMatching(Inventory.items(), FOOD);
+}
+
+function needEat(): boolean {
+    const item = Inventory.items().find(i => matchesAny(i.name, FOOD));
+    if (!item || foodCount() <= 0) {
+        return false;
+    }
+    return shouldEat(
+        Skills.effective('hitpoints'),
+        Skills.level('hitpoints'),
+        foodHealAmount(item.name ?? FOOD[0] ?? 'Trout'),
+        foodCount()
+    );
 }
 
 function lootSlots(): number {
@@ -101,8 +114,7 @@ export default class ArdyFighter extends TaskBot {
         BANK_STAND = this.settings.tile('bankStand', DEFAULT_BANK_STAND);
         FOOD = this.settings.list('food', FOOD).map(s => s.toLowerCase());
         LOOT = this.settings.list('loot', LOOT).map(s => s.toLowerCase());
-        EAT_AT = this.settings.num('eatAtHp', 50) / 100;
-        EAT_TO = this.settings.num('eatToHp', 90) / 100;
+
         PANIC_AT = this.settings.num('panicHp', 25) / 100;
         REST_UNTIL = this.settings.num('restUntilHp', 60) / 100;
         FOOD_TARGET = this.settings.num('foodTarget', 8);
@@ -124,7 +136,7 @@ export default class ArdyFighter extends TaskBot {
             enabled: () => SOLVE_CLUES
         });
         Sustain.set(async () => {
-            if (Skills.hpFraction() < EAT_AT && foodCount() > 0) {
+            if (needEat()) {
                 const food = Inventory.items().find(i => matchesAny(i.name, FOOD));
                 if (food) {
                     const before = Skills.effective('hitpoints');
@@ -273,7 +285,7 @@ class EatFood implements Task {
     constructor(private bot: ArdyFighter) {}
 
     validate(): boolean {
-        return shouldEat(Skills.hpFraction(), EAT_AT, foodCount());
+        return needEat();
     }
 
     async execute(): Promise<void> {
@@ -281,7 +293,7 @@ class EatFood implements Task {
             if (this.bot.died || ChatDialog.canContinue() || EventSignal.pending()) {
                 return;
             }
-            if (Skills.hpFraction() >= EAT_TO || foodCount() === 0) {
+            if (!needEat()) {
                 return;
             }
             const food = Inventory.items().find(i => matchesAny(i.name, FOOD));
@@ -313,7 +325,7 @@ class RestockCakes implements Task {
         await stealCakes({
             fillTo: FOOD_TARGET,
             abort: () => EventSignal.pending() || this.bot.died || ChatDialog.canContinue(),
-            shouldEat: () => shouldEat(Skills.hpFraction(), EAT_AT, foodCount()),
+            shouldEat: () => needEat(),
             setStatus: s => this.bot.setStatus(s),
             log: m => this.bot.log(m),
             onSteal: () => this.bot.countSteal()
@@ -451,7 +463,7 @@ class Fight implements Task {
     }
 
     validate(): boolean {
-        return !Game.inCombat() && Skills.hpFraction() >= EAT_AT && this.findTarget() !== null;
+        return !Game.inCombat() && !needEat() && this.findTarget() !== null;
     }
 
     async execute(): Promise<void> {
@@ -479,7 +491,7 @@ class Fight implements Task {
             if (EventSignal.pending() || ChatDialog.canContinue() || this.bot.died || Inventory.isFull()) {
                 return;
             }
-            if (shouldEat(Skills.hpFraction(), EAT_AT, foodCount()) || Skills.hpFraction() < PANIC_AT) {
+            if (needEat() || Skills.hpFraction() < PANIC_AT) {
                 return;
             }
 

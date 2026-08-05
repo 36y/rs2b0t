@@ -13,7 +13,7 @@ import { Skills } from '../api/hud/Skills.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
 import { COMBAT_STYLE_OPTIONS, parseCombatStyle, type MeleeCombatStyle } from '../api/CombatStyle.js';
 import { DROP_DB } from '../api/combat/data/dropdb.js';
-import { FOOD_OPTIONS, foodForms, foodCount as foodCountIn } from '../api/combat/food.js';
+import { FOOD_OPTIONS, foodForms, foodCount as foodCountIn, foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
 import { matchesCommonBankLoot } from '../api/Banking.js';
 import { GroundItems } from '../api/queries/GroundItems.js';
 import { Locs } from '../api/queries/Locs.js';
@@ -43,7 +43,7 @@ export const HILL_GIANT_SETTINGS: SettingsSchema = {
     weapon: { type: 'string', default: '', label: 'Weapon to wield', help: 'kept wielded, withdrawn from the bank when missing and re-worn after a death. Leave blank to fight with whatever you are already wearing.' },
     food: { type: 'string', default: 'Trout', options: FOOD_OPTIONS, label: 'Food', group: 'Food & healing' },
     foodWithdraw: { type: 'number', default: 12, min: 1, max: 27, label: 'Food per trip', group: 'Food & healing' },
-    eatAtHp: { type: 'number', default: 50, min: 1, max: 99, label: 'Eat below HP%', group: 'Food & healing' },
+
     loot: { type: 'string[]', default: DEFAULT_LOOT, options: DROPS, label: 'Loot to pick up', group: 'Banking & loot', help: 'limpwurt roots and big bones by default; everything picked up is banked' },
     bankCommonJunk: { type: 'boolean', default: true, label: 'Also grab shared gems/junk', group: 'Banking & loot' },
     buryBones: { type: 'boolean', default: false, label: 'Bury big bones', group: 'Banking & loot', help: 'bury Big bones for Prayer xp instead of banking them' },
@@ -60,7 +60,7 @@ export default class HillGiant extends TaskBot {
     private weapon = '';
     private foodName = 'Trout';
     private foodPerTrip = 12;
-    private eatAt = 0.5;
+
     private lootSet = new Set<string>();
     private bankCommon = true;
     private buryBones = false;
@@ -81,7 +81,7 @@ export default class HillGiant extends TaskBot {
         this.weapon = this.settings.str('weapon', '').trim();
         this.foodName = this.settings.str('food', 'Trout');
         this.foodPerTrip = this.settings.num('foodWithdraw', 12);
-        this.eatAt = this.settings.num('eatAtHp', 50) / 100;
+
         this.bankCommon = this.settings.bool('bankCommonJunk', true);
         this.buryBones = this.settings.bool('buryBones', false);
         this.lootSlots = this.settings.num('lootSlots', 14);
@@ -92,7 +92,7 @@ export default class HillGiant extends TaskBot {
         this.rerollSpot();
         this.startedAt = Date.now();
 
-        this.log(`HillGiant — ${this.meleeStyle}, food '${this.foodName}' x${this.foodPerTrip} (eat<${Math.round(this.eatAt * 100)}%), ${bonesAction(this.buryBones)}ing big bones, spot ${this.spot}`);
+        this.log(`HillGiant — ${this.meleeStyle}, food '${this.foodName}' x${this.foodPerTrip} (smart-eat), ${bonesAction(this.buryBones)}ing big bones, spot ${this.spot}`);
 
         this.add(
             new ContinueDialog(),
@@ -149,7 +149,20 @@ export default class HillGiant extends TaskBot {
     }
 
     cfg() {
-        return { food: this.foodName, foodPerTrip: this.foodPerTrip, eatAt: this.eatAt, lootSet: this.lootSet, bankCommon: this.bankCommon, buryBones: this.buryBones, lootSlots: this.lootSlots, spot: this.spot, meleeStyle: this.meleeStyle };
+        return { food: this.foodName, foodPerTrip: this.foodPerTrip, lootSet: this.lootSet, bankCommon: this.bankCommon, buryBones: this.buryBones, lootSlots: this.lootSlots, spot: this.spot, meleeStyle: this.meleeStyle };
+    }
+
+    needEat(): boolean {
+        const n = this.foodInPack();
+        if (n <= 0) {
+            return false;
+        }
+        return shouldEatToUseFood({
+            hp: Skills.effective('hitpoints'),
+            maxHp: Skills.level('hitpoints'),
+            heal: foodHealAmount(this.foodName),
+            foodCount: n
+        });
     }
 
     foodInPack(): number {
@@ -257,8 +270,7 @@ export default class HillGiant extends TaskBot {
 class Eat implements Task {
     constructor(private bot: HillGiant) {}
     validate(): boolean {
-        const { eatAt } = this.bot.cfg();
-        return (hpFrac() < eatAt || shouldEatForSpace(Inventory.free(), this.bot.foodInPack())) && this.bot.foodInPack() > 0;
+        return (this.bot.needEat() || shouldEatForSpace(Inventory.free(), this.bot.foodInPack())) && this.bot.foodInPack() > 0;
     }
     async execute(): Promise<void> {
         const { food } = this.bot.cfg();
@@ -266,7 +278,7 @@ class Eat implements Task {
         if (!item) {
             return;
         }
-        const forSpace = Inventory.free() === 0 && hpFrac() >= this.bot.cfg().eatAt;
+        const forSpace = Inventory.free() === 0 && !this.bot.needEat();
         this.bot.setStatus(forSpace ? `eating ${item.name} for a free slot` : `eating ${item.name} (${Math.round(hpFrac() * 100)}% hp)`);
         const before = Inventory.used();
         await item.interact('Eat');

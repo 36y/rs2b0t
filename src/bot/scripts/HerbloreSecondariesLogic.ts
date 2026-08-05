@@ -3,6 +3,10 @@
  * Anchors come from rev-274 map OBJ spawns + shop NPC stands.
  */
 
+import { foodHealAmount as healOf, shouldEatToUseFood } from '../api/combat/food.js';
+
+export { foodHealAmount } from '../api/combat/food.js';
+
 export const FOOD_DEFAULT = 'Lobster';
 export const FOOD_DEFAULT_COUNT = 10;
 /** Cap coins carried on shop runs so a death loses at most this. */
@@ -156,8 +160,8 @@ export function shopCoinsToWithdraw(inPack: number, banked: number, want = SHOP_
 }
 
 /**
- * Eat when (hp + heal) would not waste overheal past max, or when the pack is
- * full and eating frees a slot for more loot.
+ * Eat when a full heal fits (no overheal waste), HP is at the safety floor, or
+ * the pack is full and eating frees a slot for more loot.
  */
 export function shouldEat(opts: {
     hp: number;
@@ -167,35 +171,27 @@ export function shouldEat(opts: {
     freeSlots: number;
     collecting: boolean;
 }): boolean {
-    if (opts.foodCount <= 0 || opts.hp <= 0 || opts.maxHp <= 0) {
-        return false;
-    }
-    const room = opts.maxHp - opts.hp;
-    if (opts.heal > 0 && opts.heal <= room) {
+    if (shouldEatToUseFood(opts)) {
         return true;
     }
     // pack full while still collecting — free a slot
-    return opts.collecting && opts.freeSlots === 0;
+    return opts.foodCount > 0 && opts.collecting && opts.freeSlots === 0;
 }
 
-/** Lobster heals 12; Trout 7; Swordfish 14 — common defaults. */
+/** @deprecated use foodHealAmount from combat/food — kept for older imports */
 export const FOOD_HEAL: Record<string, number> = {
-    lobster: 12,
-    swordfish: 14,
-    tuna: 10,
-    salmon: 9,
-    trout: 7,
-    pike: 8,
-    bass: 13,
-    'cooked meat': 3,
-    bread: 5,
-    shrimp: 3,
-    shrimps: 3
+    lobster: healOf('Lobster'),
+    swordfish: healOf('Swordfish'),
+    tuna: healOf('Tuna'),
+    salmon: healOf('Salmon'),
+    trout: healOf('Trout'),
+    pike: healOf('Pike'),
+    bass: healOf('Bass'),
+    'cooked meat': healOf('Cooked meat'),
+    bread: healOf('Bread'),
+    shrimp: healOf('Shrimps'),
+    shrimps: healOf('Shrimps')
 };
-
-export function foodHealAmount(foodName: string): number {
-    return FOOD_HEAL[foodName.toLowerCase()] ?? 12;
-}
 
 /** What to keep when banking loot for this secondary. */
 export function keepOnDeposit(def: SecondaryDef, food: string): string[] {

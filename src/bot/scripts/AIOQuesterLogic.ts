@@ -3,7 +3,6 @@ import type { QuestSustain } from '../quests/engine/types.js';
 
 export interface ResolvedSustainPolicy {
     foods: readonly string[];
-    eatBelowHp: number;
 }
 
 /** Pick the explicit inventory operation that consumes a supported food/drink. */
@@ -18,11 +17,10 @@ export function resolveConsumeAction(actions: readonly string[]): string | null 
 /**
  * Merge the user's general food choice with the active quest's survival policy.
  * Each food expands to every form it is eaten down through, so a bitten cake is
- * still recognised as food.
+ * still recognised as food. Eat threshold is food-heal based (see food.ts #465).
  */
 export function resolveSustainPolicy(
     configuredFood: string | null,
-    configuredEatBelowHp: number,
     quest?: QuestSustain
 ): ResolvedSustainPolicy {
     const foods: string[] = [];
@@ -40,8 +38,5 @@ export function resolveSustainPolicy(
             foods.push(form);
         }
     }
-    return {
-        foods,
-        eatBelowHp: Math.max(configuredEatBelowHp, quest?.eatBelowHp ?? configuredEatBelowHp)
-    };
+    return { foods };
 }

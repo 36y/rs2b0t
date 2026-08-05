@@ -1,3 +1,5 @@
+import { shouldEatToUseFood } from '../api/combat/food.js';
+
 export interface PackItem {
     readonly name: string | null;
     readonly count: number;
@@ -30,8 +32,13 @@ export function shouldRestock(foodCount: number, threshold: number): boolean {
     return foodCount < threshold;
 }
 
-export function shouldEat(hpFrac: number, gate: number, foodCount: number): boolean {
-    return hpFrac < gate && foodCount > 0;
+/**
+ * Eat when a full heal from `heal` fits, or HP is at the safety floor.
+ * Prefer {@link shouldEatFood} when you have a food name; this form takes heal
+ * directly so loops can re-check after each bite without re-resolving.
+ */
+export function shouldEat(hp: number, maxHp: number, heal: number, foodCount: number): boolean {
+    return shouldEatToUseFood({ hp, maxHp, heal, foodCount });
 }
 
 export function shouldPanic(hpFrac: number, gate: number, foodCount: number): boolean {

@@ -13,71 +13,57 @@ describe('resolveConsumeAction', () => {
 });
 
 describe('resolveSustainPolicy', () => {
-    test('uses the configured food and threshold when no quest policy is active', () => {
-        expect(resolveSustainPolicy('Trout', 0.5)).toEqual({
-            foods: ['trout'],
-            eatBelowHp: 0.5
+    test('uses the configured food when no quest policy is active', () => {
+        expect(resolveSustainPolicy('Trout')).toEqual({
+            foods: ['trout']
         });
     });
 
-    test('adds active quest foods and raises the threshold', () => {
-        expect(resolveSustainPolicy('Trout', 0.5, {
+    test('adds active quest foods ahead of the configured food', () => {
+        expect(resolveSustainPolicy('Trout', {
             foods: ['Bread'],
             eatBelowHp: 0.95
         })).toEqual({
-            foods: ['bread', 'trout'],
-            eatBelowHp: 0.95
-        });
-    });
-
-    test('preserves a stricter user threshold', () => {
-        expect(resolveSustainPolicy('Shark', 0.99, {
-            foods: ['Bread'],
-            eatBelowHp: 0.95
-        })).toEqual({
-            foods: ['bread', 'shark'],
-            eatBelowHp: 0.99
+            foods: ['bread', 'trout']
         });
     });
 
     test('trims, ignores empty names, and de-duplicates foods case-insensitively', () => {
-        expect(resolveSustainPolicy(' BREAD ', 0.5, {
+        expect(resolveSustainPolicy(' BREAD ', {
             foods: ['Bread', '', ' bread ', 'Tuna'],
             eatBelowHp: 0.75
         })).toEqual({
-            foods: ['bread', 'tuna'],
-            eatBelowHp: 0.75
+            foods: ['bread', 'tuna']
         });
     });
 
     test('allows quest food when the configured food is blank', () => {
-        expect(resolveSustainPolicy(null, 0.5, {
+        expect(resolveSustainPolicy(null, {
             foods: ['Bread'],
             eatBelowHp: 0.95
         })).toEqual({
-            foods: ['bread'],
-            eatBelowHp: 0.95
+            foods: ['bread']
         });
     });
 
     test('keeps eating a cake once it has been bitten', () => {
-        expect(resolveSustainPolicy('Cake', 0.5).foods).toEqual(['cake', '2/3 cake', 'slice of cake']);
+        expect(resolveSustainPolicy('Cake').foods).toEqual(['cake', '2/3 cake', 'slice of cake']);
     });
 
     test('covers the half-eaten form of every multi-bite food it is given', () => {
-        expect(resolveSustainPolicy('Meat pie', 0.5).foods).toEqual(['meat pie', 'half a meat pie']);
-        expect(resolveSustainPolicy('Chocolate cake', 0.5).foods)
+        expect(resolveSustainPolicy('Meat pie').foods).toEqual(['meat pie', 'half a meat pie']);
+        expect(resolveSustainPolicy('Chocolate cake').foods)
             .toEqual(['chocolate cake', '2/3 chocolate cake', 'chocolate slice']);
     });
 
     test('de-duplicates when a quest food and the configured food share a chain', () => {
-        expect(resolveSustainPolicy('Cake', 0.5, {
+        expect(resolveSustainPolicy('Cake', {
             foods: ['Cake'],
             eatBelowHp: 0.5
         }).foods).toEqual(['cake', '2/3 cake', 'slice of cake']);
     });
 
     test('leaves single-stage food alone', () => {
-        expect(resolveSustainPolicy(' Shark ', 0.5).foods).toEqual(['shark']);
+        expect(resolveSustainPolicy(' Shark ').foods).toEqual(['shark']);
     });
 });

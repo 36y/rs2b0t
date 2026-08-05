@@ -1,3 +1,4 @@
+import { foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
 import { TaskBot, type Task } from '../api/Bot.js';
 import { EventSignal } from '../api/EventSignal.js';
 import { Execution } from '../api/Execution.js';
@@ -48,12 +49,7 @@ export const AIO_SETTINGS: SettingsSchema = {
         label: 'Food item',
         help: 'general food to withdraw and consume when HP dips; quest-specific survival items are added automatically; blank disables only the general food'
     },
-    eatAtHp: {
-        type: 'number',
-        default: 50, min: 1, max: 99,
-        label: 'Eat below HP%',
-        help: 'eat one food whenever hitpoints drop below this percent, during walks and between steps'
-    }
+
 };
 
 export default class AIOQuester extends TaskBot {
@@ -61,7 +57,7 @@ export default class AIOQuester extends TaskBot {
 
     private status = 'starting';
     private picked = new Set<string>();
-    private eatAt = 0.5;
+
 
     private rows: QueueRow[] = [];
     private runningId: string | null = null;
@@ -88,7 +84,6 @@ export default class AIOQuester extends TaskBot {
             }
         });
 
-        this.eatAt = this.settings.num('eatAtHp', 50) / 100;
         QuestFood.name = this.foodItem();
         Sustain.set(async () => { if (this.shouldEat()) { await this.eatOnce(); } });
         // Yield long walks/dialog loops as soon as Skip is clicked (#432).
@@ -111,13 +106,21 @@ export default class AIOQuester extends TaskBot {
 
     sustainPolicy(): ResolvedSustainPolicy {
         const quest = this.runningId ? defById(this.runningId) : undefined;
-        return resolveSustainPolicy(this.foodItem(), this.eatAt, quest?.sustain);
+        return resolveSustainPolicy(this.foodItem(), quest?.sustain);
     }
 
     shouldEat(): boolean {
         const policy = this.sustainPolicy();
-        return Skills.hpFraction() < policy.eatBelowHp
-            && Inventory.items().some(i => policy.foods.some(food => i.name?.toLowerCase() === food.toLowerCase()));
+        const food = Inventory.items().find(i => policy.foods.some(f => i.name?.toLowerCase() === f.toLowerCase()));
+        if (!food) {
+            return false;
+        }
+        return shouldEatToUseFood({
+            hp: Skills.effective('hitpoints'),
+            maxHp: Skills.level('hitpoints'),
+            heal: foodHealAmount(food.name ?? policy.foods[0] ?? 'Trout'),
+            foodCount: 1
+        });
     }
 
     async eatOnce(): Promise<void> {

@@ -1,5 +1,5 @@
 import { TaskBot, type Task } from '../api/Bot.js';
-import { FOOD_OPTIONS, foodCount as countFood, isFoodItem } from '../api/combat/food.js';
+import { FOOD_OPTIONS, foodCount as countFood, isFoodItem, foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
 import { Execution } from '../api/Execution.js';
 import { Game } from '../api/Game.js';
 import { Bank } from '../api/hud/Bank.js';
@@ -62,14 +62,7 @@ export const SETTINGS: SettingsSchema = {
         label: 'Food per trip',
         group: 'Food & healing'
     },
-    eatAtHp: {
-        type: 'number',
-        default: 55,
-        min: 1,
-        max: 99,
-        label: 'Eat below HP%',
-        group: 'Food & healing'
-    },
+
     panicHp: {
         type: 'number',
         default: 35,
@@ -156,7 +149,7 @@ export default class ChaosDruidKiller extends TaskBot {
 
     foodName = 'Lobster';
     foodWithdraw = 12;
-    eatHpFraction = 0.55;
+
     panicHpFraction = 0.35;
     tripPrepared = false;
     parked = false;
@@ -187,7 +180,7 @@ export default class ChaosDruidKiller extends TaskBot {
         this.spot = DRUID_SPOTS[locationName];
         this.foodName = this.settings.str('food', 'Lobster');
         this.foodWithdraw = this.settings.num('foodWithdraw', 12);
-        this.eatHpFraction = this.settings.num('eatAtHp', 55) / 100;
+
         this.panicHpFraction = this.settings.num('panicHp', 35) / 100;
         this.startedAt = Date.now();
         this.xpAtStart = COMBAT_SKILLS.reduce((sum, skill) => sum + Skills.xp(skill), 0);
@@ -195,7 +188,7 @@ export default class ChaosDruidKiller extends TaskBot {
         this.lastArea = startingArea;
         this.tripPrepared = this.inField() && this.foodCount() >= this.foodWithdraw;
 
-        this.log(`ChaosDruidKiller starting — ${this.locationName} (${this.spot.npc}), ${this.foodWithdraw} ${this.foodName}, eat <${Math.round(this.eatHpFraction * 100)}%, bank without food <${Math.round(this.panicHpFraction * 100)}%, field ${this.spot.field.x},${this.spot.field.z}`);
+        this.log(`ChaosDruidKiller starting — ${this.locationName} (${this.spot.npc}), ${this.foodWithdraw} ${this.foodName}, smart-eat, bank without food <${Math.round(this.panicHpFraction * 100)}%, field ${this.spot.field.x},${this.spot.field.z}`);
         const req = this.spot.requires;
         if (req && Skills.level(req.skill) < req.level) {
             this.park(`${this.locationName} needs ${req.level} ${req.skill} — you have ${Skills.level(req.skill)}. Train it or pick another location, then restart.`);
@@ -284,6 +277,19 @@ export default class ChaosDruidKiller extends TaskBot {
 
     foodCount(): number {
         return countFood(Inventory.items(), this.foodName);
+    }
+
+    needEat(): boolean {
+        const n = this.foodCount();
+        if (n <= 0) {
+            return false;
+        }
+        return shouldEatToUseFood({
+            hp: Skills.effective('hitpoints'),
+            maxHp: Skills.level('hitpoints'),
+            heal: foodHealAmount(this.foodName),
+            foodCount: n
+        });
     }
 
     selectedFood(): InvItem | null {
@@ -464,7 +470,7 @@ export default class ChaosDruidKiller extends TaskBot {
     }
 
     private async eatIfLow(): Promise<void> {
-        if (hpFraction() < this.eatHpFraction && this.foodCount() > 0) {
+        if (this.needEat()) {
             await eatOnce(this);
         }
     }
@@ -761,9 +767,7 @@ class Eat implements Task {
     validate(): boolean {
         return chaosDruidEatReady({
             bankOpen: Bank.isOpen(),
-            hpFraction: hpFraction(),
-            eatHpFraction: this.bot.eatHpFraction,
-            foodCount: this.bot.foodCount()
+            needEat: this.bot.needEat()
         });
     }
     async execute(): Promise<void> {
@@ -898,7 +902,7 @@ class Fight implements Task {
             if (this.bot.died || ChatDialog.canContinue()) {
                 return;
             }
-            if (hpFraction() < this.bot.eatHpFraction && this.bot.foodCount() > 0) {
+            if (this.bot.needEat()) {
                 await eatOnce(this.bot);
             }
             if (this.bot.foodCount() === 0 && hpFraction() <= this.bot.panicHpFraction) {

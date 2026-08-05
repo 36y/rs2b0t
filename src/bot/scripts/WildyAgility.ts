@@ -1,3 +1,4 @@
+import { foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
 import type { WorldTile } from '../adapter/ClientAdapter.js';
 import { actions, reader } from '../adapter/ClientAdapter.js';
 import { TaskBot, type Task } from '../api/Bot.js';
@@ -59,15 +60,7 @@ export const WILDY_AGILITY_SETTINGS: SettingsSchema = {
         label: 'Food (name contains)',
         help: 'carried food eaten while running. Running out mid-course is expected — keep lapping until death; death recovery banks and re-withdraws this food only (nothing else is restocked)'
     },
-    eatAtHp: { type: 'number', default: 50, min: 1, max: 100, label: 'Eat below HP%' },
-    eatToHp: {
-        type: 'number',
-        default: 90,
-        min: 1,
-        max: 100,
-        label: 'Eat up to HP%',
-        help: 'keep eating until HP reaches this % — 90 avoids the overheal wasted by eating to full'
-    },
+
     foodWithdraw: {
         type: 'number',
         default: 20,
@@ -95,8 +88,8 @@ export const WILDY_AGILITY_SETTINGS: SettingsSchema = {
 };
 
 let FOOD = 'lobster';
-let EAT_AT = 0.5;
-let EAT_TO = 0.9;
+
+
 let FOOD_WITHDRAW = 20;
 let MIN_FOOD = 1;
 let OBSTACLE_TIMEOUT_TICKS = 24;
@@ -115,6 +108,19 @@ async function ensureRetaliateOff(log: (m: string) => void): Promise<void> {
 
 function foodCount(): number {
     return Inventory.items().filter(i => i.name?.toLowerCase().includes(FOOD)).length;
+}
+
+function needEat(): boolean {
+    const n = foodCount();
+    if (n <= 0) {
+        return false;
+    }
+    return shouldEatToUseFood({
+        hp: Skills.effective('hitpoints'),
+        maxHp: Skills.level('hitpoints'),
+        heal: foodHealAmount(FOOD),
+        foodCount: n
+    });
 }
 
 function findRidge(): Loc | null {
@@ -253,8 +259,7 @@ export default class WildyAgility extends TaskBot {
         await Execution.delayUntil(() => Game.ingame() && Game.tile() !== null, 0);
 
         FOOD = this.settings.str('food', 'Lobster').toLowerCase();
-        EAT_AT = this.settings.num('eatAtHp', 50) / 100;
-        EAT_TO = this.settings.num('eatToHp', 90) / 100;
+
         FOOD_WITHDRAW = this.settings.num('foodWithdraw', 20);
         MIN_FOOD = this.settings.num('minFood', 1);
         OBSTACLE_TIMEOUT_TICKS = this.settings.num('obstacleTimeoutTicks', 24);
@@ -497,7 +502,7 @@ class EatFood implements Task {
     constructor(private bot: WildyAgility) {}
 
     validate(): boolean {
-        return Skills.hpFraction() < EAT_AT && foodCount() > 0;
+        return needEat();
     }
 
     async execute(): Promise<void> {
@@ -505,7 +510,7 @@ class EatFood implements Task {
             if (this.bot.died || ChatDialog.canContinue() || EventSignal.pending()) {
                 return;
             }
-            if (Skills.hpFraction() >= EAT_TO || foodCount() === 0) {
+            if (!needEat()) {
                 return;
             }
             const food = Inventory.items().find(i => i.name?.toLowerCase().includes(FOOD));
@@ -827,7 +832,7 @@ class RunLap implements Task {
             // Only after a few ticks so we don't abort the click on residual damage.
             // Never yield when inventory is empty — EatFood won't validate, and
             // aborting mid-obstacle leaves us on unpathable tiles (log/pipe).
-            if (waitedTicks >= 3 && Skills.hpFraction() < EAT_AT && foodCount() > 0) {
+            if (waitedTicks >= 3 && needEat()) {
                 lowHp = true;
                 settled = true;
                 break;

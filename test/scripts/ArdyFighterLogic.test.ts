@@ -57,10 +57,12 @@ describe('shouldRestock', () => {
 });
 
 describe('shouldEat', () => {
-    test('below the gate with food in the pack', () => {
-        expect(shouldEat(0.49, 0.5, 3)).toBe(true);
-        expect(shouldEat(0.5, 0.5, 3)).toBe(false);
-        expect(shouldEat(0.49, 0.5, 0)).toBe(false);
+    test('eats when a full heal fits or HP is at the safety floor', () => {
+        // max 40, heal 12 → eat at hp <= 28
+        expect(shouldEat(28, 40, 12, 3)).toBe(true);
+        expect(shouldEat(29, 40, 12, 3)).toBe(false);
+        expect(shouldEat(5, 40, 12, 3)).toBe(true);
+        expect(shouldEat(28, 40, 12, 0)).toBe(false);
     });
 });
 

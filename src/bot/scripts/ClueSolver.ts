@@ -1,3 +1,4 @@
+import { foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
 import { TaskBot } from '../api/Bot.js';
 import type { Task } from '../api/Bot.js';
 import { Execution } from '../api/Execution.js';
@@ -17,7 +18,7 @@ import type { SettingsSchema } from '../runtime/Settings.js';
 export const SETTINGS: SettingsSchema = {
     food: { type: 'string', default: '', label: 'Food item name', help: 'withdrawn during the pre-trail bank stop and kept out of the deposit; blank = run foodless (easy trails are low-risk)' },
     foodWithdraw: { type: 'number', default: 8, min: 1, max: 27, label: 'Food to withdraw' },
-    eatAtHp: { type: 'number', default: 50, min: 1, max: 99, label: 'Eat below HP%', help: 'eats mid-walk too — hostiles along a trail chip HP' },
+
     restorePrayer: { type: 'boolean', default: true, label: 'Top up prayer between trails', help: 'prays at the nearest altar after the bank stop; hard dig guardians are fought under Protect from Magic' },
     useTeleports: { type: 'boolean', default: true, label: 'Use teleports', help: 'routes long legs through spell teleports and the ring of dueling, and stocks the runes at the bank stop' }
 };
@@ -54,10 +55,18 @@ export default class ClueSolver extends TaskBot {
 
         ClueExecutor.setTeleports(this.settings.bool('useTeleports', true));
 
-        const eatAt = this.settings.num('eatAtHp', 50) / 100;
         const isFood = (name: string | null | undefined): boolean => foodPat !== '' && (name ?? '').toLowerCase().includes(foodPat);
         Sustain.set(async () => {
-            if (foodPat === '' || Skills.hpFraction() >= eatAt) {
+            if (foodPat === '') {
+                return;
+            }
+            const held = Inventory.items().filter(i => isFood(i.name)).length;
+            if (!shouldEatToUseFood({
+                hp: Skills.effective('hitpoints'),
+                maxHp: Skills.level('hitpoints'),
+                heal: foodHealAmount(food),
+                foodCount: held
+            })) {
                 return;
             }
             const bite = Inventory.items().find(i => isFood(i.name));

@@ -17,6 +17,7 @@ import { EventSignal } from '../api/EventSignal.js';
 import { Npcs, type Npc } from '../api/queries/Npcs.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import { matchesAny, shouldEat } from './ArdyFighterLogic.js';
+import { foodHealAmount } from '../api/combat/food.js';
 import { HOSTILE_NAMES, isHostileAttacker } from './ArdyThieverLogic.js';
 import { CAKE_ITEMS, FLEE_TILE, LOCKOUT_TICKS, STAND } from './CakeStallLogic.js';
 import { carriedCakes, stealCakes } from './CakeStall.js';
@@ -32,21 +33,28 @@ const ENGAGE_RADIUS = 5;
 
 export const SETTINGS: SettingsSchema = {
     guardResponse: { type: 'string', default: 'Flee', options: ['Flee', 'Fight'], label: 'Guard response', help: 'caught at the stall: Flee kites the guard off the market; Fight kills it (bring combat stats)' },
-    eatAtHp: { type: 'number', default: 40, min: 0, max: 100, label: 'Eat below HP%', help: 'eats the stolen cakes — they are free' },
-    eatToHp: { type: 'number', default: 90, min: 1, max: 100, label: 'Eat up to HP%' },
+
     bankCommonJunk: { type: 'boolean', default: true, label: 'Bank common junk too' },
     solveClues: { type: 'boolean', default: true, label: 'Solve clue drops', group: 'Clues', help: 'Fight mode kills guards, which drop medium clues — solve them on the spot' }
 };
 
 let RESPONSE = 'Flee';
-let EAT_AT = 0.4;
-let EAT_TO = 0.9;
+
+
 let BANK_COMMON = true;
 let SOLVE_CLUES = true;
 
 function nearMarket(): boolean {
     const here = Game.tile();
     return here !== null && STAND.distanceTo(here) <= MARKET_RADIUS;
+}
+
+function needEat(): boolean {
+    const n = carriedCakes();
+    if (n <= 0) {
+        return false;
+    }
+    return shouldEat(Skills.effective('hitpoints'), Skills.level('hitpoints'), foodHealAmount('Cake'), n);
 }
 
 export default class ArdyCakes extends TaskBot {
@@ -71,8 +79,7 @@ export default class ArdyCakes extends TaskBot {
         await Execution.delayUntil(() => Game.ingame() && Game.tile() !== null, 0);
 
         RESPONSE = this.settings.str('guardResponse', 'Flee');
-        EAT_AT = this.settings.num('eatAtHp', 40) / 100;
-        EAT_TO = this.settings.num('eatToHp', 90) / 100;
+
         BANK_COMMON = this.settings.bool('bankCommonJunk', true);
         SOLVE_CLUES = this.settings.bool('solveClues', true);
         this.solveClue = new SolveClue({
@@ -89,7 +96,7 @@ export default class ArdyCakes extends TaskBot {
             enabled: () => SOLVE_CLUES
         });
         Sustain.set(async () => {
-            if (Skills.hpFraction() < EAT_AT && carriedCakes() > 0) {
+            if (needEat()) {
                 const food = Inventory.items().find(i => matchesAny(i.name, CAKE_ITEMS));
                 if (food) {
                     const before = Skills.effective('hitpoints');
@@ -209,7 +216,7 @@ class FightBack implements Task {
         const deadline = performance.now() + 90_000;
         while (performance.now() < deadline) {
             if (EventSignal.pending() || ChatDialog.canContinue() || this.bot.died) { return; }
-            if (shouldEat(Skills.hpFraction(), EAT_AT, carriedCakes())) {
+            if (needEat()) {
                 return;
             }
             const target = this.track(attacker);
@@ -233,11 +240,11 @@ class FightBack implements Task {
 
 class EatCake implements Task {
     constructor(private bot: ArdyCakes) {}
-    validate(): boolean { return shouldEat(Skills.hpFraction(), EAT_AT, carriedCakes()); }
+    validate(): boolean { return needEat(); }
     async execute(): Promise<void> {
         for (let bite = 0; bite < 28; bite++) {
             if (this.bot.died || ChatDialog.canContinue() || EventSignal.pending()) { return; }
-            if (Skills.hpFraction() >= EAT_TO || carriedCakes() === 0) { return; }
+            if (!needEat()) { return; }
             const food = Inventory.items().find(i => matchesAny(i.name, CAKE_ITEMS));
             if (!food) { return; }
             this.bot.setStatus(`eating ${food.name} (${Math.round(Skills.hpFraction() * 100)}% hp)`);
@@ -280,7 +287,7 @@ class StealCakes implements Task {
         const result = await stealCakes({
             fillTo: 28,
             abort: () => this.bot.died || EventSignal.pending() || ChatDialog.canContinue(),
-            shouldEat: () => shouldEat(Skills.hpFraction(), EAT_AT, carriedCakes()),
+            shouldEat: () => needEat(),
             lockedOutUntil: () => this.bot.lockedOutUntil(),
             setStatus: s => this.bot.setStatus(s),
             log: m => this.bot.log(m),

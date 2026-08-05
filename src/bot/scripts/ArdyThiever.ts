@@ -23,6 +23,7 @@ import { ARDOUGNE_PICKPOCKET_TARGETS } from '../api/PickpocketTargets.js';
 import { chooseTarget, isHostileAttacker, requiredThieving, targetSpot } from './ArdyThieverLogic.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import { countMatching, matchesAny, shouldBank, shouldEat, shouldPanic, slotsMatching } from './ArdyFighterLogic.js';
+import { foodHealAmount } from '../api/combat/food.js';
 import { CAKE_ITEMS } from './CakeStallLogic.js';
 import { stealCakes } from './CakeStall.js';
 import { SolveClue } from '../clues/SolveClue.js';
@@ -43,8 +44,7 @@ const TARGET_OPTIONS = ARDOUGNE_PICKPOCKET_TARGETS;
 export const SETTINGS: SettingsSchema = {
     thieveTarget: { type: 'string', default: 'Guard', options: TARGET_OPTIONS, label: 'Pickpocket target', help: 'the bot knows each target\'s market spot — no anchor to place' },
     guardResponse: { type: 'string', default: 'Flee', options: ['Flee', 'Fight'], label: 'Guard response', help: 'caught at the stall: Flee kites the guard off the market; Fight kills it (bring combat stats)' },
-    eatAtHp: { type: 'number', default: 40, min: 0, max: 100, label: 'Eat below HP%' },
-    eatToHp: { type: 'number', default: 90, min: 1, max: 100, label: 'Eat up to HP%' },
+
     panicHp: { type: 'number', default: 25, min: 0, max: 100, label: 'Panic below HP% (no food)' },
     restUntilHp: { type: 'number', default: 60, min: 0, max: 100, label: 'Regen to HP% when bank empty' },
     foodTarget: { type: 'number', default: 22, min: 1, max: 27, label: 'Fill food to (count)' },
@@ -58,8 +58,8 @@ let TARGET = 'Guard';
 let RESPONSE = 'Flee';
 let ANCHOR = targetSpot(TARGET).anchor;
 let LEASH = targetSpot(TARGET).leash;
-let EAT_AT = 0.4;
-let EAT_TO = 0.9;
+
+
 let PANIC_AT = 0.25;
 let REST_UNTIL = 0.6;
 let FOOD_TARGET = 22;
@@ -70,6 +70,18 @@ let SOLVE_CLUES = true;
 
 function foodCount(): number {
     return countMatching(Inventory.items(), FOOD);
+}
+function needEat(): boolean {
+    const item = Inventory.items().find(i => matchesAny(i.name, FOOD));
+    if (!item || foodCount() <= 0) {
+        return false;
+    }
+    return shouldEat(
+        Skills.effective('hitpoints'),
+        Skills.level('hitpoints'),
+        foodHealAmount(item.name ?? FOOD[0] ?? 'Cake'),
+        foodCount()
+    );
 }
 function lootSlots(): number {
     return slotsMatching(Inventory.items(), LOOT);
@@ -109,8 +121,7 @@ export default class ArdyThiever extends TaskBot {
         FOOD_TARGET = this.settings.num('foodTarget', 22);
         RESTOCK_AT = this.settings.num('restockAtFood', 3);
         BANK_AT = this.settings.num('bankAtLootSlots', 12);
-        EAT_AT = this.settings.num('eatAtHp', 40) / 100;
-        EAT_TO = this.settings.num('eatToHp', 90) / 100;
+
         PANIC_AT = this.settings.num('panicHp', 25) / 100;
         REST_UNTIL = this.settings.num('restUntilHp', 60) / 100;
         BANK_COMMON = this.settings.bool('bankCommonJunk', true);
@@ -129,7 +140,7 @@ export default class ArdyThiever extends TaskBot {
             enabled: () => SOLVE_CLUES
         });
         Sustain.set(async () => {
-            if (Skills.hpFraction() < EAT_AT && foodCount() > 0) {
+            if (needEat()) {
                 const food = Inventory.items().find(i => matchesAny(i.name, FOOD));
                 if (food) {
                     const before = Skills.effective('hitpoints');
@@ -303,7 +314,7 @@ class FightBack implements Task {
         const deadline = performance.now() + 90_000;
         while (performance.now() < deadline) {
             if (EventSignal.pending() || ChatDialog.canContinue() || this.bot.died) { return; }
-            if (shouldEat(Skills.hpFraction(), EAT_AT, foodCount()) || shouldPanic(Skills.hpFraction(), PANIC_AT, foodCount())) {
+            if (needEat() || shouldPanic(Skills.hpFraction(), PANIC_AT, foodCount())) {
                 return;
             }
             const target = this.track(attacker);
@@ -354,11 +365,11 @@ class LootDrops implements Task {
 class EatFood implements Task {
     constructor(private bot: ArdyThiever) {}
     // Runs above Pickpocket so low-HP bites use stun downtime (can't thieve anyway).
-    validate(): boolean { return shouldEat(Skills.hpFraction(), EAT_AT, foodCount()); }
+    validate(): boolean { return needEat(); }
     async execute(): Promise<void> {
         for (let bite = 0; bite < 28; bite++) {
             if (this.bot.died || ChatDialog.canContinue() || EventSignal.pending()) { return; }
-            if (Skills.hpFraction() >= EAT_TO || foodCount() === 0) { return; }
+            if (!needEat()) { return; }
             const food = Inventory.items().find(i => matchesAny(i.name, FOOD));
             if (!food) { return; }
             const hpPct = Math.round(Skills.hpFraction() * 100);
@@ -427,7 +438,7 @@ class RestockCakes implements Task {
         await stealCakes({
             fillTo: FOOD_TARGET,
             abort: () => EventSignal.pending() || this.bot.died || ChatDialog.canContinue() || this.bot.inRealCombat(),
-            shouldEat: () => shouldEat(Skills.hpFraction(), EAT_AT, foodCount()),
+            shouldEat: () => needEat(),
             setStatus: s => this.bot.setStatus(s),
             log: m => this.bot.log(m),
             onSteal: () => this.bot.countSteal()
@@ -455,7 +466,7 @@ class Pickpocket implements Task {
 
     validate(): boolean {
         // Yield while stunned + low HP so EatFood can bite during the lock.
-        if (this.bot.stunned() && Skills.hpFraction() < EAT_AT) {
+        if (this.bot.stunned() && needEat()) {
             return false;
         }
         return !this.bot.inRealCombat() && foodCount() > RESTOCK_AT && !Inventory.isFull() && this.candidates().length > 0;
@@ -465,7 +476,7 @@ class Pickpocket implements Task {
         if (this.bot.stunned()) {
             // Exit early when eating is needed; EatFood is higher priority next loop.
             this.bot.setStatus('stunned — waiting');
-            await Execution.delayUntil(() => !this.bot.stunned() || Skills.hpFraction() < EAT_AT, 9000);
+            await Execution.delayUntil(() => !this.bot.stunned() || needEat(), 9000);
             return;
         }
 
@@ -488,7 +499,7 @@ class Pickpocket implements Task {
         const usedBefore = Inventory.used();
         if (!(await target.interact(PICKPOCKET_OP))) { await Execution.delayTicks(2); return; }
         await Execution.delayUntil(
-            () => Skills.xp('thieving') > xpBefore || Inventory.used() > usedBefore || ChatDialog.canContinue() || this.bot.stunned() || Skills.hpFraction() < EAT_AT,
+            () => Skills.xp('thieving') > xpBefore || Inventory.used() > usedBefore || ChatDialog.canContinue() || this.bot.stunned() || needEat(),
             2500
         );
         if (Skills.xp('thieving') > xpBefore) {
@@ -497,7 +508,7 @@ class Pickpocket implements Task {
             return;
         }
         if (this.bot.stunned()) {
-            await Execution.delayUntil(() => !this.bot.stunned() || Skills.hpFraction() < EAT_AT, 9000);
+            await Execution.delayUntil(() => !this.bot.stunned() || needEat(), 9000);
         }
     }
 }

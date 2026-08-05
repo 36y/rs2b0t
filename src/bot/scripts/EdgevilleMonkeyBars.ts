@@ -12,6 +12,7 @@ import { actions, reader } from '../adapter/ClientAdapter.js';
 import { depositAllExcept } from '../api/Banking.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
+import { foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
 
 const MONKEYBARS_APPROACH = new Tile(3121, 9964, 0);
 const MIN_AGILITY = 15; // required to swing across the monkey bars
@@ -20,31 +21,13 @@ const RESTOCK_DUNGEON = 'Dungeon ladder (out of food)';
 const RESTOCK_DEATH = 'After death only';
 
 export const EDGEVILLE_MONKEYBARS_SETTINGS: SettingsSchema = {
-    food: { type: 'string', default: 'Lobster', label: 'Food' },
+    food: {
+        type: 'string',
+        default: 'Lobster',
+        label: 'Food',
+        help: 'eaten when a full heal fits (no overheal waste), or at ≤5 HP so you do not die with food left'
+    },
     foodAmount: { type: 'number', default: 20, min: 5, max: 28, label: 'Food to withdraw' },
-    eatAtHp: { type: 'number', default: 40, min: 1, max: 100, label: 'Eat below HP %', help: 'HP threshold to start eating (only used when smart eat is off).' },
-    eatToHp: {
-        type: 'number',
-        default: 90,
-        min: 1,
-        max: 100,
-        label: 'Eat up to HP %',
-        help: 'keep eating until HP reaches this value — avoids overheal waste. Damage from mobs can stack during agility animations; set higher if you die frequently.'
-    },
-    smartEat: {
-        type: 'boolean',
-        default: false,
-        label: 'Smart eat (avoid overheal)',
-        help: 'calculate exactly how many foods to eat based on heal amount — avoids wasting food waiting to heal past the target.'
-    },
-    smartEatHealAmount: {
-        type: 'number',
-        default: 12,
-        min: 1,
-        max: 20,
-        label: 'Food heal amount',
-        help: 'how much HP each food restores (Lobster = 12). Only used when smart eat is enabled.'
-    },
     minFood: {
         type: 'number',
         default: 1,
@@ -343,69 +326,48 @@ class EdgevilleMonkeyBars extends TaskBot {
 }
 
 class EatFood implements Task {
-    private ateThisCycle = false;
-
     constructor(private bot: EdgevilleMonkeyBars) {}
 
-    validate() {
-        if (this.bot.died) {
-            return false;
-        }
-        // Don't eat while the bank is open — let BankAndRestock finish first.
-        if (Bank.isOpen()) {
-            return false;
-        }
-        const hp = Skills.hpFraction();
-        const eatAt = this.bot.settings.num('eatAtHp', 40) / 100;
-        const eatTo = this.bot.settings.num('eatToHp', 90) / 100;
-
-        // If HP climbs back above eatAt, reset the cycle so we can eat again on the next dip.
-        if (hp >= eatAt) {
-            this.ateThisCycle = false;
-        }
-
-        // Only eat once per dip below eatAt — eat up to eatTo, then stop.
-        if (hp >= eatTo || this.ateThisCycle) {
-            return false;
-        }
-        const foodName = this.bot.settings.str('food', 'Lobster').toLowerCase();
-        return Inventory.items().some(i => i.name?.toLowerCase().includes(foodName));
+    private foodName(): string {
+        return this.bot.settings.str('food', 'Lobster');
     }
+
+    private heldFood(): number {
+        const key = this.foodName().toLowerCase();
+        return Inventory.items().filter(i => i.name?.toLowerCase().includes(key)).length;
+    }
+
+    private needEat(): boolean {
+        return shouldEatToUseFood({
+            hp: Skills.effective('hitpoints'),
+            maxHp: Skills.level('hitpoints'),
+            heal: foodHealAmount(this.foodName()),
+            foodCount: this.heldFood()
+        });
+    }
+
+    validate() {
+        if (this.bot.died || Bank.isOpen()) {
+            return false;
+        }
+        return this.needEat();
+    }
+
     async execute() {
         this.bot.setStatus('eating');
-        const foodName = this.bot.settings.str('food', 'Lobster').toLowerCase();
-        const eatTo = this.bot.settings.num('eatToHp', 90) / 100;
-
-        // Determine how many foods to eat.
-        const smartEat = this.bot.settings.bool('smartEat', false);
-        let foodsToEat = Infinity;
-        if (smartEat) {
-            const healAmount = this.bot.settings.num('smartEatHealAmount', 12);
-            const hpMax = Skills.level('hitpoints'); // max HP = HP level in OSRS
-            const hpCurrent = Skills.effective('hitpoints');
-            const hpTarget = eatTo * hpMax;
-            const hpNeeded = Math.max(0, hpTarget - hpCurrent);
-            foodsToEat = Math.ceil(hpNeeded / healAmount);
-        }
-
-        let eaten = 0;
-        // Eat one food at a time until we reach eatTo, food count limit, or run out of food.
-        while ((smartEat ? eaten < foodsToEat : true) && Skills.hpFraction() < eatTo) {
-            const food = Inventory.items().find(i => i.name?.toLowerCase().includes(foodName));
+        const key = this.foodName().toLowerCase();
+        while (this.needEat()) {
+            const food = Inventory.items().find(i => i.name?.toLowerCase().includes(key));
             if (!food) {
                 break;
             }
-
             const before = Skills.effective('hitpoints');
             await food.interact('Eat');
             if (await Execution.delayUntil(() => Skills.effective('hitpoints') > before, 3000)) {
                 this.bot.countEat();
-                eaten++;
             }
         }
-        this.ateThisCycle = true;
-
-        // OSRS enforces a 3-tick (1.8s) penalty between eating; wait so the next agility
+        // OSRS enforces a 3-tick penalty between eating; wait so the next agility
         // action doesn't fire while the client is still processing the eat animation.
         await Execution.delayTicks(3);
     }

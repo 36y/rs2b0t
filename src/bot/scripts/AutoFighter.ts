@@ -14,6 +14,7 @@ import {
 } from '../api/CombatStyle.js';
 import { Autocast } from '../api/combat/Autocast.js';
 import { castsAvailable, runeWithdrawList } from '../api/combat/CombatStyleLogic.js';
+import { foodHealAmount } from '../api/combat/food.js';
 import { SPELL_DB } from '../api/combat/data/spelldb.js';
 import { ChatDialog } from '../api/hud/ChatDialog.js';
 import { Skills } from '../api/hud/Skills.js';
@@ -76,10 +77,13 @@ export const SETTINGS: SettingsSchema = {
     ammo: { type: 'string', default: 'Bronze arrow', label: 'Ammo (withdrawn from bank)', group: 'Combat', showIf: SHOW_RANGE },
     ammoWithdraw: { type: 'number', default: 500, min: 1, max: 5000, label: 'Ammo per bank trip', group: 'Combat', showIf: SHOW_RANGE },
     ammoRestockBelow: { type: 'number', default: 25, min: 0, max: 100, label: 'Bank for ammo below %', group: 'Combat', showIf: SHOW_MAGE_RANGE, help: 'when not banking for food, go bank once magic casts / ranged ammo drop below this percentage of a full trip' },
-    food: { type: 'string', default: 'Trout', label: 'Food (withdrawn from bank)' },
+    food: {
+        type: 'string',
+        default: 'Trout',
+        label: 'Food (withdrawn from bank)',
+        help: 'eaten when a full heal fits (no overheal waste), or at ≤5 HP so you do not die with food left'
+    },
     foodWithdraw: { type: 'number', default: 10, min: 0, max: 27, label: 'Food to carry' },
-    eatAtHp: { type: 'number', default: 50, min: 0, max: 100, label: 'Eat below HP%' },
-    eatToHp: { type: 'number', default: 90, min: 1, max: 100, label: 'Eat up to HP%' },
     panicHp: { type: 'number', default: 25, min: 0, max: 100, label: 'Panic below HP% (no food)' },
     loot: { type: 'string[]', default: DEFAULT_LOOT, label: 'Loot item names (contains)', help: 'defaults to gem-table items + clue scrolls, nothing else' },
     solveClues: { type: 'boolean', default: true, label: 'Solve clue drops', group: 'Clues' },
@@ -93,8 +97,6 @@ let ANCHOR = DEFAULT_CUSTOM_SPOT;
 let LEASH = 8;
 let FOOD = 'Trout';
 let FOOD_WITHDRAW = 10;
-let EAT_AT = 0.5;
-let EAT_TO = 0.9;
 let PANIC_AT = 0.25;
 let LOOT = DEFAULT_LOOT;
 let SOLVE_CLUES = true;
@@ -113,6 +115,9 @@ let TRACKED_GEAR: string[] = [];
 
 function foodCount(): number {
     return countMatching(Inventory.items(), [FOOD]);
+}
+function needEat(): boolean {
+    return shouldEat(Skills.effective('hitpoints'), Skills.level('hitpoints'), foodHealAmount(FOOD), foodCount());
 }
 function lootSlots(): number {
     return slotsMatching(Inventory.items(), LOOT);
@@ -182,8 +187,6 @@ export default class AutoFighter extends TaskBot {
         LEASH = this.settings.num('leashRadius', 8);
         FOOD = this.settings.str('food', 'Trout');
         FOOD_WITHDRAW = this.settings.num('foodWithdraw', 10);
-        EAT_AT = this.settings.num('eatAtHp', 50) / 100;
-        EAT_TO = this.settings.num('eatToHp', 90) / 100;
         PANIC_AT = this.settings.num('panicHp', 25) / 100;
         LOOT = this.settings.list('loot', DEFAULT_LOOT).map(s => s.trim().toLowerCase());
         SOLVE_CLUES = this.settings.bool('solveClues', true);
@@ -230,7 +233,7 @@ export default class AutoFighter extends TaskBot {
         });
 
         Sustain.set(async () => {
-            if (Skills.hpFraction() < EAT_AT && foodCount() > 0) {
+            if (needEat()) {
                 const food = Inventory.items().find(i => matchesAny(i.name, [FOOD]));
                 if (food) {
                     const before = Skills.effective('hitpoints');
@@ -350,21 +353,21 @@ class LootDrops implements Task {
 class EatFood implements Task {
     constructor(private bot: AutoFighter) {}
     validate(): boolean {
-        return shouldEat(Skills.hpFraction(), EAT_AT, foodCount());
+        return needEat();
     }
     async execute(): Promise<void> {
         for (let bite = 0; bite < 28; bite++) {
             if (this.bot.died || ChatDialog.canContinue() || EventSignal.pending()) {
                 return;
             }
-            if (Skills.hpFraction() >= EAT_TO || foodCount() === 0) {
+            if (!needEat()) {
                 return;
             }
             const food = Inventory.items().find(i => matchesAny(i.name, [FOOD]));
             if (!food) {
                 return;
             }
-            this.bot.setStatus(`eating ${food.name} (${Math.round(Skills.hpFraction() * 100)}% hp)`);
+            this.bot.setStatus(`eating ${food.name} (${Skills.effective('hitpoints')}/${Skills.level('hitpoints')} hp)`);
             const before = Skills.effective('hitpoints');
             if (!(await food.interact('Eat'))) {
                 return;
@@ -404,7 +407,7 @@ class PanicRetreat implements Task {
         }
         if (foodCount() === 0) {
             this.bot.setStatus('panic: bank empty — waiting for regen');
-            await Execution.delayUntil(() => Skills.hpFraction() >= EAT_TO || Game.inCombat() || ChatDialog.canContinue() || EventSignal.pending(), 300_000);
+            await Execution.delayUntil(() => Skills.hpFraction() >= 0.9 || Game.inCombat() || ChatDialog.canContinue() || EventSignal.pending(), 300_000);
         }
     }
 }
@@ -648,7 +651,7 @@ class Fight implements Task {
         return Npcs.all().find(n => n.index === engaged.index && matchesEntityName(n.name, TARGET)) ?? null;
     }
     validate(): boolean {
-        return !Game.inCombat() && Skills.hpFraction() >= EAT_AT && this.findTarget() !== null;
+        return !Game.inCombat() && !needEat() && this.findTarget() !== null;
     }
     async execute(): Promise<void> {
         const target = this.findTarget();
@@ -676,7 +679,7 @@ class Fight implements Task {
             if (EventSignal.pending() || ChatDialog.canContinue() || this.bot.died) {
                 return;
             }
-            if (shouldEat(Skills.hpFraction(), EAT_AT, foodCount()) || Skills.hpFraction() < PANIC_AT) {
+            if (needEat() || Skills.hpFraction() < PANIC_AT) {
                 return;
             }
             if (STYLE === 'range' && wieldedAmmo() < restockThreshold() && Inventory.count(AMMO) > 0) {

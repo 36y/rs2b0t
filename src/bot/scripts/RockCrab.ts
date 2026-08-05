@@ -17,6 +17,7 @@ import { Autocast } from '../api/combat/Autocast.js';
 import { castsAvailable, runeWithdrawList, spellButtonCom } from '../api/combat/CombatStyleLogic.js';
 import { SPELL_DB } from '../api/combat/data/spelldb.js';
 import { STAFFS } from '../api/combat/equipment.js';
+import { foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
 import { sweepPlan } from '../api/combat/AmmoLogic.js';
 import type { GroundItem } from '../api/queries/GroundItems.js';
 import { Paint } from '../api/hud/Paint.js';
@@ -73,7 +74,7 @@ export const SETTINGS: SettingsSchema = {
     collectRange: { type: 'number', default: 12, min: 2, max: 30, label: 'Projectile sweep range (tiles)', group: 'Combat', showIf: SHOW_RANGE },
 
     food: { type: 'string', default: 'Lobster', options: FOOD_OPTIONS, label: 'Food', group: 'Food & healing' },
-    eatAtHp: { type: 'number', default: 50, min: 1, max: 99, label: 'Eat below HP%', group: 'Food & healing' },
+
     foodWithdraw: { type: 'number', default: 20, min: 1, max: 27, label: 'Food to withdraw per bank run', group: 'Food & healing' },
     fightHpGate: { type: 'number', default: 40, min: 0, max: 100, label: 'Retreat below HP%', group: 'Food & healing' },
     restUntilHp: { type: 'number', default: 75, min: 0, max: 100, label: 'Rest until HP% (no-food fallback)', group: 'Food & healing' },
@@ -102,7 +103,7 @@ let FIELD_RADIUS = 15;
 let DESIRED_STACK = 3;
 let FIGHT_HP_GATE = 0.4;
 let REST_HP = 0.75;
-let EAT_HP = 0.5;
+
 let FOOD_NAME = 'Lobster';
 let FOOD_WITHDRAW = 20;
 let LOOT_NAMES = DEFAULT_LOOT.split(',').map(s => s.trim());
@@ -163,7 +164,7 @@ export default class RockCrab extends TaskBot {
         DESIRED_STACK = this.settings.num('stack', 3);
         FIGHT_HP_GATE = this.settings.num('fightHpGate', 40) / 100;
         REST_HP = this.settings.num('restUntilHp', 75) / 100;
-        EAT_HP = this.settings.num('eatAtHp', 50) / 100;
+
         FOOD_NAME = this.settings.str('food', 'Lobster');
         FOOD_WITHDRAW = this.settings.num('foodWithdraw', 20);
         LOOT_NAMES = this.settings.list('loot', LOOT_NAMES).map(s => s.toLowerCase());
@@ -197,7 +198,7 @@ export default class RockCrab extends TaskBot {
 
         const loadout = rangeLoadout();
         const styleNote = STYLE === 'mage' ? `, mage '${SPELL}' w/ '${WEAPON || '(no weapon set)'}'` : STYLE === 'range' ? `, range '${loadout.projectile}'${loadout.thrown ? ' (thrown)' : ` w/ '${loadout.weapon || '(no weapon set)'}'`} (${this.settings.str('rangeStyle', 'rapid')}, sweep>=${MIN_STACK})` : ` (${this.settings.str('meleeStyle', 'strength')})`;
-        this.log(`RockCrab starting — spots [${LOCS.map(t => `${t.x},${t.z}`).join(' | ')}] starting at ${currentSpot()} r${FIELD_RADIUS}, stack ${DESIRED_STACK}, food '${FOOD_NAME}' (eat<${Math.round(EAT_HP * 100)}%), bank ${BANK_TILE}, style ${STYLE}${styleNote}`);
+        this.log(`RockCrab starting — spots [${LOCS.map(t => `${t.x},${t.z}`).join(' | ')}] starting at ${currentSpot()} r${FIELD_RADIUS}, stack ${DESIRED_STACK}, food '${FOOD_NAME}' (smart-eat), bank ${BANK_TILE}, style ${STYLE}${styleNote}`);
         if (STYLE === 'mage' && spellButtonCom(SPELL) === -1) {
             this.log(`WARNING: '${SPELL}' is not an autocastable spell (Wind/Water/Earth/Fire Strike, Bolt, Blast or Wave) — autocast will not arm`);
         }
@@ -211,7 +212,7 @@ export default class RockCrab extends TaskBot {
         });
 
         Sustain.set(async () => {
-            if (Skills.hpFraction() < EAT_HP && hasFood()) {
+            if (needEat()) {
                 await eatOnce(this);
             }
         });
@@ -423,6 +424,19 @@ function hasFood(): boolean {
     return foodCount() > 0;
 }
 
+function needEat(): boolean {
+    if (!hasFood()) {
+        return false;
+    }
+    return shouldEatToUseFood({
+        hp: Skills.effective('hitpoints'),
+        maxHp: Skills.level('hitpoints'),
+        heal: foodHealAmount(FOOD_NAME),
+        foodCount: 1
+    });
+}
+
+
 function wieldedNames(): string[] {
     return Equipment.items().map(i => i.name ?? '');
 }
@@ -545,7 +559,7 @@ class Eat implements Task {
     constructor(private bot: RockCrab) {}
 
     validate(): boolean {
-        return Skills.hpFraction() < EAT_HP && hasFood();
+        return needEat();
     }
 
     async execute(): Promise<void> {
@@ -914,7 +928,7 @@ class Fight implements Task {
             if (this.bot.died || ChatDialog.canContinue()) {
                 return;
             }
-            if (Skills.hpFraction() < EAT_HP && hasFood()) {
+            if (needEat()) {
                 await eatOnce(this.bot);
                 continue;
             }

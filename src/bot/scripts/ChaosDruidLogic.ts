@@ -113,11 +113,9 @@ export function chaosDruidBankRunReady(bankOpen: boolean, reason: ChaosDruidBank
 
 export function chaosDruidEatReady(input: {
     bankOpen: boolean;
-    hpFraction: number;
-    eatHpFraction: number;
-    foodCount: number;
+    needEat: boolean;
 }): boolean {
-    return !input.bankOpen && input.hpFraction < input.eatHpFraction && input.foodCount > 0;
+    return !input.bankOpen && input.needEat;
 }
 
 export type LootSpaceAction = 'take' | 'eat-food' | 'drop-food' | 'bank';

@@ -35,8 +35,8 @@ describe('ChaosDruid settings', () => {
         expect(SETTINGS.foodWithdraw).toMatchObject({ default: 12, min: 1, max: 27 });
     });
 
-    test('exposes explicit eat and no-food retreat thresholds', () => {
-        expect(SETTINGS.eatAtHp).toMatchObject({ default: 55, min: 1, max: 99 });
+    test('exposes no-food retreat threshold (eat threshold is food-heal based)', () => {
+        expect(SETTINGS.eatAtHp).toBeUndefined();
         expect(SETTINGS.panicHp).toMatchObject({ default: 35, min: 1, max: 98 });
     });
 });
@@ -83,10 +83,9 @@ describe('ChaosDruid trip lifecycle', () => {
     });
 
     test('the eater never selects while the bank side-backpack is authoritative', () => {
-        const state = { hpFraction: 0.2, eatHpFraction: 0.5, foodCount: 12 };
-        expect(chaosDruidEatReady({ ...state, bankOpen: true })).toBe(false);
-        expect(chaosDruidEatReady({ ...state, bankOpen: false })).toBe(true);
-        expect(chaosDruidEatReady({ ...state, bankOpen: false, foodCount: 0 })).toBe(false);
+        expect(chaosDruidEatReady({ bankOpen: true, needEat: true })).toBe(false);
+        expect(chaosDruidEatReady({ bankOpen: false, needEat: true })).toBe(true);
+        expect(chaosDruidEatReady({ bankOpen: false, needEat: false })).toBe(false);
     });
 });
 
