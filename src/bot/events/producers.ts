@@ -1,19 +1,72 @@
 import { reader } from '../adapter/ClientAdapter.js';
+import { ServerProt } from '#/io/ServerProt.js';
 import { bus } from './EventBus.js';
+import {
+    anyDirty,
+    applyDirty,
+    dirtyFamiliesForPacket,
+    emptyDirty,
+    type ProducerDirtyFlags
+} from './producerDirty.js';
 
-let lastTick = 0;
+let lastTick = -1;
 let lastXp: number[] | null = null;
 let lastLevel: number[] | null = null;
 let lastInvIds: number[] | null = null;
 let lastInvCounts: number[] | null = null;
 let lastVarps: number[] | null = null;
 let lastChatSig: string | null = null;
+let wasIngame = false;
 
+/** Families that need a rescan before the next bus emit. */
+let dirty: ProducerDirtyFlags = emptyDirty(true);
+
+/** Test hook — reset caches + dirty state. */
+export function resetProducersForTests(): void {
+    lastTick = -1;
+    lastXp = lastLevel = lastInvIds = lastInvCounts = lastVarps = null;
+    lastChatSig = null;
+    wasIngame = false;
+    dirty = emptyDirty(true);
+}
+
+/**
+ * Called from the packet path after the client has applied the opcode.
+ * Marks which cached tables are stale; {@link pumpProducers} does the rescan.
+ */
+export function noteProducerPacket(ptype: number): void {
+    const hit = dirtyFamiliesForPacket(ptype, ServerProt as unknown as Record<string, number>);
+    if (hit === null) {
+        return;
+    }
+    if (hit === 'reset') {
+        lastXp = lastLevel = lastInvIds = lastInvCounts = lastVarps = null;
+        lastChatSig = null;
+        wasIngame = false;
+        dirty = emptyDirty(true);
+        return;
+    }
+    dirty = applyDirty(dirty, hit);
+}
+
+/**
+ * Frame pump: emit tick on server-tick advance; rescan only dirty families.
+ * Steady-state frames with no packets that affect producers cost ~nothing.
+ */
 export function pumpProducers(tickCount: number): void {
     if (!reader.ingame()) {
         lastXp = lastLevel = lastInvIds = lastInvCounts = lastVarps = null;
         lastChatSig = null;
+        lastTick = -1;
+        wasIngame = false;
+        dirty = emptyDirty(true);
         return;
+    }
+
+    // First frame after login: seed caches so subsequent diffs have a baseline.
+    if (!wasIngame) {
+        wasIngame = true;
+        dirty = emptyDirty(true);
     }
 
     if (tickCount !== lastTick) {
@@ -21,10 +74,26 @@ export function pumpProducers(tickCount: number): void {
         bus.emit('tick', { tick: tickCount });
     }
 
-    diffSkills();
-    diffInventory();
-    diffVarps();
-    diffChat();
+    if (!anyDirty(dirty)) {
+        return;
+    }
+
+    if (dirty.skills) {
+        diffSkills();
+        dirty.skills = false;
+    }
+    if (dirty.inventory) {
+        diffInventory();
+        dirty.inventory = false;
+    }
+    if (dirty.varps) {
+        diffVarps();
+        dirty.varps = false;
+    }
+    if (dirty.chat) {
+        diffChat();
+        dirty.chat = false;
+    }
 }
 
 function diffSkills(): void {
@@ -111,7 +180,8 @@ function diffChat(): void {
         return;
     }
 
-    const sig = (l: { type: number; username: string | null; text: string }) => `${l.type}|${l.username ?? ''}|${l.text}`;
+    const sig = (l: { type: number; username: string | null; text: string }) =>
+        `${l.type}|${l.username ?? ''}|${l.text}`;
 
     if (lastChatSig === null) {
         lastChatSig = sig(lines[0]);
