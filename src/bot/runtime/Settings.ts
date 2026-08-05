@@ -1,4 +1,5 @@
 import Tile from '../api/Tile.js';
+import { WORLDMAP_KEY_NAMES } from '../../mapview/worldmapKeyNames.js';
 import { boxKey } from './box.js';
 
 type SettingType = 'boolean' | 'number' | 'string' | 'string[]' | 'tile';
@@ -265,6 +266,154 @@ export const GLOBAL_SETTINGS: SettingsSchema = {
     }
 };
 
+/**
+ * Settings for the tile map picker only (in-picker Settings modal).
+ * Not shown under Global settings. Storage namespace: {@link MAP_PICKER_SETTINGS_NS}.
+ * URL: `?MapPicker.showBasemap=false` etc.
+ */
+export const MAP_PICKER_SETTINGS_NS = 'MapPicker';
+
+export const MAP_PICKER_SETTINGS: SettingsSchema = {
+    showBasemap: {
+        type: 'boolean',
+        default: true,
+        label: 'Show basemap',
+        group: 'Display',
+        help:
+            'On (default): classic worldmap terrain + optional Key / multi / free layers. '
+            + 'Off: original collision-dot grid with named destination markers. '
+            + 'Clicks always snap to nearest walkable tile either way.'
+    },
+    // Dot style only applies in classic mode (basemap off).
+    dotColor: {
+        type: 'string',
+        default: '#0a3d7a',
+        label: 'Walkable colour',
+        group: 'Display',
+        showIf: { key: 'showBasemap', anyOf: ['false'] },
+        help: 'HTML #RGB / #RRGGBB for walkable dots when basemap is off (default #0a3d7a).'
+    },
+    dotAlpha: {
+        type: 'number',
+        default: 0.85,
+        min: 0.15,
+        max: 1,
+        label: 'Walkable opacity',
+        group: 'Display',
+        showIf: { key: 'showBasemap', anyOf: ['false'] },
+        help: '0.15–1 (default 0.85). Only used when basemap is off.'
+    },
+    // Pre-baked per-type Key overlays (deploy gen:basemap) — free toggles, no MapView.
+    keyIconTypes: {
+        type: 'string[]',
+        default: [],
+        options: [...WORLDMAP_KEY_NAMES],
+        // Worldmap Key panel has a literal "???" entry (mapfunction type 38, ~7 sites).
+        optionLabels: { '???': 'Unknown (Key ???)' },
+        label: 'Key icons',
+        group: 'Worldmap layers',
+        showIf: { key: 'showBasemap', anyOf: ['true'] },
+        help:
+            'Which Key legend types to draw (Bank, Altar, Fishing Spot, …). '
+            + 'Each type is a pre-baked transparent overlay — toggle free, no rebuild. '
+            + '“Unknown (Key ???)” is Jagex’s unnamed Key row (type 38). '
+            + 'Default none = terrain only.'
+    },
+    showPlaceLabels: {
+        type: 'boolean',
+        default: false,
+        label: 'Place names',
+        group: 'Worldmap layers',
+        showIf: { key: 'showBasemap', anyOf: ['true'] },
+        help:
+            'Town / area names from the classic worldmap labels pack (pre-baked overlay). '
+            + 'Default off. Free — no rebuild.'
+    },
+    showMultiTint: {
+        type: 'boolean',
+        default: false,
+        label: 'Multicombat areas',
+        group: 'Worldmap layers',
+        showIf: { key: 'showBasemap', anyOf: ['true'] },
+        help: 'Red multicombat tint (pre-baked). Free — no rebuild.'
+    },
+    showFreeTint: {
+        type: 'boolean',
+        default: false,
+        label: 'Free-to-play areas',
+        group: 'Worldmap layers',
+        showIf: { key: 'showBasemap', anyOf: ['true'] },
+        help: 'Green free-to-play tint (pre-baked). Free — no rebuild.'
+    },
+    // Live Rebuild is rare — deploy already bakes terrain + Key/labels/multi/free.
+    bakeLabels: {
+        type: 'boolean',
+        default: false,
+        label: 'Stamp labels into rebuild',
+        group: 'Basemap rebuild',
+        showIf: { key: 'showBasemap', anyOf: ['true'] },
+        help: 'Prefer Worldmap layers → Place names (pre-baked). Only for live Rebuild stamps.'
+    },
+    bakeBorders: {
+        type: 'boolean',
+        default: false,
+        label: 'Map-square borders',
+        group: 'Basemap rebuild',
+        showIf: { key: 'showBasemap', anyOf: ['true'] },
+        help: '64×64 map-square grid when regenerating (dev).'
+    },
+    bakeNpcs: {
+        type: 'boolean',
+        default: false,
+        label: 'NPC dots',
+        group: 'Basemap rebuild',
+        showIf: { key: 'showBasemap', anyOf: ['true'] },
+        help: 'NPC positions from worldmap data when regenerating.'
+    },
+    bakeItems: {
+        type: 'boolean',
+        default: false,
+        label: 'Item dots',
+        group: 'Basemap rebuild',
+        showIf: { key: 'showBasemap', anyOf: ['true'] },
+        help: 'Ground-item positions when regenerating.'
+    },
+    bakeKeyIcons: {
+        type: 'boolean',
+        default: false,
+        label: 'Stamp Key icons into rebuild',
+        group: 'Basemap rebuild',
+        showIf: { key: 'showBasemap', anyOf: ['true'] },
+        help: 'Prefer Worldmap layers → Key icons (pre-baked per type).'
+    },
+    bakeMultimap: {
+        type: 'boolean',
+        default: false,
+        label: 'Stamp multicombat into rebuild',
+        group: 'Basemap rebuild',
+        showIf: { key: 'showBasemap', anyOf: ['true'] },
+        help: 'Prefer Worldmap layers → Multicombat areas (pre-baked).'
+    },
+    bakeFreemap: {
+        type: 'boolean',
+        default: false,
+        label: 'Stamp free-to-play into rebuild',
+        group: 'Basemap rebuild',
+        showIf: { key: 'showBasemap', anyOf: ['true'] },
+        help: 'Prefer Worldmap layers → Free-to-play areas (pre-baked).'
+    },
+    skipRebuildConfirm: {
+        type: 'boolean',
+        default: false,
+        label: "Don't ask before rebuild",
+        group: 'Basemap rebuild',
+        showIf: { key: 'showBasemap', anyOf: ['true'] },
+        help:
+            'Rebuild map… re-runs MapView (tab freezes). Mainly useful after a game update or if you '
+            + 'want a custom stamp (labels / higher detail). Everyday Key layers need no rebuild.'
+    }
+};
+
 const hasSession = typeof sessionStorage !== 'undefined';
 const hasLocal = typeof localStorage !== 'undefined';
 
@@ -274,8 +423,12 @@ function storageKey(name: string, key: string): string {
     return boxKey(`set:${name}:${key}`);
 }
 
+export type SettingChangeListener = (name: string, key: string, value: string) => void;
+
 class SettingsStoreImpl {
     private urlParams: URLSearchParams | null = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
+    /** Same-tab subscribers (open modals). `storage` events only fire across tabs. */
+    private changeListeners = new Set<SettingChangeListener>();
 
     private urlOverride(name: string, key: string): string | null {
         if (!this.urlParams) {
@@ -313,6 +466,29 @@ class SettingsStoreImpl {
         if (hasLocal) {
             localStorage.setItem(storageKey(name, key), rawString);
         }
+        for (const fn of this.changeListeners) {
+            try {
+                fn(name, key, rawString);
+            } catch {
+                /* listener errors must not break save */
+            }
+        }
+    }
+
+    /**
+     * Subscribe to SettingsStore.save (same tab). Returns unsubscribe.
+     * Used so an open map picker stays aligned with Global settings edits.
+     */
+    onChange(listener: SettingChangeListener): () => void {
+        this.changeListeners.add(listener);
+        return () => {
+            this.changeListeners.delete(listener);
+        };
+    }
+
+    /** True when `?Name.key=` wins over saved/default (toggle cannot stick). */
+    isUrlOverride(name: string, key: string): boolean {
+        return this.urlOverride(name, key) !== null;
     }
 
     clear(name: string, key: string): void {
