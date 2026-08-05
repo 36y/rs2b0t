@@ -44,6 +44,7 @@ import {
     shouldBank,
     shouldEat,
     waitPlatform,
+    wantRunForGoal,
     type ArenaEdge
 } from './BrimhavenAgilityLogic.js';
 
@@ -512,7 +513,6 @@ class CrossObstacle implements Task {
         if (!this.bot.inArenaNow() || this.bot.inPitNow()) {
             return false;
         }
-        // Don't queue the next hop while still recovering from the previous animation.
         if (!canStartObstacle(Game.animating(), false)) {
             return false;
         }
@@ -534,7 +534,8 @@ class CrossObstacle implements Task {
     async execute(): Promise<void> {
         const here = this.bot.platform();
         const target = this.bot.targetPillar();
-        const goal = this.bot.tagged() || target < 0 ? waitPlatform(this.bot.agility(), here) : target;
+        const chasingTag = !this.bot.tagged() && target >= 0;
+        const goal = chasingTag ? target : waitPlatform(this.bot.agility(), here);
         const hop = nextHop(here, goal, this.bot.agility());
         if (hop === null) {
             this.bot.log(`no path from platform ${here} to ${goal} at agility ${this.bot.agility()}`);
@@ -547,6 +548,7 @@ class CrossObstacle implements Task {
         }
         this.bot.log(`crossing ${edge.kind} ${here}→${hop} (goal ${goal})`);
         this.bot.setStatus(`crossing ${edge.kind} ${here}→${hop}`);
+        await ensureRun(wantRunForGoal(chasingTag));
         await crossEdge(this.bot, edge, here, hop);
     }
 }
@@ -585,6 +587,8 @@ class SpikeWait implements Task {
             // should tag first
             return;
         }
+        // Spikes / centre wait: walk to save energy for the next pillar chase.
+        await ensureRun(false);
         const dest = this.bot.nextSpikePlatform();
         const here = this.bot.platform();
         if (here < 0) {
@@ -657,21 +661,86 @@ async function leaveArena(bot: BrimhavenAgility): Promise<void> {
 }
 
 /**
- * Wait until the obstacle has finished and we can act again: on the destination
- * platform and not animating, or in the fall pit. Avoids the old 6–15s hang
- * from loose "platform changed" waits that never saw pit falls (platform=-1).
+ * Override the global runAuto threshold: run while chasing a ticket pillar,
+ * walk while returning to centre / grinding spikes (saves energy for the next tag).
+ */
+async function ensureRun(want: boolean): Promise<void> {
+    if (Game.runEnabled() === want) {
+        return;
+    }
+    actions.setRun(want);
+    await Execution.delayUntil(() => Game.runEnabled() === want, 1200);
+}
+
+/**
+ * Wait until the hop is done enough to act again.
+ * - success: on dest (anim residual OK)
+ * - pit fall
+ * - partial progress onto another platform
+ * - soft fail: engaged then idle back on start (saws/pressure bounce)
+ * Also ends after a few idle ticks on start so we never sit out the full timeout.
  */
 async function waitObstacleSettled(bot: BrimhavenAgility, from: number, to: number, timeoutMs: number): Promise<void> {
-    await Execution.delayUntil(() => {
-        const outcome = obstacleOutcome(bot.platform(), from, to, bot.inPitNow(), Game.animating());
-        return outcome === 'arrived' || outcome === 'fallen' || outcome === 'elsewhere';
-    }, timeoutMs);
-    // If we landed but are still mid-anim, wait out the recovery tick(s).
-    if (bot.platform() === to && Game.animating()) {
-        await Execution.delayUntil(() => !Game.animating() || bot.inPitNow(), 4000);
+    let leftStart = false;
+    let idleTicks = 0;
+    let animStreak = 0;
+    let lastTile = bot.here();
+    const startPillar = PILLARS[from];
+    const start = performance.now();
+
+    while (performance.now() - start < timeoutMs) {
+        const platform = bot.platform();
+        const anim = Game.animating();
+        const pit = bot.inPitNow();
+        const tile = bot.here();
+        const moved =
+            !!tile &&
+            !!lastTile &&
+            (tile.x !== lastTile.x || tile.z !== lastTile.z || tile.level !== lastTile.level);
+        // Walk traps keep platform===from until near the dest — only treat as
+        // "left" when we actually leave the start island, fall, or sustain anim
+        // (ignore 1-frame click flashes that would false-fail before the hop starts).
+        const distFromStart =
+            tile && startPillar
+                ? Math.max(Math.abs(tile.x - startPillar.x), Math.abs(tile.z - startPillar.z))
+                : 0;
+        animStreak = anim ? animStreak + 1 : 0;
+        if (pit || distFromStart > 4 || (platform >= 0 && platform !== from) || animStreak >= 2) {
+            leftStart = true;
+        }
+
+        const outcome = obstacleOutcome(platform, from, to, pit, anim);
+        if (outcome === 'arrived' || outcome === 'fallen' || outcome === 'elsewhere') {
+            bot.log(
+                `  settled ${outcome} platform ${platform} (from ${from}, want ${to}) anim=${anim} pit=${pit}`
+            );
+            return;
+        }
+
+        if (!anim && !moved) {
+            idleTicks++;
+        } else {
+            idleTicks = 0;
+        }
+        // Soft fail / stuck mid-trap: after a real leave, a few idle ticks without
+        // arriving means bounce or stall — retry now (not a 8–12s hang).
+        if (leftStart && idleTicks >= 3) {
+            bot.log(
+                `  settled failed (stalled after leave) platform ${platform} distStart=${distFromStart} (from ${from}, want ${to})`
+            );
+            return;
+        }
+        // Click/walk never took — retry without sitting out the full timeout.
+        if (!leftStart && platform === from && idleTicks >= 6) {
+            bot.log(`  settled failed (never left start) platform ${platform} (from ${from}, want ${to})`);
+            return;
+        }
+
+        lastTile = tile ?? lastTile;
+        await Execution.delayTicks(1);
     }
     bot.log(
-        `  settled platform ${bot.platform()} (from ${from}, want ${to}) anim=${Game.animating()} pit=${bot.inPitNow()} tile=${JSON.stringify(bot.here())}`
+        `  settled timeout platform ${bot.platform()} (from ${from}, want ${to}) anim=${Game.animating()} pit=${bot.inPitNow()}`
     );
 }
 
@@ -690,7 +759,7 @@ async function crossEdge(bot: BrimhavenAgility, edge: ArenaEdge, from: number, t
             bot.log(`  walkTo(${local.lx},${local.lz}) refused`);
             return;
         }
-        await waitObstacleSettled(bot, from, to, 10_000);
+        await waitObstacleSettled(bot, from, to, 8_000);
         return;
     }
 
@@ -708,12 +777,13 @@ async function crossEdge(bot: BrimhavenAgility, edge: ArenaEdge, from: number, t
         return;
     }
     // Stand on the from-platform side of the loc (rope swings reject the wrong side).
-    // Skip the walk when already adjacent so we don't waste ticks after each hop.
+    // Skip approach when already on the from platform — residual post-hop walks waste ticks.
     const lt = loc.tile();
     const here0 = bot.here();
     const distToLoc =
         here0 === null ? 99 : Math.max(Math.abs(here0.x - lt.x), Math.abs(here0.z - lt.z));
-    if (distToLoc > 2) {
+    const onFrom = bot.platform() === from;
+    if (distToLoc > 3 && !onFrom) {
         const approach = {
             x: lt.x + Math.sign(PILLARS[from].x - lt.x) * 2,
             z: lt.z + Math.sign(PILLARS[from].z - lt.z) * 2
@@ -726,26 +796,24 @@ async function crossEdge(bot: BrimhavenAgility, edge: ArenaEdge, from: number, t
                 await Execution.delayUntil(() => {
                     const t = bot.here();
                     return t !== null && Math.max(Math.abs(t.x - approach.x), Math.abs(t.z - approach.z)) <= 1;
-                }, 6000);
+                }, 4000);
             }
         }
     }
 
     bot.log(`  ${op} ${edge.locName} @ ${lt.x},${lt.z}`);
-    // Click when idle; if the packet is ignored (still recovering), re-click next
-    // tick until animation starts or we leave the start platform — no long dead wait.
-    for (let attempt = 0; attempt < 6; attempt++) {
+    // Click immediately (even mid residual anim). Re-click while still on start
+    // until the obstacle engages — no long dead wait after rope/pillar/monkey.
+    for (let attempt = 0; attempt < 5; attempt++) {
         if (bot.inPitNow() || bot.platform() === to) {
             break;
         }
         if (bot.platform() >= 0 && bot.platform() !== from) {
             break;
         }
-        if (!Game.animating()) {
-            const live = findEdgeLoc(edge, from, to) ?? loc;
-            if (!(await live.interact(op))) {
-                bot.log(`  interact failed (attempt ${attempt + 1})`);
-            }
+        const live = findEdgeLoc(edge, from, to) ?? loc;
+        if (!(await live.interact(op))) {
+            bot.log(`  interact failed (attempt ${attempt + 1})`);
         }
         const started = await Execution.delayUntil(
             () =>
@@ -753,14 +821,14 @@ async function crossEdge(bot: BrimhavenAgility, edge: ArenaEdge, from: number, t
                 || bot.platform() === to
                 || bot.inPitNow()
                 || (bot.platform() >= 0 && bot.platform() !== from),
-            900
+            700
         );
         if (started || Game.animating() || bot.platform() !== from) {
             break;
         }
         await Execution.delayTicks(1);
     }
-    await waitObstacleSettled(bot, from, to, 12_000);
+    await waitObstacleSettled(bot, from, to, 10_000);
 }
 
 function findEdgeLoc(edge: ArenaEdge, from: number, to: number): Loc | null {

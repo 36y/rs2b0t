@@ -22,7 +22,8 @@ import {
     shouldBank,
     shouldEat,
     usableEdges,
-    waitPlatform
+    waitPlatform,
+    wantRunForGoal
 } from '#/bot/scripts/BrimhavenAgilityLogic.js';
 import {
     DEFAULT_BANK_TICKETS,
@@ -97,6 +98,16 @@ describe('BrimhavenAgility pathfinding', () => {
         }
     });
 
+    test('among equal-hop routes, first step leans toward the goal (no long-way detour)', () => {
+        // 5→8: both 0-first and 6-first are 5 hops; geo-tiebreak prefers east/south toward 8.
+        const path = pathPlatforms(5, 8, 63);
+        expect(path).not.toBeNull();
+        expect(path!.length).toBe(5);
+        expect(path![0]).toBe(6);
+        // 10→12: prefer 11 over backtracking north through 5.
+        expect(pathPlatforms(10, 12, 63)?.[0]).toBe(11);
+    });
+
     test('wait platform prefers spikes at 20+ and centre below', () => {
         expect(waitPlatform(19, 0)).toBe(12);
         const wait = waitPlatform(50, 0);
@@ -162,9 +173,9 @@ describe('BrimhavenAgility location helpers', () => {
 });
 
 describe('BrimhavenAgility obstacle settle (pace)', () => {
-    test('arrived only when on dest and not animating — next hop can start that tick', () => {
+    test('arrived on dest even while animating — residual get-up must not block resume', () => {
         expect(obstacleOutcome(0, 1, 0, false, false)).toBe('arrived');
-        expect(obstacleOutcome(0, 1, 0, false, true)).toBe('pending');
+        expect(obstacleOutcome(0, 1, 0, false, true)).toBe('arrived');
     });
 
     test('pit fall is settled immediately so ClimbOutOfPit can run', () => {
@@ -176,10 +187,18 @@ describe('BrimhavenAgility obstacle settle (pace)', () => {
         expect(obstacleOutcome(2, 1, 0, false, false)).toBe('elsewhere');
     });
 
-    test('canStartObstacle blocks mid-animation and pit', () => {
+    test('canStartObstacle only blocks the pit — residual anim is clickable', () => {
         expect(canStartObstacle(false, false)).toBe(true);
-        expect(canStartObstacle(true, false)).toBe(false);
+        expect(canStartObstacle(true, false)).toBe(true);
         expect(canStartObstacle(false, true)).toBe(false);
+        expect(canStartObstacle(true, true)).toBe(false);
+    });
+});
+
+describe('BrimhavenAgility run vs walk goal', () => {
+    test('chase ticket pillar with run; centre/spikes with walk', () => {
+        expect(wantRunForGoal(true)).toBe(true);
+        expect(wantRunForGoal(false)).toBe(false);
     });
 });
 

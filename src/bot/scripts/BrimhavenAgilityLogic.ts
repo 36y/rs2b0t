@@ -205,9 +205,9 @@ export function inArenaPit(level: number, z: number): boolean {
 /**
  * After an obstacle interact, whether we should release control for the next hop.
  * - fallen: plane-0 pit — climb rope next
- * - arrived: on the destination pillar and not mid-animation (can act this tick)
+ * - arrived: on the destination pillar (anim residual is fine — next hop can queue)
  * - elsewhere: left the start pillar for a different platform (partial progress)
- * - pending: still on the start pillar or still animating on the dest
+ * - pending: still mid-attempt (soft fails need multi-tick idle confirmation in the waiter)
  */
 export type ObstacleOutcome = 'arrived' | 'fallen' | 'elsewhere' | 'pending';
 
@@ -216,13 +216,14 @@ export function obstacleOutcome(
     from: number,
     to: number,
     inPit: boolean,
-    animating: boolean
+    _animating: boolean
 ): ObstacleOutcome {
     if (inPit) {
         return 'fallen';
     }
+    // Landed = done. Residual get-up anims must not hold the next hop.
     if (platform === to) {
-        return animating ? 'pending' : 'arrived';
+        return 'arrived';
     }
     if (platform >= 0 && platform !== from) {
         return 'elsewhere';
@@ -230,26 +231,29 @@ export function obstacleOutcome(
     return 'pending';
 }
 
-/** Safe to click the next obstacle — not mid-anim and not in the fall pit. */
-export function canStartObstacle(animating: boolean, inPit: boolean): boolean {
-    return !animating && !inPit;
+/**
+ * Safe to start the next hop. Only the pit blocks — residual landing anims are
+ * clickable, and re-click loops handle ignored packets.
+ */
+export function canStartObstacle(_animating: boolean, inPit: boolean): boolean {
+    return !inPit;
+}
+
+/** Manhattan tile distance between two arena platforms (for hop tie-breaks). */
+export function platformGeoDist(a: number, b: number): number {
+    const pa = PILLARS[a];
+    const pb = PILLARS[b];
+    if (!pa || !pb) {
+        return 9999;
+    }
+    return Math.abs(pa.x - pb.x) + Math.abs(pa.z - pb.z);
 }
 
 export function usableEdges(agility: number): ArenaEdge[] {
     return ARENA_EDGES.filter(e => agility >= e.minLevel);
 }
 
-/**
- * BFS shortest path of platform indices from `from` to `to` using only edges
- * the player can clear at `agility`. Empty when already there; null when unreachable.
- */
-export function pathPlatforms(from: number, to: number, agility: number): number[] | null {
-    if (from < 0 || to < 0 || from >= PILLARS.length || to >= PILLARS.length) {
-        return null;
-    }
-    if (from === to) {
-        return [];
-    }
+function arenaAdj(agility: number): Map<number, number[]> {
     const adj = new Map<number, number[]>();
     for (const e of usableEdges(agility)) {
         if (!adj.has(e.a)) {
@@ -261,30 +265,71 @@ export function pathPlatforms(from: number, to: number, agility: number): number
         adj.get(e.a)!.push(e.b);
         adj.get(e.b)!.push(e.a);
     }
-    const prev = new Map<number, number>();
-    const q = [from];
-    prev.set(from, -1);
+    return adj;
+}
+
+/** BFS hop-distance from `src` to every reachable platform. */
+function hopDistFrom(src: number, adj: Map<number, number[]>): Map<number, number> {
+    const dist = new Map<number, number>();
+    const q = [src];
+    dist.set(src, 0);
     while (q.length > 0) {
         const cur = q.shift()!;
+        const d = dist.get(cur)!;
         for (const n of adj.get(cur) ?? []) {
-            if (prev.has(n)) {
+            if (dist.has(n)) {
                 continue;
             }
-            prev.set(n, cur);
-            if (n === to) {
-                const path: number[] = [];
-                let c = to;
-                while (c !== from) {
-                    path.push(c);
-                    c = prev.get(c)!;
-                }
-                path.reverse();
-                return path;
-            }
+            dist.set(n, d + 1);
             q.push(n);
         }
     }
-    return null;
+    return dist;
+}
+
+/**
+ * Shortest hop path from `from` to `to`. Among equal-hop routes, each step
+ * prefers the neighbour geographically closer to `to` so we don't detour
+ * the long way around the grid when BFS insertion order would.
+ */
+export function pathPlatforms(from: number, to: number, agility: number): number[] | null {
+    if (from < 0 || to < 0 || from >= PILLARS.length || to >= PILLARS.length) {
+        return null;
+    }
+    if (from === to) {
+        return [];
+    }
+    const adj = arenaAdj(agility);
+    const rem = hopDistFrom(to, adj);
+    if (!rem.has(from)) {
+        return null;
+    }
+    const path: number[] = [];
+    let cur = from;
+    const total = rem.get(from)!;
+    for (let step = 0; step < total; step++) {
+        const need = rem.get(cur)! - 1;
+        const opts = (adj.get(cur) ?? []).filter(n => rem.get(n) === need);
+        if (opts.length === 0) {
+            return null;
+        }
+        opts.sort((a, b) => {
+            const ga = platformGeoDist(a, to);
+            const gb = platformGeoDist(b, to);
+            if (ga !== gb) {
+                return ga - gb;
+            }
+            return a - b;
+        });
+        cur = opts[0];
+        path.push(cur);
+    }
+    return path;
+}
+
+/** Whether this hop is a chase toward a ticket pillar (run) vs centre/spikes (walk). */
+export function wantRunForGoal(chasingTag: boolean): boolean {
+    return chasingTag;
 }
 
 export function edgeBetween(a: number, b: number, agility: number): ArenaEdge | null {
