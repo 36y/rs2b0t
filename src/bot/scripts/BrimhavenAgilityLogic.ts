@@ -202,6 +202,39 @@ export function inArenaPit(level: number, z: number): boolean {
     return z >= 9500 && level < 3;
 }
 
+/**
+ * After an obstacle interact, whether we should release control for the next hop.
+ * - fallen: plane-0 pit — climb rope next
+ * - arrived: on the destination pillar and not mid-animation (can act this tick)
+ * - elsewhere: left the start pillar for a different platform (partial progress)
+ * - pending: still on the start pillar or still animating on the dest
+ */
+export type ObstacleOutcome = 'arrived' | 'fallen' | 'elsewhere' | 'pending';
+
+export function obstacleOutcome(
+    platform: number,
+    from: number,
+    to: number,
+    inPit: boolean,
+    animating: boolean
+): ObstacleOutcome {
+    if (inPit) {
+        return 'fallen';
+    }
+    if (platform === to) {
+        return animating ? 'pending' : 'arrived';
+    }
+    if (platform >= 0 && platform !== from) {
+        return 'elsewhere';
+    }
+    return 'pending';
+}
+
+/** Safe to click the next obstacle — not mid-anim and not in the fall pit. */
+export function canStartObstacle(animating: boolean, inPit: boolean): boolean {
+    return !animating && !inPit;
+}
+
 export function usableEdges(agility: number): ArenaEdge[] {
     return ARENA_EDGES.filter(e => agility >= e.minLevel);
 }

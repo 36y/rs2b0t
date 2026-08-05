@@ -9,9 +9,11 @@ import {
     coinsNeeded,
     edgeBetween,
     hasPaid,
+    canStartObstacle,
     inArena,
     inArenaPit,
     nextHop,
+    obstacleOutcome,
     onArenaPlatform,
     pathPlatforms,
     pillarFromHint,
@@ -156,6 +158,28 @@ describe('BrimhavenAgility location helpers', () => {
         expect(onArenaPlatform(0)).toBe(false);
         // pit tiles still snap by x/z — callers must gate with onArenaPlatform
         expect(platformAt(2802, 9590)).toBe(24);
+    });
+});
+
+describe('BrimhavenAgility obstacle settle (pace)', () => {
+    test('arrived only when on dest and not animating — next hop can start that tick', () => {
+        expect(obstacleOutcome(0, 1, 0, false, false)).toBe('arrived');
+        expect(obstacleOutcome(0, 1, 0, false, true)).toBe('pending');
+    });
+
+    test('pit fall is settled immediately so ClimbOutOfPit can run', () => {
+        expect(obstacleOutcome(-1, 5, 6, true, true)).toBe('fallen');
+        expect(obstacleOutcome(5, 5, 6, false, false)).toBe('pending');
+    });
+
+    test('partial progress off the start platform is elsewhere', () => {
+        expect(obstacleOutcome(2, 1, 0, false, false)).toBe('elsewhere');
+    });
+
+    test('canStartObstacle blocks mid-animation and pit', () => {
+        expect(canStartObstacle(false, false)).toBe(true);
+        expect(canStartObstacle(true, false)).toBe(false);
+        expect(canStartObstacle(false, true)).toBe(false);
     });
 });
 
