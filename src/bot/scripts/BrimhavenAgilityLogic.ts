@@ -188,6 +188,20 @@ export function inArena(level: number, z: number): boolean {
     return level >= 3 || z >= 9500;
 }
 
+/** True when standing on the ticket platforms (plane 3), not the fall pit below. */
+export function onArenaPlatform(level: number): boolean {
+    return level >= 3;
+}
+
+/**
+ * Failed obstacles drop the player to plane 0 under the same (x,z). Platform
+ * pillars still snap by x/z, but edge locs only exist on plane 3 — treat this
+ * as a pit fall and climb the rope before pathing (#user report 2802,9590,0).
+ */
+export function inArenaPit(level: number, z: number): boolean {
+    return z >= 9500 && level < 3;
+}
+
 export function usableEdges(agility: number): ArenaEdge[] {
     return ARENA_EDGES.filter(e => agility >= e.minLevel);
 }

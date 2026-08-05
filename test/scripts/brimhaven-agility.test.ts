@@ -10,7 +10,9 @@ import {
     edgeBetween,
     hasPaid,
     inArena,
+    inArenaPit,
     nextHop,
+    onArenaPlatform,
     pathPlatforms,
     pillarFromHint,
     pillarTagged,
@@ -143,6 +145,17 @@ describe('BrimhavenAgility location helpers', () => {
         expect(inArena(3, 3000)).toBe(true);
         expect(inArena(0, 9560)).toBe(true);
         expect(inArena(0, 3200)).toBe(false);
+    });
+
+    test('failed obstacles land in the pit (plane 0) under the same x,z as pillars', () => {
+        // live report: 2802,9590,0 after missing rope swing near landing 24 (2805,9590)
+        expect(inArenaPit(0, 9590)).toBe(true);
+        expect(inArenaPit(0, 2802)).toBe(false); // surface Brimhaven, not the arena pit
+        expect(inArenaPit(3, 9590)).toBe(false);
+        expect(onArenaPlatform(3)).toBe(true);
+        expect(onArenaPlatform(0)).toBe(false);
+        // pit tiles still snap by x/z — callers must gate with onArenaPlatform
+        expect(platformAt(2802, 9590)).toBe(24);
     });
 });
 

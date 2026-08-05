@@ -32,7 +32,9 @@ import {
     edgeBetween,
     hasPaid,
     inArena,
+    inArenaPit,
     nextHop,
+    onArenaPlatform,
     pathPlatforms,
     pillarFromHint,
     pillarTagged,
@@ -100,6 +102,7 @@ export default class BrimhavenAgility extends TaskBot {
         this.add(
             new ContinueDialog(),
             new Eat(this),
+            new ClimbOutOfPit(this),
             new BankTrip(this),
             new TravelToArena(this),
             new EnterArena(this),
@@ -156,10 +159,17 @@ export default class BrimhavenAgility extends TaskBot {
 
     platform(): number {
         const t = this.here();
-        if (!t || !inArena(t.level, t.z)) {
+        // Only snap to pillars on the real platform plane — the fall pit shares
+        // x/z with pillars but has no Rope swing / ledge locs (stuck loop).
+        if (!t || !onArenaPlatform(t.level) || !inArena(t.level, t.z)) {
             return -1;
         }
         return platformAt(t.x, t.z);
+    }
+
+    inPitNow(): boolean {
+        const t = this.here();
+        return t !== null && inArenaPit(t.level, t.z);
     }
 
     /** Active ticket pillar from the client hint arrow. */
@@ -405,10 +415,45 @@ class EnterArena implements Task {
     }
 }
 
+/** After a failed obstacle the player lands on plane 0 under the arena. */
+class ClimbOutOfPit implements Task {
+    constructor(private bot: BrimhavenAgility) {}
+    validate(): boolean {
+        return this.bot.inPitNow();
+    }
+    async execute(): Promise<void> {
+        this.bot.setStatus('climbing out of the pit');
+        const rope =
+            Locs.query().name('Climbing rope').within(20).nearest() ??
+            Locs.query()
+                .within(20)
+                .where(l => /climbing rope/i.test(l.name ?? ''))
+                .nearest();
+        if (!rope) {
+            this.bot.log('fallen into the pit but no Climbing rope in range — waiting');
+            await Execution.delayTicks(2);
+            return;
+        }
+        const op = rope.actions().find(a => /climb/i.test(a)) ?? rope.actions()[0];
+        if (!op) {
+            this.bot.log(`Climbing rope at ${rope.tile().x},${rope.tile().z} has no climb op`);
+            return;
+        }
+        this.bot.log(`climbing rope at ${rope.tile().x},${rope.tile().z} (${op})`);
+        if (!(await rope.interact(op))) {
+            this.bot.log('Climbing rope interact failed');
+            return;
+        }
+        if (!(await Execution.delayUntil(() => !this.bot.inPitNow(), 8000))) {
+            this.bot.log('still in the pit after climbing rope');
+        }
+    }
+}
+
 class TagPillar implements Task {
     constructor(private bot: BrimhavenAgility) {}
     validate(): boolean {
-        if (!this.bot.inArenaNow() || this.bot.tagged()) {
+        if (!this.bot.inArenaNow() || this.bot.inPitNow() || this.bot.tagged()) {
             return false;
         }
         const target = this.bot.targetPillar();
@@ -459,7 +504,7 @@ class TagPillar implements Task {
 class CrossObstacle implements Task {
     constructor(private bot: BrimhavenAgility) {}
     validate(): boolean {
-        if (!this.bot.inArenaNow()) {
+        if (!this.bot.inArenaNow() || this.bot.inPitNow()) {
             return false;
         }
         if (shouldBank(this.bot.ticketCount(), this.bot.foodInPack(), this.bot.cfg().bankAtTickets)) {
@@ -501,7 +546,7 @@ class CrossObstacle implements Task {
 class SpikeWait implements Task {
     constructor(private bot: BrimhavenAgility) {}
     validate(): boolean {
-        if (!this.bot.inArenaNow()) {
+        if (!this.bot.inArenaNow() || this.bot.inPitNow()) {
             return false;
         }
         if (shouldBank(this.bot.ticketCount(), this.bot.foodInPack(), this.bot.cfg().bankAtTickets)) {
@@ -559,11 +604,14 @@ class SpikeWait implements Task {
 
 async function leaveArena(bot: BrimhavenAgility): Promise<void> {
     // climb rope / ladder up from the pit if fallen, then the exit ladder
-    const rope = Locs.query().name('Climbing rope').within(15).nearest();
-    if (rope && (bot.here()?.level ?? 3) < 3) {
-        bot.setStatus('climbing rope out of the pit');
-        await rope.interact('Climb');
-        await Execution.delayUntil(() => (bot.here()?.level ?? 0) >= 3, 6000);
+    if (bot.inPitNow()) {
+        const rope = Locs.query().name('Climbing rope').within(20).nearest();
+        if (rope) {
+            bot.setStatus('climbing rope out of the pit');
+            const op = rope.actions().find(a => /climb/i.test(a)) ?? 'Climb';
+            await rope.interact(op);
+            await Execution.delayUntil(() => !bot.inPitNow(), 6000);
+        }
     }
     // exit ladder at local 53,54-ish — ladderup near SE of map
     const exit = Locs.query().name('Ladder').action('Climb-up').within(40).nearest()
