@@ -136,6 +136,15 @@ function needEat(): boolean {
     });
 }
 
+/** Full pack + food + loot on the ground — free a slot instead of banking early. */
+function needEatForLoot(): boolean {
+    return Inventory.isFull() && hasFood() && findLoot() !== null;
+}
+
+function shouldEatNow(): boolean {
+    return needEat() || needEatForLoot();
+}
+
 function castsLeft(): number {
     return castsAvailable(SPELL, wieldedNames(), rune => Inventory.count(rune));
 }
@@ -212,15 +221,24 @@ function keepNames(): string[] {
     return combatKeepNames({ food: FOOD_NAME, style: STYLE, spell: SPELL, ammo: projectile, weapon, extra: ['Coins'] });
 }
 
-async function eatOnce(bot: MossGiant): Promise<boolean> {
+async function eatOnce(bot: MossGiant, forLoot = false): Promise<boolean> {
     const food = Inventory.items().find(i => foodForms(FOOD_NAME).includes((i.name ?? '').toLowerCase()));
     if (!food) {
         return false;
     }
-    bot.setStatus(`eating ${food.name} (${Math.round(hpFrac() * 100)}% hp)`);
-    const before = Skills.effective('hitpoints');
+    bot.setStatus(
+        forLoot
+            ? `eating ${food.name} for a free slot`
+            : `eating ${food.name} (${Math.round(hpFrac() * 100)}% hp)`
+    );
+    const beforeHp = Skills.effective('hitpoints');
+    const beforeUsed = Inventory.used();
     await food.interact('Eat');
-    return Execution.delayUntil(() => Skills.effective('hitpoints') > before, 3000);
+    // HP may not rise when already full; a free inventory slot is the space-eat signal.
+    return Execution.delayUntil(
+        () => Skills.effective('hitpoints') > beforeHp || Inventory.used() < beforeUsed,
+        3000
+    );
 }
 
 async function quickReturnToSafespot(bot: MossGiant): Promise<boolean> {
@@ -253,10 +271,10 @@ async function lootOnce(bot: MossGiant): Promise<boolean> {
 class Eat implements Task {
     constructor(private bot: MossGiant) {}
     validate(): boolean {
-        return needEat();
+        return shouldEatNow();
     }
     async execute(): Promise<void> {
-        await eatOnce(this.bot);
+        await eatOnce(this.bot, needEatForLoot() && !needEat());
     }
 }
 
@@ -506,6 +524,10 @@ class BankRun implements Task {
         if (!hasFood() && !this.bot.bankKnownEmpty()) {
             return true;
         }
+        // Prefer eating a food for loot space over an early bank run when drops wait.
+        if (Inventory.isFull() && hasFood() && findLoot() !== null) {
+            return false;
+        }
         return Inventory.isFull();
     }
     async execute(): Promise<void> {
@@ -561,8 +583,8 @@ class Fight implements Task {
             if (EventSignal.pending() || this.bot.died || ChatDialog.canContinue()) {
                 return;
             }
-            if (needEat()) {
-                await eatOnce(this.bot);
+            if (shouldEatNow()) {
+                await eatOnce(this.bot, needEatForLoot() && !needEat());
                 continue;
             }
             if (hpFrac() < PANIC_HP) {
