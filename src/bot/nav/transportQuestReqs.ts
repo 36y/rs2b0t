@@ -9,7 +9,6 @@
  */
 
 import type { QuestProgress, TransportRequires } from './types.js';
-import type { WorldStateData } from './worldStateData.js';
 
 /** Engine permanent varp + complete stage (setvar seed). */
 export interface QuestVarSeed {
@@ -141,6 +140,11 @@ export const REQ = {
     treeGnomeComplete: {
         members: true,
         quests: [{ quest: 'Tree Gnome Village', minStatus: 'complete' as const }]
+    },
+    /** Elkoy maze escort (elkoy.rs2) once Tree Gnome Village is started. */
+    treeGnomeStarted: {
+        members: true,
+        quests: [{ quest: 'Tree Gnome Village', minStatus: 'started' as const }]
     },
     shiloComplete: {
         members: true,

@@ -10,9 +10,12 @@ import type { WorldStateData } from './worldStateData.js';
 import { worldStateFromData } from './worldStateData.js';
 import { SPELL_TELEPORTS, JEWELLERY_TELEPORTS } from './teleportCatalog.js';
 import { specialCrossingAt } from './data/specialCrossings.js';
+import { isSlashWebTransport, WEB_SLASH_KNIFE_NAME } from './slashTool.js';
 
-/** Flat cost for opening bank + withdrawing (tile-equivalent). */
-export const WITHDRAW_COST = 50;
+import { BANK_WITHDRAW_COST } from './edgeCosts.js';
+
+/** Flat cost for opening bank + withdrawing (tile-equivalent time). */
+export const WITHDRAW_COST = BANK_WITHDRAW_COST;
 
 export interface MissingItem {
     name: string;
@@ -74,6 +77,11 @@ export function itemsRequiredByWaypoints(waypoints: Waypoint[]): Record<string, 
         if (sc?.requires) {
             bump(sc.requires.item, sc.requires.count);
         }
+        // Slash webs: bank plan withdraws plain Knife when no slash tool held.
+        // (Wielded blades also work at execute — no withdraw needed if canSlashWeb.)
+        if (isSlashWebTransport(t.locName, t.action)) {
+            bump(WEB_SLASH_KNIFE_NAME, 1);
+        }
     }
     return need;
 }
@@ -84,6 +92,10 @@ export function missingItemsForPath(waypoints: Waypoint[], state: WorldStateData
     const need = itemsRequiredByWaypoints(waypoints);
     const missing: MissingItem[] = [];
     for (const [name, count] of Object.entries(need)) {
+        // Already have a slash tool (knife or blade) → do not bank-withdraw Knife.
+        if (name === WEB_SLASH_KNIFE_NAME && state.canSlashWeb === true) {
+            continue;
+        }
         const have = ws.itemCount(name);
         if (have < count) {
             missing.push({ name, count: count - have });

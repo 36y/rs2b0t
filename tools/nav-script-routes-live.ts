@@ -401,7 +401,7 @@ async function runWalk(page: Page, opts: WalkOpts): Promise<{ walkOk: boolean; t
                             useTeleportCatalog: teleOn,
                             policy: {
                                 useTeleports: teleOn,
-                                distanceBeforeTeleport: distanceBeforeTeleport ?? 40,
+                                distanceBeforeTeleport: distanceBeforeTeleport ?? 0,
                                 ...(allowTeleportIds ? { allowTeleportIds } : {})
                             },
                             log: m => {
@@ -674,10 +674,20 @@ function jewelleryUsedInLogs(logs: string[]): boolean {
 }
 
 const all = USE_HARDEST || USE_TRANSPORT_HEAVY || USE_SHIP_352 ? [] : await loadSeedRoutes();
+/**
+ * Essence multiloc entry is wizard Teleport into a random mine pad — not a fixed
+ * pathfinder OD (expansion budget fails even with tele catalog on). Skip TH-ess-*
+ * so LIMIT counts ship/glider/spirit/cart/Entrana (and combo) legs instead.
+ */
+function loadTransportHeavyForLive(limit: number): TransportHeavyRoute[] {
+    const raw = loadTransportHeavyRoutes(0); // full list
+    const filtered = raw.filter(r => !r.essenceRoundtrip && !/^TH-ess-/i.test(r.id));
+    return limit > 0 ? filtered.slice(0, limit) : filtered;
+}
 const routes = USE_SHIP_352
     ? loadShip352Routes(LIVE_LIMIT || 2)
     : USE_TRANSPORT_HEAVY
-      ? loadTransportHeavyRoutes(LIVE_LIMIT || 12)
+      ? loadTransportHeavyForLive(LIVE_LIMIT || 12)
       : USE_HARDEST
         ? loadHardestRoutes(LIVE_LIMIT || 25)
         : pickLiveRoutes(all, LIVE_LIMIT);
