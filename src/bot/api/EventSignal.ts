@@ -1,4 +1,6 @@
 let provider: (() => boolean) | null = null;
+/** Extra OR-clause for script-local interrupts (e.g. AIOQuester Skip quest). */
+let interrupt: (() => boolean) | null = null;
 
 /**
  * Cooperative interrupt. A long-running loop polls `pending()` and yields so a
@@ -10,7 +12,16 @@ export const EventSignal = {
         provider = p;
     },
 
+    /**
+     * Optional second signal (OR'd with the main provider). Used so a UI action
+     * like "Skip quest" can abort a walk without stopping the whole script.
+     * Pass `null` to clear.
+     */
+    setInterrupt(p: (() => boolean) | null): void {
+        interrupt = p;
+    },
+
     pending(): boolean {
-        return provider !== null && provider();
+        return (provider !== null && provider()) || (interrupt !== null && interrupt());
     }
 };

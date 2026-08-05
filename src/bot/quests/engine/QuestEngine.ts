@@ -113,14 +113,17 @@ export class QuestEngine implements Task {
     }
 
     async execute(): Promise<void> {
-        if (EventSignal.pending()) {
+        // Apply Skip before random-event yield so a mid-walk interrupt lands on
+        // the next quest instead of spinning on EventSignal.pending().
+        const skipEarly = this.host.skipPending();
+        if (!skipEarly && EventSignal.pending()) {
             await Execution.delayTicks(1);
             return;
         }
 
         // StartupWithdraw and bank-aware quest steps deliberately leave the bank open so this
         // task can take an authoritative snapshot before the interface disappears.
-        if (Bank.isOpen()) {
+        if (!skipEarly && Bank.isOpen()) {
             await Execution.delayUntil(() => Bank.loaded(), 3000);
             this.refreshBankCounts(true);
             actions.closeModal();
@@ -133,7 +136,8 @@ export class QuestEngine implements Task {
         // those (Death Plateau dice / combination handwriting were being killed mid-step).
         const mainModal = reader.modals().main;
         if (
-            mainModal !== -1
+            !skipEarly
+            && mainModal !== -1
             && !Bank.isOpen()
             && !ChatDialog.isMakeMenu()
             && !ChatDialog.isMainMakePanel()
@@ -158,10 +162,7 @@ export class QuestEngine implements Task {
 
         const skip = this.host.consumeSkip();
         if (skip && this.runningId !== null) {
-            this.host.log(`skip requested — parking ${this.nameOf(this.runningId, elig)}`);
-            this.parked.add(this.runningId);
-            this.resetWatchdog();
-            this.runningId = null;
+            this.applyUserSkip(this.runningId, elig);
         }
 
         if (this.host.consumeDeath() && this.runningId !== null) {
@@ -402,6 +403,28 @@ export class QuestEngine implements Task {
     private resetWatchdog(): void {
         this.watchdog.reset();
         this.noProgressCount = 0;
+    }
+
+    /**
+     * User "Skip quest": stop the current quest for this script session and move on.
+     * Parks are temporary (retry later); a skip is a hard session block (#432).
+     */
+    private applyUserSkip(id: string, elig: Map<string, QuestEligibility>): void {
+        const name = this.nameOf(id, elig);
+        this.host.log(`skip requested — blocking ${name} for this session`);
+        this.block(id, ['skipped by user this session']);
+        this.parked.delete(id);
+        this.parkedReasons.delete(id);
+        this.parkCounts.delete(id);
+        this.provisioned.delete(id);
+        this.deposited.delete(id);
+        this.retreated.delete(id);
+        this.retreatTries.delete(id);
+        this.waitKey = '';
+        this.waitCount = 0;
+        this.stepSubLog.clear();
+        this.lastStepLogged = '';
+        this.runningId = null;
     }
 
     private block(id: string, reasons: string[]): void {

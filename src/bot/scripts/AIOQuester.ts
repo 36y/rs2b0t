@@ -1,4 +1,5 @@
 import { TaskBot, type Task } from '../api/Bot.js';
+import { EventSignal } from '../api/EventSignal.js';
 import { Execution } from '../api/Execution.js';
 import { Game } from '../api/Game.js';
 import { Inventory } from '../api/hud/Inventory.js';
@@ -90,6 +91,8 @@ export default class AIOQuester extends TaskBot {
         this.eatAt = this.settings.num('eatAtHp', 50) / 100;
         QuestFood.name = this.foodItem();
         Sustain.set(async () => { if (this.shouldEat()) { await this.eatOnce(); } });
+        // Yield long walks/dialog loops as soon as Skip is clicked (#432).
+        EventSignal.setInterrupt(() => this.skipRequested);
 
         const queueNames = [...this.picked].map(id => defById(id)?.record.name ?? id);
         this.log(`AIOQuester — queue: ${queueNames.join(', ') || '(none)'}`);
@@ -97,6 +100,7 @@ export default class AIOQuester extends TaskBot {
     }
 
     override async onStop(): Promise<void> {
+        EventSignal.setInterrupt(null);
         Sustain.set(null);
     }
 
@@ -160,7 +164,17 @@ export default class AIOQuester extends TaskBot {
     }
 
     requestSkip(): void {
+        if (this.skipRequested) {
+            return;
+        }
         this.skipRequested = true;
+        const name = this.rows.find(r => r.id === this.runningId)?.name ?? this.runningId ?? 'current quest';
+        this.log(`Skip quest — abandoning ${name} after the current step yields`);
+    }
+
+    /** True while the player has pressed Skip and the engine has not yet applied it. */
+    skipPending(): boolean {
+        return this.skipRequested;
     }
 
     consumeSkip(): boolean {
