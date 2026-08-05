@@ -237,64 +237,74 @@ class BankTrip implements Task {
             this.bot.log('could not open the bank — will retry');
             return;
         }
-        await Bank.depositInventory();
-        await Execution.delayTicks(1);
-        this.bot.countTrip();
+        try {
+            await Bank.depositInventory();
+            await Execution.delayTicks(1);
+            this.bot.countTrip();
 
-        const plan = this.bot.attachPlan();
-        if (plan) {
-            for (const input of plan.inputs) {
-                const pat = input.toLowerCase();
-                const bankItem = Bank.items().find(i => i.name !== null && i.name.toLowerCase().includes(pat));
-                if (!bankItem || bankItem.name === null) {
-                    this.bot.log(`no '${input}' in the bank — idling`);
-                    await Execution.delayTicks(5);
-                    return;
+            const plan = this.bot.attachPlan();
+            if (plan) {
+                for (const input of plan.inputs) {
+                    const pat = input.toLowerCase();
+                    const bankItem = Bank.items().find(i => i.name !== null && i.name.toLowerCase().includes(pat));
+                    if (!bankItem || bankItem.name === null) {
+                        this.bot.log(`no '${input}' in the bank — idling`);
+                        await Execution.delayTicks(5);
+                        return;
+                    }
+                    const bankName = bankItem.name;
+                    const allOp = withdrawOp(bankItem.ops, 'all') ?? withdrawOp(bankItem.ops, 'any') ?? 'Withdraw-All';
+                    this.bot.log(`withdrawing all ${bankName} ('${allOp}')`);
+                    await Bank.withdraw(bankName, allOp);
+                    await Execution.delayUntil(() => this.bot.packCount(input) > 0 || Bank.count(bankName) === 0, 4000);
                 }
-                const bankName = bankItem.name;
-                const allOp = withdrawOp(bankItem.ops, 'all') ?? withdrawOp(bankItem.ops, 'any') ?? 'Withdraw-All';
-                this.bot.log(`withdrawing all ${bankName} ('${allOp}')`);
-                await Bank.withdraw(bankName, allOp);
-                await Execution.delayUntil(() => this.bot.packCount(input) > 0 || Bank.count(bankName) === 0, 4000);
+                return;
             }
-            return;
-        }
 
-        const logItem = Bank.items().find(i => logNameMatches(i.name, this.bot.materialName()));
-        if (!logItem || logItem.name === null) {
-            this.bot.log(`BankFletcher: bank is out of '${this.bot.materialName()}' — fletching complete, stopping.`);
-            ScriptRunner.stop();
-            return;
-        }
-        const logName = logItem.name;
+            const logItem = Bank.items().find(i => logNameMatches(i.name, this.bot.materialName()));
+            if (!logItem || logItem.name === null) {
+                this.bot.log(`BankFletcher: bank is out of '${this.bot.materialName()}' — fletching complete, stopping.`);
+                ScriptRunner.stop();
+                return;
+            }
+            const logName = logItem.name;
 
-        const knifePat = this.bot.knifeName().toLowerCase();
-        const knifeBank = Bank.items().find(i => i.name !== null && i.name.toLowerCase().includes(knifePat));
-        if (!knifeBank || knifeBank.name === null) {
-            this.bot.log(`no '${this.bot.knifeName()}' in the bank — idling`);
-            await Execution.delayTicks(5);
-            return;
-        }
-        const knifeName = knifeBank.name;
-        if (Inventory.count(knifeName) === 0) {
-            const knifeOps = knifeBank.ops.filter((o): o is string => o !== null);
-            const oneOp = withdrawOp(knifeOps, '1') ?? withdrawOp(knifeOps, 'any') ?? 'Withdraw-1';
-            await Bank.withdraw(knifeName, oneOp);
-            await Execution.delayUntil(() => Inventory.contains(knifeName), 3000);
-        }
+            const knifePat = this.bot.knifeName().toLowerCase();
+            const knifeBank = Bank.items().find(i => i.name !== null && i.name.toLowerCase().includes(knifePat));
+            if (!knifeBank || knifeBank.name === null) {
+                this.bot.log(`no '${this.bot.knifeName()}' in the bank — idling`);
+                await Execution.delayTicks(5);
+                return;
+            }
+            const knifeName = knifeBank.name;
+            if (Inventory.count(knifeName) === 0) {
+                const knifeOps = knifeBank.ops.filter((o): o is string => o !== null);
+                const oneOp = withdrawOp(knifeOps, '1') ?? withdrawOp(knifeOps, 'any') ?? 'Withdraw-1';
+                await Bank.withdraw(knifeName, oneOp);
+                await Execution.delayUntil(() => Inventory.contains(knifeName), 3000);
+            }
 
-        const allOp = withdrawOp(logItem.ops, 'all');
-        if (allOp) {
-            this.bot.log(`withdrawing all ${logName} ('${allOp}')`);
-            await Bank.withdraw(logName, allOp);
-            await Execution.delayUntil(() => this.bot.logCount() > 0 || Bank.count(logName) === 0, 4000);
-        } else {
-            const tenOp = withdrawOp(logItem.ops, '10') ?? withdrawOp(logItem.ops, 'any') ?? 'Withdraw-10';
-            this.bot.log(`withdrawing ${logName} 10 at a time ('${tenOp}')`);
-            for (let n = 0; n < 4 && !Inventory.isFull() && Bank.count(logName) > 0; n++) {
-                const before = this.bot.logCount();
-                await Bank.withdraw(logName, tenOp);
-                if (!(await Execution.delayUntil(() => this.bot.logCount() > before || Inventory.isFull(), 3000))) { break; }
+            const allOp = withdrawOp(logItem.ops, 'all');
+            if (allOp) {
+                this.bot.log(`withdrawing all ${logName} ('${allOp}')`);
+                await Bank.withdraw(logName, allOp);
+                await Execution.delayUntil(() => this.bot.logCount() > 0 || Bank.count(logName) === 0, 4000);
+            } else {
+                const tenOp = withdrawOp(logItem.ops, '10') ?? withdrawOp(logItem.ops, 'any') ?? 'Withdraw-10';
+                this.bot.log(`withdrawing ${logName} 10 at a time ('${tenOp}')`);
+                for (let n = 0; n < 4 && !Inventory.isFull() && Bank.count(logName) > 0; n++) {
+                    const before = this.bot.logCount();
+                    await Bank.withdraw(logName, tenOp);
+                    if (!(await Execution.delayUntil(() => this.bot.logCount() > before || Inventory.isFull(), 3000))) { break; }
+                }
+            }
+        } finally {
+            // Leave the bank so knife/log item-on-item can run (#484). Multibox / renderer-off
+            // still needs the close packet — without it Fletch validates but never progresses.
+            if (Bank.isOpen()) {
+                if (!(await Bank.close())) {
+                    this.bot.log('could not close the bank after withdraw — will retry');
+                }
             }
         }
     }
@@ -302,7 +312,12 @@ class BankTrip implements Task {
 
 class Fletch implements Task {
     constructor(private bot: BankFletcher) {}
-    validate(): boolean { return this.bot.attachPlan() === null && this.bot.logCount() > 0 && !ChatDialog.isOpen(); }
+    validate(): boolean {
+        return this.bot.attachPlan() === null
+            && this.bot.logCount() > 0
+            && !ChatDialog.isOpen()
+            && !Bank.isOpen();
+    }
     async execute(): Promise<void> {
         for (let n = 0; n < 30 && this.bot.logCount() > 0; n++) {
             if (ChatDialog.isMakeMenu() || ChatDialog.canContinue()) { return; }
@@ -322,7 +337,11 @@ class Attach implements Task {
     constructor(private bot: BankFletcher) {}
     validate(): boolean {
         const plan = this.bot.attachPlan();
-        return plan !== null && this.bot.packCount(plan.inputs[0]) > 0 && this.bot.packCount(plan.inputs[1]) > 0 && !ChatDialog.isOpen();
+        return plan !== null
+            && this.bot.packCount(plan.inputs[0]) > 0
+            && this.bot.packCount(plan.inputs[1]) > 0
+            && !ChatDialog.isOpen()
+            && !Bank.isOpen();
     }
     async execute(): Promise<void> {
         const plan = this.bot.attachPlan();
