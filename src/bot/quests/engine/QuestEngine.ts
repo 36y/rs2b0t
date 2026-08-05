@@ -242,9 +242,11 @@ export class QuestEngine implements Task {
 
         let step: QuestStep;
         if (!this.deposited.has(id)) {
+            const foodName = this.host.foodItem()?.toLowerCase();
             const keep = [
                 ...module.record.items.map(i => i.name.toLowerCase()),
-                ...(module.tools ?? [])
+                ...(module.tools ?? []).map(t => t.toLowerCase()),
+                ...(foodName ? [foodName] : [])
             ];
             const spillover = depositPlan(snap.inv, keep);
             if (spillover.length === 0) {
@@ -271,11 +273,10 @@ export class QuestEngine implements Task {
             // a standing balance is restored after every single purchase.
             const coinFloat = coinFloatWithdraw(snap.inv, this.lastBankCounts, module.coinFloat ?? COIN_FLOAT);
             const foodItem = this.host.foodItem();
-            const packFood = foodItem ? (snap.inv.get(foodItem.toLowerCase()) ?? 0) : 0;
-            const foodFloat = (module.food && foodItem)
-                ? (this.bankKnown
-                    ? floatWithdraw(snap.inv, this.lastBankCounts, foodItem, module.food)
-                    : (module.food - packFood > 0 ? { name: foodItem, qty: module.food - packFood } : null))
+            // Only withdraw food once the bank inventory is known — guessing a
+            // shortfall forces a failed booth trip and can scramble a full pack.
+            const foodFloat = (module.food && foodItem && this.bankKnown)
+                ? floatWithdraw(snap.inv, this.lastBankCounts, foodItem, module.food)
                 : null;
             const extras = [coinFloat, foodFloat].filter((w): w is { name: string; qty: number } => w !== null);
             if (plan.blocked.length > 0 && plan.withdraw.length === 0) {

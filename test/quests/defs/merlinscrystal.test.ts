@@ -13,26 +13,15 @@ function snap(coins: number): QuestSnapshot {
     };
 }
 
-describe('breadPlan priority: steal before buy', () => {
-    test('thieving 5+ with passes left -> steal from the stall', () => {
-        const step = breadPlan(snap(100), 5, 0);
-        expect(step.kind).toBe('custom');
-        expect((step as { name: string }).name).toContain("steal Bread from the Baker's stall");
-    });
-
-    test('thieving too low -> falls through to the Wydin buy', () => {
-        const step = breadPlan(snap(100), 1, 0);
+describe('breadPlan: Wydin buy (baker stall has no bread in rev 274)', () => {
+    test('buys Bread from Wydin when funded', () => {
+        const step = breadPlan(snap(100), 40, 0);
         expect(step.kind).toBe('buy');
         expect((step as { item: string }).item).toBe('Bread');
         expect((step as { shop: { npc: string } }).shop.npc).toBe('Wydin');
     });
 
-    test('steal passes exhausted -> concedes to the buy', () => {
-        const step = breadPlan(snap(100), 40, 3);
-        expect(step.kind).toBe('buy');
-    });
-
-    test('buy fallback on a broke account parks (buyOrWait), never loops a bare buy', () => {
+    test('parks when broke (buyOrWait), never loops a bare buy', () => {
         const step = breadPlan(snap(0), 1, 0);
         expect(step.kind).toBe('wait');
     });

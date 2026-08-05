@@ -4,13 +4,9 @@ import { Game } from '../../api/Game.js';
 import { ChatDialog } from '../../api/hud/ChatDialog.js';
 import { Equipment } from '../../api/hud/Equipment.js';
 import { Inventory } from '../../api/hud/Inventory.js';
-import { Skills } from '../../api/hud/Skills.js';
-import { stealCakes } from '../../scripts/CakeStall.js';
-import { FLEE_TILE, LOCKOUT_TICKS, STAND as BAKER_STALL_STAND } from '../../scripts/CakeStallLogic.js';
 import { GroundItems } from '../../api/queries/GroundItems.js';
 import { Locs } from '../../api/queries/Locs.js';
 import { Npcs } from '../../api/queries/Npcs.js';
-import { Reach } from '../../api/Reach.js';
 import { Sustain } from '../../api/Sustain.js';
 import { Traversal } from '../../api/Traversal.js';
 import Tile from '../../api/Tile.js';
@@ -31,8 +27,28 @@ const TINDERBOX = 'Tinderbox';
 const WEAPON = 'Rune mace';
 
 const KING_ARTHUR: NpcStop = { npc: 'King Arthur', anchor: new Tile(2764, 3515, 0), leash: 6, prefer: ['I want to become a Knight of the Round Table!'] };
-const GAWAIN: NpcStop = { npc: 'Sir Gawain', anchor: new Tile(2761, 3508, 0), leash: 4, prefer: ['Do you know how Merlin got trapped?', 'Thank you for the information.'] };
-const LANCELOT: NpcStop = { npc: 'Sir Lancelot', anchor: new Tile(2755, 3511, 1), leash: 4, prefer: ['Any ideas on how to get into Morgan Le Faye', "You're a little full of yourself"] };
+// Content strings from sir_gawain.rs2 / sir_lancelot.rs2 — prefer fragments must match.
+const GAWAIN: NpcStop = {
+    npc: 'Sir Gawain',
+    anchor: new Tile(2761, 3508, 0),
+    leash: 6,
+    prefer: [
+        'Do you know how Merlin got trapped?',
+        'Thank you for the information.',
+        'Any idea how to get into Morgan Le Faye', // singular "idea" after spoken_gawain
+        'Any ideas on how to get Merlin out'
+    ]
+};
+const LANCELOT: NpcStop = {
+    npc: 'Sir Lancelot',
+    anchor: new Tile(2755, 3511, 1),
+    leash: 8,
+    prefer: [
+        "Any ideas on how to get into Morgan Le Faye", // only present after spoken_gawain
+        'I want to get Merlin out of the crystal'
+    ]
+};
+const CAM_STAIR_L0 = new Tile(2750, 3510, 0);
 const LADY_LAKE: NpcStop = { npc: 'The Lady of the Lake', anchor: new Tile(2924, 3405, 0), leash: 6, prefer: ['I seek the sword Excalibur.'] };
 const CANDLE_MAKER: NpcStop = { npc: 'Candle maker', anchor: new Tile(2800, 3439, 0), leash: 6, prefer: ['Have you got any black candles?'] };
 
@@ -46,7 +62,8 @@ const MORDRED_TILE = new Tile(2769, 3403, 2);
 const KEEP_STAIR_L0 = new Tile(2769, 3404, 0);
 const KEEP_STAIR_L1_UP = new Tile(2769, 3398, 1);
 const KEEP_STAIR_L2_DOWN = new Tile(2769, 3399, 2);
-const RETURN_CRATE_STAND = new Tile(2779, 3402, 1);
+/** keep_crate_coord = 0_43_53_26_9 → ground-floor Arhein crate inside Mordred's keep */
+const RETURN_CRATE_STAND = new Tile(2778, 3401, 0);
 const MAGIC_SYMBOL = new Tile(2780, 3515, 0);
 const CHAOS_ALTAR_STAND = new Tile(3239, 3607, 0);
 const TOWER_LADDER_0 = new Tile(2769, 3493, 0);
@@ -77,42 +94,9 @@ function buyOrWait(snap: QuestSnapshot, step: Extract<QuestStep, { kind: 'buy' }
     return step;
 }
 
-const BAKER_STALL_THIEVING = 5;
-const BREAD_STEAL_PASSES = 3;
-let breadStealPasses = 0;
-
-let breadCombatEndTick = 0;
-
-async function stealBread(log: (m: string) => void): Promise<boolean> {
-    if (Inventory.contains(BREAD)) { return true; }
-    if (Game.inCombat()) {
-        log('stealBread: guard combat — kiting to the flee tile');
-        await Traversal.walkResilient(FLEE_TILE, { radius: 1, attempts: 3, timeoutMs: 60_000, log });
-        await Execution.delayUntil(() => !Game.inCombat(), 15_000);
-        if (!Game.inCombat()) { breadCombatEndTick = Game.tick(); }
-        return false;
-    }
-    if (!(await Traversal.walkResilient(BAKER_STALL_STAND, { radius: 2, attempts: 4, timeoutMs: 240_000, log }))) {
-        return false;
-    }
-    const res = await stealCakes({
-        fillTo: 27,
-        abort: () => Inventory.contains(BREAD),
-        lockedOutUntil: () => breadCombatEndTick + LOCKOUT_TICKS,
-        setStatus: () => {},
-        log
-    });
-    if (res !== 'combat') {
-        breadStealPasses++;
-    }
-    log(`stealBread: pass ${breadStealPasses}/${BREAD_STEAL_PASSES} -> ${res}, bread=${Inventory.contains(BREAD)}`);
-    return Inventory.contains(BREAD);
-}
-
-export function breadPlan(snap: QuestSnapshot, thievingLevel: number, passesUsed: number): QuestStep {
-    if (thievingLevel >= BAKER_STALL_THIEVING && passesUsed < BREAD_STEAL_PASSES) {
-        return { kind: 'custom', name: "steal Bread from the Baker's stall", run: stealBread };
-    }
+// East Ardougne Baker's stall stocks cake/chocolate — not bread (rev 274).
+// Beggar needs actual Bread, so always buy from Wydin's (Port Sarim).
+export function breadPlan(snap: QuestSnapshot, _thievingLevel = 0, _passesUsed = 0): QuestStep {
     return buyOrWait(snap, { kind: 'buy', item: 'Bread', qty: 1, shop: WYDIN_SHOP, estGp: 20 });
 }
 
@@ -181,26 +165,52 @@ async function descendTower(log: (m: string) => void): Promise<boolean> {
     return (Game.tile()?.level ?? 0) === 0;
 }
 
+async function ensureCamelotL1(log: (m: string) => void): Promise<boolean> {
+    if ((Game.tile()?.level ?? 0) >= 1) {
+        return true;
+    }
+    if (!(await Traversal.walkResilient(CAM_STAIR_L0, { radius: 1, attempts: 4, timeoutMs: 120_000, log }))) {
+        return false;
+    }
+    return climbAt(CAM_STAIR_L0, 'Climb-up', log);
+}
+
 async function talkKnights(log: (m: string) => void): Promise<void> {
+    // Gawain (L0) first — Lancelot's fortress option only appears after spoken_gawain.
     for (const knight of [GAWAIN, LANCELOT]) {
-        for (let attempt = 0; attempt < 4; attempt++) {
-            const status = await Reach.npcDialog({ name: knight.npc, near: knight.anchor, log });
-            if (status === 'unreachable') {
-                log(`talkKnights: '${knight.npc}' unreachable this pass`);
-                break;
+        let done = false;
+        for (let attempt = 0; attempt < 5; attempt++) {
+            if (EventSignal.pending()) {
+                return;
             }
-            if (status !== 'done') {
+            if (knight.npc === 'Sir Lancelot' && !(await ensureCamelotL1(log))) {
+                log(`talkKnights: could not climb to Lancelot's floor (attempt ${attempt + 1})`);
                 continue;
             }
-            const npc = Npcs.query().name(knight.npc).action('Talk-to').nearest();
+            // Live tile beats a stale anchor when knights wander rooms.
+            const live = Npcs.query().name(knight.npc).action('Talk-to').nearest();
             const here = Game.tile();
-            if (!npc || !here || npc.tile().distanceTo(here) > 3) {
-                log(`talkKnights: open dialogue is not '${knight.npc}' (not adjacent) — skipping`);
+            if (live && here) {
+                const tile = live.tile();
+                if (tile.level === here.level && tile.distanceTo(here) > 1) {
+                    await Traversal.walkResilient(tile, { radius: 1, attempts: 3, timeoutMs: 60_000, log });
+                }
+            } else if (!live) {
+                if (!(await gotoNpc(knight, [], log))) {
+                    log(`talkKnights: '${knight.npc}' not in scene — walking to anchor (attempt ${attempt + 1})`);
+                    await Traversal.walkResilient(knight.anchor, { radius: 2, attempts: 3, timeoutMs: 90_000, log });
+                    continue;
+                }
+            }
+            if (await talkThrough(knight.npc, knight.prefer, log)) {
+                log(`talkKnights: '${knight.npc}' dialogue done`);
+                done = true;
                 break;
             }
-            log(`talkKnights: '${knight.npc}' dialogue open — driving`);
-            await talkThrough(knight.npc, knight.prefer, log);
-            break;
+            log(`talkKnights: '${knight.npc}' talk failed (attempt ${attempt + 1})`);
+        }
+        if (!done) {
+            log(`talkKnights: giving up on '${knight.npc}' this pass`);
         }
     }
 }
@@ -238,13 +248,20 @@ async function candleMakerStageFour(log: (m: string) => void): Promise<boolean> 
         }
         await Execution.delayTicks(1);
     }
-    return stage4 || !sawOptions;
+    // Only succeed once Morgan has been briefed and the black-candle option appears.
+    // Treating a failed/empty dialogue as success used to skip the fortress entirely.
+    return stage4;
 }
 
 async function fortress(log: (m: string) => void): Promise<boolean> {
     const t = Game.tile();
     if (!t) {
         return false;
+    }
+    // After Morgan's brief the keep is done — never re-board the Catherby crate.
+    if (mordredBriefed && !insideKeep(t)) {
+        log('fortress: Morgan brief already done and outside the keep');
+        return true;
     }
     if (!insideKeep(t)) {
         if (!(await Traversal.walkResilient(CATHERBY_CRATE_STAND, { radius: 2, attempts: 3, timeoutMs: 90_000, log }))) {
@@ -266,18 +283,22 @@ async function fortress(log: (m: string) => void): Promise<boolean> {
     }
     // #353: dialog / Morgan brief always outranks Attack — Mordred stays attackable after the
     // fight ends, so re-Attack loops if we do not latch "briefed".
+    // "Yes." is last so crate Hide-in confirms never fall through to No.
+    const MORGAN_OR_CRATE = [
+        'Tell me how to untrap Merlin and I might.',
+        'OK I will go do all that.',
+        'Tell me how to untrap Merlin',
+        'I will go do all that',
+        'Yes.'
+    ];
     if (ChatDialog.isOpen() || ChatDialog.canContinue()) {
-        await driveDialogue(
-            [
-                'Tell me how to untrap Merlin and I might.',
-                'OK I will go do all that.',
-                'Tell me how to untrap Merlin',
-                'I will go do all that'
-            ],
-            log
-        );
-        mordredBriefed = true;
-        log('fortress: Morgan brief done — leaving keep (no re-attack)');
+        const opts = ChatDialog.options();
+        const crateConfirm = opts.some(o => /^yes\.?$/i.test(o.trim())) && opts.some(o => /^no\.?$/i.test(o.trim()));
+        await driveDialogue(crateConfirm ? ['Yes.'] : MORGAN_OR_CRATE, log);
+        if (!crateConfirm) {
+            mordredBriefed = true;
+            log('fortress: Morgan brief done — leaving keep (no re-attack)');
+        }
         await leaveKeep(log);
         return false;
     }
@@ -300,10 +321,7 @@ async function fortress(log: (m: string) => void): Promise<boolean> {
     }
     // Dialog may have opened while walking up.
     if (ChatDialog.isOpen() || ChatDialog.canContinue()) {
-        await driveDialogue(
-            ['Tell me how to untrap Merlin and I might.', 'OK I will go do all that.', 'Tell me how to untrap Merlin'],
-            log
-        );
+        await driveDialogue(MORGAN_OR_CRATE, log);
         mordredBriefed = true;
         await leaveKeep(log);
         return false;
@@ -322,10 +340,7 @@ async function fortress(log: (m: string) => void): Promise<boolean> {
         // no dialog); prefer dialog detection every tick.
         for (let i = 0; i < 40 && !mordredBriefed; i++) {
             if (ChatDialog.isOpen() || ChatDialog.canContinue()) {
-                await driveDialogue(
-                    ['Tell me how to untrap Merlin and I might.', 'OK I will go do all that.', 'Tell me how to untrap Merlin'],
-                    log
-                );
+                await driveDialogue(MORGAN_OR_CRATE, log);
                 mordredBriefed = true;
                 break;
             }
@@ -349,32 +364,103 @@ async function fortress(log: (m: string) => void): Promise<boolean> {
 }
 
 async function leaveKeep(log: (m: string) => void): Promise<boolean> {
-    if ((Game.tile()?.level ?? 0) >= 2) {
-        const down = Locs.query().name('Staircase').action('Climb-down').within(6).nearest();
+    let here = Game.tile();
+    if (here && !insideKeep(here)) {
+        return true;
+    }
+    // Mordred is L2; the exit crate is ground-floor (keep_crate_coord). Descend fully first.
+    for (let guard = 0; guard < 4 && (Game.tile()?.level ?? 0) > 0; guard++) {
+        const level = Game.tile()?.level ?? 0;
+        const down = Locs.query().name('Staircase').action('Climb-down').within(8).nearest();
         if (down) {
-            await down.interact('Climb-down');
-            await Execution.delayUntil(() => (Game.tile()?.level ?? 2) < 2, 8000);
-            return false;
+            if (!(await down.interact('Climb-down'))) {
+                return false;
+            }
+            if (!(await Execution.delayUntil(() => (Game.tile()?.level ?? level) < level, 8000))) {
+                return false;
+            }
+            await Execution.delayTicks(2);
+            continue;
         }
-        await Traversal.walkResilient(KEEP_STAIR_L2_DOWN, { radius: 2, attempts: 3, timeoutMs: 60_000, log });
+        const stand = level >= 2 ? KEEP_STAIR_L2_DOWN : KEEP_STAIR_L1_UP;
+        log(`leaveKeep: no Climb-down on L${level} — walking to stair (${stand.x},${stand.z})`);
+        await Traversal.walkResilient(stand, { radius: 2, attempts: 3, timeoutMs: 60_000, log });
         return false;
     }
-    if (!(await Traversal.walkResilient(RETURN_CRATE_STAND, { radius: 2, attempts: 3, timeoutMs: 60_000, log }))) {
+    here = Game.tile();
+    if (!here || here.level > 0) {
         return false;
+    }
+    if (!insideKeep(here)) {
+        return true;
+    }
+    // Prefer the Arhein crate ride home (mesbox + Yes/No header, not multi-option chat).
+    if (RETURN_CRATE_STAND.distanceTo(here) > 2) {
+        await Traversal.walkResilient(RETURN_CRATE_STAND, { radius: 2, attempts: 2, timeoutMs: 45_000, log });
     }
     const crate = Locs.query().name('Crate').action('Hide-in').within(6).nearest();
     if (crate) {
         await crate.interact('Hide-in');
-        await driveDialogue(['Yes.'], log, 40);
-        await Execution.delayUntil(() => { const g = Game.tile(); return g !== null && !insideKeep(g); }, 12_000);
+        await Execution.delayUntil(() => ChatDialog.isOpen() || ChatDialog.canContinue(), 6000);
+        for (let i = 0; i < 40 && (ChatDialog.isOpen() || ChatDialog.canContinue()); i++) {
+            if (EventSignal.pending()) {
+                break;
+            }
+            if (ChatDialog.canContinue()) {
+                await ChatDialog.continue();
+                await Execution.delayTicks(1);
+                continue;
+            }
+            const opts = ChatDialog.options();
+            if (opts.length > 0) {
+                const yes = opts.find(o => /^yes\.?$/i.test(o.trim())) ?? opts[0];
+                await ChatDialog.chooseOption(yes);
+                await Execution.delayTicks(2);
+                continue;
+            }
+            await Execution.delayTicks(1);
+        }
+        // Crate ride is a multi-mesbox teleport sequence — give it time.
+        await Execution.delayUntil(() => {
+            const g = Game.tile();
+            return g !== null && !insideKeep(g);
+        }, 25_000);
+        here = Game.tile();
+        if (here && !insideKeep(here)) {
+            log('leaveKeep: crate ride out of the keep');
+            return true;
+        }
+        log('leaveKeep: crate Hide-in did not leave the keep');
     }
-    return true;
+    // Front door is the west Large door (same one the crate entry uses), not south into the sea.
+    // Keep box is x 2762–2782 — exit must be west of 2762.
+    log('leaveKeep: walking west out the keep door');
+    const KEEP_WEST_EXIT = new Tile(2758, 3401, 0);
+    for (let attempt = 0; attempt < 8; attempt++) {
+        here = Game.tile();
+        if (here && !insideKeep(here)) {
+            return true;
+        }
+        const door = Locs.query().name('Large door').action('Open').within(6).nearest();
+        if (door) {
+            await door.interact('Open');
+            await Execution.delayTicks(2);
+        }
+        await Traversal.walkResilient(KEEP_WEST_EXIT, { radius: 1, attempts: 2, timeoutMs: 30_000, log });
+    }
+    here = Game.tile();
+    return here !== null && !insideKeep(here);
 }
 
 async function openingLeg(log: (m: string) => void): Promise<boolean> {
     const t = Game.tile();
     if (t && insideKeep(t)) {
         return fortress(log);
+    }
+    if (mordredBriefed) {
+        // Keep is done. Do not thrash the candle maker every tick — wax exchange
+        // happens later via decide() once bones/wax are in the pack.
+        return killGiantBat(log);
     }
     if (t && BAT_ANCHOR.distanceTo(t) <= 25) {
         return killGiantBat(log);
@@ -610,8 +696,6 @@ export function decide(snap: QuestSnapshot): QuestStep {
     }
     if (snap.journal === 'unknown') { return { kind: 'wait', reason: 'quest journal not loaded' }; }
     if (snap.journal === 'notStarted') {
-        breadStealPasses = 0;
-        breadCombatEndTick = 0;
         mordredBriefed = false;
         return { kind: 'talk', stop: KING_ARTHUR };
     }
@@ -651,7 +735,7 @@ export const merlinscrystal: QuestModule = {
     food: 15,
     gather: {
         'insect repellent': () => ({ kind: 'grabGround', item: 'Insect repellent', anchor: REPELLENT_SPAWN }),
-        'bread': s => breadPlan(s, Skills.level('thieving'), breadStealPasses),
+        'bread': s => breadPlan(s),
         'tinderbox': s => buyOrWait(s, { kind: 'buy', item: 'Tinderbox', qty: 1, shop: RIMMINGTON_SHOP, estGp: 15 }),
         'bucket': s => buyOrWait(s, { kind: 'buy', item: 'Bucket', qty: 1, shop: RIMMINGTON_SHOP, estGp: 15 })
     },

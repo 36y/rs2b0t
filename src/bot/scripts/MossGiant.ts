@@ -17,7 +17,7 @@ import { Autocast } from '../api/combat/Autocast.js';
 import { castsAvailable, runeWithdrawList } from '../api/combat/CombatStyleLogic.js';
 import { SPELL_DB } from '../api/combat/data/spelldb.js';
 import { DROP_DB } from '../api/combat/data/dropdb.js';
-import { BOWS, STAFFS } from '../api/combat/equipment.js';
+import { STAFFS } from '../api/combat/equipment.js';
 import { FOOD_OPTIONS, foodForms, foodCount as foodCountIn } from '../api/combat/food.js';
 import { combatKeepNames } from '../api/combat/keepList.js';
 import { depositAllExcept, matchesCommonBankLoot } from '../api/Banking.js';
@@ -27,6 +27,7 @@ import { Traversal } from '../api/Traversal.js';
 import { DirectNavigator } from '../nav/DirectNavigator.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
+import { RANGED_WEAPONS, rangeLoadoutOf, rangeSupplyEmpty } from './RockCrabRangeLogic.js';
 
 const TARGET = 'Moss giant';
 const DEFAULT_SAFESPOT = new Tile(2553, 3406, 0);
@@ -51,10 +52,34 @@ export const SETTINGS: SettingsSchema = {
     staff: { type: 'string', default: 'Staff of air', options: STAFFS, label: 'Staff', group: 'Combat', showIf: SHOW_MAGE, help: 'wielded staff, withdrawn from bank when missing' },
     spell: { type: 'string', default: 'Wind Strike', options: Object.keys(SPELL_DB), label: 'Autocast spell', group: 'Combat', showIf: SHOW_MAGE },
     runesWithdraw: { type: 'number', default: 150, min: 1, max: 1000, label: 'Casts of runes per bank trip', group: 'Combat', showIf: SHOW_MAGE },
-    bow: { type: 'string', default: 'Maple shortbow', options: BOWS, label: 'Bow', group: 'Combat', showIf: SHOW_RANGE, help: 'wielded bow, withdrawn from bank when missing' },
+    bow: {
+        type: 'string',
+        default: 'Maple shortbow',
+        options: RANGED_WEAPONS,
+        label: 'Ranged weapon',
+        group: 'Combat',
+        showIf: SHOW_RANGE,
+        help: 'bows use the selected ammo; darts are both the weapon and the projectile stack'
+    },
     rangeStyle: { type: 'string', default: 'rapid', options: RANGE_STYLE_OPTIONS, label: 'Ranged style', group: 'Combat', showIf: SHOW_RANGE },
-    ammo: { type: 'string', default: 'Iron arrow', options: ['Bronze arrow', 'Iron arrow', 'Steel arrow', 'Mithril arrow', 'Adamant arrow', 'Rune arrow'], label: 'Ammo', group: 'Combat', showIf: SHOW_RANGE },
-    ammoWithdraw: { type: 'number', default: 500, min: 1, max: 5000, label: 'Ammo per bank trip', group: 'Combat', showIf: SHOW_RANGE },
+    ammo: {
+        type: 'string',
+        default: 'Iron arrow',
+        options: ['Bronze arrow', 'Iron arrow', 'Steel arrow', 'Mithril arrow', 'Adamant arrow', 'Rune arrow'],
+        label: 'Bow ammo',
+        group: 'Combat',
+        showIf: SHOW_RANGE,
+        help: 'used by bows; ignored when the ranged weapon is a dart'
+    },
+    ammoWithdraw: {
+        type: 'number',
+        default: 500,
+        min: 1,
+        max: 5000,
+        label: 'Projectiles per bank trip',
+        group: 'Combat',
+        showIf: SHOW_RANGE
+    },
 
     food: { type: 'string', default: 'Lobster', options: FOOD_OPTIONS, label: 'Food', group: 'Food & healing' },
     foodWithdraw: { type: 'number', default: 20, min: 1, max: 27, label: 'Food to withdraw per bank run', group: 'Food & healing' },
@@ -101,15 +126,43 @@ function hasFood(): boolean {
 function castsLeft(): number {
     return castsAvailable(SPELL, wieldedNames(), rune => Inventory.count(rune));
 }
+function rangeLoadout() {
+    return rangeLoadoutOf(WEAPON, AMMO);
+}
+
+function rangeProjectile(): string {
+    return rangeLoadout().projectile;
+}
+
+function equippedProjectileCount(): number {
+    const projectile = rangeProjectile().toLowerCase();
+    return Equipment.items().find(i => (i.name ?? '').toLowerCase() === projectile)?.count ?? 0;
+}
+
 function needStyleSupplies(): boolean {
     if (STYLE === 'mage') {
         return castsLeft() < 1;
     }
     if (STYLE === 'range') {
-        const quiver = Equipment.items().find(i => (i.name ?? '').toLowerCase() === AMMO.toLowerCase())?.count ?? 0;
-        return quiver === 0 && Inventory.count(AMMO) === 0;
+        const projectile = rangeProjectile();
+        return rangeSupplyEmpty(equippedProjectileCount(), Inventory.count(projectile), 0);
     }
     return false;
+}
+
+async function equipPackProjectiles(): Promise<boolean> {
+    const projectile = rangeProjectile();
+    const item = Inventory.first(projectile);
+    if (!item) {
+        return true;
+    }
+    const op = item.actions().find(o => /wield|wear|equip/i.test(o));
+    if (!op) {
+        return false;
+    }
+    const before = Inventory.count(projectile);
+    await item.interact(op);
+    return Execution.delayUntil(() => Inventory.count(projectile) < before, 3000);
 }
 
 function inField(tile: Tile): boolean {
@@ -141,7 +194,9 @@ function findLoot() {
 }
 
 function keepNames(): string[] {
-    return combatKeepNames({ food: FOOD_NAME, style: STYLE, spell: SPELL, ammo: AMMO, weapon: WEAPON, extra: ['Coins'] });
+    const projectile = STYLE === 'range' ? rangeProjectile() : AMMO;
+    const weapon = STYLE === 'range' && rangeLoadout().thrown ? projectile : WEAPON;
+    return combatKeepNames({ food: FOOD_NAME, style: STYLE, spell: SPELL, ammo: projectile, weapon, extra: ['Coins'] });
 }
 
 async function eatOnce(bot: MossGiant): Promise<boolean> {
@@ -196,10 +251,18 @@ class GearEquip implements Task {
     private fails = 0;
     constructor(private bot: MossGiant) {}
     private needWeapon(): boolean {
+        if (STYLE === 'range' && rangeLoadout().thrown) {
+            // darts are the projectile stack — handled by needQuiver
+            return false;
+        }
         return WEAPON !== '' && !Equipment.contains(WEAPON) && Inventory.first(WEAPON) !== null;
     }
     private needQuiver(): boolean {
-        return STYLE === 'range' && Inventory.count(AMMO) > 0;
+        if (STYLE !== 'range') {
+            return false;
+        }
+        const projectile = rangeProjectile();
+        return Inventory.count(projectile) > 0 && equippedProjectileCount() === 0;
     }
     validate(): boolean {
         return STYLE !== 'melee' && this.fails < 5 && (this.needWeapon() || this.needQuiver());
@@ -215,9 +278,10 @@ class GearEquip implements Task {
             }
             return;
         }
-        this.bot.setStatus(`equipping ${AMMO}`);
-        if (await Equipment.equip(AMMO)) {
-            this.bot.log(`equipped ${AMMO}`);
+        const projectile = rangeProjectile();
+        this.bot.setStatus(`equipping ${projectile}`);
+        if (await equipPackProjectiles()) {
+            this.bot.log(`equipped ${projectile}`);
             this.fails = 0;
         } else {
             this.fails++;
@@ -315,7 +379,14 @@ async function bankRoutine(bot: MossGiant, withdrawFood: boolean): Promise<void>
 }
 
 async function withdrawStyleSupplies(bot: MossGiant): Promise<void> {
-    if (STYLE !== 'melee' && WEAPON !== '' && !Equipment.contains(WEAPON) && Inventory.first(WEAPON) === null) {
+    // darts are the projectile stack (not a durable weapon) — restocked below
+    const needWeapon =
+        STYLE !== 'melee' &&
+        WEAPON !== '' &&
+        !(STYLE === 'range' && rangeLoadout().thrown) &&
+        !Equipment.contains(WEAPON) &&
+        Inventory.first(WEAPON) === null;
+    if (needWeapon) {
         bot.setStatus(`withdrawing ${WEAPON}`);
         if ((await withdrawTo(WEAPON, 1)) > 0) {
             await Equipment.equip(WEAPON);
@@ -339,15 +410,19 @@ async function withdrawStyleSupplies(bot: MossGiant): Promise<void> {
             bot.noteSupplyEmpty(false);
         }
     } else if (STYLE === 'range') {
-        bot.setStatus(`withdrawing ${AMMO}`);
-        const got = await withdrawTo(AMMO, AMMO_WITHDRAW);
+        const projectile = rangeProjectile();
+        bot.setStatus(`withdrawing ${projectile}`);
+        const got = await withdrawTo(projectile, AMMO_WITHDRAW);
         if (got > 0) {
-            await Equipment.equip(AMMO);
-            bot.log(`withdrew ${got} ${AMMO}`);
+            // bank modal blocks equip — same pattern as RockCrab dart restock
+            if (!(await Bank.close()) || !(await equipPackProjectiles())) {
+                bot.log(`WARNING: withdrew ${projectile}, but could not equip the stack — will retry from the pack`);
+            }
+            bot.log(`withdrew ${got} ${projectile} — ${equippedProjectileCount()} equipped`);
             bot.noteSupplyEmpty(false);
-        } else if (Inventory.count(AMMO) === 0) {
+        } else if (equippedProjectileCount() === 0 && Inventory.count(projectile) === 0) {
             bot.noteSupplyEmpty(true);
-            bot.log(`WARNING: no '${AMMO}' in the bank — deposit ammo to resume.`);
+            bot.log(`WARNING: no '${projectile}' in the bank — deposit projectiles to resume.`);
         }
     }
 }
@@ -425,7 +500,9 @@ class BankRun implements Task {
             return;
         }
         this.bot.setStatus('banking — restocking');
-        this.bot.log(`banking (food ${foodCount()}${STYLE === 'mage' ? `, casts ${castsLeft()}` : ''}${STYLE === 'range' ? `, ammo ${Inventory.count(AMMO)}` : ''})`);
+        this.bot.log(
+            `banking (food ${foodCount()}${STYLE === 'mage' ? `, casts ${castsLeft()}` : ''}${STYLE === 'range' ? `, projectiles ${equippedProjectileCount() + Inventory.count(rangeProjectile())}` : ''})`
+        );
         await bankRoutine(this.bot, true);
     }
 }
@@ -569,7 +646,16 @@ export default class MossGiant extends TaskBot {
         this.startedAt = Date.now();
         this.xpAtStart = XP_SKILLS.reduce((n, sk) => n + Skills.xp(sk), 0);
 
-        this.log(`MossGiant — style ${STYLE}${STYLE !== 'melee' ? ` w/ ${WEAPON}` : ''}${STYLE === 'mage' ? ` (${SPELL})` : ''}, food '${FOOD_NAME}' (eat<${Math.round(EAT_HP * 100)}%, panic<${Math.round(PANIC_HP * 100)}%), safespot ${SAFESPOT}, bank ${BANK_TILE}${BURY_BONES ? ', burying big bones' : ''}`);
+        const loadout = rangeLoadout();
+        const rangeNote =
+            STYLE === 'range'
+                ? loadout.thrown
+                    ? ` darts '${loadout.projectile}'`
+                    : ` bow '${loadout.weapon}' + '${loadout.projectile}'`
+                : '';
+        this.log(
+            `MossGiant — style ${STYLE}${STYLE === 'mage' ? ` w/ ${WEAPON} (${SPELL})` : rangeNote}${STYLE === 'melee' ? ` (${MELEE_STYLE})` : ''}, food '${FOOD_NAME}' (eat<${Math.round(EAT_HP * 100)}%, panic<${Math.round(PANIC_HP * 100)}%), safespot ${SAFESPOT}, bank ${BANK_TILE}${BURY_BONES ? ', burying big bones' : ''}`
+        );
 
         this.add(
             new ContinueDialog(),
@@ -643,7 +729,15 @@ export default class MossGiant extends TaskBot {
             const xpGained = XP_SKILLS.reduce((n, s) => n + Skills.xp(s), 0) - this.xpAtStart;
             const xph = mins > 0.5 ? `${((xpGained / mins) * 60 / 1000).toFixed(1)}k` : '—';
             p.row(`Runtime: ${fmtDuration(mins)}`, `Kills: ${this.killsTotal}`, `XP/hr: ${xph}`);
-            p.row(`Style: ${STYLE}`, STYLE === 'mage' ? `Casts: ${castsLeft()}${Autocast.armed() ? '' : ' (OFF)'}` : STYLE === 'range' ? `Ammo: ${Inventory.count(AMMO)}` : `Food: ${foodCount()}`, `Bank trips: ${this.bankTrips}`);
+            const rangeAmmo =
+                STYLE === 'range'
+                    ? `${rangeLoadout().thrown ? 'Darts' : 'Quiver'}: ${equippedProjectileCount() + Inventory.count(rangeProjectile())}`
+                    : '';
+            p.row(
+                `Style: ${STYLE}`,
+                STYLE === 'mage' ? `Casts: ${castsLeft()}${Autocast.armed() ? '' : ' (OFF)'}` : STYLE === 'range' ? rangeAmmo : `Food: ${foodCount()}`,
+                `Bank trips: ${this.bankTrips}`
+            );
             p.bar('HP', hpFrac());
         } else {
             p.row(`Looted: ${this.looted}`, ...(BURY_BONES ? [`Buried: ${this.buriedTotal}`] : []), `Bank trips: ${this.bankTrips}`);

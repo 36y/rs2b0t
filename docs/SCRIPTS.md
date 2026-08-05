@@ -312,10 +312,10 @@ Tags: `ardougne`, `safespot`, `afk`
 | `staff` | string | `"Staff of air"` | Staff — one of: Staff, Magic staff, Staff of air, Staff of water, Staff of earth, Staff of fire, Battlestaff, Air battlestaff, Water battlestaff, Earth battlestaff, Fire battlestaff, Mystic air staff, Mystic water staff, Mystic earth staff, Mystic fire staff |
 | `spell` | string | `"Wind Strike"` | Autocast spell — one of: Wind Strike, Water Strike, Earth Strike, Fire Strike, Wind Bolt, Water Bolt, Earth Bolt, Fire Bolt, Wind Blast, Water Blast, Earth Blast, Fire Blast, Wind Wave, Water Wave, Earth Wave, Fire Wave |
 | `runesWithdraw` | number (1–1000) | `150` | Casts of runes per bank trip |
-| `bow` | string | `"Maple shortbow"` | Bow — one of: Shortbow, Longbow, Oak shortbow, Oak longbow, Willow shortbow, Willow longbow, Maple shortbow, Maple longbow, Yew shortbow, Yew longbow, Magic shortbow, Magic longbow |
+| `bow` | string | `"Maple shortbow"` | Ranged weapon — one of: Shortbow, Longbow, Oak shortbow, Oak longbow, Willow shortbow, Willow longbow, Maple shortbow, Maple longbow, Yew shortbow, Yew longbow, Magic shortbow, Magic longbow, Bronze dart, Iron dart, Steel dart, Black dart, Mithril dart, Adamant dart, Rune dart |
 | `rangeStyle` | string | `"rapid"` | Ranged style — one of: accurate, rapid, longrange |
-| `ammo` | string | `"Iron arrow"` | Ammo — one of: Bronze arrow, Iron arrow, Steel arrow, Mithril arrow, Adamant arrow, Rune arrow |
-| `ammoWithdraw` | number (1–5000) | `500` | Ammo per bank trip |
+| `ammo` | string | `"Iron arrow"` | Bow ammo — one of: Bronze arrow, Iron arrow, Steel arrow, Mithril arrow, Adamant arrow, Rune arrow |
+| `ammoWithdraw` | number (1–5000) | `500` | Projectiles per bank trip |
 | `food` | string | `"Lobster"` | Food — one of: Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
 | `foodWithdraw` | number (1–27) | `20` | Food to withdraw per bank run |
 | `eatHp` | number (1–99) | `50` | Eat below HP% |
