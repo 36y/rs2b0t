@@ -167,14 +167,28 @@ describe('PathFinder avoidZones', () => {
         }
     });
 
-    test('cannot enter a zone that covers the entire corridor (unreachable)', () => {
+    test('escapes a zone when the start is more than one tile inside', () => {
+        const finder = new PathFinder(fullyWalkablePack());
+        const from = { x: 10, z: 10, level: 0 };
+        const to = { x: 25, z: 10, level: 0 };
+        const zone = [{ minX: 5, maxX: 15, minZ: 5, maxZ: 15, level: 0 }];
+        const out = finder.findPath(from, to, { avoidZones: zone });
+        expect(out.ok).toBe(true);
+        if (out.ok) {
+            const firstOutside = out.waypoints.findIndex(p => !tileInDangerZones(p.x, p.z, p.level, zone));
+            expect(firstOutside).toBeGreaterThan(0);
+            expect(out.waypoints.slice(firstOutside).every(p => !tileInDangerZones(p.x, p.z, p.level, zone))).toBe(
+                true
+            );
+        }
+    });
+
+    test('cannot enter a danger zone from outside', () => {
         const finder = new PathFinder(fullyWalkablePack());
         const from = { x: 5, z: 10, level: 0 };
         const to = { x: 25, z: 10, level: 0 };
-        // Whole mapsquare level 0 is danger — only start tile is "free" by already being there.
-        const all = [{ minX: 0, maxX: 63, minZ: 0, maxZ: 63, level: 0 }];
-        const out = finder.findPath(from, to, { avoidZones: all });
-        // Neighbors are all in zone → no expansion → unreachable
+        const zone = [{ minX: 20, maxX: 30, minZ: 5, maxZ: 15, level: 0 }];
+        const out = finder.findPath(from, to, { avoidZones: zone });
         expect(out.ok).toBe(false);
     });
 });

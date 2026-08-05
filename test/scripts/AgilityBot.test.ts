@@ -16,6 +16,7 @@ const original = {
     delayTicks: Execution.delayTicks,
     delayUntil: Execution.delayUntil,
     ingame: Game.ingame,
+    sceneReady: Game.sceneReady,
     tile: Game.tile,
     canContinue: ChatDialog.canContinue,
     agilityXp: Skills.xp,
@@ -39,6 +40,7 @@ beforeEach(() => {
     walks = [];
 
     Game.ingame = () => true;
+    Game.sceneReady = () => true;
     Game.tile = () => playerTile;
     ChatDialog.canContinue = () => false;
     Skills.xp = () => 0;
@@ -64,6 +66,7 @@ afterEach(() => {
     Execution.delayTicks = original.delayTicks;
     Execution.delayUntil = original.delayUntil;
     Game.ingame = original.ingame;
+    Game.sceneReady = original.sceneReady;
     Game.tile = original.tile;
     ChatDialog.canContinue = original.canContinue;
     Skills.xp = original.agilityXp;
@@ -76,7 +79,9 @@ describe('GnomeCourse travel', () => {
         expect(atGnomeCourse(GNOME_COURSE_START)).toBe(true);
         expect(atGnomeCourse(new Tile(2487, 3426, 0))).toBe(true);
         expect(atGnomeCourse(new Tile(2478, 3420, 2))).toBe(true);
-        expect(atGnomeCourse(new Tile(GNOME_COURSE_START.x + GNOME_COURSE_RADIUS + 1, GNOME_COURSE_START.z, 0))).toBe(false);
+        expect(atGnomeCourse(new Tile(GNOME_COURSE_START.x + GNOME_COURSE_RADIUS + 1, GNOME_COURSE_START.z, 0))).toBe(
+            false
+        );
         expect(atGnomeCourse(new Tile(3222, 3218, 0))).toBe(false);
     });
 

@@ -174,11 +174,27 @@ class TinyMidiPCM {
         sampleRate
     });
 
-    await tinyMidiPCM.init();
-
-    const soundfontRes = await fetch(new URL('SCC1_Florestan.sf2', import.meta.url));
-    const soundfontBuffer = new Uint8Array(await soundfontRes.arrayBuffer());
-    tinyMidiPCM.setSoundfont(soundfontBuffer);
+    // Initialising WASM and fetching the large soundfont at module import time
+    // delays every consumer of Client.ts and leaves an unhandled async task in
+    // headless/unit environments. Nothing needs either asset until MIDI starts.
+    let readyPromise = null;
+    function ensureReady() {
+        if (!readyPromise) {
+            readyPromise = (async () => {
+                await tinyMidiPCM.init();
+                const soundfontRes = await fetch(new URL('SCC1_Florestan.sf2', import.meta.url));
+                if (!soundfontRes.ok) {
+                    throw new Error(`soundfont HTTP ${soundfontRes.status}`);
+                }
+                const soundfontBuffer = new Uint8Array(await soundfontRes.arrayBuffer());
+                tinyMidiPCM.setSoundfont(soundfontBuffer);
+            })().catch(err => {
+                readyPromise = null;
+                throw err;
+            });
+        }
+        return readyPromise;
+    }
 
     function flush() {
         if (!window.audioContext || !samples.length) {
@@ -325,6 +341,8 @@ class TinyMidiPCM {
         if (!midiBuffer) {
             return;
         }
+
+        await ensureReady();
 
         midiFade = useFade;
 

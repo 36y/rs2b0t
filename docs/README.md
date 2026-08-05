@@ -30,6 +30,7 @@ pure Lost City or 2004scape projects and is not maintained for those targets.
 | [Testing](TESTING.md) | unit tests, the live-harness ABI, the end-to-end smoke |
 | [Dev and deploy](DEV.md) | build targets, the three run modes, the hosting pipeline |
 | [Multi-state locs](LOCS.md) | external note on loc identity and state; partly a proposal, not built |
+| [Code review backlog](REVIEW_BACKLOG.md) | deferred correctness, API, security, and maintainability follow-ups |
 
 ---
 

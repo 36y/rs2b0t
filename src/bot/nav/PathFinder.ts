@@ -15,10 +15,7 @@ import { wildernessLevelAt } from './wilderness.js';
 import { specialRequiresAt } from './specialRequires.js';
 import { activateTransportRows } from './activateStateAware.js';
 import { tileInDangerZones, type DangerZoneRect } from './data/dangerZones.js';
-import {
-    essenceReturnIdFromStateIndex,
-    essenceReturnStateIndex
-} from './essenceExit.js';
+import { essenceReturnIdFromStateIndex, essenceReturnStateIndex } from './essenceExit.js';
 
 /**
  * A* search key = tileId * 16 + essenceReturnIdx (0..15).
@@ -142,17 +139,17 @@ export interface TransportEdgeData {
 export type NavRequest =
     | { type: 'init'; pack: ArrayBuffer }
     | {
-        type: 'path';
-        id: number;
-        from: NavPoint;
-        to: NavPoint;
-        avoid?: { x: number; z: number }[];
-        maxExpansions?: number;
-        state?: WorldStateData;
-        policy?: PathPolicy;
-        useTeleportCatalog?: boolean;
-        avoidZones?: readonly DangerZoneRect[];
-    };
+          type: 'path';
+          id: number;
+          from: NavPoint;
+          to: NavPoint;
+          avoid?: { x: number; z: number }[];
+          maxExpansions?: number;
+          state?: WorldStateData;
+          policy?: PathPolicy;
+          useTeleportCatalog?: boolean;
+          avoidZones?: readonly DangerZoneRect[];
+      };
 
 export type NavResponse =
     | { type: 'ready'; mapsquares: number; doorEdges: number; transportEdges: number }
@@ -392,12 +389,16 @@ export class PathFinder {
             if (edge.disabledReason || edge.blacklist === true) {
                 continue;
             }
-            if (!this.walkable(edge.from.x, edge.from.z, edge.from.level) || !this.walkable(edge.to.x, edge.to.z, edge.to.level)) {
+            if (
+                !this.walkable(edge.from.x, edge.from.z, edge.from.level) ||
+                !this.walkable(edge.to.x, edge.to.z, edge.to.level)
+            ) {
                 continue;
             }
             const dx = edge.to.x - edge.from.x;
             const dz = edge.to.z - edge.from.z;
-            const hasMidpointDoor = edge.kind === 'door' && (Math.abs(dx) === 2 || Math.abs(dz) === 2) && dx % 2 === 0 && dz % 2 === 0;
+            const hasMidpointDoor =
+                edge.kind === 'door' && (Math.abs(dx) === 2 || Math.abs(dz) === 2) && dx % 2 === 0 && dz % 2 === 0;
             const transport: TransportInfo = {
                 locName: edge.locName,
                 action: edge.action,
@@ -412,11 +413,11 @@ export class PathFinder {
                 toLevel: edge.to.level !== edge.from.level ? edge.to.level : undefined,
                 // Portals land on a fixed tile (or any tile for multi-exit) — executor waits on toTile.
                 toTile:
-                    edge.kind === 'dungeon'
-                    || edge.kind === 'portal'
-                    || edge.kind === 'ship'
-                    || edge.kind === 'gangplank'
-                    || edge.kind === 'teleport'
+                    edge.kind === 'dungeon' ||
+                    edge.kind === 'portal' ||
+                    edge.kind === 'ship' ||
+                    edge.kind === 'gangplank' ||
+                    edge.kind === 'teleport'
                         ? { x: edge.to.x, z: edge.to.z }
                         : undefined,
                 // Portals and hub teles may land a few tiles off exact stand.
@@ -557,7 +558,11 @@ export class PathFinder {
 
         const from = this.snapWalkable(fromRaw, 2);
         if (!from) {
-            return { ok: false, reason: `start (${fromRaw.x},${fromRaw.z},${fromRaw.level}) not walkable`, expanded: 0 };
+            return {
+                ok: false,
+                reason: `start (${fromRaw.x},${fromRaw.z},${fromRaw.level}) not walkable`,
+                expanded: 0
+            };
         }
 
         const ctx = this.buildSearchContext(from, toRaw, opts);
@@ -572,7 +577,11 @@ export class PathFinder {
 
         const goals = this.goalCandidates(toRaw, 5);
         if (goals.size === 0) {
-            return { ok: false, reason: `target (${toRaw.x},${toRaw.z},${toRaw.level}) not walkable within 5 tiles`, expanded: 0 };
+            return {
+                ok: false,
+                reason: `target (${toRaw.x},${toRaw.z},${toRaw.level}) not walkable within 5 tiles`,
+                expanded: 0
+            };
         }
         const goalSlack = goals.size === 1 && goals.has(nodeId(toRaw.x, toRaw.z, toRaw.level)) ? 0 : 5;
         return this.search(from, toRaw, goals, goalSlack, avoidDoors, maxExpansions, ctx);
@@ -581,12 +590,11 @@ export class PathFinder {
     private buildSearchContext(from: NavPoint, to: NavPoint, opts: FindPathCallOptions): SearchContext {
         const state = opts.state ? worldStateFromData(opts.state) : undefined;
         const policy = opts.policy;
-        const avoidZones =
-            opts.avoidZones && opts.avoidZones.length > 0 ? opts.avoidZones : undefined;
+        const avoidZones = opts.avoidZones && opts.avoidZones.length > 0 ? opts.avoidZones : undefined;
         const routeSpan = routeSpanChebyshev(from, to);
         const injectTele =
-            opts.useTeleportCatalog === true
-            || (opts.useTeleportCatalog !== false && policy !== undefined && policy.useTeleports !== false);
+            opts.useTeleportCatalog === true ||
+            (opts.useTeleportCatalog !== false && policy !== undefined && policy.useTeleports !== false);
 
         const teleEdges: CompiledEdge[] = [];
         if (injectTele && policy?.useTeleports !== false) {
@@ -696,9 +704,7 @@ export class PathFinder {
         }
         // Snapshot may still list a stale essenceExitReturn — use path return for honesty.
         const stateForMeets: WorldState =
-            pathReturn !== undefined
-                ? { ...baseState, essenceExitReturn: pathReturn }
-                : baseState;
+            pathReturn !== undefined ? { ...baseState, essenceExitReturn: pathReturn } : baseState;
         return meetsRequires(other, stateForMeets).ok;
     }
 
@@ -766,13 +772,18 @@ export class PathFinder {
             }
 
             if (++expanded > maxExpansions) {
-                return { ok: false, reason: `expansion budget exceeded (${maxExpansions})`, expanded };
+                return {
+                    ok: false,
+                    reason: `expansion budget exceeded (${maxExpansions})`,
+                    expanded
+                };
             }
 
             const x = nodeX(curTile);
             const z = nodeZ(curTile);
             const level = nodeLevel(curTile);
             const g = gScore.get(current)!;
+            const escapingDangerZone = ctx.avoidZones ? tileInDangerZones(x, z, level, ctx.avoidZones) : false;
 
             const mask = this.exitMask(x, z, level);
             for (let dir = 0; dir < 8; dir++) {
@@ -781,9 +792,9 @@ export class PathFinder {
                 }
                 const nx = x + DX[dir];
                 const nz = z + DZ[dir];
-                // Never walk *into* a danger zone (escape from a start inside is fine —
-                // those tiles are already on the open set from earlier expansions).
-                if (ctx.avoidZones && tileInDangerZones(nx, nz, level, ctx.avoidZones)) {
+                // Never enter a danger zone from outside. While escaping one, keep
+                // its connected tiles searchable until the route reaches safety.
+                if (ctx.avoidZones && !escapingDangerZone && tileInDangerZones(nx, nz, level, ctx.avoidZones)) {
                     continue;
                 }
                 const neighborTile = nodeId(nx, nz, level);
@@ -816,17 +827,17 @@ export class PathFinder {
                 if (!this.edgeAllowedOnPath(edge.requires, ctx.state, curEssence)) {
                     continue;
                 }
-                // Block transport landings / hops that enter a danger zone.
+                // Apply the same outside-in rule to transport landings and hops.
                 if (
-                    ctx.avoidZones
-                    && tileInDangerZones(nodeX(edge.to), nodeZ(edge.to), nodeLevel(edge.to), ctx.avoidZones)
+                    ctx.avoidZones &&
+                    !escapingDangerZone &&
+                    tileInDangerZones(nodeX(edge.to), nodeZ(edge.to), nodeLevel(edge.to), ctx.avoidZones)
                 ) {
                     continue;
                 }
                 // Entry hop updates path session return (content sets exit_essence_mine_coord).
                 const sets = edge.requires?.essenceEntrySetsReturn;
-                const nextEssence =
-                    sets !== undefined ? essenceReturnStateIndex(sets) : curEssence;
+                const nextEssence = sets !== undefined ? essenceReturnStateIndex(sets) : curEssence;
                 const neighbor = packSearchKey(edge.to, nextEssence);
                 if (closed.has(neighbor)) {
                     continue;
@@ -839,10 +850,7 @@ export class PathFinder {
                 gScore.set(neighbor, tentative);
                 cameFrom.set(neighbor, current);
                 viaEdge.set(neighbor, { transport: edge.transport, cost: edge.cost });
-                open.push(
-                    (tentative + heuristic(nodeX(edge.to), nodeZ(edge.to))) * 1048576 - tentative,
-                    neighbor
-                );
+                open.push((tentative + heuristic(nodeX(edge.to), nodeZ(edge.to))) * 1048576 - tentative, neighbor);
             }
         }
 
@@ -890,10 +898,7 @@ export class PathFinder {
             const viaNext = i + 1 < chain.length ? viaEdge.get(chain[i + 1]!) : undefined;
             const last = i === chain.length - 1;
             const turn =
-                !last
-                && !via
-                && !viaNext
-                && stepDir(chain[i - 1]!, chain[i]!) !== stepDir(chain[i]!, chain[i + 1]!);
+                !last && !via && !viaNext && stepDir(chain[i - 1]!, chain[i]!) !== stepDir(chain[i]!, chain[i + 1]!);
             if (via || viaNext || turn || last) {
                 const wp: Waypoint = point(chain[i]!);
                 if (via) {
@@ -911,14 +916,14 @@ export class PathFinder {
 /** Non-essence gates present (for path-local requires without full WorldState). */
 function hasOtherGates(requires: TransportRequires): boolean {
     return (
-        requires.members === true
-        || requires.freeSlots !== undefined
-        || (requires.skills !== undefined && requires.skills.length > 0)
-        || (requires.items !== undefined && requires.items.length > 0)
-        || (requires.worn !== undefined && requires.worn.length > 0)
-        || requires.currency !== undefined
-        || (requires.quests !== undefined && requires.quests.length > 0)
-        || requires.forbidEntranaRestricted === true
+        requires.members === true ||
+        requires.freeSlots !== undefined ||
+        (requires.skills !== undefined && requires.skills.length > 0) ||
+        (requires.items !== undefined && requires.items.length > 0) ||
+        (requires.worn !== undefined && requires.worn.length > 0) ||
+        requires.currency !== undefined ||
+        (requires.quests !== undefined && requires.quests.length > 0) ||
+        requires.forbidEntranaRestricted === true
     );
 }
 
