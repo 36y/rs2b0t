@@ -16,6 +16,15 @@ export const PAID_BIT = 1;
 export const PILLAR_TAGGED_BIT = 0;
 
 /**
+ * Rough surface Karamja / Brimhaven footprint (ship landing through arena entrance).
+ * Once here the outbound boat is already paid — only return fare (+ entrance if
+ * unpaid) remains. Using TRIP_COINS here caused bank↔boat loops forever.
+ */
+export function onBrimhavenSurface(x: number, z: number, level: number): boolean {
+    return level === 0 && x >= 2740 && x <= 2960 && z >= 3130 && z <= 3280;
+}
+
+/**
  * Absolute world tiles of arena platforms (level 3).
  * Indices 0–23 match the server ticket-pillar enum; 24 is the SE ladder landing
  * (no ticket dispenser) where Climb-Down drops you.
@@ -150,13 +159,35 @@ export function pillarTagged(varp: number): boolean {
     return bitSet(varp, PILLAR_TAGGED_BIT);
 }
 
-/** Coins needed before leaving the bank for a trip. */
-export function coinsNeeded(alreadyPaid: boolean): number {
-    return alreadyPaid ? BOAT_FARE * 2 : TRIP_COINS;
+/**
+ * Coins still required for the rest of the trip.
+ * - At Ardougne / leaving bank: both boat legs (+ entrance if unpaid).
+ * - Already on Brimhaven surface: outbound boat is spent — only the return
+ *   leg (+ entrance if unpaid). Without this, 230gp after the 30gp ship still
+ *   looked "underfunded" vs 260 and the bot banked instead of entering.
+ */
+export function coinsNeeded(alreadyPaid: boolean, outboundBoatDone = false): number {
+    const boatLegs = outboundBoatDone ? 1 : 2;
+    const boats = BOAT_FARE * boatLegs;
+    return alreadyPaid ? boats : boats + ENTRANCE_FEE;
+}
+
+/**
+ * Withdraw this many coins at Ardougne bank so a full round-trip is funded
+ * from the mainland (always 2 boat legs + entrance if needed).
+ */
+export function coinsToWithdraw(alreadyPaid: boolean, coinsInPack: number): number {
+    const need = coinsNeeded(alreadyPaid, false);
+    return Math.max(0, need - coinsInPack);
 }
 
 export function shouldBank(tickets: number, foodCount: number, bankAtTickets: number): boolean {
     return foodCount <= 0 || tickets >= bankAtTickets;
+}
+
+/** Whether low coins alone should force a bank run (location-aware). */
+export function needsCoinsRestock(coins: number, alreadyPaid: boolean, atBrimhaven: boolean): boolean {
+    return coins < coinsNeeded(alreadyPaid, atBrimhaven);
 }
 
 export function shouldEat(hp: number, foodCount: number, eatAt = EAT_AT_HP): boolean {

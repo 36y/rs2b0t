@@ -1,20 +1,24 @@
 import { describe, expect, test } from 'bun:test';
 import {
     ARENA_EDGES,
+    ARENA_ENTRANCE,
     BOAT_FARE,
     ENTRANCE_FEE,
     PILLARS,
     SPIKE_EDGE,
     TRIP_COINS,
     coinsNeeded,
+    coinsToWithdraw,
     edgeBetween,
     hasPaid,
     canStartObstacle,
     inArena,
     inArenaPit,
+    needsCoinsRestock,
     nextHop,
     obstacleOutcome,
     onArenaPlatform,
+    onBrimhavenSurface,
     pathPlatforms,
     pillarFromHint,
     pillarTagged,
@@ -116,10 +120,23 @@ describe('BrimhavenAgility pathfinding', () => {
 });
 
 describe('BrimhavenAgility banking & combat decisions', () => {
-    test('coins cover boat both ways plus first entrance', () => {
+    test('coins cover boat both ways plus first entrance from the mainland', () => {
         expect(TRIP_COINS).toBe(BOAT_FARE * 2 + ENTRANCE_FEE);
         expect(coinsNeeded(false)).toBe(TRIP_COINS);
         expect(coinsNeeded(true)).toBe(BOAT_FARE * 2);
+        expect(coinsToWithdraw(false, 0)).toBe(TRIP_COINS);
+        expect(coinsToWithdraw(false, 100)).toBe(TRIP_COINS - 100);
+    });
+
+    test('after the outbound boat, only return fare (+ entrance if unpaid) remains', () => {
+        // 260 withdrawn → pay 30 boat → 230 on Brimhaven. Old logic still wanted 260 → bank loop.
+        expect(coinsNeeded(false, true)).toBe(BOAT_FARE + ENTRANCE_FEE); // 230
+        expect(coinsNeeded(true, true)).toBe(BOAT_FARE); // 30 return only
+        expect(needsCoinsRestock(230, false, true)).toBe(false);
+        expect(needsCoinsRestock(229, false, true)).toBe(true);
+        expect(needsCoinsRestock(230, false, false)).toBe(true); // still under full trip on mainland
+        expect(onBrimhavenSurface(ARENA_ENTRANCE.x, ARENA_ENTRANCE.z, 0)).toBe(true);
+        expect(onBrimhavenSurface(2655, 3283, 0)).toBe(false); // Ardougne south bank
     });
 
     test('banks when out of food or ticket threshold hit', () => {

@@ -30,13 +30,16 @@ import {
     TICKET_NAME,
     canStartObstacle,
     coinsNeeded,
+    coinsToWithdraw,
     edgeBetween,
     hasPaid,
     inArena,
     inArenaPit,
+    needsCoinsRestock,
     nextHop,
     obstacleOutcome,
     onArenaPlatform,
+    onBrimhavenSurface,
     pathPlatforms,
     pillarFromHint,
     pillarTagged,
@@ -247,11 +250,17 @@ class BankTrip implements Task {
             // leave the arena first when banking is needed
             return shouldBank(this.bot.ticketCount(), this.bot.foodInPack(), this.bot.cfg().bankAtTickets);
         }
-        const need = coinsNeeded(this.bot.paid());
+        const here = this.bot.here();
+        const atBrim = here !== null && onBrimhavenSurface(here.x, here.z, here.level);
+        // Do not top up food to foodPerTrip while already on Brimhaven — that
+        // alone would ship you back to Ardy after eating a single lobster.
+        const needFood =
+            this.bot.foodInPack() <= 0 ||
+            (!atBrim && this.bot.foodInPack() < this.bot.cfg().foodPerTrip);
         return (
             shouldBank(this.bot.ticketCount(), this.bot.foodInPack(), this.bot.cfg().bankAtTickets) ||
-            this.bot.foodInPack() < this.bot.cfg().foodPerTrip ||
-            this.bot.coinCount() < need
+            needFood ||
+            needsCoinsRestock(this.bot.coinCount(), this.bot.paid(), atBrim)
         );
     }
     async execute(): Promise<void> {
@@ -276,15 +285,17 @@ class BankTrip implements Task {
         const keep = new Set(['coins', ...foodForms(food)]);
         await Bank.depositAllMatching(name => !keep.has(name.toLowerCase()));
 
-        const needCoins = coinsNeeded(this.bot.paid());
-        if (Bank.count('Coins') < needCoins && this.bot.coinCount() < needCoins) {
+        // Always fund a full mainland→Brimhaven round-trip when stocking.
+        const needCoins = coinsNeeded(this.bot.paid(), false);
+        const withdrawCoins = coinsToWithdraw(this.bot.paid(), this.bot.coinCount());
+        if (Bank.count('Coins') < withdrawCoins && this.bot.coinCount() < needCoins) {
             await Bank.close();
             this.bot.log(`not enough coins in the bank (need ${needCoins} for boats${this.bot.paid() ? '' : ' + entrance'}). Stopping.`);
             ScriptRunner.stop();
             return;
         }
-        if (this.bot.coinCount() < needCoins) {
-            await Bank.withdrawX('Coins', needCoins - this.bot.coinCount());
+        if (withdrawCoins > 0) {
+            await Bank.withdrawX('Coins', withdrawCoins);
         }
 
         if (Bank.count(food) < 1 && this.bot.foodInPack() < 1) {
@@ -316,8 +327,9 @@ class TravelToArena implements Task {
         if (!here) {
             return false;
         }
-        // still need food + coins
-        if (this.bot.foodInPack() < 1 || this.bot.coinCount() < coinsNeeded(this.bot.paid())) {
+        const atBrim = onBrimhavenSurface(here.x, here.z, here.level);
+        // still need food + coins for remaining legs (not full trip if already on Brimhaven)
+        if (this.bot.foodInPack() < 1 || needsCoinsRestock(this.bot.coinCount(), this.bot.paid(), atBrim)) {
             return false;
         }
         const nearEntrance = Math.max(Math.abs(here.x - ARENA_ENTRANCE.x), Math.abs(here.z - ARENA_ENTRANCE.z)) <= 8 && here.level === 0;
@@ -338,7 +350,8 @@ class EnterArena implements Task {
         if (this.bot.inArenaNow()) {
             return false;
         }
-        if (this.bot.foodInPack() < 1 || this.bot.coinCount() < coinsNeeded(this.bot.paid())) {
+        // On Brimhaven the outbound boat is already paid — only need return + entrance.
+        if (this.bot.foodInPack() < 1 || needsCoinsRestock(this.bot.coinCount(), this.bot.paid(), true)) {
             return false;
         }
         const here = this.bot.here();
