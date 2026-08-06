@@ -467,6 +467,68 @@ Two habits about verification, both of which cost live runs here:
   A level-1 loc queried in the tick after a climb reads back empty, and blank is not
   absent — the wheel works.
 
+Family Crest added four more, and the first two generalise past this quest:
+
+- **A door whose lock is a lever is still a locked door.** The perfect-gold mine's four
+  doors each advertise `op1=Open` and answer "This door is locked" unless their own
+  combination of three levers is set — and the combination that opens one shuts another.
+  They belong in `SCRIPT_REFUSED` alongside Melzar's, with the module driving the chain.
+  BFS over the collision pack with `(tile, lever-bits)` as the node produced the exact
+  thirteen-leg route; a flood with the doors removed then named the four rooms they cut
+  the mine into, which is what makes the walk between legs a plain walk.
+- **A lever's model is not its state.** `loc_change(loc, 500)` reverts the lever to its
+  down model after five minutes and leaves the varp bit set, so a lever that *looks* down
+  may well be up. Reading the loc is reading a lie; the "The lever is now up." line is
+  emitted exactly when the bit changes. Set levers by pulling until the message confirms
+  the state you want, rather than reading and deciding.
+- **An unread bank is not an empty bank.** `snap.bankIds` is empty until something opens
+  a booth, so "is the pickaxe banked?" answers *no* on the first decide tick and the
+  fallback shop wins. The bot walked from Ardougne to Nurmof in the Dwarven Mine for a
+  pickaxe that was in the bank. Any bank-then-shop chain has to check `snap.bankKnown`
+  and scan first — `fromBank` does; a bare `banked(...) > 0` test does not.
+- **`Sustain` only runs where a step calls it.** The hook the host installs is pumped by
+  `Sustain.run()`, not by the tick loop, so a custom step that fights for two minutes —
+  the hellhounds by the gold rocks, or Chronozon — never eats unless it pumps the hook
+  itself. Every long loop in a `custom` step needs one.
+- **A stage past a hand-over is a claim the item exists; when it does not, look for the
+  re-issue path before writing a `wait`.** Holding one fragment at stage 10 and none of
+  the others parked forever on "waiting to combine". Both brothers have a "I have lost
+  the piece you gave me." branch that hands theirs over again — gated on *neither* the
+  pack nor the bank holding it, which is also why nothing in the module ever banks one.
+- **A safespot is derivable, and "walkable" is not enough.** For a size-N melee NPC:
+  BFS the placements it can slide between, take every tile those placements touch, and
+  the walkable remainder is the safespot set — *intersected with the component you can
+  actually reach*, because the passage that looks ideal on the map is often a sealed
+  island, and `exitMask` does not cross door edges, so a flood seeded outside a gate
+  never sees the room behind it. Whether a shut gate blocks the cast is not something
+  the configs answer, so the module proves the spot at runtime — three casts that do
+  not land, or the demon's body coming within two tiles, and it drops back to the fight
+  it already knows works. **Not** "did my hitpoints drop": that cannot tell the demon
+  from something else hitting you, and using it as the signal made the bot abandon a
+  spot that was working.
+- **Geometry is necessary, not sufficient — check what else patrols there.** Chronozon's
+  search returns several tiles the demon provably cannot reach. The east alcove is one,
+  and it sits three tiles from poison spiders with `wanderrange=10`, so the bot is safe
+  from the demon and chewed on the whole fight. The south end of the chamber is eleven
+  away, past their limit. Read the neighbours' `wanderrange` / `maxrange`, not just the
+  target's footprint.
+- **Auto-retaliate is what breaks a safespot.** Anything that hits you — a spider,
+  a stray skeleton — draws a swing back, and the swing walks the character off the
+  tile the whole plan depends on. `Game.setAutoRetaliate(false)` for the duration,
+  restored in a `finally` so a thrown step does not leave it off.
+- **Preparation must stop at the door.** A `decide()` that tops up food or potions
+  re-runs every tick, so eating three sharks mid-fight drops the pack under the
+  threshold and the bot walks out of the dungeon to re-bank. Gate the whole
+  provisioning block on being outside the fight area; once through, the fight owns
+  what it is carrying.
+- **Poison is invisible to the client.** `%poison` is `scope=perm` with no transmit, so
+  it reads 0 whether or not you are dying of it. The oracle is the "You have been
+  poisoned!" line, and antipoison sets `%poison = min(%poison, -5)` — a cure *and*
+  about ninety seconds of immunity, so drinking on arrival is worth a dose.
+- **Bank the coin float before the wilderness.** Nothing past the last shop needs coin,
+  and a death there drops it. The top-up has to be conditional on something still being
+  unbought, or it and the deposit take turns undoing each other.
+
 ## See also
 
 - [Manual index](README.md)
