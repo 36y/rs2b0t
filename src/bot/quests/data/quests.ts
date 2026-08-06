@@ -18,8 +18,8 @@ export const QUESTS: QuestRecord[] = [
         questPoints: 1,
         requirements: { skills: [{ skill: 'mining', level: 10 }] },
         items: [
-            { name: 'Redberry pie', qty: 1, kind: 'mustHave' },
-            { name: 'Iron bar', qty: 2, kind: 'mustHave' }
+            { name: 'Redberry pie', qty: 1, kind: 'acquirable' },
+            { name: 'Iron bar', qty: 2, kind: 'acquirable' }
         ]
     },
     {

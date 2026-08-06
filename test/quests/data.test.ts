@@ -1,5 +1,6 @@
 import { expect, test } from 'bun:test';
 
+import { QUEST_ROCK_TYPES, ROCK_OPTIONS } from '#/bot/api/MiningRocks.js';
 import { loadQuestRecords } from '#/bot/quests/data/index.js';
 
 test('records have unique ids', () => {
@@ -40,4 +41,15 @@ test('item kinds are valid and quantities positive', () => {
 
 test('the dataset covers all 63 journal quests', () => {
     expect(loadQuestRecords().length).toBe(63);
+});
+
+test('blurite is a quest rock, and never a GatheringBot option', () => {
+    expect(QUEST_ROCK_TYPES.Blurite).toEqual([2110]);
+    expect(ROCK_OPTIONS).not.toContain('Blurite');
+});
+
+test("the knight's sword items are acquirable, not mustHave", () => {
+    const squire = loadQuestRecords().find(q => q.id === 'squire')!;
+    expect(squire.items.every(i => i.kind === 'acquirable')).toBe(true);
+    expect(squire.requirements.skills).toEqual([{ skill: 'mining', level: 10 }]);
 });

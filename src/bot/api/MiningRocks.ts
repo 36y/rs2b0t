@@ -20,6 +20,15 @@ export const ROCK_TYPES: Record<string, number[]> = {
     Runite: [2106, 2107]
 };
 
+/**
+ * Rocks outside the tradeable-ore block. Quest-only, and deliberately not part of
+ * `ROCK_OPTIONS` — an empty GatheringBot ore selection falls back to every option,
+ * and blurite is not something a mining bot should ever target.
+ */
+export const QUEST_ROCK_TYPES: Record<string, number[]> = {
+    Blurite: [2110]
+};
+
 export const ROCK_OPTIONS = Object.keys(ROCK_TYPES);
 
 export const GAS_ROCK_IDS: Set<number> = new Set([

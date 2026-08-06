@@ -529,6 +529,58 @@ Family Crest added four more, and the first two generalise past this quest:
   and a death there drops it. The top-up has to be conditional on something still being
   unbought, or it and the deposit take turns undoing each other.
 
+The Knight's Sword added eight, and the first three are engine behaviours rather than
+quest facts:
+
+- **`record.items` is provisioned before `decide()` ever runs.** The engine's
+  provisioning block withdraws or *gathers* every listed item up front, and only adds
+  the quest to `provisioned` once `plan.satisfied`. A module that means to acquire
+  things at the stage that needs them — the resumable shape — has to set
+  `ownsInventory: true`, which is the switch that skips both the spillover deposit and
+  the provisioning block. The cost is that the engine then withdraws neither the coin
+  float nor the food, so the module owns both.
+- **A coin float has to be a threshold, not a target.** `buy` withdraws exactly
+  `estGp` whenever the pack holds less, so a module that tops up to an exact balance
+  walks back to a booth after every single purchase — the top-up and the purchase take
+  turns undoing each other. Withdraw a large float when the pack drops under a low-water
+  mark, and keep each `estGp` far below it.
+- **`mineRock` ignores its `qty`.** It mines exactly one ore per invocation and
+  `decide()` is asked again, so a module that wants a batch has to count it. "Smelt as
+  soon as any ore is held" walked the 130 tiles between the Rimmington rocks and the
+  Falador furnace eight times for one batch of bars.
+- **A loc with no ops at all is a use-on target.** The Range carries no `op1`; cooking
+  is `[oplocu,_cooking_oven]`. `Locs.query().name('Range').action('Cook')` therefore
+  matches nothing, and the step fails in a way that reads as "the range is not in the
+  scene". Read the `.loc` config before filtering by an op you assumed exists — the
+  Fountain is the same shape, and the Furnace (`op2=Smelt`) is not.
+- **A pinned bank is only worth it for a quest that stays in one town.** Bank contents
+  are global, so naming a booth changes nothing except the walk. Pinning Falador sent
+  the bot from Draynor across two towns for a coin float with a booth underfoot; this
+  quest touches four towns and wants `'nearest'`.
+- **`forceapproach` names the only side that works, and it rotates with the loc.**
+  The packer starts the flags all-blocked and *clears* the named bit
+  (`forceapproach=east` → `0b1111 & ~0b0010`), so east is the sole legal approach, not
+  the forbidden one. The flags then rotate with the loc's placement: Sir Vyvin's
+  cupboard is at rotation 1, so its "east" is **south** in world space, and true east
+  is not even a pathable tile. Standing anywhere else has every op **silently dropped**
+  — no refusal, no message, no movement, just a loc that never changes state. The
+  symptom is indistinguishable from a missing loc, so read the `.loc` config and the
+  placement rotation before believing anything else. (The Al Kharid furnace is the same
+  shape: `forceapproach=east`, stand south.)
+- **Reproducing a server-side guard client-side turns it into a wedge.**
+  `~vyvin_distracted` is `npc_find(coord, sir_vyvin, 1, 0)`, so the obvious move is to
+  check Vyvin's distance and only search when he is clear. Sir Vyvin has
+  `wanderrange=8` in a room barely wider than that: he is adjacent most of the time, and
+  the bot spun every pass without once clicking. His position is read a tick before the
+  click and re-evaluated server-side *after* the walk anyway, so the client's copy of the
+  rule is never the rule. Act and read the result — the portrait landing is the only
+  honest oracle — and keep the proximity test as a **bounded** hint that saves a wasted
+  click. Any check that can refuse forever needs a counter that eventually stops
+  refusing.
+- **When a recipe can fail, count the product and not the input.** `smelting.rs2` loses
+  half of every iron batch, so a loop driven by ore consumed thinks it succeeded. Eight
+  ore for two bars, re-derived from the bar count, and a short batch is a no-op.
+
 ## See also
 
 - [Manual index](README.md)

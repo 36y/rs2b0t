@@ -732,7 +732,7 @@ export class PathFinder {
         const gScore = new Map<number, number>();
         const cameFrom = new Map<number, number>();
         /** Arrival search-key → transport metadata + real edge cost for hop reconstruct. */
-        const viaEdge = new Map<number, { transport: TransportInfo; cost: number }>();
+        const viaEdge = new Map<number, { transport: TransportInfo; cost: number; kind?: string }>();
         const closed = new Set<number>();
         const open = new MinHeap();
         // Lower bounds (#335):
@@ -824,7 +824,21 @@ export class PathFinder {
             if (curTile === ctx.startId) {
                 extras.push(...ctx.teleFromStart);
             }
+            // A staircase with two ground-floor stand tiles is baked as an edge
+            // per combination, so up-then-straight-back-down composes into a
+            // same-level teleport across whatever wall separates them. The
+            // server lands you on one tile only, so the walker climbs down on
+            // the wrong side and bounces. Refuse a stair hop that returns to the
+            // level we just left without moving on the landing; a genuine
+            // multi-storey climb keeps going the same way and is unaffected.
+            const arrivedBy = viaEdge.get(current);
+            const cameFromLevel = arrivedBy?.kind === 'stair'
+                ? nodeLevel(searchTileId(cameFrom.get(current) ?? current))
+                : null;
             for (const edge of extras) {
+                if (cameFromLevel !== null && edge.kind === 'stair' && nodeLevel(edge.to) === cameFromLevel) {
+                    continue;
+                }
                 if (avoidDoors && avoidDoors.has(`${edge.transport.locX}|${edge.transport.locZ}`)) {
                     continue;
                 }
@@ -856,7 +870,7 @@ export class PathFinder {
                 }
                 gScore.set(neighbor, tentative);
                 cameFrom.set(neighbor, current);
-                viaEdge.set(neighbor, { transport: edge.transport, cost: edge.cost });
+                viaEdge.set(neighbor, { transport: edge.transport, cost: edge.cost, kind: edge.kind });
                 open.push((tentative + heuristic(nodeX(edge.to), nodeZ(edge.to))) * 1048576 - tentative, neighbor);
             }
         }

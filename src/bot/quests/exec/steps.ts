@@ -13,7 +13,7 @@ import { GroundItems } from '../../api/queries/GroundItems.js';
 import { Locs } from '../../api/queries/Locs.js';
 import { Npcs } from '../../api/queries/Npcs.js';
 import { Traversal } from '../../api/Traversal.js';
-import { ROCK_TYPES } from '../../api/MiningRocks.js';
+import { QUEST_ROCK_TYPES, ROCK_TYPES } from '../../api/MiningRocks.js';
 import type { QuestStep } from '../engine/types.js';
 import { gotoNpc, talkThrough, type LadderHop } from './primitives.js';
 
@@ -246,7 +246,7 @@ export async function executeStep(step: QuestStep, hops: LadderHop[], log: (m: s
         case 'mineRock': {
             const before = Inventory.count(step.item);
             const rockType = step.rock.replace(/ ore$/i, '');
-            const rockIds = ROCK_TYPES[rockType];
+            const rockIds = ROCK_TYPES[rockType] ?? QUEST_ROCK_TYPES[rockType];
             if (!rockIds) {
                 log(`mineRock: no rock-id mapping for '${rockType}'`);
                 return false;
