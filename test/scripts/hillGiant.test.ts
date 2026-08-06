@@ -85,14 +85,35 @@ describe('HillGiant pack management', () => {
         expect(shouldEatForSpace(2, 3)).toBe(false);
     });
 
+    const vitals = { hp: 50, maxHp: 53, heal: 12 };
+
     test('banks once the loot target is hit', () => {
-        expect(shouldBank(5, 3, 14, 14)).toBe(true);
-        expect(shouldBank(5, 3, 14, 13)).toBe(false);
+        expect(shouldBank({ freeSlots: 5, foodInPack: 3, lootSlotsTarget: 14, usedLootSlots: 14, ...vitals })).toBe(true);
+        expect(shouldBank({ freeSlots: 5, foodInPack: 3, lootSlotsTarget: 14, usedLootSlots: 13, ...vitals })).toBe(false);
     });
 
     test('banks when full with no food left to eat for room', () => {
-        expect(shouldBank(0, 0, 14, 2)).toBe(true);
-        expect(shouldBank(0, 4, 14, 2)).toBe(false);
+        expect(shouldBank({ freeSlots: 0, foodInPack: 0, lootSlotsTarget: 14, usedLootSlots: 2, ...vitals })).toBe(true);
+        expect(shouldBank({ freeSlots: 0, foodInPack: 4, lootSlotsTarget: 14, usedLootSlots: 2, ...vitals })).toBe(false);
+    });
+
+    test('banks when out of food and HP is in the smart-eat band (full heal would fit)', () => {
+        // lobster 12, 40/53: room 13 ≥ 12 → would eat if food remained → bank
+        expect(
+            shouldBank({ freeSlots: 10, foodInPack: 0, lootSlotsTarget: 14, usedLootSlots: 2, hp: 40, maxHp: 53, heal: 12 })
+        ).toBe(true);
+        // 42/53: room 11 < 12 and above safety floor → stay and fight a bit longer
+        expect(
+            shouldBank({ freeSlots: 10, foodInPack: 0, lootSlotsTarget: 14, usedLootSlots: 2, hp: 42, maxHp: 53, heal: 12 })
+        ).toBe(false);
+        // still has food — eat in place, do not bank yet
+        expect(
+            shouldBank({ freeSlots: 10, foodInPack: 3, lootSlotsTarget: 14, usedLootSlots: 2, hp: 40, maxHp: 53, heal: 12 })
+        ).toBe(false);
+        // safety floor with empty pack
+        expect(
+            shouldBank({ freeSlots: 10, foodInPack: 0, lootSlotsTarget: 14, usedLootSlots: 2, hp: 5, maxHp: 53, heal: 12 })
+        ).toBe(true);
     });
 
     test('big bones are buried or banked, never both', () => {

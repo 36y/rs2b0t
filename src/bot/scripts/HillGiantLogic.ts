@@ -1,5 +1,6 @@
 import Tile from '../api/Tile.js';
 import type { WorldTile } from '../adapter/ClientAdapter.js';
+import { shouldEatToUseFood } from '../api/combat/food.js';
 
 /**
  * Pure decisions for HillGiant, kept out of the game-touching bot so the pit
@@ -47,12 +48,45 @@ export function tripNeeds(carryingKey: boolean, foodInPack: number, foodPerTrip:
     return { key: !carryingKey, food: Math.max(0, foodPerTrip - foodInPack) };
 }
 
-/** A trip is over once the pack is full and there is no food left to eat for room. */
-export function shouldBank(freeSlots: number, foodInPack: number, lootSlotsTarget: number, usedLootSlots: number): boolean {
-    if (usedLootSlots >= lootSlotsTarget) {
+export interface BankDecision {
+    freeSlots: number;
+    foodInPack: number;
+    lootSlotsTarget: number;
+    usedLootSlots: number;
+    /** Current hitpoints (effective). */
+    hp: number;
+    /** Max hitpoints (base level). */
+    maxHp: number;
+    /** Heal of one of the configured food (e.g. lobster = 12). */
+    heal: number;
+}
+
+/**
+ * Leave for the bank when:
+ * - loot target is hit, or
+ * - pack is full with no food left to free a slot, or
+ * - out of food and HP is in the smart-eat band (a full heal would fit, or the
+ *   safety floor) — fighting on with an empty pack is how the bot used to die.
+ *
+ * Example: lobster (12), 40/53 HP, 0 food → bank (40+12 still under max; full heal fits).
+ */
+export function shouldBank(d: BankDecision): boolean {
+    if (d.usedLootSlots >= d.lootSlotsTarget) {
         return true;
     }
-    return freeSlots === 0 && foodInPack === 0;
+    if (d.freeSlots === 0 && d.foodInPack === 0) {
+        return true;
+    }
+    // Out of food and we would eat if we had any — go restock before death.
+    if (d.foodInPack === 0) {
+        return shouldEatToUseFood({
+            hp: d.hp,
+            maxHp: d.maxHp,
+            heal: d.heal,
+            foodCount: 1
+        });
+    }
+    return false;
 }
 
 /**

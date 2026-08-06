@@ -23,7 +23,7 @@ import { Npcs, type Npc } from '../api/queries/Npcs.js';
 import { matchesEntityName } from '../api/queries/Query.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import { BIG_BONES, BRASS_KEY, LIMPWURT, PIT_SPOTS, bonesAction, isHillGiantKill, keepOnDeposit, pickSpot, shouldEatForSpace, tripNeeds } from './HillGiantLogic.js';
+import { BIG_BONES, BRASS_KEY, LIMPWURT, PIT_SPOTS, bonesAction, isHillGiantKill, keepOnDeposit, pickSpot, shouldBank, shouldEatForSpace, tripNeeds } from './HillGiantLogic.js';
 
 const TARGET = 'Giant';
 
@@ -372,13 +372,20 @@ class BuryBones implements Task {
 class BankRun implements Task {
     constructor(private bot: HillGiant) {}
     validate(): boolean {
-        const { lootSlots } = this.bot.cfg();
-        const outOfFood = this.bot.foodInPack() === 0 && Inventory.free() === 0;
-        return this.bot.lootUsed() >= lootSlots || outOfFood;
+        const { lootSlots, food } = this.bot.cfg();
+        return shouldBank({
+            freeSlots: Inventory.free(),
+            foodInPack: this.bot.foodInPack(),
+            lootSlotsTarget: lootSlots,
+            usedLootSlots: this.bot.lootUsed(),
+            hp: Skills.effective('hitpoints'),
+            maxHp: Skills.level('hitpoints'),
+            heal: foodHealAmount(food)
+        });
     }
     async execute(): Promise<void> {
         const { food, foodPerTrip, lootSlots } = this.bot.cfg();
-        this.bot.setStatus('banking');
+        this.bot.setStatus('banking for food/loot');
         if (!(await this.bot.walkTo(BANK_TILE, 'the Varrock West bank'))) {
             return;
         }
