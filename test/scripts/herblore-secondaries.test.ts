@@ -86,12 +86,23 @@ describe('HerbloreSecondaries decisions', () => {
         expect(foodHealAmount('Lobster')).toBe(12);
     });
 
-    test('keep list retains shield and tool when needed', () => {
+    test('keep list retains supplies but deposits product and source loot', () => {
         const w = secondaryById('white_berries');
         expect(keepOnDeposit(w, 'Lobster')).toContain(SHIELD_NAME);
+        expect(keepOnDeposit(w, 'Lobster')).not.toContain(w.name);
+
         const c = secondaryById('chocolate_dust');
         expect(keepOnDeposit(c, 'Lobster')).toContain('Pestle and mortar');
         expect(keepOnDeposit(c, 'Lobster')).toContain('Chocolate bar');
+        expect(keepOnDeposit(c, 'Lobster')).not.toContain(c.name);
+
+        // Toad legs + swamp toads are the loot — keeping them caused bank open/close spam.
+        const t = secondaryById('toads_legs');
+        const keep = keepOnDeposit(t, 'Lobster');
+        expect(keep).not.toContain(t.name);
+        expect(keep).not.toContain(t.sourceName);
+        expect(keep).toContain('Coins');
+        expect(keep).toContain('Lobster');
     });
 
     test('restock when food is empty on a dangerous secondary, not merely low', () => {

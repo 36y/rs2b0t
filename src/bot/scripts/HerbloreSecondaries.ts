@@ -88,16 +88,17 @@ export default class HerbloreSecondaries extends TaskBot {
             `HerbloreSecondaries — ${def.name} (${def.mode}) bank ${def.bankName}, food '${this.foodName}' x${this.foodWant}${def.needShield ? `, shield '${SHIELD_NAME}'` : ''}`
         );
 
-        // Loot / process before Eat so combat areas still pick up between hits
+        // ProcessSource before BankTrip so swamp toads become legs before deposit.
+        // Loot before Eat so combat areas still pick up between hits
         // (eat-when-heal-fits would otherwise starve the loot task).
         this.add(
             new ContinueDialog(),
             new GearUp(this),
+            new ProcessSource(this),
             new BankTrip(this),
             new BuyTool(this),
             new BuyGoods(this),
             new Grind(this),
-            new ProcessSource(this),
             new Loot(this),
             new Eat(this),
             new Travel(this)

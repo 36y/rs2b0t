@@ -193,20 +193,22 @@ export const FOOD_HEAL: Record<string, number> = {
     shrimps: healOf('Shrimps')
 };
 
-/** What to keep when banking loot for this secondary. */
+/**
+ * What to keep in the pack when banking. Product + source (toad legs / swamp toads
+ * / eggs / …) are intentionally omitted — those are the loot we deposit. Keeping
+ * them left a full pack after close and spammed open/close forever.
+ */
 export function keepOnDeposit(def: SecondaryDef, food: string): string[] {
-    const keep = [def.name, 'Coins', food];
+    const keep = ['Coins', food];
     if (def.needShield) {
         keep.push(SHIELD_NAME);
     }
     if (def.toolName) {
         keep.push(def.toolName);
     }
+    // Bars mid-grind stay so we can finish dust after restocking; finished dust deposits.
     if (def.grindFrom) {
         keep.push(def.grindFrom);
-    }
-    if (def.sourceName) {
-        keep.push(def.sourceName);
     }
     return keep;
 }
