@@ -1,6 +1,7 @@
 import { actions, reader } from '../../adapter/ClientAdapter.js';
 import { Execution, type ExecutionApi } from '../Execution.js';
 import { Inventory } from '../hud/Inventory.js';
+import { Modals } from '../hud/Modals.js';
 
 export const CUBE_IF = {
     root: 6554,
@@ -95,7 +96,7 @@ export async function solveAllBoxes(log: (msg: string) => void, execution: Execu
         const answer = solveCube(question, models);
         if (answer === null) {
             log(`random event: could not solve strange box ('${question}' models=${models}) — closing`);
-            actions.closeModal();
+            await Modals.close();
             return solved > 0;
         }
 

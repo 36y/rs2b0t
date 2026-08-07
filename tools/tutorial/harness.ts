@@ -322,6 +322,34 @@ export async function clearChatDialogs(page: Page, label = 'dialogs'): Promise<v
     }
 }
 
+/**
+ * Close a leftover **main** modal.
+ *
+ * `clearChatDialogs` only drains the chat slot, and `~maxme` can leave a scroll
+ * in the main one. A script that starts behind it looks alive and does nothing:
+ * every talk it issues is refused with no message, so the run reads as a broken
+ * `decide()` rather than a modal nobody closed.
+ */
+export async function clearMainModal(page: Page): Promise<void> {
+    type MainAbi = {
+        rs2b0t: {
+            actions: { closeModal(): boolean };
+            reader: { modals(): { main: number } };
+        };
+    };
+    const closed = await page.evaluate(() => {
+        const g = globalThis as never as MainAbi;
+        if (g.rs2b0t.reader.modals().main === -1) {
+            return -1;
+        }
+        g.rs2b0t.actions.closeModal();
+        return g.rs2b0t.reader.modals().main;
+    });
+    if (closed !== -1) {
+        console.log('  closed a leftover main modal');
+    }
+}
+
 /** `~maxme`, wait for combat skills to land, drain level-up chat (twice for stragglers). */
 export async function maxmeAndClearDialogs(page: Page): Promise<void> {
     if (!(await cheatQuiet(page, '~maxme'))) {

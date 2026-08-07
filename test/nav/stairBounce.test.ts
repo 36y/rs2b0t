@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 
 import { describe, expect, test } from 'bun:test';
 import { gunzipSync } from 'fflate';
@@ -8,12 +9,24 @@ import stairs from '#/bot/nav/data/stairEdges.json';
 import transports from '#/bot/nav/data/transports.json';
 import { PathFinder, type DoorEdgeData, type NavPoint, type TransportEdgeData } from '#/bot/nav/PathFinder.js';
 
-let bytes: Uint8Array = new Uint8Array(fs.readFileSync('out/collision.lcnav.gz'));
-if (bytes[0] === 0x1f && bytes[1] === 0x8b) {
-    bytes = gunzipSync(bytes);
+// The pack is a build artifact, not a committed file, so CI runs without it.
+// Read at import and unguarded this threw before any test ran — an "unhandled
+// error between tests" that failed the job while every other pack-gated suite
+// skipped cleanly.
+const PACK_PATH = path.join(process.cwd(), 'out/collision.lcnav.gz');
+const HAS_COLLISION_PACK = fs.existsSync(PACK_PATH);
+
+function loadFinder(): PathFinder {
+    let bytes: Uint8Array = new Uint8Array(fs.readFileSync(PACK_PATH));
+    if (bytes[0] === 0x1f && bytes[1] === 0x8b) {
+        bytes = gunzipSync(bytes);
+    }
+    const built = new PathFinder(bytes);
+    built.addEdges(doors as DoorEdgeData[], transports as TransportEdgeData[], stairs as TransportEdgeData[]);
+    return built;
 }
-const finder = new PathFinder(bytes);
-finder.addEdges(doors as DoorEdgeData[], transports as TransportEdgeData[], stairs as TransportEdgeData[]);
+
+const finder = HAS_COLLISION_PACK ? loadFinder() : (null as unknown as PathFinder);
 
 const RELDO: NavPoint = { x: 3209, z: 3495, level: 0 };
 
@@ -26,7 +39,7 @@ const RELDO: NavPoint = { x: 3209, z: 3495, level: 0 };
  * and 3220,3496) sits between the kitchen and the library and wedged the
  * Knight's Sword walk to Reldo.
  */
-describe('stair hops never compose into a same-level teleport', () => {
+describe.skipIf(!HAS_COLLISION_PACK)('stair hops never compose into a same-level teleport', () => {
     const kitchenTiles: NavPoint[] = [
         { x: 3222, z: 3492, level: 0 },
         { x: 3223, z: 3493, level: 0 },

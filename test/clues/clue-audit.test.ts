@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { CLUE_DB } from '#/bot/clues/data/cluedb.js';
 import { KILL_ANCHORS } from '#/bot/clues/data/killAnchors.js';
+import { PACK_UNREACHABLE } from '#/bot/clues/data/unreachable.js';
 import { auditInputsPresent, runClueAudit } from '../../tools/clues/audit-clues.js';
 
 const KEY_FROM_IDS = Object.keys(CLUE_DB)
@@ -25,12 +26,13 @@ describe('kill-for-key anchors (KILL_ANCHORS ↔ keyFrom)', () => {
 const present = auditInputsPresent();
 
 // Destinations the baked nav pack cannot route to. Each is a pack gap with a
-// diagnosis in KNOWN_UNREACHABLE, not a clue-database bug: the solver abandons
+// diagnosis in PACK_UNREACHABLE, not a clue-database bug: the solver abandons
 // cleanly, and fixing the pack makes the clue start working untouched.
-const EXPECTED_ABANDON = [
-    2815, 2855, 3522, 3526, 3528, 3532, 3534, 3536,
-    3546, 3548, 3552, 3554, 3560, 3562, 3564
-];
+//
+// Derived, not a second copy of the list. The audit already fails both ways —
+// an unlisted id that cannot route, and a listed id that now can — so pinning
+// the ids again here only ever drifts out of sync with the file it mirrors.
+const EXPECTED_ABANDON = Object.keys(PACK_UNREACHABLE).map(Number).sort((a, b) => a - b);
 
 describe.skipIf(!present)('clue audit (pack-gated)', () => {
     test('every clue variant is solvable: reachable, interact-legal, egress, loc/npc present', () => {

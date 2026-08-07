@@ -1,5 +1,5 @@
 import { Skills } from '../../../api/hud/Skills.js';
-import { SettingsStore } from '../../../runtime/Settings.js';
+import { Traversal } from '../../../api/Traversal.js';
 import type { QuestSnapshot, QuestStep } from '../../engine/types.js';
 import { ANTIPOISON_IDS, DUEL_RING_IDS, FC_BANK, FC_ID, FC_ITEM, FC_SHOP, PICKAXES } from './areas.js';
 import type Tile from '../../../api/Tile.js';
@@ -187,13 +187,7 @@ export const TELEPORT_KIT: readonly { item: FcItem; qty: number }[] = [
 const AUBURY_STOCKS: ReadonlySet<number> = new Set([FC_ID.AIR_RUNE, FC_ID.FIRE_RUNE, FC_ID.WATER_RUNE]);
 
 /** Global `navTeleports`; the nav layer consults the same setting per walk. */
-export function navTeleportsOn(): boolean {
-    try {
-        return SettingsStore.globalBag().bool('navTeleports', false);
-    } catch {
-        return false;
-    }
-}
+export const navTeleportsOn = (): boolean => Traversal.teleportsEnabled();
 
 export function heldDuelRing(snap: QuestSnapshot): number {
     return DUEL_RING_IDS.reduce((sum, id) => sum + held(snap, id), 0);

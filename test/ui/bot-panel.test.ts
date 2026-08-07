@@ -5,16 +5,29 @@ import { ScriptRegistry } from '#/bot/runtime/ScriptRegistry.js';
 import { ScriptRunner } from '#/bot/runtime/ScriptRunner.js';
 import BotPanel from '#/bot/ui/BotPanel.js';
 
+/**
+ * The URL is process-global and `boxId()` reads it on every call, so a test that
+ * navigates to `?box=alice` and leaves it there re-namespaces every later
+ * `boxKey()` in the run — which silently moved the MapPicker settings tests'
+ * storage keys out from under them. Restore it.
+ */
+const setURL = (url: string): void =>
+    (window as unknown as { happyDOM: { setURL(u: string): void } }).happyDOM.setURL(url);
+
+const PLAIN_URL = 'http://localhost:8081/bot.html';
+
 beforeEach(() => {
     document.body.replaceChildren();
     localStorage.clear();
     sessionStorage.clear();
+    setURL(PLAIN_URL);
 });
 
 afterEach(async () => {
     ScriptRunner.stop();
     await Promise.resolve();
     await Promise.resolve();
+    setURL(PLAIN_URL);
 });
 
 test('sidebar omits chat and low-value status rows', () => {
@@ -41,7 +54,7 @@ test('sidebar omits chat and low-value status rows', () => {
 });
 
 test('render controls appear below the log and persist per bot', () => {
-    (window as unknown as { happyDOM: { setURL(url: string): void } }).happyDOM.setURL('http://localhost:8081/bot.html?box=alice');
+    setURL(`${PLAIN_URL}?box=alice`);
     localStorage.setItem('rs2b0t:alice:rendererEnabled', '0');
     const root = document.createElement('div');
     document.body.appendChild(root);
@@ -80,7 +93,7 @@ test('render controls appear below the log and persist per bot', () => {
 });
 
 test('wall start and stop use the script selected in the bot panel', async () => {
-    (window as unknown as { happyDOM: { setURL(url: string): void } }).happyDOM.setURL('http://localhost:8081/bot.html?box=alice');
+    setURL(`${PLAIN_URL}?box=alice`);
     class SelectedBot extends LoopingBot {
         override loop(): void {}
     }

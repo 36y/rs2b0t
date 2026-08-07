@@ -1,10 +1,11 @@
-import { actions } from '../../../adapter/ClientAdapter.js';
 import { Execution } from '../../../api/Execution.js';
 import { Game } from '../../../api/Game.js';
 import { Bank } from '../../../api/hud/Bank.js';
 import { ChatDialog } from '../../../api/hud/ChatDialog.js';
 import { Inventory } from '../../../api/hud/Inventory.js';
+import { Modals } from '../../../api/hud/Modals.js';
 import { Shop } from '../../../api/hud/Shop.js';
+import { Skills } from '../../../api/hud/Skills.js';
 import { GroundItems } from '../../../api/queries/GroundItems.js';
 import { Locs } from '../../../api/queries/Locs.js';
 import { Traversal } from '../../../api/Traversal.js';
@@ -100,7 +101,7 @@ export async function ensureCoins(need: number, log: (m: string) => void): Promi
         return false;
     }
     await Bank.withdrawX('Coins', Math.max(need, 2000));
-    actions.closeModal();
+    await Modals.close();
     return Inventory.count('Coins') >= need;
 }
 
@@ -128,6 +129,16 @@ async function buyMindBomb(log: (m: string) => void): Promise<boolean> {
     return Execution.delayUntil(() => Inventory.count("Wizard's mind bomb") > before, 5000);
 }
 
+/**
+ * How long one rock gets before the leg gives up and re-clicks.
+ *
+ * This is a swing budget, not a rock budget: the caller re-enters once per engine
+ * tick, so a timeout here throws away the current swing and starts another. Log
+ * loudly when it fires — a timeout shorter than the ore actually takes is an
+ * infinite loop that mines nothing, and it looks identical to a slow rock.
+ */
+const MINE_TIMEOUT_MS = 20_000;
+
 /** Mines until the pack holds `want` of the named ore. */
 async function mineFor(rockIds: readonly number[], item: string, want: number, at: Tile, log: (m: string) => void): Promise<boolean> {
     if (Inventory.count(item) >= want) {
@@ -147,23 +158,41 @@ async function mineFor(rockIds: readonly number[], item: string, want: number, a
     // Wide enough to cross a seam: a mined rock is a different loc until it
     // respawns, so a tight radius parks the leg on its own leftovers.
     const rock = () => Locs.query().where(l => ids.has(l.id)).action('Mine').within(14).nearest();
+    const seam = (): number => Locs.query().where(l => ids.has(l.id)).action('Mine').within(14).count();
     if (!rock()) {
+        log(`no live ${item} rock within 14 — walking to the seam at (${at.x},${at.z})`);
         if (!(await walk(at, log, 2)) || !(await sceneLoaded())) {
+            log(`could not reach the ${item} seam at (${at.x},${at.z})`);
             return false;
         }
     }
     const target = rock();
     if (!target) {
-        log(`no ${item} rocks in reach — waiting on a respawn`);
+        log(`no ${item} rocks in reach — waiting on a respawn (mining ${Skills.level('mining')}, `
+            + `${Inventory.count(item)}/${want} ${item} held)`);
         await Execution.delayTicks(5);
         return false;
     }
     const before = Inventory.count(item);
+    const spot = target.tile();
+    log(`mining ${item} ${before}/${want} — rock ${target.id} at (${spot.x},${spot.z}) `
+        + `${target.distance()} tile(s) away, ${seam()} live rock(s) in the seam, ${Inventory.free()} free slot(s)`);
     if (!(await target.interact('Mine'))) {
+        log(`the Mine click on rock ${target.id} was not accepted`);
         return false;
     }
-    await Execution.delayUntil(() => Inventory.count(item) > before, 20_000);
-    return Inventory.count(item) >= want;
+    const swungAt = Date.now();
+    const landed = await Execution.delayUntil(() => Inventory.count(item) > before, MINE_TIMEOUT_MS);
+    const took = ((Date.now() - swungAt) / 1000).toFixed(1);
+    if (!landed) {
+        log(`gave up on rock ${target.id} after ${took}s with no ${item} — mining ${Skills.level('mining')}; `
+            + 'the next pass re-clicks and restarts the swing, so a rock slower than '
+            + `${MINE_TIMEOUT_MS / 1000}s never finishes`);
+        return false;
+    }
+    const now = Inventory.count(item);
+    log(`got ${item} ${now}/${want} in ${took}s`);
+    return now >= want;
 }
 
 const ROCKS = { clay: [2108, 2109], iron: [2092, 2093], coal: [2096, 2097] } as const;

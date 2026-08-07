@@ -10,6 +10,7 @@ import { Reachability } from './Reachability.js';
 import { EventSignal } from './EventSignal.js';
 import { Execution } from './Execution.js';
 import { Sustain } from './Sustain.js';
+import { SettingsStore } from '../runtime/Settings.js';
 
 /**
  * Options for a walk behind the escalation ladder.
@@ -68,6 +69,22 @@ export const Traversal = {
     pureWalk: NAV_PURE_WALK,
     /** @see NAV_WITH_TELES */
     withTeles: NAV_WITH_TELES,
+
+    /**
+     * Whether ordinary walks may inject teleport edges — the Global
+     * `navTeleports` toggle every walk already consults.
+     *
+     * Exposed because knowing it is a *provisioning* question: A* only injects a
+     * hop the live inventory can pay for, so a script that wants the toggle to
+     * mean anything has to put the runes in the pack before it walks.
+     */
+    teleportsEnabled(): boolean {
+        try {
+            return SettingsStore.globalBag().bool('navTeleports', false);
+        } catch {
+            return false;
+        }
+    },
 
     walkTo(dest: WorldTile, opts?: WalkOptions): Promise<boolean> {
         return WalkExecutor.walkTo(dest, opts);

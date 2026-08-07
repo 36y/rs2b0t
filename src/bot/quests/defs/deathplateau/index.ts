@@ -42,6 +42,7 @@ import {
     TILE,
     TOSTIG_SHOP
 } from './areas.js';
+import { Modals } from '../../../api/hud/Modals.js';
 import {
     DEATH_PLATEAU_QUEST,
     DP_FLAG,
@@ -882,9 +883,7 @@ async function readIou(log: (m: string) => void): Promise<boolean> {
     for (let i = 0; i < 30; i++) {
         if (liveId(DEATH_ITEM.COMBINATION.id) > 0 && !ChatDialog.isOpen() && !ChatDialog.canContinue()) {
             // Combination granted; close leftover handwriting scroll if open.
-            if (reader.modals().main !== -1) {
-                actions.closeModal();
-            }
+            await Modals.closeIfOpen();
             break;
         }
         if (ChatDialog.canContinue()) {

@@ -64,6 +64,7 @@ import ShopBuyout, { SHOPBUYOUT_SETTINGS } from './ShopBuyout.js';
 import FlaxRunner, { SETTINGS as FLAXRUNNER_SETTINGS } from './FlaxRunner.js';
 import { ShopRunner, SHOPRUNNER_SETTINGS } from './ShopRunner.js';
 import AIOTeleport, { SETTINGS as AIOTELEPORT_SETTINGS } from './AIOTeleport.js';
+import Barcrawl from './Barcrawl.js';
 
 // First register = panel default when no script is remembered (BotPanel → list()[0]).
 // Keep TutorialBot first so new accounts land on onboarding, not AIO Teleport.
@@ -99,6 +100,14 @@ ScriptRegistry.register({
     tags: ['quest', 'queue', 'aio'],
     settingsSchema: AIO_SETTINGS,
     create: () => new AIOQuester()
+});
+
+ScriptRegistry.register({
+    name: 'Barcrawl',
+    description: "Alfred Grimhand's Barcrawl — banks for the drinks, gets the card from the outpost guard, tours all ten bars nearest-first and hands it back in (opens the Barbarian Outpost gate)",
+    category: 'Quest',
+    tags: ['miniquest', 'barcrawl', 'barbarian outpost', 'gate'],
+    create: () => new Barcrawl()
 });
 
 ScriptRegistry.register({

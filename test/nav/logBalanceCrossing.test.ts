@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
-import { SPECIAL_CROSSINGS, meetsSkill, specialCrossingAt } from '#/bot/nav/data/specialCrossings.js';
+import {
+    SPECIAL_CROSSINGS, meetsSkill, specialCrossingAt, specialCrossingForTransport
+} from '#/bot/nav/data/specialCrossings.js';
 import transports from '#/bot/nav/data/transports.json';
 import { allTransportRows } from '#/bot/nav/loadTransportGraph.js';
 
@@ -55,6 +57,32 @@ describe('log balance special crossings', () => {
         const sc = specialCrossingAt(WEST.x, WEST.z, 0);
         expect(sc?.locName).toBe('Log balance');
         expect(sc?.action).toBe('Walk-across');
+    });
+
+    // The executor resolves the loc within Chebyshev 3 of the chosen crossing's
+    // stand tile, so picking the far bank's entry sends the Walk-across at the
+    // opposite end of the log — five tiles away, across the river we are trying
+    // to cross. Both entries are nameless twins with no toTile, so before this
+    // was ranked the tie-break fell through to source-array order and the west
+    // entry won both directions.
+    describe('the crossing chosen is the bank we are standing on', () => {
+        test('west → east uses the west stand', () => {
+            const sc = specialCrossingForTransport(
+                { locX: 2599, locZ: 3477, locName: 'Log balance' },
+                WEST,
+                EAST
+            );
+            expect(sc?.x).toBe(WEST.x);
+        });
+
+        test('east → west uses the east stand', () => {
+            const sc = specialCrossingForTransport(
+                { locX: 2602, locZ: 3477, locName: 'Log balance' },
+                EAST,
+                WEST
+            );
+            expect(sc?.x).toBe(EAST.x);
+        });
     });
 
     test('every skill-gated crossing has a matching transport edge to prune', () => {

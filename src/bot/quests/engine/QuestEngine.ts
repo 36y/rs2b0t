@@ -1,5 +1,5 @@
 // docs/QUESTS.md#quest-state
-import { actions, reader } from '../../adapter/ClientAdapter.js';
+import { reader } from '../../adapter/ClientAdapter.js';
 import { type Task } from '../../api/Bot.js';
 import { EventSignal } from '../../api/EventSignal.js';
 import { Execution } from '../../api/Execution.js';
@@ -9,6 +9,7 @@ import { Bank } from '../../api/hud/Bank.js';
 import { ChatDialog } from '../../api/hud/ChatDialog.js';
 import { Equipment } from '../../api/hud/Equipment.js';
 import { Inventory } from '../../api/hud/Inventory.js';
+import { Modals } from '../../api/hud/Modals.js';
 import { Quests } from '../../api/hud/Quests.js';
 import { ScriptRunner } from '../../runtime/ScriptRunner.js';
 import { evaluate } from '../EligibilityEvaluator.js';
@@ -19,6 +20,7 @@ import { coinFloatWithdraw, depositPlan, floatWithdraw, planProvisioning } from 
 import { nextQuest, queueRows, type QueueRow } from './queue.js';
 import type { QuestModule, QuestProgress, QuestSnapshot, QuestStep } from './types.js';
 import { NO_PROGRESS_PARK, NO_PROGRESS_WARN, ProgressWatchdog, progressSignature } from './watchdog.js';
+import { FAIL_WARN, StepTracker, formatDuration, formatTile, invDelta } from './trace.js';
 import type AIOQuester from '../../scripts/AIOQuester.js';
 
 const PARK_GIVE_UP = 3;
@@ -108,6 +110,10 @@ export class QuestEngine implements Task {
 
     private readonly stepSubLog = new Set<string>();
 
+    private readonly tracker = new StepTracker();
+    private tick = 0;
+    private failStreak = 0;
+
     constructor(private readonly host: AIOQuester) {}
 
     validate(): boolean {
@@ -128,8 +134,7 @@ export class QuestEngine implements Task {
         if (!skipEarly && Bank.isOpen()) {
             await Execution.delayUntil(() => Bank.loaded(), 3000);
             this.refreshBankCounts(true);
-            actions.closeModal();
-            await Execution.delayTicks(1);
+            await Modals.close();
             return;
         }
 
@@ -145,9 +150,8 @@ export class QuestEngine implements Task {
             && !ChatDialog.isMainMakePanel()
             && !isInteractiveQuestMainModal(mainModal)
         ) {
-            if (actions.closeModal()) {
+            if (await Modals.close()) {
                 this.host.log('closed a leftover main modal (quest-complete scroll)');
-                await Execution.delayTicks(1);
                 return;
             }
         }
@@ -261,10 +265,7 @@ export class QuestEngine implements Task {
                 }
                 await Execution.delayUntil(() => Bank.loaded(), 3000);
                 this.refreshBankCounts(true);
-                if (Bank.isOpen()) {
-                    actions.closeModal();
-                }
-                await Execution.delayTicks(1);
+                await Modals.closeIfOpen();
                 return;
             }
         }
@@ -314,9 +315,23 @@ export class QuestEngine implements Task {
 
         const stepDesc = describeStep(step);
         this.host.noteState(rows, id, stepDesc, this.noProgressCount, this.parked.size);
+
+        const verbose = this.host.verbose();
+        const now = Date.now();
+        const attempt = this.tracker.open(`${id}|${stepDesc}`, now);
         const stepLine = `${module.record.name}: ${stepDesc}`;
-        if (stepLine !== this.lastStepLogged) {
-            this.host.log(stepLine);
+        const fresh = stepLine !== this.lastStepLogged;
+        // A leg that keeps re-deciding to the same step is the normal way this
+        // engine loops, so silence on the repeat is the default. The heartbeat is
+        // what stops a long chain — mine, smelt, hammer, all called `smith 8
+        // nails` — from looking like a hang.
+        const announce = verbose || fresh || this.tracker.beat(now);
+        if (announce) {
+            const context = `stage ${snap.stage ?? '?'} · ${formatTile(snap.tile)} · ${snap.freeSlots} free`;
+            const repeat = attempt > 1
+                ? ` — attempt ${attempt}, ${formatDuration(this.tracker.elapsed(now))} on this step`
+                : '';
+            this.host.log(`${verbose ? `[t${++this.tick}] ` : ''}${stepLine}${repeat} · ${context}`);
             this.lastStepLogged = stepLine;
             this.stepSubLog.clear();
         }
@@ -343,17 +358,40 @@ export class QuestEngine implements Task {
         const bankAwareStep: QuestStep = step.kind === 'withdraw' || step.kind === 'deposit'
             ? { ...step, leaveOpen: true }
             : step;
+        const startedAt = Date.now();
         const ok = await executeStep(bankAwareStep, module.hops ?? [], m => {
+            // Verbose keeps the repeats: a sub-log that fires once per rock is the
+            // whole record of a mining leg, and de-duping it erases the leg.
+            if (verbose) {
+                this.host.log(`  ${m}`);
+                return;
+            }
             if (!this.stepSubLog.has(m)) {
                 this.host.log(`  ${m}`);
                 this.stepSubLog.add(m);
             }
         });
+        const took = Date.now() - startedAt;
+
+        if (announce || !ok) {
+            const after = this.buildSnapshot(module, stage, progress);
+            this.host.log(`  → ${ok ? 'ok' : 'FAILED'} in ${formatDuration(took)} · ${invDelta(snap.inv, after.inv)}`);
+        }
+
+        // The no-progress watchdog below only counts steps that *succeeded*, so a
+        // step failing forever parks nothing and — before the heartbeat above —
+        // said nothing either. Name it rather than let it spin in silence.
+        if (ok) {
+            this.failStreak = 0;
+        } else if (++this.failStreak % FAIL_WARN === 0) {
+            this.host.log(`WARN: '${stepDesc}' has failed ${this.failStreak}x in a row `
+                + `over ${formatDuration(this.tracker.elapsed(Date.now()))} — failures do not feed the no-progress watchdog, so this will not park itself`);
+        }
 
         if (Bank.isOpen()) {
             await Execution.delayUntil(() => Bank.loaded(), 3000);
             this.refreshBankCounts(true);
-            actions.closeModal();
+            await Modals.close();
         }
 
         if (ok && advancesWorld(step)) {
@@ -406,6 +444,8 @@ export class QuestEngine implements Task {
     private resetWatchdog(): void {
         this.watchdog.reset();
         this.noProgressCount = 0;
+        this.tracker.reset();
+        this.failStreak = 0;
     }
 
     /**

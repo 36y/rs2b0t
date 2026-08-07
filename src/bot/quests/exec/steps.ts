@@ -1,4 +1,3 @@
-import { actions } from '../../adapter/ClientAdapter.js';
 import type { WorldTile } from '../../adapter/ClientAdapter.js';
 import { Execution } from '../../api/Execution.js';
 import { Game } from '../../api/Game.js';
@@ -6,6 +5,7 @@ import Tile from '../../api/Tile.js';
 import { Bank } from '../../api/hud/Bank.js';
 import { Equipment } from '../../api/hud/Equipment.js';
 import { Inventory } from '../../api/hud/Inventory.js';
+import { Modals } from '../../api/hud/Modals.js';
 import { Shop } from '../../api/hud/Shop.js';
 import { bankDistance, nearestBanks } from '../../api/BankLocations.js';
 import { Navigator } from '../../nav/Navigator.js';
@@ -197,7 +197,7 @@ export async function executeStep(step: QuestStep, hops: LadderHop[], log: (m: s
                 }
             }
             if (!step.leaveOpen) {
-                actions.closeModal();
+                await Modals.close();
             }
             return ok;
         }
@@ -215,7 +215,7 @@ export async function executeStep(step: QuestStep, hops: LadderHop[], log: (m: s
             };
             await Bank.depositAllMatching((name, id) => !kept(name, id));
             if (!step.leaveOpen) {
-                actions.closeModal();
+                await Modals.close();
             }
             return true;
         }
@@ -226,7 +226,7 @@ export async function executeStep(step: QuestStep, hops: LadderHop[], log: (m: s
                     return false;
                 }
                 await Bank.withdrawX('Coins', step.estGp);
-                actions.closeModal();
+                await Modals.close();
                 if (Inventory.count('Coins') < step.estGp) {
                     log(`buy: bank could not cover ${step.estGp} gp for ${step.item}`);
                     return false;

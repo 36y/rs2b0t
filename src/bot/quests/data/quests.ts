@@ -418,9 +418,12 @@ export const QUESTS: QuestRecord[] = [
         id: 'horror', name: 'Horror from the Deep', questPoints: 2,
         requirements: { skills: [{ skill: 'agility', level: 35 }] },
         items: [
-            { name: 'Plank', qty: 2, kind: 'mustHave' },
-            { name: 'Nails', qty: 8, kind: 'mustHave' },
-            { name: 'Hammer', qty: 1, kind: 'mustHave' },
+            // All five have a source the module walks to: the plank spawns by the
+            // outpost, nails off the Dwarven Mine anvil, a 1gp hammer, the
+            // Lumbridge swamp tar patch and Catherby seaweed for the glass.
+            { name: 'Plank', qty: 2, kind: 'acquirable' },
+            { name: 'Nails', qty: 8, kind: 'acquirable' },
+            { name: 'Hammer', qty: 1, kind: 'acquirable' },
             { name: 'Swamp tar', qty: 1, kind: 'acquirable' },
             { name: 'Molten glass', qty: 1, kind: 'acquirable' }
         ]

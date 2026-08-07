@@ -14,6 +14,7 @@ import type Tile from '../api/Tile.js';
 import { executeStep } from '../quests/exec/steps.js';
 import { QUEST_DEFS, defById } from '../quests/defs/index.js';
 import { QuestFood } from '../quests/food.js';
+import { QuestGear } from '../quests/gear.js';
 import type { QueueRow, QueueStatus } from '../quests/engine/queue.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
@@ -49,7 +50,18 @@ export const AIO_SETTINGS: SettingsSchema = {
         label: 'Food item',
         help: 'general food to withdraw and consume when HP dips; quest-specific survival items are added automatically; blank disables only the general food'
     },
-
+    meleeWeapon: {
+        type: 'string',
+        default: 'Rune scimitar',
+        label: 'Melee weapon',
+        help: 'weapon withdrawn and wielded for fights that magic cannot win (the Dagannoth mother\'s melee form). Bank-only — nothing sells a rune scimitar; blank disables melee entirely'
+    },
+    verbose: {
+        type: 'boolean',
+        default: true,
+        label: 'Verbose step log',
+        help: 'log every engine tick with the step, attempt count, elapsed time and inventory delta, and stop de-duplicating sub-steps; off still heartbeats a repeating step'
+    }
 };
 
 export default class AIOQuester extends TaskBot {
@@ -85,6 +97,7 @@ export default class AIOQuester extends TaskBot {
         });
 
         QuestFood.name = this.foodItem();
+        QuestGear.meleeWeapon = this.meleeWeapon();
         Sustain.set(async () => { if (this.shouldEat()) { await this.eatOnce(); } });
         // Yield long walks/dialog loops as soon as Skip is clicked (#432).
         EventSignal.setInterrupt(() => this.skipRequested);
@@ -102,6 +115,15 @@ export default class AIOQuester extends TaskBot {
     foodItem(): string | null {
         const f = this.settings.str('food', '').trim();
         return f.length > 0 ? f : null;
+    }
+
+    verbose(): boolean {
+        return this.settings.bool('verbose', true);
+    }
+
+    meleeWeapon(): string | null {
+        const w = this.settings.str('meleeWeapon', '').trim();
+        return w.length > 0 ? w : null;
     }
 
     sustainPolicy(): ResolvedSustainPolicy {

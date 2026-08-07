@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { gunzipSync } from 'fflate';
 
 import doorsJson from '#/bot/nav/data/doors.json';
-import transportsJson from '#/bot/nav/data/transports.json';
+import { allTransportRows } from '#/bot/nav/loadTransportGraph.js';
 import stairsJson from '#/bot/nav/data/stairEdges.json';
 import { PathFinder, type DoorEdgeData, type NavPoint, type TransportEdgeData } from '#/bot/nav/PathFinder.js';
 import { CLUE_DB } from '#/bot/clues/data/cluedb.js';
@@ -82,7 +82,11 @@ function loadPack(pack: string): PathFinder {
         bytes = gunzipSync(bytes);
     }
     const finder = new PathFinder(bytes);
-    finder.addEdges(doorsJson as DoorEdgeData[], transportsJson as TransportEdgeData[], stairsJson as TransportEdgeData[]);
+    // The same edge set the live navigator builds. Loading transports.json alone
+    // left out every curated travel edge, so the audit routed on a smaller graph
+    // than the bot actually walks and reported destinations unreachable that the
+    // navigator reaches without trouble.
+    finder.addEdges(doorsJson as DoorEdgeData[], allTransportRows(), stairsJson as TransportEdgeData[]);
     return finder;
 }
 

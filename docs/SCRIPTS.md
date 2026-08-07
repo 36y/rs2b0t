@@ -5,7 +5,7 @@
 
 # Bundled scripts
 
-The client ships **48 scripts** across 20 categories. They double as worked
+The client ships **49 scripts** across 20 categories. They double as worked
 examples of the [scripting API](API.md) — the source for each is under
 [`src/bot/scripts/`](../src/bot/scripts/).
 
@@ -26,7 +26,7 @@ Settings listed here are the parameters the panel exposes before you start a scr
 - [Money making](#money-making) — 2
 - [Navigation](#navigation) — 1
 - [Prayer](#prayer) — 1
-- [Quest](#quest) — 2
+- [Quest](#quest) — 3
 - [Runecrafting](#runecrafting) — 3
 - [Smithing](#smithing) — 2
 - [Thieving](#thieving) — 3
@@ -663,8 +663,16 @@ Tags: `quest`, `queue`, `aio`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
-| `quests` | string[] | `[]` | Quest queue (empty = all) — one of: Rune Mysteries Quest, Doric's Quest, The Knight's Sword, Sheep Shearer, The Restless Ghost, Cook's Assistant, Witch's Potion, Romeo & Juliet, Prince Ali Rescue, Waterfall Quest, Goblin Diplomacy, Demon Slayer, Witch's House, Merlin's Crystal, Priest in Peril, Black Knight's Fortress, Druidic Ritual, Lost City, The Tourist Trap, Watch Tower, Vampire Slayer, Jungle Potion, Shilo Village, Elemental Workshop, Death Plateau, Troll Stronghold, Family Crest, Dragon Slayer |
+| `quests` | string[] | `[]` | Quest queue (empty = all) — one of: Rune Mysteries Quest, Doric's Quest, The Knight's Sword, Sheep Shearer, The Restless Ghost, Cook's Assistant, Witch's Potion, Romeo & Juliet, Prince Ali Rescue, Waterfall Quest, Goblin Diplomacy, Demon Slayer, Witch's House, Merlin's Crystal, Priest in Peril, Black Knight's Fortress, Druidic Ritual, Lost City, The Tourist Trap, Watch Tower, Vampire Slayer, Jungle Potion, Shilo Village, Elemental Workshop, Death Plateau, Troll Stronghold, Family Crest, Horror from the Deep, Dragon Slayer |
 | `food` | string | `"Trout"` | Food item |
+| `meleeWeapon` | string | `"Rune scimitar"` | Melee weapon |
+| `verbose` | boolean | `true` | Verbose step log |
+
+### Barcrawl
+
+Alfred Grimhand's Barcrawl — banks for the drinks, gets the card from the outpost guard, tours all ten bars nearest-first and hands it back in (opens the Barbarian Outpost gate)
+
+Tags: `miniquest`, `barcrawl`, `barbarian outpost`, `gate`
 
 ### QuestDashboard
 

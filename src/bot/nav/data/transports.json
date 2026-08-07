@@ -6891,5 +6891,427 @@
         }
       ]
     }
+  },
+  {
+    "from": {
+      "x": 2522,
+      "z": 3595,
+      "level": 0
+    },
+    "to": {
+      "x": 2522,
+      "z": 3598,
+      "level": 0
+    },
+    "locName": "Basalt rock",
+    "action": "Jump-across",
+    "kind": "shortcut",
+    "locId": 4550,
+    "locX": 2522,
+    "locZ": 3595,
+    "debugName": "horror_basalt1_north_#216",
+    "options": [
+      "Jump-across"
+    ],
+    "requires": {
+      "members": true,
+      "skills": [
+        {
+          "name": "agility",
+          "level": 35
+        }
+      ]
+    }
+  },
+  {
+    "from": {
+      "x": 2522,
+      "z": 3597,
+      "level": 0
+    },
+    "to": {
+      "x": 2522,
+      "z": 3594,
+      "level": 0
+    },
+    "locName": "Basalt rock",
+    "action": "Jump-across",
+    "kind": "shortcut",
+    "locId": 4551,
+    "locX": 2522,
+    "locZ": 3597,
+    "debugName": "horror_basalt1_south_#216",
+    "options": [
+      "Jump-across"
+    ],
+    "requires": {
+      "members": true,
+      "skills": [
+        {
+          "name": "agility",
+          "level": 35
+        }
+      ]
+    }
+  },
+  {
+    "from": {
+      "x": 2522,
+      "z": 3600,
+      "level": 0
+    },
+    "to": {
+      "x": 2522,
+      "z": 3603,
+      "level": 0
+    },
+    "locName": "Basalt rock",
+    "action": "Jump-across",
+    "kind": "shortcut",
+    "locId": 4552,
+    "locX": 2522,
+    "locZ": 3600,
+    "debugName": "horror_basalt2_north_#216",
+    "options": [
+      "Jump-across"
+    ],
+    "requires": {
+      "members": true,
+      "skills": [
+        {
+          "name": "agility",
+          "level": 35
+        }
+      ]
+    }
+  },
+  {
+    "from": {
+      "x": 2522,
+      "z": 3602,
+      "level": 0
+    },
+    "to": {
+      "x": 2522,
+      "z": 3599,
+      "level": 0
+    },
+    "locName": "Basalt rock",
+    "action": "Jump-across",
+    "kind": "shortcut",
+    "locId": 4553,
+    "locX": 2522,
+    "locZ": 3602,
+    "debugName": "horror_basalt2_south_#216",
+    "options": [
+      "Jump-across"
+    ],
+    "requires": {
+      "members": true,
+      "skills": [
+        {
+          "name": "agility",
+          "level": 35
+        }
+      ]
+    }
+  },
+  {
+    "from": {
+      "x": 2518,
+      "z": 3611,
+      "level": 0
+    },
+    "to": {
+      "x": 2515,
+      "z": 3611,
+      "level": 0
+    },
+    "locName": "Basalt rock",
+    "action": "Jump-across",
+    "kind": "shortcut",
+    "locId": 4554,
+    "locX": 2518,
+    "locZ": 3611,
+    "debugName": "horror_basalt3_west_#216",
+    "options": [
+      "Jump-across"
+    ],
+    "requires": {
+      "members": true,
+      "skills": [
+        {
+          "name": "agility",
+          "level": 35
+        }
+      ]
+    }
+  },
+  {
+    "from": {
+      "x": 2516,
+      "z": 3611,
+      "level": 0
+    },
+    "to": {
+      "x": 2518,
+      "z": 3610,
+      "level": 0
+    },
+    "locName": "Basalt rock",
+    "action": "Jump-across",
+    "kind": "shortcut",
+    "locId": 4555,
+    "locX": 2516,
+    "locZ": 3611,
+    "debugName": "horror_basalt3_east_#216",
+    "options": [
+      "Jump-across"
+    ],
+    "requires": {
+      "members": true,
+      "skills": [
+        {
+          "name": "agility",
+          "level": 35
+        }
+      ]
+    }
+  },
+  {
+    "from": {
+      "x": 2514,
+      "z": 3613,
+      "level": 0
+    },
+    "to": {
+      "x": 2514,
+      "z": 3616,
+      "level": 0
+    },
+    "locName": "Basalt rock",
+    "action": "Jump-across",
+    "kind": "shortcut",
+    "locId": 4556,
+    "locX": 2514,
+    "locZ": 3613,
+    "debugName": "horror_basalt4_north_#216",
+    "options": [
+      "Jump-across"
+    ],
+    "requires": {
+      "members": true,
+      "skills": [
+        {
+          "name": "agility",
+          "level": 35
+        }
+      ]
+    }
+  },
+  {
+    "from": {
+      "x": 2514,
+      "z": 3615,
+      "level": 0
+    },
+    "to": {
+      "x": 2514,
+      "z": 3612,
+      "level": 0
+    },
+    "locName": "Basalt rock",
+    "action": "Jump-across",
+    "kind": "shortcut",
+    "locId": 4557,
+    "locX": 2514,
+    "locZ": 3615,
+    "debugName": "horror_basalt4_south_#216",
+    "options": [
+      "Jump-across"
+    ],
+    "requires": {
+      "members": true,
+      "skills": [
+        {
+          "name": "agility",
+          "level": 35
+        }
+      ]
+    }
+  },
+  {
+    "from": {
+      "x": 2514,
+      "z": 3617,
+      "level": 0
+    },
+    "to": {
+      "x": 2514,
+      "z": 3620,
+      "level": 0
+    },
+    "locName": "Basalt rock",
+    "action": "Jump-across",
+    "kind": "shortcut",
+    "locId": 4558,
+    "locX": 2514,
+    "locZ": 3617,
+    "debugName": "horror_basalt5_north_#216",
+    "options": [
+      "Jump-across"
+    ],
+    "requires": {
+      "members": true,
+      "skills": [
+        {
+          "name": "agility",
+          "level": 35
+        }
+      ]
+    }
+  },
+  {
+    "from": {
+      "x": 2514,
+      "z": 3619,
+      "level": 0
+    },
+    "to": {
+      "x": 2514,
+      "z": 3616,
+      "level": 0
+    },
+    "locName": "Basalt rock",
+    "action": "Jump-across",
+    "kind": "shortcut",
+    "locId": 4559,
+    "locX": 2514,
+    "locZ": 3619,
+    "debugName": "horror_basalt5_south_#216",
+    "options": [
+      "Jump-across"
+    ],
+    "requires": {
+      "members": true,
+      "skills": [
+        {
+          "name": "agility",
+          "level": 35
+        }
+      ]
+    }
+  },
+  {
+    "from": {
+      "x": 2596,
+      "z": 3608,
+      "level": 0
+    },
+    "to": {
+      "x": 2599,
+      "z": 3608,
+      "level": 0
+    },
+    "locName": "Broken bridge",
+    "action": "Cross",
+    "kind": "shortcut",
+    "locId": 4615,
+    "locX": 2596,
+    "locZ": 3608,
+    "debugName": "horror_bridge_east_#216",
+    "options": [
+      "Cross"
+    ],
+    "requires": {
+      "members": true
+    }
+  },
+  {
+    "from": {
+      "x": 2598,
+      "z": 3608,
+      "level": 0
+    },
+    "to": {
+      "x": 2595,
+      "z": 3608,
+      "level": 0
+    },
+    "locName": "Broken bridge",
+    "action": "Cross",
+    "kind": "shortcut",
+    "locId": 4616,
+    "locX": 2598,
+    "locZ": 3608,
+    "debugName": "horror_bridge_west_#216",
+    "options": [
+      "Cross"
+    ],
+    "requires": {
+      "members": true
+    }
+  },
+  {
+    "from": {
+      "x": 2552,
+      "z": 3561,
+      "level": 0
+    },
+    "to": {
+      "x": 2552,
+      "z": 3558,
+      "level": 0
+    },
+    "locName": "Obstacle pipe",
+    "action": "Squeeze-through",
+    "kind": "shortcut",
+    "locId": 2287,
+    "locX": 2552,
+    "locZ": 3559,
+    "debugName": "horror_outpost_pipe_in_#216",
+    "options": [
+      "Squeeze-through"
+    ],
+    "requires": {
+      "members": true,
+      "skills": [
+        {
+          "name": "agility",
+          "level": 35
+        }
+      ]
+    }
+  },
+  {
+    "from": {
+      "x": 2552,
+      "z": 3558,
+      "level": 0
+    },
+    "to": {
+      "x": 2552,
+      "z": 3561,
+      "level": 0
+    },
+    "locName": "Obstacle pipe",
+    "action": "Squeeze-through",
+    "kind": "shortcut",
+    "locId": 2287,
+    "locX": 2552,
+    "locZ": 3559,
+    "debugName": "horror_outpost_pipe_out_#216",
+    "options": [
+      "Squeeze-through"
+    ],
+    "requires": {
+      "members": true,
+      "skills": [
+        {
+          "name": "agility",
+          "level": 35
+        }
+      ]
+    }
   }
 ]

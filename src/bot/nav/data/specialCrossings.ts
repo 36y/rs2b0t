@@ -748,22 +748,47 @@ export function specialCrossingForTransport(
         levels.add(step.level);
     }
 
-    const matchesOrigin = (sc: SpecialCrossing, level: number): boolean => {
+    // Which tile of the hop a crossing is keyed at, best first.
+    //
+    // A two-sided obstacle registers one crossing per bank, and both match the
+    // same hop — one as the tile being left, one as the tile being reached. The
+    // executor then resolves the loc within Chebyshev 3 of the crossing's stand,
+    // so the far bank's entry aims the op at the opposite end of the obstacle,
+    // across the water. The bank under our feet is the one that can be used.
+    const ORIGIN_APPROACH = 0;
+    const ORIGIN_LOC = 1;
+    const ORIGIN_STEP = 2;
+
+    const originRank = (sc: SpecialCrossing, level: number): number | null => {
         if (sc.level !== level) {
-            return false;
+            return null;
         }
-        return (
-            (sc.x === transport.locX && sc.z === transport.locZ)
-            || (sc.x === approach.x && sc.z === approach.z)
-            || (step !== undefined && sc.x === step.x && sc.z === step.z)
-        );
+        if (sc.x === approach.x && sc.z === approach.z) {
+            return ORIGIN_APPROACH;
+        }
+        if (sc.x === transport.locX && sc.z === transport.locZ) {
+            return ORIGIN_LOC;
+        }
+        if (step !== undefined && sc.x === step.x && sc.z === step.z) {
+            return ORIGIN_STEP;
+        }
+        return null;
     };
 
     let candidates: SpecialCrossing[] = [];
+    const rank = new Map<SpecialCrossing, number>();
     for (const level of levels) {
         for (const sc of SPECIAL_CROSSINGS) {
-            if (matchesOrigin(sc, level)) {
+            const r = originRank(sc, level);
+            if (r === null) {
+                continue;
+            }
+            const seen = rank.get(sc);
+            if (seen === undefined) {
                 candidates.push(sc);
+                rank.set(sc, r);
+            } else if (r < seen) {
+                rank.set(sc, r);
             }
         }
     }
@@ -803,7 +828,12 @@ export function specialCrossingForTransport(
             return byDest;
         }
     }
-    return candidates[0] ?? null;
+    // Lowest origin rank wins; ties keep source order, which is what every
+    // single-sided crossing already relied on.
+    return candidates.reduce<SpecialCrossing | null>(
+        (best, sc) => (best === null || rank.get(sc)! < rank.get(best)! ? sc : best),
+        null
+    );
 }
 
 export function pickChoice(options: string[], choose: string[]): string | null {

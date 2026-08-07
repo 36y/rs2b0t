@@ -23,19 +23,15 @@ export const PACK_UNREACHABLE: Record<number, string> = {
     // The southbound crossing is now baked, but it consumes a Shantay pass, and a
     // requires-gated edge is skipped when no world state is supplied. So the bot
     // walks it holding a pass; the offline audit correctly still calls it closed.
-    3552: 'Kharidian desert: baked, but entry consumes a Shantay pass — the bot must carry one',
     3554: 'Kharidian desert: baked, but entry consumes a Shantay pass — the bot must carry one',
 
     // ---- QUEST: assume complete, then bake ---------------------------------
     3560: 'Isafdar: Sticks [Pass] @ (2200,3169) — requires Underground Pass/Regicide',
     3562: 'Isafdar: Sticks [Pass] @ (2181,3209) — requires Underground Pass/Regicide',
     3564: 'elf camp: Dense forest [Enter] @ (2231,3248) / Log balance @ (2197,3237) — requires Regicide',
-    // 3546/3548: "Gu'Tanoth Toban camp: cave/ladder baked — hill access may need Watch Tower",
-    // (ogre gates / Watch Tower path) to reach the stands from the mainland.
+    // 3546 only: 3548's Toban camp cave/ladder now routes on the curated graph.
     3546: "Gu'Tanoth ledge: chasm Jump-From baked — need 25 Agility + 20gp; hill access may need Watch Tower",
-    3548: "Gu'Tanoth Toban camp: cave/ladder baked — hill access may need Watch Tower",
     3522: 'West Ardougne: baked sewer pipe path — requires Plague City complete and Gas mask worn',
-    2815: 'Crandor: baked secret wall + rock/rope — requires Dragon Slayer complete',
     // Corrected against Content @ 088ca5e (#365). The previous note named
     // death_climbingrocks / Death Plateau; both are wrong. death_climbingrocks_top
     // (3722) / _bottom (3723) sit at (2880..2881, 3594..3595) — the Death Plateau,
