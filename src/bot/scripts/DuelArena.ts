@@ -4,6 +4,7 @@ import { Execution } from '../api/Execution.js';
 import { Traversal } from '../api/Traversal.js';
 import { Skills } from '../api/hud/Skills.js';
 import { Paint } from '../api/hud/Paint.js';
+import { fmtXpHr } from '../api/hud/paintLogic.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
 import { Players, type Player } from '../api/queries/Players.js';
 import { Duel } from '../api/hud/Duel.js';
@@ -64,6 +65,7 @@ export const DUEL_ARENA_SETTINGS: SettingsSchema = {
 };
 
 const CHALLENGE_RESULT_WAIT_MS = 1500;
+const DUEL_XP_SKILLS = ['attack', 'strength', 'hitpoints'] as const;
 
 function sameName(a: string | null, b: string): boolean {
     return a !== null && a.trim().toLowerCase() === b.trim().toLowerCase();
@@ -93,12 +95,14 @@ export default class DuelArena extends TaskBot {
     private centerSeekAttempts = 0;
     private centerSeekExhaustionLogged = false;
     private startedAt = Date.now();
+    private xpAtStart = 0;
 
     override async onStart(): Promise<void> {
         await Execution.delayUntil(() => Game.sceneReady(), 0);
         this.targetAttack = this.settings.num('targetAttack', 99);
         this.targetStrength = this.settings.num('targetStrength', 99);
         this.startedAt = Date.now();
+        this.xpAtStart = this.trainingXp();
 
         this.on('chat.message', line => {
             const inviter = duelInviter(line);
@@ -127,10 +131,17 @@ export default class DuelArena extends TaskBot {
 
     override onPaint(ctx: CanvasRenderingContext2D): void {
         const paint = Paint.begin(ctx, { dock: 'chatbox', accent: '#e6c368' });
+        const mins = (Date.now() - this.startedAt) / 60_000;
+        const xpGained = Math.max(0, this.trainingXp() - this.xpAtStart);
         paint.title(`Duel Arena — ${this.status}`);
         paint.row(`Attack ${Skills.level('attack')}/${this.targetAttack}`, `Strength ${Skills.level('strength')}/${this.targetStrength}`, `Duels ${this.duels}`);
-        paint.row(`Style ${this.desiredStyle()}`, `Opponent ${this.opponent ?? '—'}`, `Runtime ${Math.floor((Date.now() - this.startedAt) / 60000)}m`);
+        paint.row(`Style ${this.desiredStyle()}`, `Opponent ${this.opponent ?? '—'}`, `Runtime ${Math.floor(mins)}m`);
+        paint.row(`XP/hr: ${fmtXpHr(xpGained, mins)}`);
         paint.end();
+    }
+
+    private trainingXp(): number {
+        return DUEL_XP_SKILLS.reduce((total, skill) => total + Skills.xp(skill), 0);
     }
 
     setStatus(status: string): void {
