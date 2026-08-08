@@ -311,11 +311,8 @@ export default class WildyAgility extends TaskBot {
                     await Execution.delayTicks(2);
                 }
                 if (!opened || foodCount() < MIN_FOOD) {
-                    this.log(
-                        `only ${foodCount()} '${FOOD}' after bank (need ${MIN_FOOD}) — stopping`
-                    );
                     this.setStatus(`out of '${FOOD}' in bank — stopped`);
-                    ScriptRunner.stop();
+                    ScriptRunner.stop(`only ${foodCount()} '${FOOD}' after bank (need ${MIN_FOOD})`);
                     return;
                 }
             }

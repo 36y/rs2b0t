@@ -41,16 +41,14 @@ export default class Barcrawl extends LoopingBot {
         // a booth.
         if (Inventory.count(COINS) < BARCRAWL_GP && !(await this.topUpCoins())) {
             this.status = 'out of coins';
-            this.log('not enough coins for the tour and none in the bank — stopping');
-            ScriptRunner.stop();
+            ScriptRunner.stop('not enough coins for the tour and none in the bank');
             return;
         }
 
         this.status = 'touring';
         if (await ensureBarcrawl(m => this.log(m), signed => { this.signed = signed; })) {
             this.status = 'complete';
-            this.log('barcrawl complete — the outpost gate will open');
-            ScriptRunner.stop();
+            ScriptRunner.stop('barcrawl complete — the outpost gate will open');
             return;
         }
 
@@ -59,8 +57,7 @@ export default class Barcrawl extends LoopingBot {
         // Retry a few times before giving up on it.
         if (++this.failures >= 3) {
             this.status = 'gave up';
-            this.log('the barcrawl made no progress in three passes — stopping');
-            ScriptRunner.stop();
+            ScriptRunner.stop('the barcrawl made no progress in three passes');
             return;
         }
         this.log(`barcrawl pass failed (${this.failures}/3) — retrying`);

@@ -4,7 +4,6 @@ import { Game } from '../api/Game.js';
 import Tile from '../api/Tile.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
 import { DeathRecovery } from '../api/tasks/DeathRecovery.js';
-import { depositMatcher } from '../api/Banking.js';
 import { ChatDialog } from '../api/hud/ChatDialog.js';
 import { Skills } from '../api/hud/Skills.js';
 import { Inventory } from '../api/hud/Inventory.js';
@@ -34,14 +33,11 @@ const ENGAGE_RADIUS = 5;
 export const SETTINGS: SettingsSchema = {
     guardResponse: { type: 'string', default: 'Flee', options: ['Flee', 'Fight'], label: 'Guard response', help: 'caught at the stall: Flee kites the guard off the market; Fight kills it (bring combat stats)' },
 
-    bankCommonJunk: { type: 'boolean', default: true, label: 'Bank common junk too' },
     solveClues: { type: 'boolean', default: true, label: 'Solve clue drops', group: 'Clues', help: 'Fight mode kills guards, which drop medium clues — solve them on the spot' }
 };
 
 let RESPONSE = 'Flee';
 
-
-let BANK_COMMON = true;
 let SOLVE_CLUES = true;
 
 function nearMarket(): boolean {
@@ -80,7 +76,6 @@ export default class ArdyCakes extends TaskBot {
 
         RESPONSE = this.settings.str('guardResponse', 'Flee');
 
-        BANK_COMMON = this.settings.bool('bankCommonJunk', true);
         SOLVE_CLUES = this.settings.bool('solveClues', true);
         this.solveClue = new SolveClue({
             log: m => this.log(m),
@@ -267,11 +262,14 @@ class BankRun implements Task {
             return;
         }
         const before = carriedCakes();
-        await Bank.depositAllMatching(depositMatcher(name => matchesAny(name, CAKE_ITEMS), BANK_COMMON), m => this.bot.log(`  ${m}`));
+        const heldBefore = Inventory.used();
+        // The whole pack goes in: cakes are the haul and everything else is random
+        // event loot (death runes, arrows, coins) that would ride along forever.
+        await Bank.depositInventory();
         await Execution.delayTicks(1);
         const shed = before - carriedCakes();
         this.bot.countBanked(Math.max(0, shed));
-        this.bot.log(`banked ${shed} cakes${shed <= 0 ? ' (nothing deposited!)' : ''}`);
+        this.bot.log(`banked ${shed} cakes + ${Math.max(0, heldBefore - Inventory.used() - shed)} other item stack(s)${Inventory.used() > 0 ? ` (${Inventory.used()} slot(s) would not deposit)` : ''}`);
         this.bot.countTrip();
         this.bot.setStatus('heading back to the stall');
         await Traversal.walkResilient(STAND, { radius: 1, attempts: 4, timeoutMs: 120_000, log: m => this.bot.log(`  ${m}`) });

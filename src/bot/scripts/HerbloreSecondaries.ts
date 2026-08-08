@@ -74,8 +74,7 @@ export default class HerbloreSecondaries extends TaskBot {
         const pick = this.settings.str('secondary', "Red spiders' eggs");
         const def = secondaryByName(pick);
         if (!def) {
-            this.log(`unknown secondary '${pick}'. Stopping.`);
-            ScriptRunner.stop();
+            ScriptRunner.stop(`unknown secondary '${pick}'`);
             return;
         }
         this.def = def;
@@ -88,18 +87,18 @@ export default class HerbloreSecondaries extends TaskBot {
         );
 
         // ProcessSource before BankTrip so swamp toads become legs before deposit.
-        // Loot before Eat so combat areas still pick up between hits
-        // (eat-when-heal-fits would otherwise starve the loot task).
+        // Eat before BankTrip: a full pack with food left is a free slot away from
+        // more loot, and BankTrip would otherwise always win and bank the food.
         this.add(
             new ContinueDialog(),
             new GearUp(this),
             new ProcessSource(this),
+            new Eat(this),
             new BankTrip(this),
             new BuyTool(this),
             new BuyGoods(this),
             new Grind(this),
             new Loot(this),
-            new Eat(this),
             new Travel(this)
         );
     }
@@ -168,14 +167,18 @@ export default class HerbloreSecondaries extends TaskBot {
 class Eat implements Task {
     constructor(private bot: HerbloreSecondaries) {}
     validate(): boolean {
-        const { food } = this.bot.cfg();
+        const { def, food } = this.bot.cfg();
         return shouldEat({
             hp: Skills.effective('hitpoints'),
             maxHp: Skills.level('hitpoints'),
             heal: foodHealAmount(food),
             foodCount: this.bot.foodInPack(),
             freeSlots: Inventory.free(),
-            collecting: true
+            // Eating for a slot only pays off where there is loot to pick up —
+            // same gate as Loot, or a bot at the bank would burn its whole stack.
+            collecting:
+                (def.mode === 'loot' || def.mode === 'loot_process')
+                && this.bot.near(def.anchor, def.searchRadius + 4)
         });
     }
     async execute(): Promise<void> {
@@ -237,8 +240,7 @@ class BankTrip implements Task {
         if (def.needShield && !this.bot.hasShield()) {
             if (Bank.count(SHIELD_NAME) < 1) {
                 await Bank.close();
-                this.bot.log(`no ${SHIELD_NAME} banked for white berries. Stopping.`);
-                ScriptRunner.stop();
+                ScriptRunner.stop(`no ${SHIELD_NAME} banked for white berries`);
                 return;
             }
             await Bank.withdrawX(SHIELD_NAME, 1);
@@ -249,8 +251,7 @@ class BankTrip implements Task {
             if (have < foodWant) {
                 if (Bank.count(food) < 1 && have < 1) {
                     await Bank.close();
-                    this.bot.log(`out of ${food} in the bank. Stopping.`);
-                    ScriptRunner.stop();
+                    ScriptRunner.stop(`out of ${food} in the bank`);
                     return;
                 }
                 await Bank.withdrawX(food, foodWant - have);
@@ -262,8 +263,7 @@ class BankTrip implements Task {
             if (need > 0) {
                 if (Bank.count('Coins') < need && this.bot.coinCount() < 50) {
                     await Bank.close();
-                    this.bot.log('not enough coins in the bank for shopping. Stopping.');
-                    ScriptRunner.stop();
+                    ScriptRunner.stop('not enough coins in the bank for shopping');
                     return;
                 }
                 await Bank.withdrawX('Coins', need);

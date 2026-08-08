@@ -2300,8 +2300,7 @@ export default class GatheringBot extends TaskBot {
     stopMissingGear(reason: string, missing: string[]): void {
         const need = missing.join(' + ') || this.gearLabel();
         this.setStatus(`restock: stop — ${need}`);
-        this.log(`restock: ${reason} — need ${need}; stopping`);
-        ScriptRunner.stop();
+        ScriptRunner.stop(`restock: ${reason} — need ${need}`);
     }
 
     heldItemNames(): string[] {
@@ -2799,11 +2798,8 @@ export default class GatheringBot extends TaskBot {
         }
         this.inCookBatch = false;
         if (outcome === 'stop') {
-            this.log(
-                `cook: batch drained (bank raw ${this.bankRawInBank}/${this.bankRawTarget}) — stop`
-            );
             this.setStatus('cook: batch complete — stopped');
-            ScriptRunner.stop();
+            ScriptRunner.stop(`cook: batch drained (bank raw ${this.bankRawInBank}/${this.bankRawTarget})`);
             return;
         }
         this.log(

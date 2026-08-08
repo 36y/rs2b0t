@@ -124,9 +124,8 @@ class SmithPanel implements Task {
         if (!(await ChatDialog.makeFromPanelMax(this.bot.productName()))) {
             const products = ChatDialog.mainMakeProducts().filter(Boolean);
             if (products.length === 0) { await Execution.delayTicks(1); return; }
-            this.bot.log(`'${this.bot.productName()}' isn't on the ${this.bot.barItemName()} anvil panel — available: [${products.join(', ')}]. Stopping (pick a listed item).`);
             this.bot.setStatus(`'${this.bot.productName()}' not available — stopped`);
-            ScriptRunner.stop();
+            ScriptRunner.stop(`'${this.bot.productName()}' isn't on the ${this.bot.barItemName()} anvil panel — available: [${products.join(', ')}] — pick a listed item`);
             return;
         }
         await Execution.delayUntil(() => Game.animating() || this.bot.barCount() < start || ChatDialog.isMainMakePanel() || ChatDialog.canContinue(), 3000);

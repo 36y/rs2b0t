@@ -192,7 +192,7 @@ export default class BotPanel {
     }
 
     stopScript(): void {
-        ScriptRunner.stop();
+        ScriptRunner.stop('Stop button (bot panel)');
     }
 
     setRendererEnabled(enabled: boolean): void {

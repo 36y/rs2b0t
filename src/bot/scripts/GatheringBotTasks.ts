@@ -1489,8 +1489,7 @@ export class RepairBrokenGatherTool implements Task {
                         }
                     }
                 }
-                this.bot.log('pickaxe: no usable pick in bank — stopping');
-                ScriptRunner.stop();
+                ScriptRunner.stop('pickaxe: no usable pick in bank');
                 return;
             }
             const item = Bank.items().find(i => (i.name ?? '').toLowerCase() === pick.toLowerCase());

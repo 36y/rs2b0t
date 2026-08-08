@@ -158,8 +158,7 @@ class FletchDialog implements Task {
         const products = ChatDialog.makeProducts();
         const match = matchProduct(products, this.bot.productName());
         if (!match) {
-            this.bot.log(`BankFletcher: '${this.bot.productName()}' isn't offered for '${this.bot.materialName()}' (menu: [${products.join(', ')}]) — stopping instead of making the wrong item.`);
-            ScriptRunner.stop();
+            ScriptRunner.stop(`BankFletcher: '${this.bot.productName()}' isn't offered for '${this.bot.materialName()}' (menu: [${products.join(', ')}]) — refusing to make the wrong item`);
             return;
         }
         const start = this.bot.logCount();
@@ -263,8 +262,7 @@ class BankTrip implements Task {
 
             const logItem = Bank.items().find(i => logNameMatches(i.name, this.bot.materialName()));
             if (!logItem || logItem.name === null) {
-                this.bot.log(`BankFletcher: bank is out of '${this.bot.materialName()}' — fletching complete, stopping.`);
-                ScriptRunner.stop();
+                ScriptRunner.stop(`BankFletcher: bank is out of '${this.bot.materialName()}' — fletching complete`);
                 return;
             }
             const logName = logItem.name;

@@ -100,8 +100,7 @@ export default class ThievingBot extends TaskBot {
         this.xpAtStart = Skills.xp('thieving');
         if (this.autoBank && !this.food) {
             this.setStatus('Auto banking needs a food name — stopped');
-            this.log('Auto food banking needs a non-blank food setting — stopping.');
-            ScriptRunner.stop();
+            ScriptRunner.stop('Auto food banking needs a non-blank food setting');
             return;
         }
         this.log(`thieving '${this.target}' (${this.action}) within ${this.leash} of ${this.anchor}${this.food ? `, smart-eat *${this.food}*` : ''}, banking ${this.autoBank ? `at ${this.bankAtFood} food (target ${this.foodWithdraw})` : 'off'}`);
@@ -237,8 +236,7 @@ export default class ThievingBot extends TaskBot {
     }
     stopSafely(reason: string): void {
         this.setStatus(`${reason} — stopped`);
-        this.log(`${reason} — stopping.`);
-        ScriptRunner.stop();
+        ScriptRunner.stop(`${reason}`);
     }
 }
 

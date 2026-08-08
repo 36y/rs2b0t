@@ -12,7 +12,7 @@ class SelfStoppingBot extends LoopingBot {
 
     override onStart(): void {
         this.starts++;
-        ScriptRunner.stop();
+        ScriptRunner.stop('test: self-stopping bot');
     }
 
     override onStop(): void {
@@ -64,7 +64,7 @@ async function settle(): Promise<void> {
 }
 
 afterEach(async () => {
-    ScriptRunner.stop();
+    ScriptRunner.stop('test teardown');
     await settle();
 });
 
@@ -87,10 +87,12 @@ test('a script can restart after stopping itself during onStart', async () => {
     expect(Scheduler.active).toBeNull();
     expect(instances[0]?.starts).toBe(1);
     expect(instances[0]?.stops).toBe(1);
-    expect(ScriptRunner.ctx?.log.map(line => line.msg)).toEqual([
+    // Tail, not the whole log: ScriptRunner is a singleton, so whether a line
+    // about an earlier run is carried in depends on what ran before this file.
+    expect(ScriptRunner.ctx?.log.map(line => line.msg).slice(-3)).toEqual([
         'Self-stopping test bot started (input: direct)',
-        'stopping...',
-        'stopped'
+        'stopping — test: self-stopping bot',
+        'stopped — test: self-stopping bot'
     ]);
 
     expect(() => ScriptRunner.start(meta)).not.toThrow();
@@ -101,6 +103,31 @@ test('a script can restart after stopping itself during onStart', async () => {
     expect(instances).toHaveLength(2);
     expect(instances[1]?.starts).toBe(1);
     expect(instances[1]?.stops).toBe(1);
+    // A restart replaces the context and its log; without this carry-over the
+    // reason the previous run ended would be gone (the "stopped, nothing in the
+    // logs" report).
+    expect(ScriptRunner.ctx?.log.map(line => line.msg)).toContain(
+        "previous run of 'Self-stopping test bot' ended (stopped) — test: self-stopping bot"
+    );
+});
+
+test('a stop with a blank reason still says so instead of reading as no reason', async () => {
+    const meta: ScriptMeta = {
+        name: 'Blank reason bot',
+        description: 'runner regression fixture',
+        create: () => new (class extends LoopingBot {
+            loop(): void {}
+        })()
+    };
+
+    ScriptRunner.start(meta);
+    await settle();
+    ScriptRunner.stop('   ');
+    await settle();
+
+    expect(ScriptRunner.ctx?.log.map(line => line.msg)).toContain(
+        'stopped — no reason given by the caller (bug — please report)'
+    );
 });
 
 test('onPaint remains hidden until asynchronous onStart establishes its baseline', async () => {

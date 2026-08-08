@@ -151,7 +151,6 @@ export default class DartFletcher extends LoopingBot {
         }
         this.finished = true;
         this.status = reason;
-        this.log(`DartFletcher: ${reason}; made ${Math.max(0, Inventory.count(this.plan.product) - this.productAtStart)} darts. Stopping.`);
-        ScriptRunner.stop();
+        ScriptRunner.stop(`DartFletcher: ${reason}; made ${Math.max(0, Inventory.count(this.plan.product) - this.productAtStart)} darts`);
     }
 }

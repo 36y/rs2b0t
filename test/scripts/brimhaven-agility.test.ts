@@ -23,6 +23,7 @@ import {
     pillarFromHint,
     pillarTagged,
     platformAt,
+    restockShortfall,
     shouldBank,
     shouldEat,
     usableEdges,
@@ -223,5 +224,31 @@ describe('BrimhavenAgility settings defaults', () => {
     test('defaults match the issue: 25 food, bank at 1000 tickets', () => {
         expect(DEFAULT_FOOD_PER_TRIP).toBe(25);
         expect(DEFAULT_BANK_TICKETS).toBe(1000);
+    });
+});
+
+describe('BrimhavenAgility restock verification', () => {
+    const base = { food: 'Lobster', foodPerTrip: 25, coins: 260, alreadyPaid: false };
+
+    test('a funded trip has no shortfall', () => {
+        expect(restockShortfall({ ...base, foodInPack: 25 })).toBeNull();
+        expect(restockShortfall({ ...base, foodInPack: 26 })).toBeNull();
+    });
+
+    test('names the missing food instead of spinning the bank open and closed', () => {
+        // The reported bug: the bank had *some* lobsters, so the old
+        // "bank empty AND pack empty" guard never fired and the bot re-banked forever.
+        const partial = restockShortfall({ ...base, foodInPack: 3 });
+        expect(partial).toContain('Lobster');
+        expect(partial).toContain('only 3');
+        expect(restockShortfall({ ...base, foodInPack: 0 })).toContain('Lobster');
+    });
+
+    test('names missing coins once food is covered', () => {
+        const broke = restockShortfall({ ...base, foodInPack: 25, coins: 100 });
+        expect(broke).toContain('coins');
+        expect(broke).toContain('260');
+        // Entrance already paid — only the two boat fares are needed.
+        expect(restockShortfall({ ...base, foodInPack: 25, coins: 60, alreadyPaid: true })).toBeNull();
     });
 });

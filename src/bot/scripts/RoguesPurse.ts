@@ -120,8 +120,7 @@ export default class RoguesPurse extends LoopingBot {
     override async loop(): Promise<void> {
         if (this.refusal) {
             this.status = 'refused';
-            this.log(`RoguesPurse: ${this.refusal}. Stopping.`);
-            ScriptRunner.stop();
+            ScriptRunner.stop(`RoguesPurse: ${this.refusal}`);
             return;
         }
 

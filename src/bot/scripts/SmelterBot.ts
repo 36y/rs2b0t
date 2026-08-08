@@ -146,9 +146,8 @@ class BankTrip implements Task {
         const plan = withdrawFor(recipe, stock);
         if (plan.length === 0) {
             const short = recipe.ingredients.map(i => `${i.ore} ${stock(i.ore)}`).join(', ');
-            this.bot.log(`the bank cannot supply even one ${recipe.bar} bar (${short}) — stopping.`);
             this.bot.setStatus('out of ore — stopped');
-            ScriptRunner.stop();
+            ScriptRunner.stop(`the bank cannot supply even one ${recipe.bar} bar (${short})`);
             return;
         }
 

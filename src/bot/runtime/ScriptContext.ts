@@ -43,6 +43,9 @@ export class ScriptContext {
 
     crashError: Error | null = null;
 
+    /** Why {@link ScriptRunner.stop} was called. Survives into the next run's log. */
+    stopReason: string | null = null;
+
     activeEvent: string | null = null;
 
     /**

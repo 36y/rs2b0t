@@ -149,9 +149,8 @@ class BankTrip implements Task {
 
         const flaxBank = Bank.items().find(i => i.name !== null && i.name.toLowerCase().includes(this.bot.productName().toLowerCase()));
         if (!flaxBank || flaxBank.name === null || Bank.count(flaxBank.name) === 0) {
-            this.bot.log(`out of '${this.bot.productName()}' in the bank. Stopping.`);
             this.bot.setStatus(`out of ${this.bot.productName()} — stopped`);
-            ScriptRunner.stop();
+            ScriptRunner.stop(`out of '${this.bot.productName()}' in the bank`);
             return;
         }
         const flaxName = flaxBank.name;

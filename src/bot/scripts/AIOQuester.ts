@@ -255,7 +255,7 @@ export default class AIOQuester extends TaskBot {
         } else if (clicked === 'skip') {
             this.requestSkip();
         } else if (clicked === 'stop') {
-            ScriptRunner.stop();
+            ScriptRunner.stop('Stop button (quest overlay)');
         }
         p.end();
     }

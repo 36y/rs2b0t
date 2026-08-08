@@ -29,7 +29,6 @@ import {
     SPIKE_PLATFORMS,
     TICKET_NAME,
     canStartObstacle,
-    coinsNeeded,
     coinsToWithdraw,
     edgeBetween,
     hasPaid,
@@ -44,6 +43,7 @@ import {
     pillarFromHint,
     pillarTagged,
     platformAt,
+    restockShortfall,
     shouldBank,
     shouldEat,
     waitPlatform,
@@ -286,30 +286,29 @@ class BankTrip implements Task {
         await Bank.depositAllMatching(name => !keep.has(name.toLowerCase()));
 
         // Always fund a full mainland→Brimhaven round-trip when stocking.
-        const needCoins = coinsNeeded(this.bot.paid(), false);
         const withdrawCoins = coinsToWithdraw(this.bot.paid(), this.bot.coinCount());
-        if (Bank.count('Coins') < withdrawCoins && this.bot.coinCount() < needCoins) {
-            await Bank.close();
-            this.bot.log(`not enough coins in the bank (need ${needCoins} for boats${this.bot.paid() ? '' : ' + entrance'}). Stopping.`);
-            ScriptRunner.stop();
-            return;
-        }
         if (withdrawCoins > 0) {
             await Bank.withdrawX('Coins', withdrawCoins);
-        }
-
-        if (Bank.count(food) < 1 && this.bot.foodInPack() < 1) {
-            await Bank.close();
-            this.bot.log(`out of ${food} in the bank. Stopping.`);
-            ScriptRunner.stop();
-            return;
         }
         const have = this.bot.foodInPack();
         if (have < foodPerTrip) {
             await Bank.withdrawX(food, foodPerTrip - have);
         }
 
+        // A shortfall here means the next loop banks again for the same reason.
+        const shortfall = restockShortfall({
+            food,
+            foodInPack: this.bot.foodInPack(),
+            foodPerTrip,
+            coins: this.bot.coinCount(),
+            alreadyPaid: this.bot.paid()
+        });
         await Bank.close();
+        if (shortfall !== null) {
+            this.bot.setStatus(`stopped — ${shortfall}`);
+            ScriptRunner.stop(shortfall);
+            return;
+        }
         this.bot.log(`restocked: ${this.bot.foodInPack()} ${food}, ${this.bot.coinCount()} coins, ${this.bot.ticketCount()} tickets banked (threshold ${bankAtTickets})`);
     }
 }

@@ -2,7 +2,7 @@ import { actions, reader, type WorldTile } from '../adapter/ClientAdapter.js';
 import { BotHost } from '../BotHost.js';
 import { ActionRouter } from '../input/ActionRouter.js';
 import { Execution } from './Execution.js';
-import { CombatStyleController, type CombatStyleResolution, type MeleeCombatStyle } from './CombatStyle.js';
+import { CombatStyleController, type CombatModeLabel, type CombatStyleResolution, type MeleeCombatStyle } from './CombatStyle.js';
 import { resolveTeleport, resolveTeleportComponent } from './Teleport.js';
 import type { Npc } from './entities/index.js';
 
@@ -101,6 +101,15 @@ export const Game = {
 
     combatMode(): number {
         return reader.varp(COM_MODE_VARP);
+    },
+
+    /**
+     * The combat-tab style buttons this weapon offers, in on-screen order
+     * (top-to-bottom, left-to-right). Null until the combat tab has loaded.
+     * Index into this to pick a style without guessing what the weapon calls it.
+     */
+    combatStyles(): readonly CombatModeLabel[] | null {
+        return offeredCombatModes();
     },
 
     combatStyleResolution(style: MeleeCombatStyle): CombatStyleResolution | null {

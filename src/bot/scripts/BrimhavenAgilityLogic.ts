@@ -185,6 +185,31 @@ export function shouldBank(tickets: number, foodCount: number, bankAtTickets: nu
     return foodCount <= 0 || tickets >= bankAtTickets;
 }
 
+/**
+ * What the bank could not supply after a restock, or null when the trip is funded.
+ *
+ * The bank trip is triggered by exactly these shortfalls, so anything still missing
+ * when it finishes means the next loop re-opens the bank for the same reason —
+ * the open/close spin a user sees when the account simply ran out of lobsters.
+ * The caller stops on a non-null result instead of spinning.
+ */
+export function restockShortfall(s: {
+    food: string;
+    foodInPack: number;
+    foodPerTrip: number;
+    coins: number;
+    alreadyPaid: boolean;
+}): string | null {
+    if (s.foodInPack < s.foodPerTrip) {
+        return `out of ${s.food} — only ${s.foodInPack} in the pack after restocking, need ${s.foodPerTrip} per trip. Bank more ${s.food} (or lower "Food per trip") and restart.`;
+    }
+    const need = coinsNeeded(s.alreadyPaid, false);
+    if (s.coins < need) {
+        return `out of coins — only ${s.coins} after restocking, need ${need} for the boats${s.alreadyPaid ? '' : ' + arena entrance'}. Bank more coins and restart.`;
+    }
+    return null;
+}
+
 /** Whether low coins alone should force a bank run (location-aware). */
 export function needsCoinsRestock(coins: number, alreadyPaid: boolean, atBrimhaven: boolean): boolean {
     return coins < coinsNeeded(alreadyPaid, atBrimhaven);

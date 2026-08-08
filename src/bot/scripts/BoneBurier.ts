@@ -84,8 +84,7 @@ export default class BoneBurier extends LoopingBot {
         this.status = `burying ${this.boneName}`;
         const before = Inventory.count(this.boneName);
         if (!(await bones.interact('Bury'))) {
-            this.log(`'${this.boneName}' has no Bury action (ops: [${bones.actions().join(', ')}]) — stopping.`);
-            ScriptRunner.stop();
+            ScriptRunner.stop(`'${this.boneName}' has no Bury action (ops: [${bones.actions().join(', ')}])`);
             return;
         }
 
@@ -103,8 +102,7 @@ export default class BoneBurier extends LoopingBot {
         }
         if (Inventory.free() === 0) {
             this.status = 'pack full';
-            this.log(`pack is full of other items — free at least one slot for '${this.boneName}', then restart.`);
-            ScriptRunner.stop();
+            ScriptRunner.stop(`pack is full of other items — free at least one slot for '${this.boneName}', then restart.`);
             return;
         }
 
@@ -141,8 +139,7 @@ export default class BoneBurier extends LoopingBot {
         const op = withdrawOp(bankItem.ops, 'all') ?? withdrawOp(bankItem.ops, '10') ?? withdrawOp(bankItem.ops, '1');
         if (!op) {
             this.status = 'withdraw failed';
-            this.log(`'${bankItem.name}' has no usable Withdraw action — stopping.`);
-            ScriptRunner.stop();
+            ScriptRunner.stop(`'${bankItem.name}' has no usable Withdraw action`);
             return;
         }
 
@@ -165,10 +162,9 @@ export default class BoneBurier extends LoopingBot {
 
     private finishComplete(): void {
         this.status = 'complete';
-        this.log(`bank is out of exact item '${this.boneName}' — complete.`);
         if (Bank.isOpen()) {
             actions.closeModal();
         }
-        ScriptRunner.stop();
+        ScriptRunner.stop(`bank is out of exact item '${this.boneName}' — complete.`);
     }
 }

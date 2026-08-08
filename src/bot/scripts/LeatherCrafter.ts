@@ -216,8 +216,7 @@ export default class LeatherCrafter extends LoopingBot {
         this.pickRecipe();
         if (!this.recipe) {
             const need = Math.min(...this.kind.recipes.map(r => r.level));
-            this.log(`Crafting ${Skills.level('crafting')} is too low for ${this.kindLabel} (needs ${need}) — stopping.`);
-            ScriptRunner.stop();
+            ScriptRunner.stop(`Crafting ${Skills.level('crafting')} is too low for ${this.kindLabel} (needs ${need})`);
             return;
         }
         this.log(`LeatherCrafter — ${this.kindLabel} -> ${this.recipe.label} (level ${this.recipe.level}, ${this.recipe.qty} per item)`);
@@ -273,10 +272,10 @@ export default class LeatherCrafter extends LoopingBot {
             return;
         }
 
-        if (invById(NEEDLE) === 0 && !(await this.withdrawRequired(NEEDLE, 1, 'needle', 'no needle in the bank — stopping.'))) {
+        if (invById(NEEDLE) === 0 && !(await this.withdrawRequired(NEEDLE, 1, 'needle', 'no needle in the bank'))) {
             return;
         }
-        if (invById(THREAD) < 5 && !(await this.withdrawRequired(THREAD, this.threadStock, 'thread', 'no thread in the bank — stopping.'))) {
+        if (invById(THREAD) < 5 && !(await this.withdrawRequired(THREAD, this.threadStock, 'thread', 'no thread in the bank'))) {
             return;
         }
 
@@ -285,7 +284,7 @@ export default class LeatherCrafter extends LoopingBot {
             this.kind.leatherId,
             free,
             this.kindLabel,
-            `no ${this.kindLabel} left in the bank — stopping.`
+            `no ${this.kindLabel} left in the bank`
         ))) {
             return;
         }
@@ -294,7 +293,7 @@ export default class LeatherCrafter extends LoopingBot {
         await Execution.delayUntil(() => !Bank.isOpen(), 3000);
     }
 
-    private async withdrawRequired(id: number, count: number, label: string, missingMessage: string): Promise<boolean> {
+    private async withdrawRequired(id: number, count: number, label: string, stopReason: string): Promise<boolean> {
         const result = await withdrawXById(id, count);
         if (result === 'withdrawn') {
             return true;
@@ -303,8 +302,7 @@ export default class LeatherCrafter extends LoopingBot {
             this.log(`could not withdraw ${label} — retrying`);
             return false;
         }
-        this.log(missingMessage);
-        ScriptRunner.stop();
+        ScriptRunner.stop(stopReason);
         return false;
     }
 

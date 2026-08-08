@@ -425,9 +425,8 @@ class BankAndRestock implements Task {
             const afterCount = foodCount(foodName);
             const minFood = this.bot.settings.num('minFood', 1);
             if (afterCount < minFood) {
-                log(`only ${afterCount} ${foodName} in bank (minimum ${minFood}) — stopping (sending bot to its own death is not useful)`);
                 this.bot.setStatus(`out of ${foodName} in bank — stopped`);
-                ScriptRunner.stop();
+                ScriptRunner.stop(`only ${afterCount} ${foodName} in bank (minimum ${minFood}) — sending the bot to its own death is not useful`);
                 return;
             }
             log(`Withdrew food (have ${afterCount})`);

@@ -190,11 +190,10 @@ export class QuestEngine implements Task {
 
         if (this.runningId === null) {
             this.host.noteState(rows, null, 'queue drained', this.noProgressCount, this.parked.size);
-            this.host.log('queue drained — nothing left to run:');
             for (const r of rows) {
                 this.host.log(`  ${r.name}: ${r.status}${r.reasons.length ? ' — ' + r.reasons.join('; ') : ''}`);
             }
-            ScriptRunner.stop();
+            ScriptRunner.stop('quest queue drained — nothing left to run (per-quest status logged above)');
             return;
         }
 

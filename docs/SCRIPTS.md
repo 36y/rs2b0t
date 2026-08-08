@@ -152,6 +152,7 @@ Tags: `wilderness`, `edgeville`, `ardougne`, `yanille`, `herbs`, `banking`
 |---|---|---|---|
 | `location` | string | `"Edgeville Dungeon"` | Location — one of: Edgeville Dungeon, Chaos Druid Tower, Yanille Dungeon |
 | `food` | string | `"Lobster"` | Food — one of: Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
+| `combatStyleIndex` | string | `"1"` | Combat style — one of: 0 — first button, 1 — second button, 2 — third button, 3 — fourth button |
 | `foodWithdraw` | number (1–27) | `12` | Food per trip |
 | `panicHp` | number (1–98) | `35` | Bank below HP% (no food) |
 
@@ -770,7 +771,6 @@ Tags: `ardougne`, `thieving`, `banking`, `clues`, `afk`
 | Setting | Type | Default | Notes |
 |---|---|---|---|
 | `guardResponse` | string | `"Flee"` | Guard response — one of: Flee, Fight |
-| `bankCommonJunk` | boolean | `true` | Bank common junk too |
 | `solveClues` | boolean | `true` | Solve clue drops |
 
 ### ArdyThiever

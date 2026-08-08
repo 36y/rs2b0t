@@ -101,8 +101,15 @@ describe('HerbloreSecondaries decisions', () => {
         const keep = keepOnDeposit(t, 'Lobster');
         expect(keep).not.toContain(t.name);
         expect(keep).not.toContain(t.sourceName);
-        expect(keep).toContain('Coins');
-        expect(keep).toContain('Lobster');
+    });
+
+    test('loot routes bank everything, including random-event coins', () => {
+        // Coins on a loot route only ever come from a random event.
+        expect(keepOnDeposit(secondaryById('red_spiders_eggs'), 'Lobster')).toEqual(['Lobster']);
+        expect(keepOnDeposit(secondaryById('toads_legs'), 'Lobster')).toEqual([]);
+        // Shop routes still need their float.
+        expect(keepOnDeposit(secondaryById('eye_of_newt'), 'Lobster')).toContain('Coins');
+        expect(keepOnDeposit(secondaryById('chocolate_dust'), 'Lobster')).toContain('Coins');
     });
 
     test('restock when food is empty on a dangerous secondary, not merely low', () => {

@@ -90,6 +90,19 @@ function holdResumeMessage(reason: LoopHoldReason, heldMs: number): string {
     }
 }
 
+/** Never let a blank reason read as "the script just stopped for no reason". */
+export function stopReasonOf(reason: string): string {
+    return reason.trim() || 'no reason given by the caller (bug — please report)';
+}
+
+/** One-line summary of how a finished run ended, for the next run's log. */
+export function endEpitaph(ctx: ScriptContext): string {
+    if (ctx.state === 'crashed') {
+        return `crashed: ${ctx.crashError?.message ?? 'unknown error'}`;
+    }
+    return `ended (${ctx.state}) — ${ctx.stopReason ?? 'no reason recorded'}`;
+}
+
 class ScriptRunnerImpl {
     ctx: ScriptContext | null = null;
     bot: AbstractBot | null = null;
@@ -118,7 +131,7 @@ class ScriptRunnerImpl {
                 this.pause();
             }
         } else if (clicked === 'stop') {
-            this.stop();
+            this.stop('Stop button (paint overlay)');
         }
     }
 
@@ -144,6 +157,7 @@ class ScriptRunnerImpl {
             throw new Error(`'${this.meta?.name}' is still ${this.ctx.state}`);
         }
 
+        const previous = this.ctx ? { name: this.meta?.name ?? '?', epitaph: endEpitaph(this.ctx) } : null;
         const ctx = new ScriptContext();
         const bot = meta.create();
         bot.bindLog(msg => ctx.addLog('info', msg));
@@ -159,6 +173,12 @@ class ScriptRunnerImpl {
 
         ActionRouter.beginRun((level, msg) => ctx.addLog(level, msg));
 
+        // A restart (StallGuard) throws away the old context along with its log —
+        // the only place the reason the previous run ended was recorded, which is
+        // why a restarted script looked like it stopped for nothing. Carry it over.
+        if (previous) {
+            ctx.addLog('info', `previous run of '${previous.name}' ${previous.epitaph}`);
+        }
         ctx.addLog('info', `${meta.name} started (input: ${ActionRouter.driver.mode})`);
         this.fireChange();
 
@@ -240,7 +260,12 @@ class ScriptRunnerImpl {
         this.fireChange();
     }
 
-    stop(): void {
+    /**
+     * `reason` is mandatory so no caller can end a run without leaving a starting
+     * point for debugging. It is echoed on both the stopping and stopped lines and
+     * carried into the next run's log by {@link start}.
+     */
+    stop(reason: string): void {
         const ctx = this.ctx;
         if (!ctx || ctx.state === 'stopped' || ctx.state === 'crashed') {
             return;
@@ -250,8 +275,9 @@ class ScriptRunnerImpl {
             return;
         }
 
+        ctx.stopReason = stopReasonOf(reason);
         ctx.state = 'stopping';
-        ctx.addLog('info', 'stopping...');
+        ctx.addLog('info', `stopping — ${ctx.stopReason}`);
         this.fireChange();
         ctx.abortWaiters();
 
@@ -345,7 +371,11 @@ class ScriptRunnerImpl {
 
     private finishStop(ctx: ScriptContext): void {
         ctx.state = 'stopped';
-        ctx.addLog('info', 'stopped');
+        ctx.stopReason ??= stopReasonOf('');
+        ctx.addLog('info', `stopped — ${ctx.stopReason}`);
+        // Also to the console: the panel only shows the *current* context's log,
+        // so a restart would otherwise erase why the last run ended.
+        console.log(`[rs2b0t] ${this.meta?.name ?? 'script'} stopped — ${ctx.stopReason}`);
         this.teardown(ctx);
     }
 

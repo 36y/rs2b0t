@@ -20,6 +20,8 @@ export const MAZE_SQUARE = { mx: 45, mz: 71 };
  */
 const MAZE_DOOR_IDS = new Set([3628, 3629, 3630, 3631, 3632]);
 const MAZE_SHRINE_LOC = 3634; // macro_maze_complete
+/** Step-backs allowed before giving up on this pass and restarting the route. */
+const MAX_RESYNCS = 3;
 
 export async function solveMaze(log: (msg: string) => void, execution: ExecutionApi = Execution): Promise<boolean> {
     const inMaze = (): boolean => {
@@ -43,6 +45,7 @@ export async function solveMaze(log: (msg: string) => void, execution: Execution
     await clearMesbox();
 
     const route = selectRoute(start, MAZE_ROUTES);
+    let resyncs = 0;
     log(
         `random event: maze — spawn (${start.x},${start.z}) -> route ${route.spawn.x},${route.spawn.z} (${route.doors.length} doors)`
     );
@@ -75,10 +78,14 @@ export async function solveMaze(log: (msg: string) => void, execution: Execution
             }, 4_000);
         }
     };
-    const walkAdjacent = (d: { x: number; z: number }): Promise<void> => walkTowards(d, false);
+    /** True when the walk actually got next to `d` — a false means it is walled off. */
+    const walkAdjacent = async (d: { x: number; z: number }): Promise<boolean> => {
+        await walkTowards(d, false);
+        const t = reader.worldTile();
+        return t !== null && chebyshev(t, d) <= 1;
+    };
 
     const openDoorAt = async (d: { x: number; z: number }): Promise<void> => {
-        await walkAdjacent(d);
         await clearMesbox();
         const door = Locs.query()
             .where(l => MAZE_DOOR_IDS.has(l.id) && l.tile().x === d.x && l.tile().z === d.z)
@@ -102,8 +109,37 @@ export async function solveMaze(log: (msg: string) => void, execution: Execution
         }
     };
 
-    for (let i = 0; i < route.doors.length && inMaze(); i++) {
-        await openDoorAt(route.doors[i]);
+    // The door list is a route through cells: each door is only reachable from the
+    // cell the previous one opens into, and only opens from that side. Anything
+    // that leaves the player out of step with it — a relogin inside the maze, or a
+    // door step that bounced them back — walls the next door off. When that
+    // happens, step back through the previous door to re-enter the right cell
+    // instead of clicking a door on the far side of a wall for a minute.
+    for (let i = 0; i < route.doors.length && inMaze(); ) {
+        const door = route.doors[i];
+        if (await walkAdjacent(door)) {
+            await openDoorAt(door);
+            i++;
+            resyncs = 0;
+            continue;
+        }
+        const previous = route.doors[i - 1];
+        const here = reader.worldTile();
+        if (!previous || resyncs >= MAX_RESYNCS) {
+            log(
+                `random event: maze — door ${i} (${door.x},${door.z}) is walled off from (${here?.x},${here?.z}) `
+                + `after ${resyncs} re-sync attempt(s); restarting the route`
+            );
+            return true;
+        }
+        resyncs++;
+        log(
+            `random event: maze — door ${i} (${door.x},${door.z}) is walled off from (${here?.x},${here?.z}) — `
+            + `stepping back through (${previous.x},${previous.z}) to re-enter the route (${resyncs}/${MAX_RESYNCS})`
+        );
+        if (await walkAdjacent(previous)) {
+            await openDoorAt(previous);
+        }
     }
 
     // Belt-and-suspenders: if a regenerated route missed the chamber door, open it.
@@ -115,6 +151,7 @@ export async function solveMaze(log: (msg: string) => void, execution: Execution
         log(
             `random event: maze — opening chamber door (${MAZE_SHRINE_DOOR.x},${MAZE_SHRINE_DOOR.z})`
         );
+        await walkAdjacent(MAZE_SHRINE_DOOR);
         await openDoorAt(MAZE_SHRINE_DOOR);
     }
 
@@ -176,6 +213,7 @@ export async function solveMaze(log: (msg: string) => void, execution: Execution
         }
         // Re-open chamber door if it closed between attempts.
         if (pass % 2 === 1) {
+            await walkAdjacent(MAZE_SHRINE_DOOR);
             await openDoorAt(MAZE_SHRINE_DOOR);
         }
         await execution.delayTicks(1);

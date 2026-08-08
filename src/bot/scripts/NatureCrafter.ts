@@ -294,8 +294,7 @@ class EnterAltar implements Task {
             return;
         }
         if (++this.fails >= 3) {
-            this.bot.log('NatureCrafter: the talisman didn\'t teleport into the altar. Stopping.');
-            ScriptRunner.stop();
+            ScriptRunner.stop('NatureCrafter: the talisman didn\'t teleport into the altar');
         }
     }
 }
@@ -622,8 +621,7 @@ class BankRestock implements Task {
                 await Bank.withdrawX(COINS, Math.min(needCoins, Bank.count(COINS)));
             }
             if (Inventory.count(COINS) < LOW_COINS && Bank.loaded()) {
-                this.bot.log('NatureCrafter runner: out of coins (bank + pack) for fares and buy-backs. Stopping.');
-                ScriptRunner.stop();
+                ScriptRunner.stop('NatureCrafter runner: out of coins (bank + pack) for fares and buy-backs');
                 return;
             }
         }
@@ -632,8 +630,7 @@ class BankRestock implements Task {
         if (banked === 0) {
             // only believe an empty bank after it reads empty on three separate restocks
             if (essCount() === 0 && ++this.emptyReads >= 3) {
-                this.bot.log('NatureCrafter runner: out of Rune essence in the bank (three reads). Stopping.');
-                ScriptRunner.stop();
+                ScriptRunner.stop('NatureCrafter runner: out of Rune essence in the bank (three reads)');
             }
             return;
         }

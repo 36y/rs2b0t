@@ -101,8 +101,7 @@ async function openBank(bot: RuneCrafter): Promise<boolean> {
         return true;
     }
     if (bot.countBankFail() >= MAX_BANK_FAILS) {
-        bot.log('RuneCrafter: couldn\'t reach the bank — start nearer it. Stopping.');
-        ScriptRunner.stop();
+        ScriptRunner.stop('RuneCrafter: couldn\'t reach the bank — start nearer it');
         return false;
     }
     bot.log('could not open the bank — will retry');
@@ -124,8 +123,7 @@ async function cleanPack(bot: RuneCrafter, keep: string[]): Promise<boolean> {
     }
     const left = packJunk(keep);
     if (left.length > 0) {
-        bot.log(`RuneCrafter: ${left.length} item(s) would not deposit (${left.map(i => `${i.name ?? 'unnamed'}#${i.id}`).join(', ')}) — the pack must hold only ${keep.join(' + ')}. Stopping.`);
-        ScriptRunner.stop();
+        ScriptRunner.stop(`RuneCrafter: ${left.length} item(s) would not deposit (${left.map(i => `${i.name ?? 'unnamed'}#${i.id}`).join(', ')}) — the pack must hold only ${keep.join(' + ')}`);
         return false;
     }
     return true;
@@ -140,15 +138,13 @@ async function ensureTalisman(bot: RuneCrafter): Promise<boolean> {
     await Execution.delayUntil(() => Bank.loaded(), 3000);
     const tal = Bank.items().find(i => i.name?.toLowerCase() === talisman.toLowerCase());
     if (!tal) {
-        bot.log(`RuneCrafter: no ${talisman} in the bank or pack. Stopping.`);
-        ScriptRunner.stop();
+        ScriptRunner.stop(`RuneCrafter: no ${talisman} in the bank or pack`);
         return false;
     }
     const op = withdrawOp(tal.ops, '1') ?? withdrawOp(tal.ops, 'any') ?? 'Withdraw-1';
     await Bank.withdraw(talisman, op);
     if (!(await Execution.delayUntil(() => Inventory.contains(talisman), 3000))) {
-        bot.log(`RuneCrafter: the ${talisman} withdraw never landed. Stopping.`);
-        ScriptRunner.stop();
+        ScriptRunner.stop(`RuneCrafter: the ${talisman} withdraw never landed`);
         return false;
     }
     bot.log(`withdrew a ${talisman}`);
@@ -335,8 +331,7 @@ class BankTrip implements Task {
         if (!(await ensureTalisman(this.bot))) { return; }
 
         if (Bank.count(ESSENCE) === 0) {
-            this.bot.log('RuneCrafter: out of Rune essence in the bank. Stopping.');
-            ScriptRunner.stop();
+            ScriptRunner.stop('RuneCrafter: out of Rune essence in the bank');
             return;
         }
         const ess = Bank.items().find(i => i.name?.toLowerCase() === ESSENCE.toLowerCase());
@@ -359,8 +354,7 @@ class Enter implements Task {
         const ruins = Locs.query().name(RUINS).nearest();
         const talisman = Inventory.first(this.bot.talismanName());
         if (!talisman) {
-            this.bot.log(`RuneCrafter: no ${this.bot.talismanName()} in the pack — the altar can't be entered without one. Stopping.`);
-            ScriptRunner.stop();
+            ScriptRunner.stop(`RuneCrafter: no ${this.bot.talismanName()} in the pack — the altar can't be entered without one`);
             return;
         }
         if (!ruins) { await Execution.delayTicks(2); return; }
@@ -373,8 +367,7 @@ class Enter implements Task {
             return;
         }
         if (++this.fails >= MAX_ENTER_FAILS) {
-            this.bot.log('RuneCrafter: the talisman didn\'t teleport into the altar. Stopping.');
-            ScriptRunner.stop();
+            ScriptRunner.stop('RuneCrafter: the talisman didn\'t teleport into the altar');
         }
     }
 }
@@ -461,8 +454,7 @@ class RunnerRestock implements Task {
         const banked = Bank.count(ESSENCE);
         if (banked === 0) {
             if (++this.emptyReads >= 3) {
-                this.bot.log('RuneCrafter: out of Rune essence in the bank (three reads). Stopping.');
-                ScriptRunner.stop();
+                ScriptRunner.stop('RuneCrafter: out of Rune essence in the bank (three reads)');
             }
             return;
         }
@@ -571,8 +563,7 @@ class MuleDropJunk implements Task {
         const left = this.junk();
         if (left.length > 0) {
             // undroppable junk would loop here forever while runners pile up outside
-            this.bot.log(`RuneCrafter: could not drop ${left.map(i => `${i.name ?? 'unnamed'}#${i.id}`).join(', ')} — it keeps blocking essence deliveries. Stopping.`);
-            ScriptRunner.stop();
+            ScriptRunner.stop(`RuneCrafter: could not drop ${left.map(i => `${i.name ?? 'unnamed'}#${i.id}`).join(', ')} — it keeps blocking essence deliveries`);
         }
     }
 }

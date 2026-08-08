@@ -138,16 +138,14 @@ class BankTrip implements Task {
 
         if (bot.budgetLeft() === 0) {
             await Bank.depositAllMatching(() => true);
-            bot.log(`[buyout] budget spent (${bot.sessionSpent}gp) — stopping. Haul: ${Object.entries(bot.sessionHaul).map(([o, n]) => `${o}×${n}`).join(', ') || '(nothing)'}`);
             bot.setStatus('budget spent — stopped');
-            ScriptRunner.stop();
+            ScriptRunner.stop(`[buyout] budget spent (${bot.sessionSpent}gp). Haul: ${Object.entries(bot.sessionHaul).map(([o, n]) => `${o}×${n}`).join(', ') || '(nothing)'}`);
             return;
         }
         const bankGp = Bank.count('Coins');
         if (bankGp < bot.stopFloorGp) {
-            bot.log(`[buyout] bank coins ${bankGp} below floor ${bot.stopFloorGp} — stopping`);
             bot.setStatus('bank dry — stopped');
-            ScriptRunner.stop();
+            ScriptRunner.stop(`[buyout] bank coins ${bankGp} below floor ${bot.stopFloorGp}`);
             return;
         }
 

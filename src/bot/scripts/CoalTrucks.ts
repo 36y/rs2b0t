@@ -241,9 +241,8 @@ export default class CoalTrucks extends LoopingBot {
             return;
         }
         if (result === 'wrong-item') {
-            this.log('CoalTrucks: the truck refused the item we used on it. Stopping.');
             this.status = 'wrong item used — stopped';
-            ScriptRunner.stop();
+            ScriptRunner.stop('CoalTrucks: the truck refused the item we used on it');
             return;
         }
         // Same race as the pull: the message can beat the inventory by a tick, and a real
@@ -298,9 +297,8 @@ export default class CoalTrucks extends LoopingBot {
         }
         if (!(await Bank.openBooth(SEERS_BANK, BOOTH.name, BOOTH.op, m => this.log(`  ${m}`)))) {
             if (++this.bankFails >= MAX_BANK_FAILS) {
-                this.log('CoalTrucks: could not open the Seers bank. Stopping.');
                 this.status = 'cannot reach the bank — stopped';
-                ScriptRunner.stop();
+                ScriptRunner.stop('CoalTrucks: could not open the Seers bank');
                 return;
             }
             this.log('could not open the bank — will retry');
@@ -332,9 +330,8 @@ export default class CoalTrucks extends LoopingBot {
         }
         const fromBank = bestPickaxe(Skills.level('mining'), name => Bank.count(name) > 0);
         if (!fromBank) {
-            this.log('CoalTrucks: no usable pickaxe held or banked. Stopping.');
             this.status = 'no pickaxe — stopped';
-            ScriptRunner.stop();
+            ScriptRunner.stop('CoalTrucks: no usable pickaxe held or banked');
             return;
         }
         if (await Bank.withdraw(fromBank)) {

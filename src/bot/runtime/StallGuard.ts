@@ -20,9 +20,8 @@ class StallGuardImpl {
         if (this.restartPending || !ScriptRunner.meta) {
             return;
         }
-        ScriptRunner.ctx?.addLog('warn', `stall guard: restarting script — ${reason}`);
         this.restartPending = true;
-        ScriptRunner.stop();
+        ScriptRunner.stop(`stall guard is restarting the script — ${reason}`);
     }
 
     private onFrame(): void {

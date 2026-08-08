@@ -54,6 +54,20 @@ export const SETTINGS: SettingsSchema = {
         label: 'Food',
         group: 'Food & healing'
     },
+    combatStyleIndex: {
+        type: 'string',
+        default: '1',
+        options: ['0', '1', '2', '3'],
+        optionLabels: {
+            '0': '0 — first button',
+            '1': '1 — second button',
+            '2': '2 — third button',
+            '3': '3 — fourth button'
+        },
+        label: 'Combat style',
+        help: 'which combat-tab style button to select, counted top-to-bottom. What each one trains depends on the weapon (the resolved name is logged at startup), so this works with weapons that have no Controlled or no Defensive option.',
+        group: 'Combat'
+    },
     foodWithdraw: {
         type: 'number',
         default: 12,
@@ -149,6 +163,7 @@ export default class ChaosDruidKiller extends TaskBot {
 
     foodName = 'Lobster';
     foodWithdraw = 12;
+    combatStyleIndex = 1;
 
     panicHpFraction = 0.35;
     tripPrepared = false;
@@ -180,6 +195,7 @@ export default class ChaosDruidKiller extends TaskBot {
         this.spot = DRUID_SPOTS[locationName];
         this.foodName = this.settings.str('food', 'Lobster');
         this.foodWithdraw = this.settings.num('foodWithdraw', 12);
+        this.combatStyleIndex = Number(this.settings.str('combatStyleIndex', '1'));
 
         this.panicHpFraction = this.settings.num('panicHp', 35) / 100;
         this.startedAt = Date.now();
@@ -188,7 +204,7 @@ export default class ChaosDruidKiller extends TaskBot {
         this.lastArea = startingArea;
         this.tripPrepared = this.inField() && this.foodCount() >= this.foodWithdraw;
 
-        this.log(`ChaosDruidKiller starting — ${this.locationName} (${this.spot.npc}), ${this.foodWithdraw} ${this.foodName}, smart-eat, bank without food <${Math.round(this.panicHpFraction * 100)}%, field ${this.spot.field.x},${this.spot.field.z}`);
+        this.log(`ChaosDruidKiller starting — ${this.locationName} (${this.spot.npc}), ${this.foodWithdraw} ${this.foodName}, combat style ${this.combatStyleIndex}, smart-eat, bank without food <${Math.round(this.panicHpFraction * 100)}%, field ${this.spot.field.x},${this.spot.field.z}`);
         const req = this.spot.requires;
         if (req && Skills.level(req.skill) < req.level) {
             this.park(`${this.locationName} needs ${req.level} ${req.skill} — you have ${Skills.level(req.skill)}. Train it or pick another location, then restart.`);
@@ -212,6 +228,9 @@ export default class ChaosDruidKiller extends TaskBot {
             new Parked(this),
             new LocationGuard(this),
             new Eat(this),
+            // Before the walk, so a style index this weapon does not have parks the
+            // bot at once instead of after a trip out to the field.
+            new SetCombatStyle(this),
             new BankRun(this),
             new GoToField(this),
             new Loot(this),
@@ -772,6 +791,55 @@ class Eat implements Task {
     }
     async execute(): Promise<void> {
         await eatOnce(this.bot);
+    }
+}
+
+/**
+ * Select the configured combat-tab button. The style is picked by position rather
+ * than by name because the Accurate/Aggressive/Controlled/Defensive set is not the
+ * same on every weapon — a name-based pick silently lands on the wrong button.
+ * com_mode is not persisted, so this re-asserts after every login.
+ */
+class SetCombatStyle implements Task {
+    private announced = false;
+    private retryAt = 0;
+    constructor(private bot: ChaosDruidKiller) {}
+
+    validate(): boolean {
+        // The bank modal owns the screen; a tab button pressed under it is rejected.
+        if (this.bot.parked || Bank.isOpen() || Date.now() < this.retryAt) {
+            return false;
+        }
+        const offered = Game.combatStyles();
+        if (offered === null || offered.length === 0) {
+            return false; // combat tab not loaded yet
+        }
+        const want = offered[this.bot.combatStyleIndex];
+        return want === undefined || Game.combatMode() !== want.mode;
+    }
+
+    async execute(): Promise<void> {
+        const offered = Game.combatStyles() ?? [];
+        const index = this.bot.combatStyleIndex;
+        const want = offered[index];
+        if (!want) {
+            this.bot.park(
+                `combat style ${index} does not exist for the wielded weapon — it offers ${offered.length}: `
+                + `${offered.map((option, i) => `${i}=${option.label}`).join(', ')}. Pick one of those, then restart.`
+            );
+            return;
+        }
+        this.bot.setStatus(`setting combat style ${index} (${want.label})`);
+        Game.setCombatMode(want.mode);
+        if (!(await Execution.delayUntil(() => Game.combatMode() === want.mode, 3000))) {
+            this.retryAt = Date.now() + 60_000;
+            this.bot.log(`could not select combat style ${index} (${want.label}) — retrying in 60s`);
+            return;
+        }
+        if (!this.announced) {
+            this.announced = true;
+            this.bot.log(`combat style ${index} = ${want.label} (of ${offered.map(option => option.label).join(', ')})`);
+        }
     }
 }
 

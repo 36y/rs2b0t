@@ -296,8 +296,7 @@ class CrafterAtBank implements Task {
             const banked = Bank.count(ESSENCE);
             if (banked === 0) {
                 if (++this.emptyReads >= 3) {
-                    this.bot.log('MuleCrafter: no essence left in the bank (three reads). Stopping.');
-                    ScriptRunner.stop();
+                    ScriptRunner.stop('MuleCrafter: no essence left in the bank (three reads)');
                 }
                 return;
             }
@@ -341,8 +340,7 @@ class EnterAltar implements Task {
             return;
         }
         if (++this.fails >= 3) {
-            this.bot.log('MuleCrafter: the talisman didn\'t teleport into the altar. Stopping.');
-            ScriptRunner.stop();
+            ScriptRunner.stop('MuleCrafter: the talisman didn\'t teleport into the altar');
         }
     }
 }
@@ -580,8 +578,7 @@ class CrafterGoBank implements Task {
             const banked = Bank.count(ESSENCE);
             if (banked === 0) {
                 if (essCount() === 0 && ++this.emptyReads >= 3) {
-                    this.bot.log('MuleCrafter: no essence left in the bank (three reads). Stopping.');
-                    ScriptRunner.stop();
+                    ScriptRunner.stop('MuleCrafter: no essence left in the bank (three reads)');
                 }
                 return;
             }
@@ -639,8 +636,7 @@ class MuleGoBank implements Task {
         const banked = Bank.count(ESSENCE);
         if (banked === 0 && essCount() === 0) {
             if (++this.emptyReads >= 3) {
-                this.bot.log('MuleCrafter: out of essence in the bank (three reads). Stopping.');
-                ScriptRunner.stop();
+                ScriptRunner.stop('MuleCrafter: out of essence in the bank (three reads)');
             }
             return;
         }

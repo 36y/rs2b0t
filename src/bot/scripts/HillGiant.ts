@@ -419,8 +419,7 @@ class BankRun implements Task {
         if (needs.food > 0) {
             if (Bank.count(food) === 0) {
                 await Bank.close();
-                this.bot.log(`out of ${food} in the bank. Stopping.`);
-                ScriptRunner.stop();
+                ScriptRunner.stop(`out of ${food} in the bank`);
                 return;
             }
             await Bank.withdrawX(food, needs.food);

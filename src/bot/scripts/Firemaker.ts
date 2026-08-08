@@ -73,13 +73,11 @@ export default class Firemaker extends LoopingBot {
         const need = LOG_LEVELS[this.logName];
         const have = Skills.level('firemaking');
         if (!this.plot || need === undefined) {
-            this.log(`unknown setting — logType='${this.logName}', location='${this.spotName}' — stopping.`);
-            ScriptRunner.stop();
+            ScriptRunner.stop(`unknown setting — logType='${this.logName}', location='${this.spotName}'`);
             return;
         }
         if (have < need) {
-            this.log(`${this.logName} need Firemaking ${need}, you have ${have} — stopping.`);
-            ScriptRunner.stop();
+            ScriptRunner.stop(`${this.logName} need Firemaking ${need}, you have ${have}`);
             return;
         }
         this.log(`Firemaker — ${this.logName} at ${this.spotName}, plot x${this.plot.x0}-${this.plot.x1} z${this.plot.z0}-${this.plot.z1}`);
@@ -125,19 +123,16 @@ export default class Firemaker extends LoopingBot {
         for (const step of plan) {
             await Bank.withdraw(step.name);
             if (!(await Execution.delayUntilTicks(() => Inventory.count(step.name) > 0, 5))) {
-                this.log(`no ${step.name} in the bank or pack — stopping.`);
-                ScriptRunner.stop();
+                ScriptRunner.stop(`no ${step.name} in the bank or pack`);
                 return false;
             }
         }
         if (!hasAllTools(TOOLS, this.skillLevel, this.invCount)) {
-            this.log('no tinderbox in the bank or pack — stopping.');
-            ScriptRunner.stop();
+            ScriptRunner.stop('no tinderbox in the bank or pack');
             return false;
         }
         if (!(await Bank.withdrawX(this.logName, reader.inventorySize() - Inventory.used()))) {
-            this.log(`no ${this.logName} left in the bank — stopping.`);
-            ScriptRunner.stop();
+            ScriptRunner.stop(`no ${this.logName} left in the bank`);
             return false;
         }
 

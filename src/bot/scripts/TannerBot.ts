@@ -170,8 +170,7 @@ export default class TannerBot extends LoopingBot {
             await Bank.withdrawX(COINS, this.coinFloat);
         }
         if (Inventory.count(COINS) === 0) {
-            this.log('out of coins — the tanner charges per hide. Stopping.');
-            ScriptRunner.stop();
+            ScriptRunner.stop('out of coins — the tanner charges per hide');
             return false;
         }
 

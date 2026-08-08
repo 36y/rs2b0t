@@ -153,7 +153,7 @@ export async function bringUpOffIsland(page: Page, opts: { user: string; typeWai
 
 export async function stopScript(page: Page): Promise<void> {
     await page.evaluate(() => {
-        try { (globalThis as never as Rs2b0t).rs2b0t.runner.stop(); } catch { /* ignore */ }
+        try { (globalThis as never as Rs2b0t).rs2b0t.runner.stop('harness stopScript()'); } catch { /* ignore */ }
     });
     await page.waitForTimeout(400);
 }
@@ -195,7 +195,7 @@ export type Rs2b0t = {
             ctx: { log: { level: string; msg: string }[]; loopCount: number } | null;
             bot: Record<string, unknown> | null;
             start(script: unknown): void;
-            stop(): void;
+            stop(reason: string): void;
         };
         reader: {
             inventory(): { name: string | null; count: number; id: number; slot: number; comId: number; ops: (string | null)[] }[];

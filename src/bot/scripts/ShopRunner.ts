@@ -82,14 +82,12 @@ export class ShopRunner extends TaskBot {
             }
         }
         if (this.chosen.size === 0) {
-            this.log('[shoprun] stopping — no buy items selected');
-            ScriptRunner.stop();
+            ScriptRunner.stop('[shoprun] no buy items selected');
             return;
         }
         const acct = this.accountView();
         if (!this.route.clusters.some(c => clusterEligible(c, acct, this.toggles))) {
-            this.log('[shoprun] stopping — no eligible clusters for this account');
-            ScriptRunner.stop();
+            ScriptRunner.stop('[shoprun] no eligible clusters for this account');
             return;
         }
         this.loadState();
@@ -186,8 +184,7 @@ class RunCluster implements Task {
             ? nextCluster(bot.route, bot.lastClusterId, bot.accountView(), bot.toggles)
             : bot.route.clusters.find(candidate => candidate.id === bot.repeatClusterId) ?? null;
         if (!cluster) {
-            bot.log('[shoprun] no eligible cluster on the ring — stopping');
-            ScriptRunner.stop();
+            ScriptRunner.stop('[shoprun] no eligible cluster on the ring');
             return;
         }
 
@@ -227,8 +224,7 @@ class RunCluster implements Task {
 
         const bankGp = Bank.count('Coins');
         if (bankGp < bot.stopFloorGp) {
-            bot.log(`[shoprun] stopping — out of operating gp (bank ${bankGp} < floor ${bot.stopFloorGp})`);
-            ScriptRunner.stop();
+            ScriptRunner.stop(`[shoprun] out of operating gp (bank ${bankGp} < floor ${bot.stopFloorGp})`);
             return;
         }
         const estimate = estimateClusterGp(cluster, SHOP_DB, bot.chosen);

@@ -111,6 +111,13 @@ const MAX_ATTEMPTS = 4; // give up on an event we can't clear after this many tr
 const GIVE_UP_COOLDOWN_MS = 45000; // then ignore that event for this long so the bot resumes
 const PICK_WAIT_MS = 80_000;
 
+/**
+ * Events that teleport the player into their own map square. Giving up on these
+ * is never right: the script cannot walk out, so resuming it just makes the bot
+ * fight the solver for the same tiles. Retry until solved.
+ */
+const TRAPPED_KINDS: ReadonlySet<EventKind> = new Set(['maze', 'mime']);
+
 export function plantStrategy(ops: string[]): 'pick' | 'evade' {
     const canPick = ops.some(a => /pick|take/i.test(a));
     const canAttack = ops.some(a => /attack/i.test(a));
@@ -334,12 +341,16 @@ class RandomEventsImpl {
         const n = (this.attempts.get(sig) ?? 0) + 1;
         this.attempts.set(sig, n);
         if (n > MAX_ATTEMPTS) {
-            this.attempts.delete(sig);
-            this.cooldownUntil.set(sig, performance.now() + GIVE_UP_COOLDOWN_MS);
-            log(
-                `random event: gave up on ${event.name} after ${MAX_ATTEMPTS} attempts — ignoring it for ${GIVE_UP_COOLDOWN_MS / 1000}s`
-            );
-            return false;
+            if (TRAPPED_KINDS.has(event.kind)) {
+                log(`random event: ${event.name} — attempt ${n}; still inside the event map, so retrying instead of handing back to the script`);
+            } else {
+                this.attempts.delete(sig);
+                this.cooldownUntil.set(sig, performance.now() + GIVE_UP_COOLDOWN_MS);
+                log(
+                    `random event: gave up on ${event.name} after ${MAX_ATTEMPTS} attempts — ignoring it for ${GIVE_UP_COOLDOWN_MS / 1000}s`
+                );
+                return false;
+            }
         }
 
         let acted = false;

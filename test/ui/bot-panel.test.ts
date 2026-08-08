@@ -24,7 +24,7 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
-    ScriptRunner.stop();
+    ScriptRunner.stop('test teardown');
     await Promise.resolve();
     await Promise.resolve();
     setURL(PLAIN_URL);

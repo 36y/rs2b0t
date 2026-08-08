@@ -39,7 +39,7 @@ const original = {
 };
 
 let logs: string[];
-let stops: number;
+let stops: string[];
 let bankOpen: boolean;
 let sideReady: boolean;
 let dialogOpen: boolean;
@@ -99,7 +99,7 @@ async function runBankLeg(instance = bot('Leather')): Promise<void> {
 
 beforeEach(() => {
     logs = [];
-    stops = 0;
+    stops = [];
     bankOpen = true;
     sideReady = true;
     dialogOpen = false;
@@ -149,8 +149,8 @@ beforeEach(() => {
         return true;
     };
     Execution.delayUntil = async condition => condition();
-    ScriptRunner.stop = () => {
-        stops++;
+    ScriptRunner.stop = reason => {
+        stops.push(reason);
     };
 });
 
@@ -197,7 +197,7 @@ describe('LeatherCrafter startup readiness', () => {
         await bot().onStart();
 
         expect(readiness).toEqual([false, false, true]);
-        expect(stops).toBe(0);
+        expect(stops).toEqual([]);
         expect(logs).toContain('LeatherCrafter — Hard leather -> Hardleather body (level 28, 1 per item)');
         expect(logs.some(message => message.includes('Crafting 0'))).toBe(false);
     });
@@ -207,8 +207,7 @@ describe('LeatherCrafter startup readiness', () => {
 
         await bot().onStart();
 
-        expect(stops).toBe(1);
-        expect(logs).toContain('Crafting 27 is too low for Hard leather (needs 28) — stopping.');
+        expect(stops).toEqual(['Crafting 27 is too low for Hard leather (needs 28)']);
     });
 });
 
@@ -225,7 +224,7 @@ describe('LeatherCrafter bank withdrawals', () => {
         expect(clickedIds).toEqual([THREAD, LEATHER]);
         expect(occupiedBefore).toBe(2);
         expect(occupiedAfterThreadTopUp).toBe(occupiedBefore);
-        expect(stops).toBe(0);
+        expect(stops).toEqual([]);
         expect(bankOpen).toBe(false);
         expect(logs.some(message => message.includes('no thread'))).toBe(false);
     });
@@ -236,7 +235,7 @@ describe('LeatherCrafter bank withdrawals', () => {
 
         await runBankLeg();
 
-        expect(stops).toBe(0);
+        expect(stops).toEqual([]);
         expect(clickedIds).toEqual([]);
         expect(logs).toContain('bank contents not ready — retrying');
     });
@@ -251,7 +250,7 @@ describe('LeatherCrafter bank withdrawals', () => {
 
         await runBankLeg();
 
-        expect(stops).toBe(0);
+        expect(stops).toEqual([]);
         expect(clickedIds).toEqual([THREAD]);
         expect(logs).toContain('could not withdraw thread — retrying');
     });
@@ -264,7 +263,7 @@ describe('LeatherCrafter bank withdrawals', () => {
 
         await runBankLeg();
 
-        expect(stops).toBe(0);
+        expect(stops).toEqual([]);
         expect(clickedIds).toEqual([]);
         expect(logs).toContain('could not withdraw thread — retrying');
         expect(logs.some(message => message.includes('no thread'))).toBe(false);
@@ -278,7 +277,7 @@ describe('LeatherCrafter bank withdrawals', () => {
 
         await runBankLeg();
 
-        expect(stops).toBe(0);
+        expect(stops).toEqual([]);
         expect(clickedIds).toEqual([]);
         expect(logs).toContain('bank inventory view not ready — retrying');
     });
@@ -289,8 +288,7 @@ describe('LeatherCrafter bank withdrawals', () => {
 
         await runBankLeg();
 
-        expect(stops).toBe(1);
+        expect(stops).toEqual(['no thread in the bank']);
         expect(clickedIds).toEqual([]);
-        expect(logs).toContain('no thread in the bank — stopping.');
     });
 });
