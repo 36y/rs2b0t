@@ -13,6 +13,7 @@ describe('foodHealAmount', () => {
         expect(foodHealAmount('Lobster')).toBe(12);
         expect(foodHealAmount('Swordfish')).toBe(14);
         expect(foodHealAmount('Cake')).toBe(4);
+        expect(foodHealAmount('2/3 cake')).toBe(4);
         expect(foodHealAmount('slice of cake')).toBe(4);
     });
 });

@@ -1,9 +1,8 @@
-import { foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
 import { TaskBot, type Task } from '../api/Bot.js';
 import { EventSignal } from '../api/EventSignal.js';
 import { Execution } from '../api/Execution.js';
 import { Game } from '../api/Game.js';
-import { Inventory } from '../api/hud/Inventory.js';
+import { Inventory, type InvItem } from '../api/hud/Inventory.js';
 import { Paint } from '../api/hud/Paint.js';
 import { Quests } from '../api/hud/Quests.js';
 import { Skills } from '../api/hud/Skills.js';
@@ -18,7 +17,12 @@ import { QuestGear } from '../quests/gear.js';
 import type { QueueRow, QueueStatus } from '../quests/engine/queue.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import { resolveConsumeAction, resolveSustainPolicy, type ResolvedSustainPolicy } from './AIOQuesterLogic.js';
+import {
+    resolveSustainPolicy,
+    selectSustainConsumable,
+    type ResolvedSustainPolicy,
+    type SustainSelection
+} from './AIOQuesterLogic.js';
 
 const DEATH_RE = /oh dear.*you are dead/i;
 
@@ -69,8 +73,6 @@ export default class AIOQuester extends TaskBot {
 
     private status = 'starting';
     private picked = new Set<string>();
-
-
     private rows: QueueRow[] = [];
     private runningId: string | null = null;
     private stepDesc = '—';
@@ -132,29 +134,28 @@ export default class AIOQuester extends TaskBot {
     }
 
     shouldEat(): boolean {
-        const policy = this.sustainPolicy();
-        const food = Inventory.items().find(i => policy.foods.some(f => i.name?.toLowerCase() === f.toLowerCase()));
-        if (!food) {
-            return false;
-        }
-        return shouldEatToUseFood({
-            hp: Skills.effective('hitpoints'),
-            maxHp: Skills.level('hitpoints'),
-            heal: foodHealAmount(food.name ?? policy.foods[0] ?? 'Trout'),
-            foodCount: 1
-        });
+        return this.selectFood() !== null;
     }
 
     async eatOnce(): Promise<void> {
-        const policy = this.sustainPolicy();
-        const food = Inventory.items().find(i => policy.foods.some(candidate => i.name?.toLowerCase() === candidate.toLowerCase()));
-        if (!food) { return; }
-        const action = resolveConsumeAction(food.actions());
-        if (!action) { return; }
+        // Re-evaluate at execution time so a packet received after validation
+        // cannot leave us interacting with a stale inventory slot or HP decision.
+        const selected = this.selectFood();
+        if (!selected) { return; }
+        const { item: food, action } = selected;
         this.status = `consuming ${food.name} (${Math.round(Skills.hpFraction() * 100)}% hp)`;
         const before = Skills.effective('hitpoints');
         if (!(await food.interact(action))) { return; }
         await Execution.delayUntil(() => Skills.effective('hitpoints') > before, 3000);
+    }
+
+    private selectFood(): SustainSelection<InvItem> | null {
+        return selectSustainConsumable(
+            Inventory.items(),
+            this.sustainPolicy().foods,
+            Skills.effective('hitpoints'),
+            Skills.level('hitpoints')
+        );
     }
 
     override grindTargets(): string[] {
