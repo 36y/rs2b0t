@@ -158,8 +158,17 @@ export type NavResponse =
     | ({ type: 'path'; id: number; elapsedMs: number } & PathOutcome);
 
 const DOOR_COST = DEFAULT_EDGE_COST.door;
-/** HARD long OD pairs (Seers→Rellekka, multi-level manor) need ~350k with Dijkstra. */
-const MAX_EXPANSIONS = 500_000;
+/**
+ * First-try expansion budget. Long-range edges force Dijkstra (h = 0), so this
+ * scales with **total path cost**, not distance — and the time-based edge costs
+ * raised those costs by 10–25 %. At 500 000 the longest clue routes out of
+ * Edgeville sat at 96–99 % of budget and Varrock → deep Wilderness needed
+ * 502 246, so ordinary destinations were failing first-try and only surviving on
+ * `walkResilient`'s bigger-budget retry — a wasted ladder pass each time.
+ * Matched to that retry budget instead. Genuinely unreachable destinations still
+ * empty the open set long before this and return in well under a second.
+ */
+const MAX_EXPANSIONS = 1_200_000;
 
 const DX = [0, 1, 0, -1, 1, 1, -1, -1];
 const DZ = [1, 0, -1, 0, 1, -1, -1, 1];

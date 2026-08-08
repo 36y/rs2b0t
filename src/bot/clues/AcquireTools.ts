@@ -7,9 +7,11 @@ import { Inventory } from '#/bot/api/hud/Inventory.js';
 import { GroundItems } from '#/bot/api/queries/GroundItems.js';
 import { gotoNpc, talkThrough, type NpcStop } from '#/bot/quests/exec/primitives.js';
 import { CLUE_DB } from '#/bot/clues/data/cluedb.js';
+import { Shop } from '#/bot/api/hud/Shop.js';
+import { COINS } from '#/bot/api/ToolAcquire.js';
 import {
     KOJO, KOJO_EXIT, MURPHY, PROFESSOR, SPADE_NAME, SPADE_SPAWNS, TRIO,
-    nextCoordTool, type HeldTrio
+    extraItemShop, nextCoordTool, type HeldTrio
 } from '#/bot/clues/data/toolAcquire.js';
 
 const SPADE_OBJ_ID = 952;
@@ -72,6 +74,52 @@ export async function ensureSpade(log: (m: string) => void): Promise<boolean> {
         log(`no spade at (${spawn.x},${spawn.z}) — trying the next spawn`);
     }
     return false;
+}
+
+/**
+ * Buy the extra items a clue row lists in `items` (today: the Baxtorian Rope).
+ * The bank prep already withdraws them when the bank has one; this is the case
+ * where it does not, which otherwise abandons the trail over 18gp.
+ */
+export async function ensureExtraItems(names: readonly string[], log: (m: string) => void): Promise<boolean> {
+    let bought = false;
+    for (const name of names) {
+        if (Inventory.first(name) !== null) {
+            continue;
+        }
+        if (EventSignal.pending()) {
+            return bought;
+        }
+        const shop = extraItemShop(name);
+        if (!shop) {
+            log(`no shop known for '${name}' — cannot acquire it`);
+            continue;
+        }
+        if (Inventory.count(COINS) < shop.cost) {
+            log(`need ~${shop.cost} coins for '${name}' and hold ${Inventory.count(COINS)} — skipping the shop trip`);
+            continue;
+        }
+        log(`acquiring ${name} — walking to ${shop.npc} at (${shop.stand.x},${shop.stand.z})`);
+        await Traversal.walkResilient(shop.stand, {
+            radius: HOP_ARRIVE_RADIUS,
+            attempts: WALK_ATTEMPTS,
+            timeoutMs: WALK_TIMEOUT_MS,
+            log: m => log(`  ${m}`)
+        });
+        if (!(await Shop.open(shop.npc))) {
+            log(`${shop.npc}'s shop did not open — leaving '${name}' unacquired`);
+            continue;
+        }
+        const got = await Shop.buy(name, 1);
+        await Shop.close();
+        if (got > 0 && (await Execution.delayUntil(() => Inventory.first(name) !== null, TOOL_WAIT_MS))) {
+            log(`bought ${name}`);
+            bought = true;
+        } else {
+            log(`${shop.npc} had no '${name}' in stock`);
+        }
+    }
+    return bought;
 }
 
 export async function ensureCoordTools(log: (m: string) => void): Promise<boolean> {

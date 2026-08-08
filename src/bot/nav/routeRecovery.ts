@@ -51,3 +51,26 @@ export function findForwardRecoveryIndex(
     }
     return bestOnCorridor;
 }
+
+/**
+ * What a stalled walk should do next.
+ *
+ * `recover` — click further along the published path.
+ * `combat`  — hold course; a fight, not a nav problem.
+ * `escalate` — open a route door, dismiss a quest lock, or declare blocked/repath.
+ *
+ * The search window for {@link findForwardRecoveryIndex} is capped at the tile
+ * *before* the next hop, so it is empty — `recoverIdx === -1` — exactly when the
+ * walk has already reached that hop's approach. That is the door/stair case, and
+ * it is the one that most needs the escalation ladder. Repathing there instead
+ * just replans the same route and burns the repath budget until the walk reports
+ * failure, which `walkResilient` then escalates to **unreachable**.
+ */
+export type StallPhase = 'recover' | 'combat' | 'escalate';
+
+export function stallPhase(opts: { stallRetries: number; recoverIdx: number; inCombat: boolean }): StallPhase {
+    if (opts.stallRetries === 0 && opts.recoverIdx !== -1) {
+        return 'recover';
+    }
+    return opts.inCombat ? 'combat' : 'escalate';
+}

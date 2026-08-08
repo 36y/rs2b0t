@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 
-import { pickNearbyDoorTile } from '#/bot/nav/exec/doorCrossing.js';
+import {
+    barrierBannable,
+    DOOR_AVOID_STRIKES,
+    DOOR_SESSION_STRIKES,
+    noteFailedDoor,
+    pickNearbyDoorTile
+} from '#/bot/nav/exec/doorCrossing.js';
 
 describe('path-scoped nearby door pick (multiloc placement)', () => {
     const me = { x: 100, z: 100, level: 0 };
@@ -61,5 +67,56 @@ describe('path-scoped nearby door pick (multiloc placement)', () => {
 
     test('empty candidates → null', () => {
         expect(pickNearbyDoorTile([], me, path)).toBeNull();
+    });
+});
+
+/**
+ * A door that cannot be crossed at all (a quest-locked gate, a leaf the server
+ * refuses) has to survive the walk it failed on. `resetAvoids` clears the
+ * per-walk avoid list, so without a session escalation the next
+ * `walkResilient` ladder pass plans straight back through it — live that was
+ * seven Morytania clue destinations each burning their whole 484-second budget
+ * in front of the same Paterdomus gate at (3405,9895).
+ */
+describe('failed door strikes escalate past one walk', () => {
+    const hop = {
+        x: 3405,
+        z: 3894,
+        level: 0,
+        transport: { locX: 3405, locZ: 3895, locName: 'Gate', action: 'Open', kind: 'door' }
+    } as never as Parameters<typeof noteFailedDoor>[0];
+
+    test('second strike avoids it for this walk, third bans it for the run', () => {
+        const strikes = new Map<string, number>();
+        const avoid: { x: number; z: number }[] = [];
+        expect(noteFailedDoor(hop, strikes, avoid)).toBe(1);
+        expect(avoid).toEqual([]);
+        expect(noteFailedDoor(hop, strikes, avoid)).toBe(DOOR_AVOID_STRIKES);
+        expect(avoid).toEqual([{ x: 3405, z: 3895 }]);
+        expect(noteFailedDoor(hop, strikes, avoid)).toBe(DOOR_SESSION_STRIKES);
+    });
+
+    test('the session threshold is past the per-walk one, or it never fires', () => {
+        expect(DOOR_SESSION_STRIKES).toBeGreaterThan(DOOR_AVOID_STRIKES);
+    });
+});
+
+/**
+ * Only openable barriers may be banned for the run. A `Gangplank` that "refuses"
+ * three times is a scene that has not caught up, and banning it marooned a bot
+ * on the Karamja ship deck with no other exit.
+ */
+describe('what may be banned for the run', () => {
+    test('doors and gates', () => {
+        expect(barrierBannable('door', 'Door')).toBe(true);
+        expect(barrierBannable('gate', 'Gate')).toBe(true);
+        expect(barrierBannable(undefined, 'Large door')).toBe(true);
+    });
+
+    test('never a boarding plank, ladder or ship', () => {
+        expect(barrierBannable('gangplank', 'Gangplank')).toBe(false);
+        expect(barrierBannable('stair', 'Ladder')).toBe(false);
+        expect(barrierBannable('ship', 'Ship')).toBe(false);
+        expect(barrierBannable('shortcut', 'Balancing ledge')).toBe(false);
     });
 });

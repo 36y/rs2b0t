@@ -15,17 +15,31 @@ export const DEFAULT_PATH_STALL_TICKS = 9;
 export const DEFAULT_PATH_DEVIATION_CHEBYSHEV = 10;
 
 /**
+ * The corridor-snap radius (`WalkExecutor.CORRIDOR`). Path progress counts a tile
+ * as reached from this far away, so any trigger below it opens a band where the
+ * walker believes it is at a hop and refuses to cross it.
+ */
+export const PATH_CORRIDOR = 3;
+
+/**
  * Engage a planned transport hop only when this close to its **approach** tile
  * (not the far landing, not “any nearby spirit tree”).
+ *
+ * **Must be ≥ {@link PATH_CORRIDOR}.** `locateOnPath` snaps `pathIdx` onto the
+ * approach from up to `PATH_CORRIDOR` tiles away, and the click selector will
+ * not target a tile at or before `pathIdx` — so between the trigger and the
+ * corridor the walker emits zero clicks *and* skips the hop, and only a
+ * `nearApproach` fallback saves the walk. Keeping the trigger at the arrival
+ * radius closes that band.
  */
-export const DEFAULT_TRANSPORT_APPROACH_CHEBYSHEV = 2;
+export const DEFAULT_TRANSPORT_APPROACH_CHEBYSHEV = 4;
 
 export interface PathFollowConfig {
     /** Server ticks without a tile change → repath (default 9). */
     stallTicks: number;
     /** Chebyshev off the published path → repath (default 10). */
     deviationChebyshev: number;
-    /** Chebyshev to hop approach tile before executing the hop (default 2). */
+    /** Chebyshev to hop approach tile before executing the hop (default 4). */
     transportApproachChebyshev: number;
 }
 
@@ -49,8 +63,9 @@ export function resolvePathFollowConfig(over?: PathFollowOverrides | null): Path
     return {
         stallTicks: Math.max(1, over?.stallTicks ?? gStall),
         deviationChebyshev: Math.max(1, over?.deviationChebyshev ?? gDev),
+        // Never below the corridor snap — see DEFAULT_TRANSPORT_APPROACH_CHEBYSHEV.
         transportApproachChebyshev: Math.max(
-            0,
+            PATH_CORRIDOR,
             over?.transportApproachChebyshev ?? DEFAULT_TRANSPORT_APPROACH_CHEBYSHEV
         )
     };

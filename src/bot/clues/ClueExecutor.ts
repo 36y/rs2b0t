@@ -17,7 +17,7 @@ import { CASKET_IDS, CLUE_DB } from '#/bot/clues/data/cluedb.js';
 import { challengeAnswer } from '#/bot/clues/data/challengeAnswers.js';
 import { clueGate } from '#/bot/clues/data/clueGates.js';
 import { KILL_ANCHORS } from '#/bot/clues/data/killAnchors.js';
-import { ensureSpade, ensureCoordTools } from '#/bot/clues/AcquireTools.js';
+import { ensureSpade, ensureCoordTools, ensureExtraItems } from '#/bot/clues/AcquireTools.js';
 import { SPADE_NAME } from '#/bot/clues/data/toolAcquire.js';
 import { fightGuardian } from '#/bot/clues/Guardian.js';
 import { PuzzleBox } from '#/bot/clues/PuzzleBox.js';
@@ -403,6 +403,15 @@ function blockReason(step: ClueStep): string | null {
 }
 
 async function tryAcquire(step: ClueStep, log: (m: string) => void): Promise<boolean> {
+    if (step.type === 'open-casket') {
+        return false;
+    }
+    // Row extras (Baxtorian's Rope) come first: the bank prep only withdraws
+    // them when the bank already has one, and without it the trail abandons.
+    const extras = ((step as ClueRow).items ?? []).filter(n => !Inventory.first(n));
+    if (extras.length > 0 && (await ensureExtraItems(extras, log))) {
+        return true;
+    }
     if (step.type !== 'dig') {
         return false;
     }

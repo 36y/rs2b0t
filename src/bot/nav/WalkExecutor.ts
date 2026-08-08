@@ -24,7 +24,7 @@ import {
     selectClientWalkTarget,
     starvedTerminalIndex
 } from './followMath.js';
-import { resolvePathFollowConfig, type PathFollowOverrides } from './pathFollowPolicy.js';
+import { PATH_CORRIDOR, resolvePathFollowConfig, type PathFollowOverrides } from './pathFollowPolicy.js';
 import { BotHost } from '../BotHost.js';
 import { classifyReason } from './walkLadder.js';
 import { isArrived } from './arrival.js';
@@ -35,7 +35,7 @@ import { formatHops } from './hops.js';
 import { executeTeleportHop } from './teleportExecute.js';
 import { missingItemsForPath, pathHasTeleport, planBankLeg } from './bankPlan.js';
 import { virtualizeWithItems } from './virtualState.js';
-import { findForwardRecoveryIndex } from './routeRecovery.js';
+import { findForwardRecoveryIndex, stallPhase } from './routeRecovery.js';
 import { RouteState } from './routeState.js';
 import { EssenceSession } from './essenceSession.js';
 import { PathPublish, formatHopLabel } from './pathPublish.js';
@@ -45,7 +45,9 @@ import { expandWaypoints as expandWaypointsDense, localBfsPath } from './pathExp
 import { DEFAULT_DISTANCE_BEFORE_TELEPORT } from './policy.js';
 import { SettingsStore } from '../runtime/Settings.js';
 import {
+    barrierBannable,
     crossMultiTileDoor,
+    DOOR_SESSION_STRIKES,
     isOpenableBarrier,
     isOpenBarrierLeaf,
     noteFailedDoor,
@@ -76,7 +78,7 @@ const TARGET_JITTER = 4;
 const ARRIVE_RADIUS = 4;
 const PROGRESS_WINDOW = 26;
 // Path-index snap only. Deviation repath uses pathFollowPolicy (default 10).
-const CORRIDOR = 3;
+const CORRIDOR = PATH_CORRIDOR;
 const STALL_REACH_STEPS = 256;
 const TRIGGER_REACH_STEPS = 256;
 /**
@@ -90,6 +92,8 @@ const MIN_FOLLOW_REMAINING_MS = 3_000;
 const PATH_REQUEST_TIMEOUT_MS = 30_000;
 const TRANSPORT_WAIT_MS = 8000;
 const SCENE_STEP_MS = 8000;
+/** Walking the last tiles onto a hop's planned approach after a server can't-reach. */
+const APPROACH_STEP_MS = 4000;
 const REACH_CHECK_STEPS = 1200;
 
 export interface WalkOptions {
@@ -743,7 +747,7 @@ class WalkExecutorImpl {
     }
 
     private resetAvoids(): void {
-        this.doorStrikes.clear();
+        // Strikes deliberately survive the walk — see DOOR_SESSION_STRIKES.
         this.avoidDoors = [];
         this.refreshSpecialCrossingAvoids();
     }
@@ -752,6 +756,28 @@ class WalkExecutorImpl {
     blacklistDoor(x: number, z: number): void {
         this.sessionBlacklistDoors.add(`${x}|${z}`);
         this.avoidDoors.push({ x, z });
+    }
+
+    /**
+     * A crossing was attempted and the player is still on the near side. Past
+     * {@link DOOR_SESSION_STRIKES} the placement is shut for good as far as this
+     * run is concerned — otherwise the next ladder pass plans straight back
+     * through it and the walk never terminates.
+     */
+    private noteDoorRefusal(hop: PathStep, log: (msg: string) => void): void {
+        const strikes = noteFailedDoor(hop, this.doorStrikes, this.avoidDoors);
+        const t = hop.transport;
+        if (
+            t
+            && strikes >= DOOR_SESSION_STRIKES
+            && barrierBannable(t.kind, t.locName)
+            && !this.sessionBlacklistDoors.has(`${t.locX}|${t.locZ}`)
+        ) {
+            log(
+                `'${t.locName}' at (${t.locX},${t.locZ}) refused ${strikes} crossings — routing around it for the rest of the run`
+            );
+            this.blacklistDoor(t.locX, t.locZ);
+        }
     }
 
     async probeDest(dest: WorldTile, maxExpansions: number): Promise<{ ok: boolean; terminal: WorldTile | null }> {
@@ -926,7 +952,7 @@ class WalkExecutorImpl {
                         lastTile = null;
                         continue;
                     }
-                    noteFailedDoor(hop, this.doorStrikes, this.avoidDoors);
+                    this.noteDoorRefusal(hop, log);
                     return 'repath';
                 }
             }
@@ -951,43 +977,45 @@ class WalkExecutorImpl {
 
             // Stall recovery / repath only after the stickiness idle budget (default 9).
             if (idleTicks >= follow.stallTicks) {
-                if (stallRetries === 0) {
-                    const limit = nextCrossingIdx !== -1 ? nextCrossingIdx - 1 : tiles.length - 1;
-                    const recover = findForwardRecoveryIndex(tiles, me, pathIdx, clickable, {
-                        corridor: CORRIDOR,
-                        window: PROGRESS_WINDOW + 20,
-                        limitIdx: limit
-                    });
-                    if (recover !== -1) {
-                        const local = reader.toLocal(tiles[recover]!.x, tiles[recover]!.z);
-                        if (local) {
-                            log(
-                                `stall recovery (${idleTicks} ticks idle, stall=${follow.stallTicks}) → path idx ${recover} (${tiles[recover]!.x},${tiles[recover]!.z})`
-                            );
-                            const mark = GameMessages.mark();
-                            if (ActionRouter.driver.walk(local.lx, local.lz)) {
-                                walkClickMark = mark;
-                                walkClickAt = { x: me.x, z: me.z, level: me.level };
-                                this.publishClientWalkSegment(me, tiles[recover]!);
-                                clickIdx = recover;
-                                clicks++;
-                                stallRetries = 1;
-                                // Give the recovery click a full stall window to produce movement.
-                                lastMoveTick = BotHost.tickCount;
-                                this.publishPath(tiles, pathIdx, clickIdx);
-                                await Execution.delayTicks(2);
-                                continue;
-                            }
-                            log('stall recovery walk rejected by client — repathing');
-                            return 'repath';
+                const recoverLimit = nextCrossingIdx !== -1 ? nextCrossingIdx - 1 : tiles.length - 1;
+                const recover =
+                    stallRetries === 0
+                        ? findForwardRecoveryIndex(tiles, me, pathIdx, clickable, {
+                            corridor: CORRIDOR,
+                            window: PROGRESS_WINDOW + 20,
+                            limitIdx: recoverLimit
+                        })
+                        : -1;
+                // No forward tile to click means we are already standing at the next
+                // hop's approach — the door/stair case. Escalate in this same pass
+                // rather than replanning the identical route until the walk fails.
+                const phase = stallPhase({ stallRetries, recoverIdx: recover, inCombat: reader.inCombat() });
+                if (phase === 'recover') {
+                    const local = reader.toLocal(tiles[recover]!.x, tiles[recover]!.z);
+                    if (local) {
+                        log(
+                            `stall recovery (${idleTicks} ticks idle, stall=${follow.stallTicks}) → path idx ${recover} (${tiles[recover]!.x},${tiles[recover]!.z})`
+                        );
+                        const mark = GameMessages.mark();
+                        if (ActionRouter.driver.walk(local.lx, local.lz)) {
+                            walkClickMark = mark;
+                            walkClickAt = { x: me.x, z: me.z, level: me.level };
+                            this.publishClientWalkSegment(me, tiles[recover]!);
+                            clickIdx = recover;
+                            clicks++;
+                            stallRetries = 1;
+                            // Give the recovery click a full stall window to produce movement.
+                            lastMoveTick = BotHost.tickCount;
+                            this.publishPath(tiles, pathIdx, clickIdx);
+                            await Execution.delayTicks(2);
+                            continue;
                         }
+                        log('stall recovery walk rejected by client — repathing');
+                        return 'repath';
                     }
-                    // No recovery tile — repath now (do not burn another stall window).
-                    log(
-                        `stall with no recovery tile after ${idleTicks} idle ticks (stall=${follow.stallTicks}) — repathing`
-                    );
-                    return 'repath';
-                } else if (reader.inCombat()) {
+                    // Recovery tile is off-scene — spend the retry and escalate next pass.
+                    stallRetries = 1;
+                } else if (phase === 'combat') {
                     if (!warnedCombat) {
                         warnedCombat = true;
                         log('under attack — holding course');
@@ -1136,7 +1164,7 @@ class WalkExecutorImpl {
                                 lastTile = null;
                                 continue;
                             }
-                            noteFailedDoor(hop, this.doorStrikes, this.avoidDoors);
+                            this.noteDoorRefusal(hop, log);
                             return 'repath';
                         }
                     }
@@ -1258,6 +1286,31 @@ class WalkExecutorImpl {
                 return false;
             }
             if (cantReach()) {
+                const here = reader.worldTile();
+                const atApproach =
+                    here !== null
+                    && here.level === approach.level
+                    && here.x === approach.x
+                    && here.z === approach.z;
+                if (!atApproach && attempt === 0) {
+                    // The server ran its own path search and gave up from where we
+                    // stand. The planned approach is the tile the pack says this hop
+                    // works from, so stand on it and try once more — a stair fires
+                    // from up to the trigger radius away and clicks from wherever it
+                    // happens to be, which is how a staircase two tiles behind a wall
+                    // reads as an unreachable destination.
+                    log(
+                        `server can't reach ${transport.locName} from (${here?.x},${here?.z}) — stepping onto the planned approach (${approach.x},${approach.z})`
+                    );
+                    DirectNavigator.walk(approach);
+                    await Execution.delayUntil(() => {
+                        const p = reader.worldTile();
+                        return (
+                            p !== null && p.x === approach.x && p.z === approach.z && p.level === approach.level
+                        );
+                    }, APPROACH_STEP_MS);
+                    continue;
+                }
                 log(`server says can't reach ${transport.locName} at (${transport.locX},${transport.locZ}) — repathing`);
                 return false;
             }
@@ -1272,7 +1325,7 @@ class WalkExecutorImpl {
      * do not import the split module.
      */
     tryNearbyDoor(log: (msg: string) => void): Promise<boolean> {
-        return tryNearbyDoor(log);
+        return tryNearbyDoor(log, null, this.sessionBlacklistDoors);
     }
 }
 

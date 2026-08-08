@@ -90,9 +90,14 @@ function holdResumeMessage(reason: LoopHoldReason, heldMs: number): string {
     }
 }
 
-/** Never let a blank reason read as "the script just stopped for no reason". */
+/**
+ * Never let a blank reason read as "the script just stopped for no reason".
+ * A missing one is a caller bug, not grounds for throwing out of `stop()` and
+ * leaving the run wedged in `running` forever (that broke every harness that
+ * calls `runner.stop()` from page context).
+ */
 export function stopReasonOf(reason: string): string {
-    return reason.trim() || 'no reason given by the caller (bug — please report)';
+    return (reason ?? '').trim() || 'no reason given by the caller (bug — please report)';
 }
 
 /** One-line summary of how a finished run ended, for the next run's log. */

@@ -199,21 +199,47 @@ export function isOpenBarrierLeaf(name: string | null, ops: readonly (string | n
     return /(door|gate)/i.test(name ?? '') && ops.some(op => op !== null && /^close/i.test(op));
 }
 
+/** Failed crossings at one placement before A* is told to avoid it this walk. */
+export const DOOR_AVOID_STRIKES = 2;
+
+/**
+ * Failed crossings before the placement is banned for the whole session.
+ *
+ * The per-walk avoid list is thrown away by `resetAvoids` on the next `walkTo`,
+ * so a door that cannot be crossed at all — a quest-locked gate, a leaf the
+ * server refuses — is replanned by the very next `walkResilient` ladder pass and
+ * the walk loops forever. Strikes therefore count across walks, and a placement
+ * that has refused this many crossings is treated as shut for good.
+ */
+export const DOOR_SESSION_STRIKES = 3;
+
+/**
+ * Only openable barriers may be banned for the run. A gangplank or a ladder that
+ * "refuses" is usually a scene that has not caught up, and banning it can strand
+ * the walker somewhere with one exit — live, three missed `Gangplank` frames on
+ * the Karamja ship left a bot marooned on the deck.
+ */
+export function barrierBannable(kind: string | undefined, locName: string | undefined): boolean {
+    return kind === 'door' || kind === 'gate' || /\b(door|gate)\b/i.test(locName ?? '');
+}
+
+/** Records a failed crossing and returns the running strike count. */
 export function noteFailedDoor(
     step: PathStepTile,
     doorStrikes: Map<string, number>,
     avoidDoors: { x: number; z: number }[]
-): void {
+): number {
     const t = step.transport;
     if (!t) {
-        return;
+        return 0;
     }
     const key = `${t.locX}|${t.locZ}`;
     const strikes = (doorStrikes.get(key) ?? 0) + 1;
     doorStrikes.set(key, strikes);
-    if (strikes >= 2) {
+    if (strikes >= DOOR_AVOID_STRIKES) {
         avoidDoors.push({ x: t.locX, z: t.locZ });
     }
+    return strikes;
 }
 
 /**
@@ -314,7 +340,9 @@ export function pickNearbyDoorTile(
 
 export async function tryNearbyDoor(
     log: (msg: string) => void,
-    path?: PathDoorHint | null
+    path?: PathDoorHint | null,
+    /** Placements already given up on — never re-open one the route now avoids. */
+    exclude?: ReadonlySet<string>
 ): Promise<boolean> {
     const me = reader.worldTile();
     if (!me) {
@@ -323,7 +351,11 @@ export async function tryNearbyDoor(
     const candidates = Locs.query()
         .where(l => isOpenableBarrier(l.name, l.actions()))
         .within(3)
-        .results();
+        .results()
+        .filter(l => {
+            const t = l.tile();
+            return !exclude?.has(`${t.x}|${t.z}`);
+        });
     if (candidates.length === 0) {
         return false;
     }

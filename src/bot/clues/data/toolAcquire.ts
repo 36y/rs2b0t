@@ -57,3 +57,26 @@ export const KOJO: NpcStop = {
     prefer: ['watch', 'lost']
 };
 export const KOJO_EXIT = new Tile(2576, 3250, 0);
+
+/**
+ * Shop counters for the extra items a clue row demands in `items`, so a trail
+ * that rolls one is not abandoned for want of an 18gp purchase. Only rows that
+ * carry `items` reach this: today that is `Rope` (2811, Baxtorian Falls), whose
+ * nearest stocked counter is Aemad's in East Ardougne — the same stand the
+ * Waterfall and Watch Tower quests already use.
+ */
+export interface ShopSource {
+    npc: string;
+    stand: Tile;
+    /** Rough coins per unit, so a caller can say why it could not buy. */
+    cost: number;
+}
+
+export const EXTRA_ITEM_SHOPS: Record<string, ShopSource> = {
+    Rope: { npc: 'Aemad', stand: new Tile(2613, 3294, 0), cost: 18 }
+};
+
+export function extraItemShop(name: string): ShopSource | null {
+    const key = Object.keys(EXTRA_ITEM_SHOPS).find(k => k.toLowerCase() === name.trim().toLowerCase());
+    return key ? EXTRA_ITEM_SHOPS[key]! : null;
+}

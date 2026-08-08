@@ -479,6 +479,52 @@ def make_edge(config, placement: EffectivePlacement, action: str, source: Target
     return edge
 
 
+def pair_up_approaches(edges: list[dict]) -> int:
+    """Anchor each climb-up on the tile its own climb-down lands on.
+
+    snap() picks an approach by scanning tiles around the loc, so it can settle
+    on a diagonal the server will not accept — live that reads as an endless
+    ``server says can't reach Ladder`` / ``no path`` loop and the destination is
+    reported unreachable. The paired climb-down is authoritative: the engine puts
+    the player on that tile, so Climb-up is operable from it by construction.
+
+    Only applied when the landing is the ladder's own foot (within two tiles of
+    the placement) — a ladder that teleports, like the Watch Tower one, lands
+    somewhere unrelated and must keep its derived approach.
+    """
+    downs: dict[tuple[int, int], list[dict]] = {}
+    for edge in edges:
+        if "locX" not in edge or "locZ" not in edge:
+            continue
+        if edge["to"]["level"] < edge["from"]["level"]:
+            downs.setdefault((edge["locX"], edge["locZ"]), []).append(edge)
+
+    moved = 0
+    for edge in edges:
+        if "locX" not in edge or "locZ" not in edge:
+            continue
+        if edge["to"]["level"] <= edge["from"]["level"]:
+            continue
+        paired = downs.get((edge["locX"], edge["locZ"]))
+        if not paired:
+            continue
+        landings = {
+            (d["to"]["x"], d["to"]["z"])
+            for d in paired
+            if d["to"]["level"] == edge["from"]["level"]
+        }
+        if len(landings) != 1:
+            continue
+        (lx, lz), = landings
+        if (edge["from"]["x"], edge["from"]["z"]) == (lx, lz):
+            continue
+        if max(abs(lx - edge["locX"]), abs(lz - edge["locZ"])) > 2:
+            continue
+        edge["from"]["x"], edge["from"]["z"] = lx, lz
+        moved += 1
+    return moved
+
+
 def edge_sort_key(edge: dict) -> tuple:
     source, target = edge["from"], edge["to"]
     return (
@@ -581,12 +627,14 @@ def main() -> None:
     generated_stairs = [edge for edge in generated if edge["kind"] == "stair"]
     output_transports = transports + generated_transports
     output_stairs = stairs + generated_stairs
+    repaired = pair_up_approaches(output_stairs) + pair_up_approaches(output_transports)
     write_json(transport_path, output_transports, args.check)
     write_json(stair_path, output_stairs, args.check)
 
     active = sum("disabledReason" not in edge for edge in generated)
     disabled = len(generated) - active
     print(json.dumps({
+        "approachesPairedToDownLanding": repaired,
         "ladderLocTypes": len(ladder_configs),
         "placements": sum(len(placed_by_id[loc_id]) for loc_id in ladder_ids),
         "interactions": interactions,

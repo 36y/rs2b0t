@@ -3,7 +3,7 @@ import { reader } from '#/bot/adapter/ClientAdapter.js';
 import { LoopingBot } from '#/bot/api/Bot.js';
 import { Execution } from '#/bot/api/Execution.js';
 import { Scheduler } from '#/bot/runtime/Scheduler.js';
-import { loopReadyOrDetached, ScriptRunner } from '#/bot/runtime/ScriptRunner.js';
+import { loopReadyOrDetached, ScriptRunner, stopReasonOf } from '#/bot/runtime/ScriptRunner.js';
 import type { ScriptMeta } from '#/bot/runtime/ScriptRegistry.js';
 
 class SelfStoppingBot extends LoopingBot {
@@ -230,4 +230,15 @@ test('onStart remains blocked until the stat snapshot is ready', async () => {
         reader.worldTile = originalReader.worldTile;
         reader.statsReady = originalReader.statsReady;
     }
+});
+
+/**
+ * Harnesses and page-context callers reach `rs2b0t.runner.stop()` with no
+ * argument. Throwing there aborts before the state transition, so the run stays
+ * `running` forever and every later `start` reports "'X' is still running".
+ */
+test('stop() without a reason still stops the run', () => {
+    expect(stopReasonOf(undefined as never)).toContain('no reason given');
+    expect(stopReasonOf('  ')).toContain('no reason given');
+    expect(stopReasonOf('out of food')).toBe('out of food');
 });
