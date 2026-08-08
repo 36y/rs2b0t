@@ -21,6 +21,14 @@ export default class ScriptLibrary {
                 this.close();
             }
         });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && this.isOpen()) {
+                // Match the other modal controls: the selector owns this Escape
+                // so outer UI hosts do not also close or handle it.
+                e.stopPropagation();
+                this.close();
+            }
+        });
 
         const modal = el('div', 'rs2b0t-modal');
 

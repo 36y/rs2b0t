@@ -22,3 +22,22 @@ test('the script selector renders Firemaker under its Firemaking filter', () => 
     expect(cards.map(card => card.querySelector('.rs2b0t-card-name')?.textContent)).toEqual(['Firemaker']);
     expect(cards[0]?.querySelector('.rs2b0t-card-cat')?.textContent).toBe('Firemaking');
 });
+
+test('Escape closes the open script selector and stops propagation to outer handlers', () => {
+    document.body.replaceChildren();
+    const library = new ScriptLibrary(() => {});
+    library.open();
+
+    let outerSawEscape = false;
+    const outer = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+            outerSawEscape = true;
+        }
+    };
+    window.addEventListener('keydown', outer);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    window.removeEventListener('keydown', outer);
+
+    expect(library.isOpen()).toBe(false);
+    expect(outerSawEscape).toBe(false);
+});
