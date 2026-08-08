@@ -16,6 +16,9 @@ import {
     inArenaPit,
     needsCoinsRestock,
     nextHop,
+    edgeApproachCandidates,
+    edgeApproachPoint,
+    obstacleAxis,
     obstacleOutcome,
     onArenaPlatform,
     onBrimhavenSurface,
@@ -34,6 +37,60 @@ import {
     DEFAULT_BANK_TICKETS,
     DEFAULT_FOOD_PER_TRIP
 } from '#/bot/scripts/BrimhavenAgilityLogic.js';
+
+/** Direction-specific loc anchors selected by the live edge-loc scoring. */
+const DIRECTED_INTERACT_LOCS = [
+    [0, 1, 2764, 9546],
+    [1, 0, 2769, 9546],
+    [0, 5, 2761, 9549],
+    [5, 0, 2761, 9554],
+    [1, 2, 2774, 9545],
+    [2, 1, 2781, 9545],
+    [2, 3, 2785, 9544],
+    [3, 2, 2792, 9544],
+    [3, 4, 2797, 9546],
+    [4, 3, 2802, 9546],
+    [3, 8, 2794, 9548],
+    [8, 3, 2794, 9555],
+    [4, 9, 2805, 9549],
+    [9, 4, 2805, 9554],
+    [5, 6, 2764, 9557],
+    [6, 5, 2769, 9557],
+    [5, 10, 2759, 9559],
+    [10, 5, 2759, 9566],
+    [6, 11, 2772, 9559],
+    [11, 6, 2772, 9566],
+    [7, 12, 2783, 9562],
+    [12, 7, 2783, 9562],
+    [8, 13, 2793, 9559],
+    [13, 8, 2793, 9566],
+    [9, 14, 2805, 9562],
+    [14, 9, 2805, 9562],
+    [10, 11, 2766, 9569],
+    [11, 10, 2767, 9567],
+    [11, 16, 2771, 9570],
+    [16, 11, 2771, 9577],
+    [12, 13, 2786, 9568],
+    [13, 12, 2791, 9568],
+    [14, 19, 2805, 9571],
+    [19, 14, 2805, 9576],
+    [15, 16, 2764, 9579],
+    [16, 15, 2769, 9579],
+    [17, 22, 2783, 9581],
+    [22, 17, 2783, 9588],
+    [18, 23, 2794, 9582],
+    [23, 18, 2794, 9587],
+    [20, 21, 2764, 9590],
+    [21, 20, 2769, 9590],
+    [21, 22, 2777, 9590],
+    [22, 21, 2777, 9590],
+    [22, 23, 2785, 9592],
+    [23, 22, 2792, 9592],
+    [24, 19, 2806, 9585],
+    [19, 24, 2804, 9584],
+    [24, 23, 2802, 9590],
+    [23, 24, 2797, 9590]
+] as const;
 
 describe('BrimhavenAgility arena geometry', () => {
     test('has 24 ticket pillars plus the SE ladder landing', () => {
@@ -55,6 +112,59 @@ describe('BrimhavenAgility arena geometry', () => {
         expect(SPIKE_EDGE.kind).toBe('spikes');
         expect(SPIKE_EDGE.minLevel).toBe(20);
         expect(new Set([SPIKE_EDGE.a, SPIKE_EDGE.b])).toEqual(new Set([13, 14]));
+    });
+
+    test('all directed interact edges have cardinal, source-side approach candidates', () => {
+        const directedEdges = ARENA_EDGES
+            .filter(edge => edge.mode === 'interact')
+            .flatMap(edge => [`${edge.a}->${edge.b}`, `${edge.b}->${edge.a}`]);
+        const fixtureKeys = DIRECTED_INTERACT_LOCS.map(([from, to]) => `${from}->${to}`);
+
+        expect(DIRECTED_INTERACT_LOCS.length).toBe(50);
+        expect(new Set(fixtureKeys)).toEqual(new Set(directedEdges));
+        expect(new Set(fixtureKeys).size).toBe(DIRECTED_INTERACT_LOCS.length);
+
+        for (const [from, to, x, z] of DIRECTED_INTERACT_LOCS) {
+            const loc = { x, z };
+            const axis = obstacleAxis(from, to);
+            const ideal = edgeApproachPoint(from, to, loc);
+            const candidates = edgeApproachCandidates(from, to, loc);
+
+            expect(axis).not.toBeNull();
+            expect(Math.abs(axis!.dx) + Math.abs(axis!.dz)).toBe(1);
+            expect(ideal).not.toBeNull();
+            expect(candidates[0]).toEqual(ideal!);
+            expect(new Set(candidates.map(tile => `${tile.x},${tile.z}`)).size).toBe(candidates.length);
+
+            for (const candidate of candidates) {
+                expect(platformAt(candidate.x, candidate.z)).toBe(from);
+                expect(
+                    (candidate.x - loc.x) * axis!.dx + (candidate.z - loc.z) * axis!.dz
+                ).toBeLessThan(0);
+                expect(
+                    Math.max(Math.abs(candidate.x - ideal!.x), Math.abs(candidate.z - ideal!.z))
+                ).toBeLessThanOrEqual(3);
+            }
+        }
+    });
+
+    test('rope swings stage on their exact directional server start tiles', () => {
+        expect(edgeApproachPoint(24, 19, { x: 2806, z: 9585 })).toEqual({ x: 2806, z: 9587 });
+        expect(edgeApproachPoint(19, 24, { x: 2804, z: 9584 })).toEqual({ x: 2804, z: 9582 });
+        expect(edgeApproachPoint(10, 11, { x: 2766, z: 9569 })).toEqual({ x: 2764, z: 9569 });
+        expect(edgeApproachPoint(11, 10, { x: 2767, z: 9567 })).toEqual({ x: 2769, z: 9567 });
+    });
+
+    test('selects a deterministic reachable alternative when the theoretical stand is blocked', () => {
+        const loc = { x: 2806, z: 9585 };
+        const candidates = edgeApproachCandidates(24, 19, loc);
+        const theoretical = edgeApproachPoint(24, 19, loc)!;
+        const blocked = new Set([`${theoretical.x},${theoretical.z}`]);
+        const selected = candidates.find(tile => !blocked.has(`${tile.x},${tile.z}`));
+
+        expect(candidates[0]).toEqual(theoretical);
+        expect(selected).toEqual(candidates[1]);
+        expect(selected).not.toEqual(theoretical);
     });
 });
 

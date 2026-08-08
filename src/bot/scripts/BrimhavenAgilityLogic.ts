@@ -61,6 +61,114 @@ export const PILLARS: ReadonlyArray<{ x: number; z: number }> = [
 export const TICKET_PILLAR_COUNT = 24;
 export const LANDING_PLATFORM = 24;
 
+export interface ArenaPoint {
+    x: number;
+    z: number;
+}
+
+export interface ArenaAxis {
+    dx: -1 | 0 | 1;
+    dz: -1 | 0 | 1;
+}
+
+/** Furthest we search around an obstacle's ideal from-side stand tile. */
+export const OBSTACLE_APPROACH_RADIUS = 3;
+
+/** Cardinal direction of travel from one platform to an adjacent platform. */
+export function obstacleAxis(from: number, to: number): ArenaAxis | null {
+    const source = PILLARS[from];
+    const destination = PILLARS[to];
+    if (!source || !destination) {
+        return null;
+    }
+
+    const dx = Math.sign(destination.x - source.x) as -1 | 0 | 1;
+    const dz = Math.sign(destination.z - source.z) as -1 | 0 | 1;
+    // Arena edges are cardinal. Reject an invalid same-tile or diagonal pair so
+    // callers never stage on an arbitrary side of an obstacle.
+    if ((dx === 0) === (dz === 0)) {
+        return null;
+    }
+    return { dx, dz };
+}
+
+/**
+ * Ideal interaction stand: two tiles from the loc, toward the source platform.
+ * The server's obstacle scripts use these directional start tiles (not merely
+ * any tile that happens to snap to the same logical platform).
+ */
+export function edgeApproachPoint(from: number, to: number, loc: ArenaPoint): ArenaPoint | null {
+    const axis = obstacleAxis(from, to);
+    if (!axis) {
+        return null;
+    }
+    return {
+        x: loc.x - axis.dx * 2,
+        z: loc.z - axis.dz * 2
+    };
+}
+
+/**
+ * Deterministic stand candidates for a live collision/reachability filter.
+ *
+ * Candidates stay within three tiles of the ideal stand, on the source
+ * platform, and strictly on the source side of the loc. The ideal tile is
+ * always first; equal-radius alternatives prefer lateral movement before
+ * changing the required distance along the obstacle axis.
+ */
+export function edgeApproachCandidates(
+    from: number,
+    to: number,
+    loc: ArenaPoint,
+    radius = OBSTACLE_APPROACH_RADIUS
+): ArenaPoint[] {
+    const axis = obstacleAxis(from, to);
+    const ideal = edgeApproachPoint(from, to, loc);
+    if (!axis || !ideal) {
+        return [];
+    }
+
+    const searchRadius = Math.max(0, Math.min(OBSTACLE_APPROACH_RADIUS, Math.floor(radius)));
+    const offsets: Array<{ ox: number; oz: number }> = [];
+    for (let ox = -searchRadius; ox <= searchRadius; ox++) {
+        for (let oz = -searchRadius; oz <= searchRadius; oz++) {
+            offsets.push({ ox, oz });
+        }
+    }
+    offsets.sort((a, b) => {
+        const radiusA = Math.max(Math.abs(a.ox), Math.abs(a.oz));
+        const radiusB = Math.max(Math.abs(b.ox), Math.abs(b.oz));
+        if (radiusA !== radiusB) {
+            return radiusA - radiusB;
+        }
+        const axialA = a.ox * axis.dx + a.oz * axis.dz;
+        const axialB = b.ox * axis.dx + b.oz * axis.dz;
+        if (Math.abs(axialA) !== Math.abs(axialB)) {
+            return Math.abs(axialA) - Math.abs(axialB);
+        }
+        const lateralA = a.ox * -axis.dz + a.oz * axis.dx;
+        const lateralB = b.ox * -axis.dz + b.oz * axis.dx;
+        if (lateralA !== lateralB) {
+            return lateralA - lateralB;
+        }
+        if (axialA !== axialB) {
+            return axialA - axialB;
+        }
+        return a.ox - b.ox || a.oz - b.oz;
+    });
+
+    const candidates: ArenaPoint[] = [];
+    for (const { ox, oz } of offsets) {
+        const candidate = { x: ideal.x + ox, z: ideal.z + oz };
+        const sourceSide =
+            (candidate.x - loc.x) * axis.dx + (candidate.z - loc.z) * axis.dz < 0;
+        if (sourceSide && platformAt(candidate.x, candidate.z) === from) {
+            candidates.push(candidate);
+        }
+    }
+    return candidates;
+}
+
 export type ObstacleKind =
     | 'ledge'
     | 'pillar'

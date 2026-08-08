@@ -2,6 +2,7 @@ import { actions, reader } from '../adapter/ClientAdapter.js';
 import { TaskBot, type Task } from '../api/Bot.js';
 import { Execution } from '../api/Execution.js';
 import { Game } from '../api/Game.js';
+import { Reachability } from '../api/Reachability.js';
 import Tile from '../api/Tile.js';
 import { Traversal } from '../api/Traversal.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
@@ -14,6 +15,7 @@ import { fmtDuration } from '../api/hud/paintLogic.js';
 import { foodCount as foodCountIn, FOOD_OPTIONS, foodForms } from '../api/combat/food.js';
 import { Locs, type Loc } from '../api/queries/Locs.js';
 import { Npcs } from '../api/queries/Npcs.js';
+import { DirectNavigator } from '../nav/DirectNavigator.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import {
@@ -30,6 +32,7 @@ import {
     TICKET_NAME,
     canStartObstacle,
     coinsToWithdraw,
+    edgeApproachCandidates,
     edgeBetween,
     hasPaid,
     inArena,
@@ -788,28 +791,23 @@ async function crossEdge(bot: BrimhavenAgility, edge: ArenaEdge, from: number, t
         bot.log(`${edge.locName} has no actions at ${loc.tile().x},${loc.tile().z}`);
         return;
     }
-    // Stand on the from-platform side of the loc (rope swings reject the wrong side).
-    // Skip approach when already on the from platform — residual post-hop walks waste ticks.
+    // Stage on the source side before every interaction. Platform membership is
+    // not enough: recovery ladders and ticket dispensers can separate the player
+    // from the obstacle's usable side while both tiles still belong to one island.
     const lt = loc.tile();
+    const approach = edgeApproachCandidates(from, to, lt)
+        .map(t => new Tile(t.x, t.z, lt.level))
+        .find(t => Reachability.walkable(t) && Reachability.canReach(t, { maxSteps: 512 }));
+    if (!approach) {
+        bot.log(`  no reachable source-side stage for ${edge.kind} ${from}→${to}`);
+        return;
+    }
     const here0 = bot.here();
-    const distToLoc =
-        here0 === null ? 99 : Math.max(Math.abs(here0.x - lt.x), Math.abs(here0.z - lt.z));
-    const onFrom = bot.platform() === from;
-    if (distToLoc > 3 && !onFrom) {
-        const approach = {
-            x: lt.x + Math.sign(PILLARS[from].x - lt.x) * 2,
-            z: lt.z + Math.sign(PILLARS[from].z - lt.z) * 2
-        };
-        if (approach.x !== lt.x || approach.z !== lt.z) {
-            const al = reader.toLocal(approach.x, approach.z);
-            if (al) {
-                bot.log(`  approach ${approach.x},${approach.z}`);
-                actions.walkTo(al.lx, al.lz);
-                await Execution.delayUntil(() => {
-                    const t = bot.here();
-                    return t !== null && Math.max(Math.abs(t.x - approach.x), Math.abs(t.z - approach.z)) <= 1;
-                }, 4000);
-            }
+    if (!here0?.equals(approach)) {
+        bot.log(`  stage ${approach.x},${approach.z} before ${edge.kind} ${from}→${to}`);
+        if (!(await DirectNavigator.walkTo(approach, 0, 6000))) {
+            bot.log(`  could not reach stage ${approach.x},${approach.z}; interaction skipped`);
+            return;
         }
     }
 
@@ -874,4 +872,3 @@ function findEdgeLoc(edge: ArenaEdge, from: number, to: number): Loc | null {
     }
     return best;
 }
-
