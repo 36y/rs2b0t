@@ -5,7 +5,7 @@
 
 # Bundled scripts
 
-The client ships **49 scripts** across 20 categories. They double as worked
+The client ships **50 scripts** across 20 categories. They double as worked
 examples of the [scripting API](API.md) — the source for each is under
 [`src/bot/scripts/`](../src/bot/scripts/).
 
@@ -14,7 +14,7 @@ Settings listed here are the parameters the panel exposes before you start a scr
 ## Contents
 
 - [Agility](#agility) — 4
-- [Combat](#combat) — 10
+- [Combat](#combat) — 11
 - [Cooking](#cooking) — 1
 - [Crafting](#crafting) — 5
 - [Firemaking](#firemaking) — 1
@@ -210,6 +210,17 @@ Tags: `lumbridge`, `falador`, `cowhide`, `bones`, `banking`, `afk`
 | `bankEveryItems` | number (1–27) | `15` | Bank at N loot items |
 | `bankEveryMinutes` | number (1–120) | `10` | Bank every N minutes |
 | `bankCommonJunk` | boolean | `true` | Also bank gems/fruit/beer/kebabs/caskets |
+
+### Duel Arena Combat Trainer
+
+Walks to the Al Kharid Duel Arena, pairs with other players, accepts both no-stake screens, fights with melee, and alternates Attack/Strength toward configured target levels
+
+Tags: `duel arena`, `pvp`, `attack`, `strength`, `multibox`
+
+| Setting | Type | Default | Notes |
+|---|---|---|---|
+| `targetAttack` | number (1–99) | `99` | Target Attack level |
+| `targetStrength` | number (1–99) | `99` | Target Strength level |
 
 ### FireGiant
 

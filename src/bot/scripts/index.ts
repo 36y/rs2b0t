@@ -66,6 +66,7 @@ import FlaxRunner, { SETTINGS as FLAXRUNNER_SETTINGS } from './FlaxRunner.js';
 import { ShopRunner, SHOPRUNNER_SETTINGS } from './ShopRunner.js';
 import AIOTeleport, { SETTINGS as AIOTELEPORT_SETTINGS } from './AIOTeleport.js';
 import Barcrawl from './Barcrawl.js';
+import DuelArena, { DUEL_ARENA_SETTINGS } from './DuelArena.js';
 
 // First register = panel default when no script is remembered (BotPanel → list()[0]).
 // Keep TutorialBot first so new accounts land on onboarding, not AIO Teleport.
@@ -118,6 +119,15 @@ ScriptRegistry.register({
     tags: ['lumbridge', 'bones', 'feathers', 'afk'],
     settingsSchema: CHICKEN_SETTINGS,
     create: () => new ChickenKiller()
+});
+
+ScriptRegistry.register({
+    name: 'Duel Arena Combat Trainer',
+    description: 'Walks to the Al Kharid Duel Arena, pairs with other players, accepts both no-stake screens, fights with melee, and alternates Attack/Strength toward configured target levels',
+    category: 'Combat',
+    tags: ['duel arena', 'pvp', 'attack', 'strength', 'multibox'],
+    settingsSchema: DUEL_ARENA_SETTINGS,
+    create: () => new DuelArena()
 });
 
 ScriptRegistry.register({

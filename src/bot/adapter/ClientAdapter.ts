@@ -335,6 +335,10 @@ export const reader = {
         return raw?.localPlayer?.primaryAnim ?? -1;
     },
 
+    selfChat(): string | null {
+        return raw?.localPlayer?.chatMessage ?? null;
+    },
+
     energy(): number {
         return raw?.runenergy ?? 0;
     },
