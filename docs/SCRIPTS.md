@@ -185,13 +185,13 @@ Tags: `lumbridge`, `bones`, `feathers`, `afk`
 
 ### CowKiller
 
-Walks to the Lumbridge, north-west Lumbridge, or south-Falador cow fields, loots hides + bones, and supports Al Kharid toll banking
+Walks to the Lumbridge, north-west Lumbridge, south-Falador, or East Ardougne cow fields, loots hides + bones, and supports field-aware banking
 
-Tags: `lumbridge`, `falador`, `cowhide`, `bones`, `banking`, `afk`
+Tags: `lumbridge`, `falador`, `ardougne`, `cowhide`, `bones`, `banking`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
-| `location` | string | `"Auto"` | Cow field — one of: Auto, Lumbridge cow field, North-west of Lumbridge, South of Falador, Start tile |
+| `location` | string | `"Auto"` | Cow field — one of: Auto, Lumbridge cow field, North-west of Lumbridge, South of Falador, East Ardougne cow field, Start tile |
 | `alKharidTollCoins` | boolean | `true` | Keep 20 coins for Al Kharid gate? |
 | `leashRadius` | number (3–30) | `18` | Leash radius (tiles) |
 | `fightHpGate` | number (0–100) | `45` | Stop fighting below HP% |

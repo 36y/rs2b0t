@@ -1,11 +1,15 @@
 import type { WorldTile } from '../adapter/ClientAdapter.js';
+import type { BankDestination } from './Banking.js';
 import Tile from './Tile.js';
 
 export interface CowLocation {
     name: string;
     anchor: Tile;
     usesAlKharidToll: boolean;
+    bankDestination?: BankDestination;
 }
+
+export const ARDOUGNE_EAST_BANK = new Tile(2655, 3283, 0);
 
 export const COW_LOCATIONS: CowLocation[] = [
     {
@@ -23,6 +27,13 @@ export const COW_LOCATIONS: CowLocation[] = [
         name: 'South of Falador',
         anchor: new Tile(3033, 3306, 0),
         usesAlKharidToll: false
+    },
+    {
+        name: 'East Ardougne cow field',
+        anchor: new Tile(2664, 3347, 0),
+        usesAlKharidToll: false,
+        // Ardougne West is nearer by straight line but farther through the real street/pen route.
+        bankDestination: { name: 'Ardougne East', tile: ARDOUGNE_EAST_BANK }
     }
 ];
 
@@ -57,6 +68,13 @@ export function nearestCowLocation(tile: WorldTile): CowLocation {
 
 export function needsTollCoins(location: CowLocation | null, enabled: boolean): boolean {
     return enabled && location?.usesAlKharidToll === true;
+}
+
+export function cowBankDestination(location: CowLocation | null, tollEnabled: boolean): BankDestination | null {
+    if (needsTollCoins(location, tollEnabled)) {
+        return { name: 'Al Kharid', tile: AL_KHARID_BANK };
+    }
+    return location?.bankDestination ?? null;
 }
 
 export function shouldBootstrapTollCoins(location: CowLocation | null, start: WorldTile, coins: number, enabled: boolean): boolean {

@@ -8,6 +8,7 @@ import ChickenKiller, { SETTINGS as CHICKEN_SETTINGS } from './ChickenKiller.js'
 import {
     AL_KHARID_BANK,
     COW_LOCATION_OPTIONS,
+    cowBankDestination,
     isCowFieldLootTile,
     nearestCowLocation,
     needsTollCoins,
@@ -109,7 +110,7 @@ export default class CowKiller extends ChickenKiller {
     }
 
     protected override bankDestination(): BankDestination | null {
-        return this.usesTollCoins() ? { name: 'Al Kharid', tile: AL_KHARID_BANK } : null;
+        return cowBankDestination(this.location, this.settings.bool('alKharidTollCoins', true));
     }
 
     private usesTollCoins(): boolean {
