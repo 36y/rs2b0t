@@ -39,6 +39,18 @@ describe('resolveMiningLocation', () => {
         expect(loc?.bankStand.x).toBe(2655);
         expect(loc?.bankStand.z).toBe(3283);
     });
+
+    test('Auto and named selection resolve the Wilderness Hobgoblin Mine', () => {
+        const named = resolveMiningLocation('wilderness hobgoblin mine', new Tile(0, 0, 0));
+        expect(named?.name).toBe('Wilderness Hobgoblin Mine');
+        expect(named?.spot).toEqual(new Tile(3093, 3751, 0));
+        expect(named?.bankStand).toEqual(new Tile(3094, 3493, 0));
+        expect(named?.resources).toEqual(['iron', 'coal', 'mithril', 'adamantite']);
+
+        expect(resolveMiningLocation('Auto', new Tile(3088, 3758, 0))?.name).toBe(
+            'Wilderness Hobgoblin Mine'
+        );
+    });
 });
 
 describe('MINING_LOCATIONS table', () => {
@@ -49,6 +61,11 @@ describe('MINING_LOCATIONS table', () => {
         for (const loc of MINING_LOCATIONS) {
             expect(MINING_LOCATION_OPTIONS).toContain(loc.name);
         }
+    });
+
+    test('dropdown camps are alphabetical between Auto and None', () => {
+        const camps = MINING_LOCATION_OPTIONS.slice(1, -1);
+        expect(camps).toEqual([...camps].sort((a, b) => a.localeCompare(b)));
     });
 
     test('every bankStand is a known BANK_LOCATIONS tile', () => {
@@ -80,7 +97,8 @@ describe('MINING_LOCATIONS table', () => {
             'Rimmington Mine',
             'Al Kharid Mine',
             'Mining Guild',
-            'Lava Maze Runite Mine'
+            'Lava Maze Runite Mine',
+            'Wilderness Hobgoblin Mine'
         ]) {
             expect(names.has(n), n).toBe(true);
         }

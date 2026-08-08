@@ -206,6 +206,25 @@ export class TannerfishSustain implements Task {
     }
 }
 
+/** Miner-only smart eating: whole-heal boundary or one more ore slot. */
+export class MinerEatFood implements Task {
+    constructor(private bot: GatheringBot) {}
+
+    validate(): boolean {
+        return (
+            this.bot.minerFoodEnabled()
+            && !Bank.isOpen()
+            && !EventSignal.pending()
+            && !ChatDialog.canContinue()
+            && this.bot.shouldEatMinerFood()
+        );
+    }
+
+    async execute(): Promise<void> {
+        await this.bot.eatMinerFood();
+    }
+}
+
 /**
  * Sticky combatCycle with no face-target attacker: wait (do not east-kite).
  * Lets burn/gather resume once the cycle drains instead of deadlocking the loop.
@@ -847,6 +866,9 @@ export class BankCatch implements Task {
         ) {
             return false;
         }
+        if (this.bot.minerFoodRestockNeeded()) {
+            return true;
+        }
         return Inventory.isFull() && this.bot.hasDepositable();
     }
 
@@ -892,12 +914,20 @@ export class BankCatch implements Task {
             await refreshRaw();
         }
 
-        this.bot.countTrip(had);
-        this.bot.log(`bank: deposited ${had} ${this.bot.productLabel()}`);
+        if (had > 0) {
+            this.bot.countTrip(had);
+            this.bot.log(`bank: deposited ${had} ${this.bot.productLabel()}`);
+        } else if (this.bot.minerFoodEnabled()) {
+            this.bot.log('bank: preparing Miner food trip (no haul to deposit)');
+        }
 
         // Same bank open: top up bait/feathers toward baitQty before heading back.
         if (this.bot.isFishing() && this.bot.needsFishingBaitTopUp()) {
             await this.bot.topUpFishingBaitAtBank(log);
+        }
+
+        if (this.bot.minerFoodEnabled() && !(await this.bot.topUpMinerFoodAtBank(log))) {
+            return;
         }
 
         // Opportunistic tool upgrade while already banking — never yank mid-chop.

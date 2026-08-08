@@ -584,7 +584,7 @@ Tags: `varrock`, `mining`, `banking`, `afk`
 
 ### Miner
 
-Mines the selected rock types, then banks the ore at the nearest bank or drops it (power-mining). Needs a pickaxe (best available is restocked from the bank when Full inventory is Auto). Optional Buy/repair acquires picks from Nurmof (and repairs broken picks).
+Mines the selected rock types, then banks the ore at the nearest bank or drops it (power-mining). Optional trip food is eaten when its full heal fits or to turn food slots into more ore slots. Needs a pickaxe (best available is restocked from the bank when Full inventory is Auto). Optional Buy/repair acquires picks from Nurmof (and repairs broken picks).
 
 Tags: `gathering`, `banking`, `drop`
 
@@ -592,7 +592,9 @@ Tags: `gathering`, `banking`, `drop`
 |---|---|---|---|
 | `rocks` | string[] | `["Iron"]` | Rock types — one of: Clay, Copper, Tin, Iron, Silver, Coal, Gold, Mithril, Adamantite, Runite |
 | `leashRadius` | number (2–64) | `10` | Leash radius (tiles) |
-| `location` | string | `"Auto"` | Location / full inventory — one of: Auto, Southwest Varrock Mine, Southeast Varrock Mine, Rimmington Mine, Dwarven Mine, Fight Arena Mine, Al Kharid Mine, Mining Guild, Crafting Guild, Coal Trucks, Barbarian Village, North Brimhaven Mine, Shilo Village, West Lumbridge Swamp Mine, Grand Tree Mine, Desert Mining Camp, Lava Maze Runite Mine, Heroes Guild, South-east Ardougne Mine, Legends Guild Iron (west), Legends Guild Iron (east), None |
+| `location` | string | `"Auto"` | Location / full inventory — one of: Auto, Al Kharid Mine, Barbarian Village, Coal Trucks, Crafting Guild, Desert Mining Camp, Dwarven Mine, Fight Arena Mine, Grand Tree Mine, Heroes Guild, Lava Maze Runite Mine, Legends Guild Iron (east), Legends Guild Iron (west), Mining Guild, North Brimhaven Mine, Rimmington Mine, Shilo Village, South-east Ardougne Mine, Southeast Varrock Mine, Southwest Varrock Mine, West Lumbridge Swamp Mine, Wilderness Hobgoblin Mine, None |
+| `food` | string | `"Lobster"` | Food — one of: Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
+| `foodWithdraw` | number (0–27) | `0` | Food to withdraw |
 | `tickManip` | string | `"Off"` | Tick manip — one of: Off |
 | `muleMode` | string | `"Off"` | Mule mode — one of: Off, Gatherer, Mule, Cooker, Supplier |
 | `mulePartner` | string | `""` | Mule partner name(s) |

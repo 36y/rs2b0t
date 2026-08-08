@@ -175,6 +175,15 @@ export const MINING_LOCATIONS: MiningLocation[] = [
         'Wilderness — high risk; bank out at Edgeville'
     ),
     mine(
+        'Wilderness Hobgoblin Mine',
+        // Level 30 Wilderness mine. This south-east stand is on walkable ground
+        // among the broad iron/coal/mithril/adamantite rock field.
+        new Tile(3093, 3751, 0),
+        BANK.edgeville,
+        ['iron', 'coal', 'mithril', 'adamantite'],
+        'Wilderness — aggressive Hobgoblins; bank out at Edgeville'
+    ),
+    mine(
         'Heroes Guild',
         // Rune rocks ~2919,9917 / 2925,9909 — another +10 east of 2920 stand.
         new Tile(2930, 9911, 0),
@@ -211,7 +220,7 @@ export const MINING_LOCATIONS: MiningLocation[] = [
         'Tick manip: iron cadence (3-rock). Unverified seed; bank Ardougne East.',
         false
     )
-];
+].sort((a, b) => a.name.localeCompare(b.name));
 
 export const MINING_LOCATION_OPTIONS = locationOptions(MINING_LOCATIONS);
 

@@ -15,6 +15,12 @@ import { Equipment } from '../api/hud/Equipment.js';
 import { Inventory } from '../api/hud/Inventory.js';
 import { Paint } from '../api/hud/Paint.js';
 import { Skills } from '../api/hud/Skills.js';
+import {
+    foodCount as countFood,
+    foodForms,
+    foodHealAmount,
+    isFoodItem
+} from '../api/combat/food.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
 import { Locs } from '../api/queries/Locs.js';
 import { Npcs } from '../api/queries/Npcs.js';
@@ -165,6 +171,13 @@ import {
 } from '../api/ToolAcquireExec.js';
 import { hostileAttackerNearby } from './GatheringBotLogic.js';
 import {
+    minerFoodConfig,
+    minerFoodRestockNeeded,
+    planMinerFoodWithdrawal,
+    shouldEatMinerFood,
+    type MinerFoodConfig
+} from './MinerLogic.js';
+import {
     BankCatch,
     ClearPackJunk,
     DropProduct,
@@ -180,6 +193,7 @@ import {
     MuleBankHaul,
     MuleGoMeet,
     MuleRequestOrWait,
+    MinerEatFood,
     RepairBrokenGatherTool,
     RestockFishingGear,
     RestockGatherTool,
@@ -310,6 +324,11 @@ export default class GatheringBot extends TaskBot {
 
     private toolReqs: ToolReq[] = [];
 
+    /** Opt-in Miner trip food; null keeps every pre-#521 mining path unchanged. */
+    private minerFood: MinerFoodConfig | null = null;
+    private minerFoodStartupPending = false;
+    private minerFoodEaten = 0;
+
     private cookMode: CookMode = 'off';
     private burntPolicy: BurntPolicy = 'drop';
     private afterCook: AfterCookCycle = 'stop';
@@ -408,6 +427,17 @@ export default class GatheringBot extends TaskBot {
             this.rockIds = resolveRockIds(rocks);
             this.productKeywords = rocks.map(r => r.trim().toLowerCase());
             this.toolReqs = [pickaxeReq()];
+            this.minerFood = minerFoodConfig(
+                this.settings.str('food', 'Lobster'),
+                this.settings.num('foodWithdraw', 0)
+            );
+            this.minerFoodStartupPending =
+                this.minerFood !== null && this.minerFoodCount() < this.minerFood.target;
+            if (this.minerFood) {
+                this.log(
+                    `food: ${this.minerFood.name} x${this.minerFood.target}; eat when its full heal fits or the pack needs an ore slot`
+                );
+            }
             // Empty multi-select falls back to every ROCK_OPTIONS entry; log so a
             // wrong ore type (e.g. Copper at tin-only SW Varrock) is obvious.
             this.log(
@@ -532,6 +562,11 @@ export default class GatheringBot extends TaskBot {
                     this.log('mule: supplier is Fisher-only — falling back to Off');
                     this.muleMode = 'off';
                 }
+            }
+            if (this.minerFood && this.muleMode !== 'off') {
+                this.log('food: disabled while Miner mule mode owns the haul/bank loop');
+                this.minerFood = null;
+                this.minerFoodStartupPending = false;
             }
         }
 
@@ -716,7 +751,11 @@ export default class GatheringBot extends TaskBot {
             this.log('location: no preset — nearest bank');
         }
         if (this.powerMode) {
-            this.log('location: power mode — drop haul; bank only to fetch missing tools (nearest bank)');
+            this.log(
+                this.minerFood
+                    ? 'location: power mode — eat food for ore slots; nearest-bank restock when empty'
+                    : 'location: power mode — drop haul; bank only to fetch missing tools (nearest bank)'
+            );
         }
         const pairNote = this.pairOp ? ` + pair '${this.pairOp}'` : '';
         this.log(
@@ -771,8 +810,11 @@ export default class GatheringBot extends TaskBot {
         const tannerPower = this.tickManip.cookEatInterleave;
         // Cooker always runs cook tasks; gatherer/solo use cookOn when enabled.
         const cookTasks = cookOn || cooker;
+        const bankCatch = new BankCatch(this);
+        const minerFoodLoop = this.minerFoodEnabled();
         this.add(
             new ContinueDialog(),
+            ...(minerFoodLoop ? [new MinerEatFood(this)] : []),
             // Sticky combatCycle (no face target) — wait; do not thrash-walk.
             ...(mobFlee ? [new WaitStickyCombat(this), new FleeCombat(this)] : []),
             // Named/None only: break multi-combat pulls (wildy spiders) by walking off.
@@ -799,7 +841,13 @@ export default class GatheringBot extends TaskBot {
                 ? [new SupplierWithdrawRaw(this), new MuleGoMeet(this), new MuleRequestOrWait(this)]
                 : []),
             ...(this.isMuleGatherer() ? [new MuleGoMeet(this), new MuleRequestOrWait(this)] : []),
-            this.powerMode || tannerPower ? new DropProduct(this) : new BankCatch(this),
+            // Opt-in Miner food owns the full→eat→restock loop even under power mode.
+            ...(minerFoodLoop ? [bankCatch] : []),
+            ...(this.powerMode || tannerPower
+                ? [new DropProduct(this)]
+                : minerFoodLoop
+                    ? []
+                    : [bankCatch]),
             // Partner bank/cook/supplier sides do not gather.
             ...(muleSide ? [] : [new Gather(this)]),
 
@@ -842,6 +890,11 @@ export default class GatheringBot extends TaskBot {
 
     private rebuildGearKeep(): string[] {
         const names = new Set<string>(toolKeepNames(this.toolReqs));
+        if (this.minerFood) {
+            for (const form of foodForms(this.minerFood.name)) {
+                names.add(form);
+            }
+        }
         if (this.fishMethod) {
             for (const n of gearKeepNames(this.fishMethod)) {
                 names.add(n);
@@ -1421,6 +1474,9 @@ export default class GatheringBot extends TaskBot {
         if (this.burnMode === 'chop-then-burn') {
             return `burning ${this.burnLogs} when full`;
         }
+        if (this.minerFood) {
+            return `eating ${this.minerFood.name} for ore slots, then banking to restock`;
+        }
         if (this.powerMode) {
             return `dropping ${this.productLabel()} when full`;
         }
@@ -1445,6 +1501,9 @@ export default class GatheringBot extends TaskBot {
     private paintFullNote(): string {
         if (this.burnMode === 'chop-then-burn') {
             return `Full: burn ${this.burnLogs}`;
+        }
+        if (this.minerFood) {
+            return `Full: eat ${this.minerFood.name} → bank`;
         }
         if (this.powerMode) {
             return `Full: drop ${this.productLabel()}`;
@@ -1504,11 +1563,13 @@ export default class GatheringBot extends TaskBot {
             const third =
                 this.mining() && this.gems > 0
                     ? `Gems: ${this.gems}`
-                    : cookOn
-                        ? `Ok ${this.cooked} · Burnt ${this.burnt}`
-                        : burnOn
-                            ? `Burned: ${this.firesLit}`
-                            : `Inv: ${Inventory.used()}/28`;
+                    : this.minerFood
+                        ? `Food: ${this.minerFoodCount()}/${this.minerFood.target} · ate ${this.minerFoodEaten}`
+                        : cookOn
+                            ? `Ok ${this.cooked} · Burnt ${this.burnt}`
+                            : burnOn
+                                ? `Burned: ${this.firesLit}`
+                                : `Inv: ${Inventory.used()}/28`;
             p.row(`Banked: ${this.banked}`, `Trips: ${this.trips}`, third);
             p.bar('Pack', Inventory.used() / 28);
 
@@ -1983,6 +2044,144 @@ export default class GatheringBot extends TaskBot {
             return false;
         }
         await Execution.delayUntilTicks(() => Skills.effective('hitpoints') > before, 5);
+        return true;
+    }
+
+    minerFoodEnabled(): boolean {
+        return this.minerFood !== null;
+    }
+
+    minerFoodCount(): number {
+        return this.minerFood ? countFood(Inventory.items(), this.minerFood.name) : 0;
+    }
+
+    minerFoodRestockNeeded(): boolean {
+        return minerFoodRestockNeeded({
+            configured: this.minerFood !== null,
+            foodCount: this.minerFoodCount(),
+            startupPending: this.minerFoodStartupPending
+        });
+    }
+
+    shouldEatMinerFood(): boolean {
+        const config = this.minerFood;
+        if (!config) {
+            return false;
+        }
+        return shouldEatMinerFood({
+            hp: Skills.effective('hitpoints'),
+            maxHp: Skills.level('hitpoints'),
+            heal: foodHealAmount(config.name),
+            foodCount: this.minerFoodCount(),
+            inventoryFull: Inventory.isFull()
+        });
+    }
+
+    async eatMinerFood(): Promise<boolean> {
+        const config = this.minerFood;
+        if (!config || Bank.isOpen()) {
+            return false;
+        }
+        const food = Inventory.items().find(i => isFoodItem(i.name, config.name));
+        if (!food) {
+            return false;
+        }
+        const before = {
+            hp: Skills.effective('hitpoints'),
+            used: Inventory.used(),
+            count: this.minerFoodCount(),
+            slot: food.slot,
+            id: food.id,
+            name: food.name
+        };
+        const reason = Inventory.isFull() ? 'ore room' : 'full heal';
+        this.setStatus(`food: eating ${food.name} (${reason})`);
+        this.log(
+            `food: eat ${food.name} (${reason}; hp ${before.hp}/${Skills.level('hitpoints')}, pack ${before.used}/28)`
+        );
+        if (!(await food.interact('Eat'))) {
+            this.log(`food: '${food.name}' has no usable Eat action`);
+            return false;
+        }
+        const consumed = await Execution.delayUntilTicks(() => {
+            const sameSlot = Inventory.items().find(i => i.slot === before.slot);
+            return (
+                Skills.effective('hitpoints') > before.hp
+                || Inventory.used() < before.used
+                || this.minerFoodCount() < before.count
+                || sameSlot?.id !== before.id
+                || sameSlot?.name !== before.name
+            );
+        }, 6);
+        if (consumed) {
+            this.minerFoodEaten++;
+        } else {
+            this.log(`food: ${food.name} did not change the pack or HP — will retry`);
+        }
+        return consumed;
+    }
+
+    /** Top up the configured Miner food while BankCatch already has the bank open. */
+    async topUpMinerFoodAtBank(log: (m: string) => void): Promise<boolean> {
+        const config = this.minerFood;
+        if (!config) {
+            return true;
+        }
+        await Execution.delayUntilTicks(() => Bank.loaded(), 6);
+        await Execution.delayTicks(1);
+
+        const held = this.minerFoodCount();
+        const banked = Bank.count(config.name);
+        const plan = planMinerFoodWithdrawal({
+            target: config.target,
+            held,
+            banked,
+            freeSlots: Inventory.free()
+        });
+        if (!plan.ok) {
+            const detail =
+                plan.reason === 'bank-stock'
+                    ? `bank + pack are short by ${plan.missing}`
+                    : `pack needs ${plan.missing} more free slot(s)`;
+            const message = `food: cannot prepare ${config.target} ${config.name} (${detail})`;
+            this.setStatus(`${message} — stopped`);
+            this.log(`${message}; stopping`);
+            if (Bank.isOpen()) {
+                await this.closeScriptBank(log, { allowForgetful: false });
+            }
+            ScriptRunner.stop(message);
+            return false;
+        }
+
+        if (plan.withdraw > 0) {
+            this.setStatus(`food: withdrawing ${plan.withdraw} ${config.name}`);
+            log(`food: withdraw ${plan.withdraw} ${config.name} (${held} → ${config.target})`);
+            if (!(await Bank.withdrawX(config.name, plan.withdraw))) {
+                const message = `food: withdraw failed for ${plan.withdraw} ${config.name}`;
+                this.setStatus(`${message} — stopped`);
+                this.log(`${message}; stopping`);
+                if (Bank.isOpen()) {
+                    await this.closeScriptBank(log, { allowForgetful: false });
+                }
+                ScriptRunner.stop(message);
+                return false;
+            }
+            await Execution.delayUntilTicks(() => this.minerFoodCount() >= config.target, 7);
+        }
+
+        const after = this.minerFoodCount();
+        if (after < config.target) {
+            const message = `food: restock verification failed (${after}/${config.target} ${config.name})`;
+            this.setStatus(`${message} — stopped`);
+            this.log(`${message}; stopping`);
+            if (Bank.isOpen()) {
+                await this.closeScriptBank(log, { allowForgetful: false });
+            }
+            ScriptRunner.stop(message);
+            return false;
+        }
+        this.minerFoodStartupPending = false;
+        this.log(`food: trip ready with ${after} ${config.name}`);
         return true;
     }
 
@@ -2957,4 +3156,3 @@ export default class GatheringBot extends TaskBot {
         return until === undefined || Game.tick() >= until;
     }
 }
-

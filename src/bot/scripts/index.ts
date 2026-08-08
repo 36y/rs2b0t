@@ -15,6 +15,7 @@ import {
     tickManipUiOptions
 } from './TickManipLogic.js';
 import { ROCK_OPTIONS } from '../api/MiningRocks.js';
+import { MINER_FOOD_SETTINGS } from './MinerLogic.js';
 import EdgevilleMonkeyBars, { EDGEVILLE_MONKEYBARS_SETTINGS } from './EdgevilleMonkeyBars.js';
 import { ScriptRegistry } from '../runtime/ScriptRegistry.js';
 import AgilityBot from './AgilityBot.js';
@@ -231,7 +232,7 @@ ScriptRegistry.register({
 ScriptRegistry.register({
     name: 'Miner',
     description:
-        'Mines the selected rock types, then banks the ore at the nearest bank or drops it (power-mining). Needs a pickaxe (best available is restocked from the bank when Full inventory is Auto). Optional Buy/repair acquires picks from Nurmof (and repairs broken picks).',
+        'Mines the selected rock types, then banks the ore at the nearest bank or drops it (power-mining). Optional trip food is eaten when its full heal fits or to turn food slots into more ore slots. Needs a pickaxe (best available is restocked from the bank when Full inventory is Auto). Optional Buy/repair acquires picks from Nurmof (and repairs broken picks).',
     category: 'Mining',
     tags: ['gathering', 'banking', 'drop'],
     settingsSchema: {
@@ -250,8 +251,9 @@ ScriptRegistry.register({
             options: MINING_LOCATION_OPTIONS,
             label: 'Location / full inventory',
             help:
-                'Mine camp + full-pack behaviour. Auto = if you start in the same 64×64 map square as a known mine camp, snap to the nearest such camp and bank there; otherwise freeform (start-tile leash + nearest bank). Named camps pin spot + bank. None = power-mine (drop ore; bank only for missing tools).'
+                'Mine camp + full-pack behaviour. Auto = if you start in the same 64×64 map square as a known mine camp, snap to the nearest such camp and bank there; otherwise freeform (start-tile leash + nearest bank). Named camps pin spot + bank. None = power-mine (drop ore; configured food still restocks from the nearest bank).'
         },
+        ...MINER_FOOD_SETTINGS,
         tickManip: {
             type: 'string',
             default: 'Off',
