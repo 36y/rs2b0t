@@ -1,0 +1,126 @@
+import { afterAll, afterEach, describe, expect, mock, test } from 'bun:test';
+
+mock.module('#3rdparty/audio.js', () => ({ playWave: async (): Promise<void> => {}, setWaveVolume: (): void => {} }));
+mock.module('#3rdparty/tinymidipcm.js', () => ({ playMidi: (): void => {}, setMidiVolume: (): void => {}, stopMidi: (): void => {} }));
+
+const { attach, detach, invalidateLocSnapshots, reader } = await import('#/bot/adapter/ClientAdapter.js');
+const { default: LocType } = await import('#/config/LocType.js');
+
+// LocType reads the game config cache, which a unit test has no reason to load.
+LocType.list = ((id: number) => ({ name: `loc${id}`, op: ['Mine'] })) as unknown as typeof LocType.list;
+
+/**
+ * locs() sweeps 104x104 tiles x 4 typecodes and allocates a snapshot per hit --
+ * measured 1.4-1.7ms and up to 2289 objects per call, from script predicates that
+ * run at frame rate. The memo must survive repeat calls on an unchanged scene and
+ * must not survive anything the server says changed.
+ */
+let sceneReads = 0;
+
+function fakeClient(overrides: Record<string, unknown> = {}) {
+    const world = {
+        wallType: (): number => 0,
+        sceneType: (_level: number, lx: number, lz: number): number => {
+            sceneReads++;
+            // one loc at scene tile (1,2)
+            return lx === 1 && lz === 2 ? (7 << 14) | 1 : 0;
+        },
+        gdType: (): number => 0,
+        decorType: (): number => 0
+    };
+    return {
+        world,
+        localPlayer: { x: 0, z: 0 },
+        minusedlevel: 0,
+        mapBuildBaseX: 3200,
+        mapBuildBaseZ: 3200,
+        ...overrides
+    };
+}
+
+describe('locs() snapshot memo', () => {
+    afterEach(() => {
+        invalidateLocSnapshots();
+    });
+
+    // `raw` is module-global and shared with every other test file in the run. A
+    // half-populated fake left attached makes unrelated adapter reads dereference
+    // undefined, so this file must hand the adapter back the way it found it.
+    afterAll(() => {
+        detach();
+    });
+
+    test('rebuilds once, then serves repeat calls without re-sweeping the scene', () => {
+        attach(fakeClient() as never);
+        invalidateLocSnapshots();
+
+        sceneReads = 0;
+        const first = reader.locs();
+        const sweep = sceneReads;
+        expect(sweep).toBeGreaterThan(0);
+        expect(first.length).toBeGreaterThan(0);
+
+        for (let i = 0; i < 20; i++) {
+            reader.locs();
+        }
+        // 20 further predicate evaluations must not touch the scene again
+        expect(sceneReads).toBe(sweep);
+    });
+
+    test('a zone packet drops the memo so scripts never see a stale scene', () => {
+        attach(fakeClient() as never);
+        invalidateLocSnapshots();
+
+        reader.locs();
+        const sweep = sceneReads;
+        invalidateLocSnapshots();
+        reader.locs();
+
+        expect(sceneReads).toBeGreaterThan(sweep);
+    });
+
+    test('walking re-sweeps, because distance is baked into every snapshot', () => {
+        const client = fakeClient();
+        attach(client as never);
+        invalidateLocSnapshots();
+
+        const before = reader.locs()[0].distance;
+        const sweep = sceneReads;
+
+        // one tile north: the loc sits at scene (1,2), so moving east would leave the
+        // Chebyshev distance at 2 and prove nothing
+        client.localPlayer.z = 128;
+        const after = reader.locs()[0].distance;
+
+        expect(sceneReads).toBeGreaterThan(sweep);
+        expect(after).not.toBe(before);
+    });
+
+    test('a scene rebuild at new base coordinates re-sweeps', () => {
+        const client = fakeClient();
+        attach(client as never);
+        invalidateLocSnapshots();
+
+        reader.locs();
+        const sweep = sceneReads;
+
+        client.mapBuildBaseX = 3264;
+        reader.locs();
+
+        expect(sceneReads).toBeGreaterThan(sweep);
+    });
+
+    test('cached snapshots carry the same data as a fresh sweep', () => {
+        attach(fakeClient() as never);
+        invalidateLocSnapshots();
+
+        const cached = reader.locs();
+        invalidateLocSnapshots();
+        const fresh = reader.locs();
+
+        expect(cached.length).toBe(fresh.length);
+        expect(cached[0].id).toBe(fresh[0].id);
+        expect(cached[0].tile).toEqual(fresh[0].tile);
+        expect(cached[0].distance).toBe(fresh[0].distance);
+    });
+});

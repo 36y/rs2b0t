@@ -13,6 +13,29 @@ import { ClientProt } from '#/io/ClientProt.js';
 import { SELF_TEST, type RawClient } from './RawClient.js';
 
 const SCENE_SIZE = 104;
+
+// locs() sweeps 104x104 tiles x 4 typecodes and allocates one snapshot per hit --
+// measured 1.4-1.7ms and 586-2289 objects per call. Predicates in script waiters
+// call it at frame rate, so without memoisation the same unchanged scene is rebuilt
+// ~24x/sec per bot. The scene only changes on a zone packet, and the snapshots carry
+// a player-relative distance, so the memo is keyed on the scene and the player tile
+// and dropped whenever the server says a loc changed.
+let locCache: LocSnapshot[] | null = null;
+let locCacheKey = '';
+
+/** Called when a zone packet lands; the next locs() rebuilds from the live scene. */
+export function invalidateLocSnapshots(): void {
+    locCache = null;
+}
+
+/**
+ * Releases the attached client. Reads then degrade to empty via the `raw?.` guards
+ * rather than dereferencing a half-dead client.
+ */
+export function detach(): void {
+    raw = null;
+    invalidateLocSnapshots();
+}
 const SCRATCH_SLOT = 499;
 
 let raw: RawClient | null = null;
@@ -155,6 +178,9 @@ export interface SelectButtonLabel {
 export function attach(client: unknown): string[] {
     const missing = SELF_TEST.filter(name => !(name in (client as Record<string, unknown>)));
     raw = client as RawClient;
+    // A new client is a new scene. Without this the memo outlives the client that
+    // filled it and a relogin would read the previous session's locs.
+    invalidateLocSnapshots();
 
     if (!missing.includes('tcpIn')) {
         const orig = raw.tcpIn;
@@ -714,6 +740,13 @@ export const reader = {
         const px = raw.mapBuildBaseX + (raw.localPlayer.x >> 7);
         const pz = raw.mapBuildBaseZ + (raw.localPlayer.z >> 7);
 
+        // Distance is baked into each snapshot, so the player tile is part of the key
+        // rather than a reason to skip caching: a standing bot hits the memo every frame.
+        const key = `${level}:${px}:${pz}:${raw.mapBuildBaseX}:${raw.mapBuildBaseZ}`;
+        if (locCache !== null && locCacheKey === key) {
+            return locCache;
+        }
+
         for (let lx = 0; lx < SCENE_SIZE; lx++) {
             for (let lz = 0; lz < SCENE_SIZE; lz++) {
                 const typecodes = [raw.world.wallType(level, lx, lz), raw.world.sceneType(level, lx, lz), raw.world.gdType(level, lx, lz), raw.world.decorType(level, lz, lx)];
@@ -740,6 +773,8 @@ export const reader = {
             }
         }
 
+        locCache = out;
+        locCacheKey = key;
         return out;
     },
 
