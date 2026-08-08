@@ -25,10 +25,8 @@ export default class Overlay {
         const path = PathPublish.get();
         const pathLabels =
             isNavPathPaintEnabled() && path !== null && path.tiles.length > 0;
-        const state = ScriptRunner.state;
-        const scriptActive = state === 'running' || state === 'paused';
-        const bot = ScriptRunner.bot;
-        const botPaint = Boolean(bot?.onPaint && scriptActive);
+        const bot = ScriptRunner.paintBot;
+        const botPaint = Boolean(bot?.onPaint);
 
         if (!pathLabels && !botPaint) {
             if (this.hadContent) {

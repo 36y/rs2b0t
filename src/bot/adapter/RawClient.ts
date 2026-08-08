@@ -26,6 +26,8 @@ export interface RawClient {
     statBaseLevel: Int32Array;
     statEffectiveLevel: Int32Array;
     statXP: Int32Array;
+    statSessionGeneration: number;
+    statSeenGeneration: Int32Array;
     runenergy: number;
     runweight: number;
 
@@ -102,6 +104,8 @@ export const SELF_TEST = [
     'statBaseLevel',
     'statEffectiveLevel',
     'statXP',
+    'statSessionGeneration',
+    'statSeenGeneration',
     'runenergy',
     'runweight',
     'var',

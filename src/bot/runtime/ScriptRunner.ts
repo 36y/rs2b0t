@@ -38,7 +38,7 @@ function scheduleNextLoop(ctx: ScriptContext, cadence: LoopCadence): void {
  * Scene state 2 is the live playable scene — mid-load (teleport, login rebuild,
  * hop) is not "logged out" even though we pause the loop the same way.
  */
-type LoopHoldReason = 'logged-out' | 'scene-load' | 'no-tile';
+type LoopHoldReason = 'logged-out' | 'scene-load' | 'no-tile' | 'stats-load';
 
 function loopHoldReason(): LoopHoldReason | null {
     if (!reader.attached()) {
@@ -53,10 +53,13 @@ function loopHoldReason(): LoopHoldReason | null {
     if (reader.worldTile() === null) {
         return 'no-tile';
     }
+    if (!reader.statsReady()) {
+        return 'stats-load';
+    }
     return null;
 }
 
-function loopReadyOrDetached(): boolean {
+export function loopReadyOrDetached(): boolean {
     return loopHoldReason() === null;
 }
 
@@ -68,6 +71,8 @@ function holdWarnMessage(reason: LoopHoldReason): string {
             return `scene loading (state ${reader.sceneState()}) — holding the loop until the scene is ready`;
         case 'no-tile':
             return 'scene ready but no local tile yet — holding the loop';
+        case 'stats-load':
+            return 'scene ready but stats are still loading — holding the loop';
     }
 }
 
@@ -80,6 +85,8 @@ function holdResumeMessage(reason: LoopHoldReason, heldMs: number): string {
             return `scene ready after ${secs}s — resuming the loop`;
         case 'no-tile':
             return `local tile available after ${secs}s — resuming the loop`;
+        case 'stats-load':
+            return `stats ready after ${secs}s — resuming the loop`;
     }
 }
 
@@ -89,6 +96,8 @@ class ScriptRunnerImpl {
     meta: ScriptMeta | null = null;
 
     private changeListeners = new Set<() => void>();
+    /** onStart has returned and established any baselines consumed by onPaint. */
+    private startupComplete = false;
     /** Wall-clock start of the current loop hold (logout / scene load / no tile). */
     private holdSince = 0;
     private holdReason: LoopHoldReason | null = null;
@@ -117,6 +126,19 @@ class ScriptRunnerImpl {
         return this.ctx?.state ?? 'idle';
     }
 
+    /** The bot that may safely paint this frame, or null while startup/state is incomplete. */
+    get paintBot(): AbstractBot | null {
+        const state = this.ctx?.state;
+        if (
+            !this.startupComplete ||
+            (state !== 'running' && state !== 'paused') ||
+            !loopReadyOrDetached()
+        ) {
+            return null;
+        }
+        return this.bot;
+    }
+
     start(meta: ScriptMeta): void {
         if (this.ctx && (this.ctx.state === 'running' || this.ctx.state === 'paused' || this.ctx.state === 'stopping')) {
             throw new Error(`'${this.meta?.name}' is still ${this.ctx.state}`);
@@ -132,6 +154,7 @@ class ScriptRunnerImpl {
         this.ctx = ctx;
         this.bot = bot;
         this.meta = meta;
+        this.startupComplete = false;
         Scheduler.active = ctx;
 
         ActionRouter.beginRun((level, msg) => ctx.addLog(level, msg));
@@ -154,7 +177,14 @@ class ScriptRunnerImpl {
                     ctx.addLog('warn', holdWarnMessage(reason));
                 }
                 await Execution.delayUntil(loopReadyOrDetached, 0);
-                ctx.addLog('info', reason === 'logged-out' ? 'ingame — starting' : 'scene ready — starting');
+                ctx.addLog(
+                    'info',
+                    reason === 'logged-out'
+                        ? 'ingame — starting'
+                        : reason === 'stats-load'
+                            ? 'stats ready — starting'
+                            : 'scene ready — starting'
+                );
             }
             await bot.onStart?.();
         })()
@@ -171,6 +201,7 @@ class ScriptRunnerImpl {
                 if (RecoveryHints.pendingRecovery) {
                     RecoveryHints.clear();
                 }
+                this.startupComplete = true;
                 ctx.nextLoopAt = 0;
                 ctx.progress();
             })
@@ -319,6 +350,7 @@ class ScriptRunnerImpl {
     }
 
     private teardown(ctx: ScriptContext): void {
+        this.startupComplete = false;
         try {
             this.bot?.onStop?.();
         } catch (err) {

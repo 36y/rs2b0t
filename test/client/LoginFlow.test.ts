@@ -28,6 +28,7 @@ interface LoginClientView {
     loginMes2: string;
     loginUser: string;
     loginPass: string;
+    statSessionGeneration: number;
     loginAttempt: AttemptView | null;
     stream: ClientStream | null;
     out: {
@@ -128,6 +129,7 @@ function bareClient(openLoginStream: () => Promise<ClientStream>): LoginClientVi
         loginMes2: '',
         loginUser: '',
         loginPass: '',
+        statSessionGeneration: 0,
         loginAttempt: null,
         stream: null,
         out: {
@@ -157,7 +159,9 @@ test('programmatic login immediately uses the native screen and rejects a concur
     expect(client.loginPass).toBe('secret');
     expect(client.loginMes1).toBe('');
     expect(client.loginMes2).toBe('Connecting to server...');
+    expect(client.statSessionGeneration).toBe(1);
     expect(client.startLogin('mallory', 'other')).toBe(false);
+    expect(client.statSessionGeneration).toBe(1);
 
     await client.loginAttempt!.done;
     expect(opens).toBe(1);
@@ -167,6 +171,7 @@ test('programmatic login immediately uses the native screen and rejects a concur
     expect(client.loginAttempt).toBeNull();
 
     expect(client.startLogin('alice', 'secret')).toBe(true);
+    expect(client.statSessionGeneration).toBe(2);
     await client.loginAttempt!.done;
     expect(opens).toBe(2);
 });
@@ -181,6 +186,7 @@ test('server retry stays inside one public login attempt', async () => {
     client.loginSleep = async (): Promise<void> => retryDelay.promise;
 
     expect(client.startLogin('alice', 'secret')).toBe(true);
+    expect(client.statSessionGeneration).toBe(1);
     const done = client.loginAttempt!.done;
     while (retryStream.closeCount === 0) {
         await Bun.sleep(0);
@@ -192,6 +198,7 @@ test('server retry stays inside one public login attempt', async () => {
     await done;
 
     expect(opens).toBe(2);
+    expect(client.statSessionGeneration).toBe(1);
     expect(retryStream.closeCount).toBe(1);
     expect(client.loginMes1).toBe('Your account is already logged in.');
     expect(client.loginMes2).toBe('Try again in 60 secs...');

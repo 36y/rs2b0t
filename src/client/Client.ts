@@ -440,6 +440,9 @@ export class Client extends GameShell {
     private statEffectiveLevel: Int32Array = new Int32Array(Skill.count);
     private statBaseLevel: Int32Array = new Int32Array(Skill.count);
     private statXP: Int32Array = new Int32Array(Skill.count);
+    /** Login attempt that supplied each stat slot; prevents stale relog data from becoming ready. */
+    private statSessionGeneration: number = 0;
+    private statSeenGeneration: Int32Array = new Int32Array(Skill.count);
 
     private oneMouseButton: number = 0;
     private isMenuOpen: boolean = false;
@@ -1735,6 +1738,11 @@ export class Client extends GameShell {
         if (this.ingame) {
             return { accepted: false, done: Promise.resolve() };
         }
+
+        // Stat arrays intentionally survive logout for the title/UI. Give every
+        // accepted login its own generation so consumers can distinguish that
+        // retained snapshot from UPDATE_STAT packets belonging to this attempt.
+        this.statSessionGeneration++;
 
         if (!reconnect) {
             this.loginscreen = 2;
@@ -6822,6 +6830,7 @@ export class Client extends GameShell {
                 this.statXP[stat] = xp;
                 this.statEffectiveLevel[stat] = level;
                 this.statBaseLevel[stat] = 1;
+                this.statSeenGeneration[stat] = this.statSessionGeneration;
 
                 for (let i: number = 0; i < 98; i++) {
                     if (xp >= Client.levelExperience[i]) {

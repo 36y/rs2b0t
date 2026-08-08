@@ -41,6 +41,36 @@ const SCRATCH_SLOT = 499;
 let raw: RawClient | null = null;
 let packetListener: ((ptype: number) => void) | null = null;
 
+/** Whether the login snapshot has populated every skill exposed by this client. */
+export function activeStatsReady(baseLevels: ArrayLike<number>): boolean {
+    for (let i = 0; i < Skill.count; i++) {
+        if (Skill.used[i] && (baseLevels[i] ?? 0) <= 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/** Whether every active stat was received during this exact login session. */
+export function currentLoginStatsReady(
+    baseLevels: ArrayLike<number>,
+    seenGenerations: ArrayLike<number>,
+    sessionGeneration: number
+): boolean {
+    if (sessionGeneration <= 0) {
+        return false;
+    }
+    for (let i = 0; i < Skill.count; i++) {
+        if (
+            Skill.used[i] &&
+            ((baseLevels[i] ?? 0) <= 0 || seenGenerations[i] !== sessionGeneration)
+        ) {
+            return false;
+        }
+    }
+    return true;
+}
+
 /**
  * Object/NPC vertical extent for hulls. RS model space: minY = max(-vertexY)
  * (height above origin) — same as ClientNpc.height. maxY is below-origin only.
@@ -334,6 +364,15 @@ export const reader = {
 
     skillUsed(index: number): boolean {
         return Skill.used[index] ?? false;
+    },
+
+    /** True once this login's stat snapshot is safe for script baselines. */
+    statsReady(): boolean {
+        return raw !== null && currentLoginStatsReady(
+            raw.statBaseLevel,
+            raw.statSeenGeneration,
+            raw.statSessionGeneration
+        );
     },
 
     stat(index: number): StatSnapshot {
