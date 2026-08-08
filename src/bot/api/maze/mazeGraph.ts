@@ -24,7 +24,7 @@ export const MAZE_SPAWNS = [
     { x: 2891, z: 4555 }  // SW  local (11,11)
 ] as const;
 
-const WALL_ID = 3626;
+export const WALL_ID = 3626;
 export const DOOR_DIRS: Record<number, number> = { 3628: 0, 3629: 1, 3630: 2, 3631: 2, 3632: 1 };
 
 const LOC_LINE = /^(\d+)\s+(\d+)\s+(\d+):\s+(\d+)(?:\s+(\d+))?(?:\s+(\d+))?$/;

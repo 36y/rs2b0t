@@ -4,7 +4,6 @@ import { Execution, type ExecutionApi } from '../Execution.js';
 import { ChatDialog } from '../hud/ChatDialog.js';
 import { Locs } from '../queries/Locs.js';
 import { MAZE_SHRINE, MAZE_SHRINE_DOOR } from './mazeGraph.js';
-import { MAZE_ROUTES } from './mazeRoutes.js';
 import { selectRoute } from './selectRoute.js';
 
 /** Region 45,71 — content mapzone `0_45_71` / enum macro_maze_teleports. */
@@ -44,10 +43,16 @@ export async function solveMaze(log: (msg: string) => void, execution: Execution
     }
     await clearMesbox();
 
-    const route = selectRoute(start, MAZE_ROUTES);
+    const route = selectRoute(start);
+    if (!route) {
+        // Loudly, and without a route: silently replaying someone else's is what
+        // pinned two bots on a walled-off first door for a quarter of an hour.
+        log(`random event: maze — no route solvable from (${start.x},${start.z}); the layout does not reach the shrine from here`);
+        return true;
+    }
     let resyncs = 0;
     log(
-        `random event: maze — spawn (${start.x},${start.z}) -> route ${route.spawn.x},${route.spawn.z} (${route.doors.length} doors)`
+        `random event: maze — spawn (${start.x},${start.z}) -> ${route.doors.length} doors, first (${route.doors[0].x},${route.doors[0].z})`
     );
 
     const walkTowards = async (d: { x: number; z: number }, onto: boolean): Promise<void> => {

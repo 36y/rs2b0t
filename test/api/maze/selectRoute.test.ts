@@ -1,19 +1,58 @@
 import { describe, expect, test } from 'bun:test';
-import { selectRoute } from '#/bot/api/maze/selectRoute.js';
-import type { MazeRoute } from '#/bot/api/maze/mazeRoutes.js';
 
-const R: MazeRoute[] = [
-    { spawn: { x: 2891, z: 4597 }, doors: [{ x: 1, z: 1 }] },
-    { spawn: { x: 2933, z: 4597 }, doors: [{ x: 2, z: 2 }] },
-    { spawn: { x: 2933, z: 4555 }, doors: [{ x: 3, z: 3 }] },
-    { spawn: { x: 2891, z: 4555 }, doors: [{ x: 4, z: 4 }] }
+import { selectRoute } from '#/bot/api/maze/selectRoute.js';
+import { MAZE_SPAWNS } from '#/bot/api/maze/mazeGraph.js';
+
+/**
+ * The event does not only spawn on the four corners. Two live bots landed on
+ * (2905,4566) and (2900,4567); the old nearest-corner lookup handed both the
+ * (2891,4555) route, whose first door (2903,4554) is walled off from where they
+ * stood, and they burned 16 minutes restarting the same dead route.
+ */
+const REAL_STUCK_SPAWNS = [
+    { x: 2905, z: 4566 },
+    { x: 2900, z: 4567 }
 ];
 
+const WALLED_OFF_FIRST_DOOR = { x: 2903, z: 4554 };
+
 describe('selectRoute', () => {
-    test('exact spawn match', () => {
-        expect(selectRoute({ x: 2933, z: 4555 }, R).spawn).toEqual({ x: 2933, z: 4555 });
+    test('still solves the four corner spawns', () => {
+        for (const spawn of MAZE_SPAWNS) {
+            const route = selectRoute(spawn);
+            expect(route).not.toBeNull();
+            expect(route!.doors.length).toBeGreaterThan(0);
+        }
     });
-    test('nearest when spawned a couple tiles off the corner', () => {
-        expect(selectRoute({ x: 2890, z: 4595 }, R).spawn).toEqual({ x: 2891, z: 4597 });
+
+    test('solves from a spawn that is not a known corner', () => {
+        for (const spawn of REAL_STUCK_SPAWNS) {
+            const route = selectRoute(spawn);
+            expect(route).not.toBeNull();
+            expect(route!.doors.length).toBeGreaterThan(0);
+        }
+    });
+
+    test('routes from where the player actually is, not the nearest corner', () => {
+        for (const spawn of REAL_STUCK_SPAWNS) {
+            const route = selectRoute(spawn)!;
+            expect(route.spawn).toEqual(spawn);
+            // the exact door both bots died on, inherited from the wrong corner
+            expect(route.doors[0]).not.toEqual(WALLED_OFF_FIRST_DOOR);
+        }
+    });
+
+    test('a non-corner spawn gets a shorter route than the corner it was misrouted to', () => {
+        const corner = selectRoute({ x: 2891, z: 4555 })!;
+        for (const spawn of REAL_STUCK_SPAWNS) {
+            // both sit well inside the maze, so the real route must beat the corner's
+            expect(selectRoute(spawn)!.doors.length).toBeLessThan(corner.doors.length);
+        }
+    });
+
+    test('returns null rather than someone else\'s route when nothing is solvable', () => {
+        // far outside the maze map square: no route exists, and inventing one is
+        // exactly the failure this replaced
+        expect(selectRoute({ x: 3200, z: 3200 })).toBeNull();
     });
 });
