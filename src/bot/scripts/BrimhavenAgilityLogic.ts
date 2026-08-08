@@ -293,6 +293,25 @@ export function shouldBank(tickets: number, foodCount: number, bankAtTickets: nu
     return foodCount <= 0 || tickets >= bankAtTickets;
 }
 
+/** Inventory fields used to distinguish a real stack gain from a removal. */
+export interface TicketInventoryChange {
+    id: number;
+    name: string | null;
+    count: number;
+    previousId: number;
+    previousCount: number;
+}
+
+/** Tickets newly entering the pack outside a bank interface. */
+export function ticketInventoryGain(change: TicketInventoryChange, bankOpen: boolean): number {
+    if (bankOpen || change.id === -1 || change.name !== TICKET_NAME) {
+        return 0;
+    }
+    return change.previousId !== change.id
+        ? Math.max(1, change.count)
+        : Math.max(0, change.count - change.previousCount);
+}
+
 /**
  * What the bank could not supply after a restock, or null when the trip is funded.
  *

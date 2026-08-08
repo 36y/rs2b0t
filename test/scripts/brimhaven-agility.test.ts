@@ -29,6 +29,7 @@ import {
     restockShortfall,
     shouldBank,
     shouldEat,
+    ticketInventoryGain,
     usableEdges,
     waitPlatform,
     wantRunForGoal
@@ -267,6 +268,40 @@ describe('BrimhavenAgility banking & combat decisions', () => {
         expect(hasPaid(1 << 1)).toBe(true);
         expect(pillarTagged(0)).toBe(false);
         expect(pillarTagged(1 << 0)).toBe(true);
+    });
+});
+
+describe('BrimhavenAgility collected-ticket total', () => {
+    const change = (overrides: Partial<Parameters<typeof ticketInventoryGain>[0]> = {}) => ({
+        id: 513,
+        name: 'Agility arena ticket',
+        count: 1,
+        previousId: -1,
+        previousCount: 0,
+        ...overrides
+    });
+
+    test('counts the delayed inventory reward independently of tag completion', () => {
+        let collected = 12; // tagging/varp/modal completion does not change the total
+        collected += ticketInventoryGain(change(), false);
+        collected += ticketInventoryGain(change({ count: 5, previousId: 513, previousCount: 4 }), false);
+
+        expect(collected).toBe(14);
+    });
+
+    test('depositing cannot reduce the total and bank withdrawals cannot inflate it', () => {
+        let collected = ticketInventoryGain(change(), false);
+        collected += ticketInventoryGain(
+            change({ id: -1, name: null, count: 0, previousId: 513, previousCount: 1 }),
+            false
+        );
+        collected += ticketInventoryGain(change(), true);
+
+        expect(collected).toBe(1);
+    });
+
+    test('ignores unrelated inventory gains', () => {
+        expect(ticketInventoryGain(change({ name: 'Lobster' }), false)).toBe(0);
     });
 });
 

@@ -49,6 +49,7 @@ import {
     restockShortfall,
     shouldBank,
     shouldEat,
+    ticketInventoryGain,
     waitPlatform,
     wantRunForGoal,
     type ArenaEdge
@@ -89,7 +90,7 @@ export default class BrimhavenAgility extends TaskBot {
     private foodPerTrip = DEFAULT_FOOD_PER_TRIP;
     private bankAtTickets = DEFAULT_BANK_TICKETS;
 
-    private tickets = 0;
+    private ticketsCollected = 0;
     private tags = 0;
     private status = 'starting';
     private startedAt = Date.now();
@@ -104,7 +105,13 @@ export default class BrimhavenAgility extends TaskBot {
         this.bankAtTickets = this.settings.num('bankAtTickets', DEFAULT_BANK_TICKETS);
         this.startedAt = Date.now();
         this.xpAtStart = Skills.xp('agility');
-        this.tickets = Inventory.count(TICKET_NAME);
+        this.ticketsCollected = 0;
+        this.on('inventory.changed', change => {
+            const gained = ticketInventoryGain(change, Bank.isOpen());
+            if (gained > 0) {
+                this.ticketsCollected += gained;
+            }
+        });
 
         this.log(
             `BrimhavenAgility — food '${this.foodName}' x${this.foodPerTrip}, bank@${this.bankAtTickets} tickets, eat@${EAT_AT_HP}hp`
@@ -199,7 +206,6 @@ export default class BrimhavenAgility extends TaskBot {
 
     countTag(): void {
         this.tags++;
-        this.tickets = this.ticketCount();
     }
 
     nextSpikePlatform(): number {
@@ -220,8 +226,9 @@ export default class BrimhavenAgility extends TaskBot {
         const xp = Skills.xp('agility') - this.xpAtStart;
         const xph = mins > 0.5 ? `${((xp / mins) * 60 / 1000).toFixed(1)}k` : '—';
         p.row(`Runtime: ${fmtDuration(mins)}`, `Tags: ${this.tags}`, `XP/hr: ${xph}`);
-        p.row(`Tickets: ${this.ticketCount()}`, `Food: ${this.foodInPack()}`, `HP: ${this.hp()}`);
-        p.row(`Agility: ${this.agility()}`, `Platform: ${this.platform()}`, `Target: ${this.targetPillar()}`);
+        p.row(`Tickets earned: ${this.ticketsCollected}`);
+        p.row(`Food: ${this.foodInPack()}`, `HP: ${this.hp()}`, `Agility: ${this.agility()}`);
+        p.row(`Platform: ${this.platform()}`, `Target: ${this.targetPillar()}`);
         p.gap();
         ScriptRunner.paintControls(p);
         p.end();
