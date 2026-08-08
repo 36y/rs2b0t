@@ -1,5 +1,6 @@
 import { BUILD_INFO, formatBuildInfo } from '../../config/buildInfo.js';
 import { installWorkerClockHub } from '../../util/WorkerClock.js';
+import { installDiagnostics } from './installDiagnostics.js';
 import { TrafficCollector } from '../adapter/TrafficAdapter.js';
 import { DomSlotOps, orderedSlotElements } from './DomSlotOps.js';
 import { MultiBoxController } from './MultiBoxController.js';
@@ -339,9 +340,14 @@ function boot(): void {
     );
     renderRail();
 
+    const diagnostics = installDiagnostics(window, () => Array.from(document.querySelectorAll('iframe')));
+
     (globalThis as Record<string, unknown>).multibox = {
         build: BUILD_INFO,
         controller,
+        diagnostics: () => diagnostics.dump(),
+        diagCompare: (agoMs: number) => diagnostics.compare(agoMs),
+        diagDownload: () => diagnostics.download(),
         add: (a?: Account) => {
             const slot = controller.add(a);
             renderRail();

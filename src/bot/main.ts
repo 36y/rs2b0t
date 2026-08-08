@@ -3,6 +3,7 @@ import BotClient from './BotClient.js';
 import { BotHost } from './BotHost.js';
 import { ClueExecutor, TRACE_STORAGE_KEY } from './clues/ClueExecutor.js';
 import { readTraceRing } from './clues/ClueTrace.js';
+import { BotDiag } from './diag/BotDiag.js';
 import { ActionRouter } from './input/ActionRouter.js';
 import { Navigator } from './nav/Navigator.js';
 import { installAbi } from './runtime/abi.js';
@@ -89,6 +90,7 @@ if (typeof document !== 'undefined' && document.getElementById('canvas')) {
         router: ActionRouter, scheduler: Scheduler,
         renderGate: RenderGate,
         build: BUILD_INFO,
+        diag: () => BotDiag.drain(),
         setRenderMode: (mode: RenderMode) => RenderGate.setMode(mode),
         setCredentials: (u: string, p: string) => AutoRelogin.setCredentials(u, p),
         setAutoLogin: (on: boolean) => AutoRelogin.setAutoLogin(on),

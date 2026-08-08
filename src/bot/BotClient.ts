@@ -2,6 +2,7 @@ import { Client } from '#/client/Client.js';
 import { WorkerClock } from '#/util/WorkerClock.js';
 
 import { BotHost } from './BotHost.js';
+import { BotDiag } from './diag/BotDiag.js';
 import { paintNavPathInGame } from './nav/pathScenePaint.js';
 import { RenderGate } from './runtime/RenderGate.js';
 
@@ -24,6 +25,7 @@ export default class BotClient extends Client {
     constructor(nodeid: number, lowmem: boolean, members: boolean) {
         super(nodeid, lowmem, members);
         this.syncLogicRate();
+        BotDiag.attach(this);
         BotHost.attach(this);
     }
 
@@ -49,17 +51,22 @@ export default class BotClient extends Client {
     override async mainloop(): Promise<void> {
         this.syncLogicRate();
         await super.mainloop();
-        BotHost.onFrame();
+        // Only the host frame is timed: it is synchronous, and it is where the cost
+        // lives (script + producer work dwarfs the client's own loop). super.mainloop()
+        // is async, so timing it would measure yields to other bots, not occupancy.
+        BotDiag.measure('logic', () => BotHost.onFrame());
     }
 
     override async mainredraw(): Promise<void> {
         const now = performance.now();
+        // Measured outside the gate on purpose: a skipped draw costs nothing, and
+        // counting it would make an idle background bot look like it is drawing.
         if (!RenderGate.shouldDraw(now)) {
             return;
         }
         await super.mainredraw();
         RenderGate.markDrawn(now);
-        BotHost.onDraw();
+        BotDiag.measure('draw', () => BotHost.onDraw());
     }
 
     /** Path tile quads + loc rings into areaGame (after 3D world, before name plates). */

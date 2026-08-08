@@ -15,6 +15,7 @@ bot starves. In a single tab they all hold full speed while that tab is visible.
 - [Profiles and the vault](#profiles-and-the-vault)
 - [Login coordination](#login-coordination)
 - [Resource telemetry](#resource-telemetry)
+- [Diagnostics](#diagnostics)
 - [Viewers and the launcher](#viewers-and-the-launcher)
 
 ## Slots and iframes
@@ -169,6 +170,73 @@ Traffic shows a numeric `0 B/s` only after two unchanged browser-counter samples
 at least one bot publisher is present. An empty wall reports that no publisher
 appeared. There are no last-known values, no host or headroom estimates, and no
 zero-value substitutes for missing data.
+
+## Diagnostics
+
+Resource telemetry answers "how loaded is the wall right now". Diagnostics answers the
+different question that actually gets reported: **"this was fine an hour ago and now a
+right-click takes two seconds — what changed?"** That is only answerable against
+retained history, so diagnostics keeps its own.
+
+Every bot times its own main-thread cost, bucketed by phase
+([`PhaseTimer`](../src/bot/diag/PhaseTimer.ts)). Aggregate loop counts tell you the wall
+is busy; only a per-bot breakdown tells you *which* bot to look at. All 27 iframes share
+one main thread, so without attribution a stall is just "the wall is slow".
+
+Measurement is **synchronous on purpose**. Timing an `async` body records the span's wall
+time, which includes every yield to the other 26 bots — that read 4-13x high and made a
+healthy wall look 130% oversubscribed. Only an uninterrupted synchronous run is
+main-thread occupancy, so the timed hooks are `BotHost.onFrame()` and `onDraw()`: they are
+synchronous, and they are where the cost lives (script and producer work dwarfs the
+client's own loop, measured ~60x).
+
+Samples land in fixed-capacity columnar rings
+([`DiagRing`](../src/bot/diag/DiagRing.ts)) on two tiers — 1s for the last 10 minutes,
+30s for the last 24 hours ([`DiagSampler`](../src/bot/multibox/DiagSampler.ts)). The
+coarse tier **aggregates rather than decimates**: keeping 1 sample in 30 would discard
+exactly the spikes worth having. A 27-bot wall costs about 6 MB for the full 24 hours.
+
+Stalls are measured from *outside* the main thread. A main-thread heartbeat cannot time
+the freeze it is stuck inside, so [`FreezeWatch`](../src/bot/diag/FreezeWatch.ts) reuses
+the wall's worker-backed clock: the worker's timer fires on schedule and the resolve
+waits for the main thread, so the overshoot past the requested delay *is* the
+starvation. Each recorded stall names whichever bot and phase was executing.
+
+Input lag is measured directly rather than inferred from CPU
+([`InputLatency`](../src/bot/diag/InputLatency.ts)). Firefox has no Long Tasks API but
+does implement Event Timing, which reports the number a user actually perceives as lag.
+
+From the wall console:
+
+| Call | Answers |
+|---|---|
+| `multibox.diagnostics()` | everything, JSON-safe, one call |
+| `multibox.diagCompare(3600_000)` | same fields now vs an hour ago, ranked by what grew most |
+| `multibox.diagDownload()` | the dump as a file |
+
+Diagnostics follows the same honesty rules as the resource card. Unwritten ring slots
+read as `NaN`, never as a real `0`. A wrong-width sample, an unknown field, a nested
+phase, or a browser without Event Timing all throw — a blind sampler silently reporting
+zero lag is worse than no sampler at all.
+
+### Going deeper than the shipped metrics
+
+The retained series names the *bot*; naming the *function* has so far needed a temporary
+probe from the devtools console, wrapping a suspect and accumulating `performance.now()`
+deltas. Two fixes came out of exactly that:
+
+- **`RandomEventGuardian`** — timing the seven frame listeners individually showed one
+  costing 1.5ms/frame. Its tick guard was stamped only after a successful detect, so in
+  the steady state it never armed and a full scene scan ran every frame.
+- **`reader.locs()`** — timing each waiter's `cond` closure showed two `Miner` predicates
+  at ~3.5ms per evaluation, 93% of all condition time. The cost was the shared snapshot
+  sweep, not either script.
+
+Two lessons worth keeping. Measure the *synchronous* span: an `async` wrapper bills a bot
+for time it spent yielded. And do not trust `setTimeout(0)` drift as a starvation signal —
+an unfocused window clamps timers to 1/sec, which looks identical to a wedged main thread.
+The worker-backed stall figure above is immune to that clamp, which is why it is the one
+to read.
 
 ## Viewers and the launcher
 

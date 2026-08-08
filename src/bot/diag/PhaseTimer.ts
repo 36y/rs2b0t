@@ -1,0 +1,100 @@
+// docs/MULTIBOX.md#diagnostics
+//
+// Per-bot main-thread cost, bucketed by phase. Aggregate loop counts tell you the
+// wall is busy; only a bucket breakdown tells you which subsystem to optimise.
+//
+// One accumulator lives per iframe (one bot per frame). The wall reads and clears
+// it on each sample tick, so a bucket is always "cost since the last sample".
+
+export type Phase = 'logic' | 'draw';
+
+export const PHASES: readonly Phase[] = ['logic', 'draw'];
+
+/**
+ * A single phase that ran long enough to be a freeze suspect. Recorded with its
+ * window so the wall can match it against a stall it detected after the fact --
+ * asking "what is running now" cannot attribute a stall that has already ended.
+ */
+export interface SlowSpan {
+    phase: Phase;
+    /** Wall clock, not performance.now(): every iframe has its own time origin,
+     *  so only a shared clock lets the wall line a span up with a stall. */
+    start: number;
+    end: number;
+}
+
+/** Spans at or above this are worth keeping as freeze suspects. */
+export const SLOW_SPAN_MS = 50;
+
+/** Bounded so a pathological bot cannot grow this without limit between drains. */
+export const SLOW_SPAN_CAPACITY = 64;
+
+export interface PhaseTotals {
+    /** Summed ms in each phase since the last drain. */
+    ms: Record<Phase, number>;
+    /** Slowest single occurrence of each phase since the last drain. */
+    maxMs: Record<Phase, number>;
+    /** Occurrences of each phase since the last drain. */
+    count: Record<Phase, number>;
+    /** Long phases with their windows, for freeze attribution. */
+    slowSpans: SlowSpan[];
+}
+
+function zeroed(): PhaseTotals {
+    return {
+        ms: { logic: 0, draw: 0 },
+        maxMs: { logic: 0, draw: 0 },
+        count: { logic: 0, draw: 0 },
+        slowSpans: []
+    };
+}
+
+export class PhaseTimer {
+    private totals: PhaseTotals = zeroed();
+    private depth = 0;
+
+    constructor(
+        private readonly box: string,
+        private readonly wallClock: () => number = () => Date.now()
+    ) {}
+
+    /**
+     * Times `body` into `phase`.
+     *
+     * Deliberately synchronous. Wrapping an async body measured the span's wall
+     * time, which includes every yield to other bots -- measured 4-13x higher than
+     * the real cost. Only an uninterrupted synchronous run is main-thread occupancy.
+     *
+     * Phases must not nest: a nested span would be counted in both buckets.
+     */
+    measure<T>(phase: Phase, body: () => T): T {
+        if (this.depth !== 0) {
+            throw new Error(`[rs2b0t] phase "${phase}" opened while another is already running on ${this.box}`);
+        }
+        this.depth++;
+        const started = performance.now();
+        try {
+            return body();
+        } finally {
+            const ended = performance.now();
+            const elapsed = ended - started;
+            this.totals.ms[phase] += elapsed;
+            this.totals.count[phase]++;
+            if (elapsed > this.totals.maxMs[phase]) {
+                this.totals.maxMs[phase] = elapsed;
+            }
+            if (elapsed >= SLOW_SPAN_MS && this.totals.slowSpans.length < SLOW_SPAN_CAPACITY) {
+                const endedAt = this.wallClock();
+                this.totals.slowSpans.push({ phase, start: endedAt - elapsed, end: endedAt });
+            }
+            this.depth--;
+        }
+    }
+
+    /** Returns the totals accumulated since the previous drain and resets them. */
+    drain(): PhaseTotals {
+        const out = this.totals;
+        this.totals = zeroed();
+        return out;
+    }
+}
