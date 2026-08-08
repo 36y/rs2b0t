@@ -2086,7 +2086,8 @@
     "debugName": "tobanladderdown",
     "options": [
       "Climb-down"
-    ]
+    ],
+    "curated": true
   },
   {
     "from": {

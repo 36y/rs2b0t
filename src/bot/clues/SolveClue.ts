@@ -76,6 +76,9 @@ export class SolveClue implements Task {
 
     private abandonedClueId: number | null = null;
 
+    /** What the Entrana monk search made us bank, so the trail can give it back. */
+    private strippedGear: string[] = [];
+
     private status = 'idle';
 
     constructor(private readonly host: SolveClueHost) {}
@@ -118,15 +121,71 @@ export class SolveClue implements Task {
         if (outcome === 'abandon') {
             this.abandonedClueId = heldClueLikeId();
             this.bankedThisSolve = false;
+            await this.restoreStrippedGear();
             this.status = 'abandoned';
             this.host.log(`[clue] abandoned ${this.abandonedClueId ?? '?'} — leaving it in the pack`);
             return;
         }
 
         this.bankedThisSolve = false;
+        await this.restoreStrippedGear();
         this.status = 'idle';
         this.host.setStatus('clue solved');
         this.host.log('[clue] trail complete');
+    }
+
+    /**
+     * Put back what the Entrana strip banked. Nothing else restores it: the
+     * grind bots only re-equip their configured weapon and shield, so armour
+     * stripped for the monk search stayed in the bank for good.
+     */
+    private async restoreStrippedGear(): Promise<void> {
+        const want = this.strippedGear.filter(n => !Equipment.contains(n));
+        if (want.length === 0) {
+            this.strippedGear = [];
+            return;
+        }
+
+        const here = Game.tile();
+        const bank = here ? nearestBank(here) : null;
+        if (!bank) {
+            this.host.log(`[clue] no bank nearby to reclaim ${want.join(', ')} — will retry after the next trail`);
+            return;
+        }
+
+        this.status = 'restoring gear';
+        this.host.setStatus('clue — reclaiming stripped gear');
+        this.host.log(`[clue] reclaiming gear banked for Entrana: ${want.join(', ')}`);
+
+        if (!(await Traversal.walkResilient(bank.tile, { radius: 3, attempts: 6, timeoutMs: 300_000, log: m => this.host.log(`  ${m}`) }))) {
+            this.host.log('[clue] walk to the bank failed — gear stays banked, will retry');
+            return;
+        }
+        if (!(await Bank.openNearest(BANK_NAME, BANK_OP, m => this.host.log(`  ${m}`)))) {
+            this.host.log('[clue] could not open the bank — gear stays banked, will retry');
+            return;
+        }
+        for (const name of want) {
+            if (Inventory.first(name) === null) {
+                await Bank.withdraw(name, 'Withdraw-1');
+                await Execution.delayUntil(() => Inventory.first(name) !== null, 2500);
+            }
+        }
+        await Bank.close();
+        await Execution.delayUntil(() => !Bank.isOpen(), 3000);
+
+        for (const name of want) {
+            if (!Equipment.contains(name) && Inventory.first(name) !== null) {
+                await Equipment.equip(name);
+                await Execution.delayUntil(() => Equipment.contains(name), 2500);
+            }
+        }
+
+        // Keep anything that would not go back on, so the next trail retries it.
+        this.strippedGear = want.filter(n => !Equipment.contains(n));
+        if (this.strippedGear.length > 0) {
+            this.host.log(`[clue] could not re-equip ${this.strippedGear.join(', ')} — will retry`);
+        }
     }
 
     private async bankFirst(): Promise<boolean> {
@@ -155,6 +214,9 @@ export class SolveClue implements Task {
                 const n = worn.name ?? '';
                 if (n !== '' && ENTRANA_RESTRICTED_GEAR_RE.test(n)) {
                     await Equipment.unequip(n);
+                    if (!this.strippedGear.some(g => g.toLowerCase() === n.toLowerCase())) {
+                        this.strippedGear.push(n);
+                    }
                 }
             }
         }

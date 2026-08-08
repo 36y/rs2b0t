@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
     escapeNeeded,
+    gearCandidates,
     inWilderness,
     isClueLike,
     isGrindForeign,
@@ -59,6 +60,30 @@ describe('underPlayerAttack', () => {
     });
     test('an unknown position is never an attack', () => {
         expect(underPlayerAttack(null, true)).toBe(false);
+    });
+});
+
+describe('gearCandidates', () => {
+    const ARMOUR = ['Rune platebody', 'Rune platelegs', 'Rune full helm'];
+    test('armour worn at start is kept and re-equipped, not just the weapon and shield', () => {
+        expect(gearCandidates('Rune scimitar', 'Dragonfire shield', ARMOUR)).toEqual([
+            'Rune scimitar',
+            'Dragonfire shield',
+            'Rune platebody',
+            'Rune platelegs',
+            'Rune full helm'
+        ]);
+    });
+    test('the configured weapon and shield are not duplicated when also worn at start', () => {
+        expect(gearCandidates('Rune scimitar', 'Dragonfire shield', ['rune scimitar', 'Rune platebody'])).toEqual([
+            'Rune scimitar',
+            'Dragonfire shield',
+            'Rune platebody'
+        ]);
+    });
+    test('an empty weapon or shield slot contributes nothing', () => {
+        expect(gearCandidates('', '', ARMOUR)).toEqual(ARMOUR);
+        expect(gearCandidates('', '', [])).toEqual([]);
     });
 });
 

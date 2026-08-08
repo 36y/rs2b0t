@@ -51,10 +51,11 @@ export const PACK_UNREACHABLE: Record<number, string> = {
     // 2811 Baxtorian rope baked (#369); 2790 sewer web baked (#370); 3579 Entrana ferry+planks (#368).
     3532: 'Kharazi jungle: boundary is cut tile-by-tile with a machete (jungle_tree.rs2) — a traversal mode, not one edge',
     3534: 'Kharazi jungle: boundary is cut tile-by-tile with a machete (jungle_tree.rs2) — a traversal mode, not one edge',
-    3536: 'Kharazi jungle: boundary is cut tile-by-tile with a machete (jungle_tree.rs2) — a traversal mode, not one edge',
+    3536: 'Kharazi jungle: boundary is cut tile-by-tile with a machete (jungle_tree.rs2) — a traversal mode, not one edge'
 
-    // ---- DEFECT: no gate, the data is wrong --------------------------------
-    2855: 'Sinclair Mansion upstairs: its ladder foot at (2737,3583,0) sits on a sealed one-tile-wide strip — walkable, exits only along itself, connected to nothing. A build-collision artifact, not a snap choice.'
+    // 2855 Sinclair Mansion: the ladder foot was anchored on a sealed strip.
+    // Fixed by overriding the approach tile in derive-ladders.py, not by making
+    // snap() smarter — a general rule moved ladders that were already correct.
 };
 
 export function packUnreachable(id: number): string | null {

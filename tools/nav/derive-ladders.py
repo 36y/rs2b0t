@@ -447,7 +447,20 @@ def point(target: Target) -> dict[str, int]:
     return {"x": target.x, "z": target.z, "level": target.level}
 
 
+# snap() rejects only a one-tile prison, so it can anchor onto a walled-off
+# pocket that reads as unsealed. Sinclair Mansion's ladder landed on the 22-tile
+# strip along its north wall — walkable, and reachable by nothing, which left
+# Donovan (medium anagram clue) unsolvable. Keyed by loc tile plus the approach
+# level, because the up and down edges of one ladder share a loc tile.
+APPROACH_OVERRIDES: dict[tuple[int, int, int], tuple[int, int]] = {
+    (2737, 3582, 0): (2736, 3582),
+}
+
+
 def make_edge(config, placement: EffectivePlacement, action: str, source: Target, target: Target, disabled_reason: str | None) -> dict:
+    override = APPROACH_OVERRIDES.get((placement.x, placement.z, source.level))
+    if override is not None:
+        source = Target(override[0], override[1], source.level)
     kind = "stair" if source.level != target.level else "dungeon"
     edge = {
         "from": point(source),
@@ -475,6 +488,10 @@ def edge_sort_key(edge: dict) -> tuple:
 
 
 def legacy_ladder_edge(edge: dict, ladder_ids: set[int], ladder_debugs: set[str]) -> bool:
+    # Hand-baked routes are ladder-shaped but are not in the map data, so they
+    # would be filtered here and never re-derived — a silent loss on every run.
+    if edge.get("curated"):
+        return False
     if edge.get("locId") in ladder_ids or edge.get("debugName") in ladder_debugs:
         return True
     # Preserve disabled non-ladder rows such as the Castle Wars auto-reverse

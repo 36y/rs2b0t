@@ -55,6 +55,21 @@ export function wantsGroundItem(item: { id: number; name: string | null }, f: Lo
     return f.lootSet.has(n) || (f.bankCommon && matchesCommonBankLoot(name, item.id));
 }
 
+/**
+ * Gear the bot must keep and put back on. Only the weapon and shield are
+ * configured, so armour worn at start would otherwise be banked on the first
+ * trip — or stripped for an Entrana clue — and never re-equipped.
+ */
+export function gearCandidates(weapon: string, shield: string, tracked: readonly string[]): string[] {
+    const out: string[] = [];
+    for (const name of [weapon, shield, ...tracked]) {
+        if (name !== '' && !out.some(seen => seen.toLowerCase() === name.toLowerCase())) {
+            out.push(name);
+        }
+    }
+    return out;
+}
+
 /** Chebyshev radius around the bank stand that counts as "the flee finished". */
 export const AT_BANK_RADIUS = 8;
 
