@@ -282,3 +282,82 @@ export const Banking = {
         return true;
     }
 };
+
+/**
+ * Human-ish pause between bank UI actions (open→scan, withdraw, deposit).
+ * Tick-based (1–2 ticks) so bank load is not raced by open→scan→close on the
+ * same tick after the GatheringBot split.
+ */
+export function bankPaceTicks(rand: () => number = Math.random): number {
+    return rand() < 0.35 ? 2 : 1;
+}
+
+/** @deprecated Use {@link bankPaceTicks}; wall-clock ms is not used for pacing. */
+export function bankPaceMs(rand: () => number = Math.random): number {
+    return bankPaceTicks(rand) * 600;
+}
+
+/** Pause between bank UI actions so tool checks don't flash open/close. */
+export async function bankPace(log?: (m: string) => void): Promise<void> {
+    const ticks = bankPaceTicks();
+    log?.(`bank: pause ${ticks}t`);
+    await Execution.delayTicks(ticks);
+}
+
+/**
+ * Wait for bank item list after open. Counts stay 0 until loaded — without a
+ * human pause this looks like an instant open→scan→close.
+ */
+export async function waitBankReady(log?: (m: string) => void): Promise<boolean> {
+    if (!Bank.isOpen()) {
+        return false;
+    }
+    await bankPace(log);
+    // ~7 ticks for bank table load
+    await Execution.delayUntilTicks(() => Bank.loaded() || !Bank.isOpen(), 7);
+    if (!Bank.isOpen()) {
+        return false;
+    }
+    await Execution.delayTicks(1);
+    await bankPace();
+    return Bank.isOpen();
+}
+
+/**
+ * Withdraw coins so inventory holds at least `need`. Bank must already be open.
+ * Returns false when the bank has no coins or the withdraw fails.
+ */
+export async function withdrawCoins(
+    need: number,
+    opts: {
+        invCoins: number;
+        bankCoins: number;
+        coinName?: string;
+        log?: (m: string) => void;
+    }
+): Promise<boolean> {
+    const log = opts.log ?? (() => {});
+    const coin = opts.coinName ?? 'Coins';
+    const take = Math.max(0, need - opts.invCoins);
+    if (take <= 0) {
+        return true;
+    }
+    if (!Bank.isOpen()) {
+        return false;
+    }
+    if (opts.bankCoins <= 0) {
+        log(`acquire: no coins in bank (need ${need}gp)`);
+        return false;
+    }
+    const amt = Math.min(take, opts.bankCoins);
+    log(`acquire: withdraw ${amt}gp`);
+    await bankPace();
+    if (!(await Bank.withdrawX(coin, amt))) {
+        return false;
+    }
+    const ok = await Execution.delayUntilTicks(() => Inventory.count(coin) >= Math.min(need, opts.invCoins + amt), 7);
+    if (ok) {
+        await bankPace();
+    }
+    return ok;
+}

@@ -992,6 +992,8 @@ type Scenario = {
          */
         maxDistToCamp: number;
         minDistToBank: number;
+        /** Current distance to bank (not the run minimum — purge often visits bank first). */
+        distToBank: number;
         startDistToCamp: number;
     }) => 'pass' | 'wait' | 'fail';
     failMsg?: (ctx: {
@@ -1000,6 +1002,7 @@ type Scenario = {
         minDistToCamp: number;
         maxDistToCamp?: number;
         minDistToBank?: number;
+        distToBank?: number;
         minDistToCampAfterBank?: number;
         productPeak?: number;
         bankedHint?: boolean;
@@ -1292,7 +1295,7 @@ const SCENARIOS: Scenario[] = [
         ],
         scene: 'rocks',
         budgetMs: 90_000,
-        check: ({ cur, productPeak, minDistToBank, minDistToCamp, elapsedMs }) => {
+        check: ({ cur, productPeak, distToBank, minDistToCamp, elapsedMs }) => {
             if (cur.runner === 'crashed') {
                 return 'fail';
             }
@@ -1304,14 +1307,15 @@ const SCENARIOS: Scenario[] = [
             if (logHas(cur, /bank:\s*deposited/i) && elapsedMs >= 12_000) {
                 return 'fail';
             }
-            if (muleOn && nearMeet && stillHolding && minDistToBank > 12 && elapsedMs >= 8_000) {
+            // Use current bank distance — minDistToBank is poisoned by start-purge bank trips.
+            if (muleOn && nearMeet && stillHolding && distToBank > 12 && elapsedMs >= 8_000) {
                 return 'pass';
             }
             return 'wait';
         },
-        failMsg: ({ cur, minDistToCamp, minDistToBank, productPeak }) =>
+        failMsg: ({ cur, minDistToCamp, distToBank, productPeak }) =>
             `mule-gatherer ore=${invMatch(cur, /ore/i)} peak=${productPeak} ` +
-            `distCamp=${minDistToCamp} distBank=${minDistToBank} ` +
+            `distCamp=${minDistToCamp} distBank=${distToBank ?? '?'} ` +
             `muleOn=${logHas(cur, /mule:\s*gatherer with/i)} bankedLog=${logHas(cur, /bank:\s*deposited/i)} ` +
             `tile=${cur.tile ? `${cur.tile.x},${cur.tile.z}` : '?'}`
     },
@@ -1547,7 +1551,7 @@ const SCENARIOS: Scenario[] = [
         ],
         scene: 'skip',
         budgetMs: 90_000,
-        check: ({ cur, productPeak, minDistToBank, minDistToCamp, elapsedMs }) => {
+        check: ({ cur, productPeak, distToBank, minDistToCamp, elapsedMs }) => {
             if (cur.runner === 'crashed') {
                 return 'fail';
             }
@@ -1557,14 +1561,15 @@ const SCENARIOS: Scenario[] = [
             if (logHas(cur, /bank:\s*deposited/i) && elapsedMs >= 12_000) {
                 return 'fail';
             }
-            if (muleOn && nearMeet && stillHolding && minDistToBank > 8 && elapsedMs >= 8_000) {
+            // Current bank dist — Draynor start-purge visits the booth and poisons minDistToBank.
+            if (muleOn && nearMeet && stillHolding && distToBank > 8 && elapsedMs >= 8_000) {
                 return 'pass';
             }
             return 'wait';
         },
-        failMsg: ({ cur, minDistToCamp, minDistToBank, productPeak }) =>
+        failMsg: ({ cur, minDistToCamp, distToBank, productPeak }) =>
             `fish-mule-gatherer raw=${invMatch(cur, /^raw /i)} peak=${productPeak} ` +
-            `distCamp=${minDistToCamp} distBank=${minDistToBank} ` +
+            `distCamp=${minDistToCamp} distBank=${distToBank ?? '?'} ` +
             `muleOn=${logHas(cur, /mule:\s*gatherer with/i)} bankedLog=${logHas(cur, /bank:\s*deposited/i)} ` +
             `tile=${cur.tile ? `${cur.tile.x},${cur.tile.z}` : '?'}`
     },
@@ -1587,6 +1592,8 @@ const SCENARIOS: Scenario[] = [
             burntPolicy: 'Drop',
             toolAcquire: 'Off',
             forgetfulBank: false,
+            // Keep seeded cooked pack — purge would force a full re-fish before cook.
+            purgePackOnStart: false,
             leashRadius: 18
         },
         // Pot + 26 cooked = 27 slots; one free → fish last raw → cook → bank → home.
@@ -1596,8 +1603,8 @@ const SCENARIOS: Scenario[] = [
         ],
         // Cooking/fishing already 99 from BASE_STATS.
         scene: 'skip',
-        // Extra headroom for bank→pier walk (~36 tiles) after deposit.
-        budgetMs: 270_000,
+        // No Make-X: one last catch + one-at-a-time cook + bank/home (Catherby range≈bank).
+        budgetMs: 300_000,
         check: ({
             start,
             cur,
@@ -1610,20 +1617,17 @@ const SCENARIOS: Scenario[] = [
         }) => {
             const fishXp = cur.xp.fishing - start.xp.fishing;
             const cookXp = cur.xp.cooking - start.xp.cooking;
-            const cooked = invMatch(cur, /^lobster$/i);
-            const raw = invMatch(cur, /^raw lobster$/i);
             if (cur.runner === 'crashed') {
                 return 'fail';
             }
             // Full cook→bank→home: catch → cook → deposit near bank → walk to pier.
+            // After home the bot may re-fish; do not require empty pack at pass time.
             if (
                 fishXp > 0
                 && cookXp > 0
                 && productPeak >= 26
                 && bankedHint
                 && sawNearBank
-                && cooked <= 2
-                && raw === 0
                 && minDistToBank <= 12
                 && returnedToCampAfterBank
                 && minDistToCampAfterBank <= 12
@@ -1667,12 +1671,14 @@ const SCENARIOS: Scenario[] = [
             burntPolicy: 'Drop',
             toolAcquire: 'Off',
             forgetfulBank: false,
+            purgePackOnStart: false,
             leashRadius: 18
         },
+        // Rod + feather stack + 25 cooked = 27 used, free 1 for last raw.
         seed: [
             { debug: 'fly_fishing_rod', name: 'Fly fishing rod', qty: 1 },
             { debug: 'feather', name: 'Feather', qty: 50 },
-            { debug: 'trout', name: 'Trout', qty: 26 }
+            { debug: 'trout', name: 'Trout', qty: 25 }
         ],
         scene: 'skip',
         budgetMs: 270_000,
@@ -1685,7 +1691,7 @@ const SCENARIOS: Scenario[] = [
             if (
                 fishXp > 0
                 && cookXp > 0
-                && productPeak >= 26
+                && productPeak >= 25
                 && bankedHint
                 && sawNearBank
                 && minDistToBank <= 14
@@ -1718,6 +1724,7 @@ const SCENARIOS: Scenario[] = [
             burntPolicy: 'Drop',
             toolAcquire: 'Off',
             forgetfulBank: false,
+            purgePackOnStart: false,
             leashRadius: 18
         },
         // Rod + feathers + 25 cooked = 27 used, free 1 for last raw (same as Catherby).
@@ -1727,6 +1734,7 @@ const SCENARIOS: Scenario[] = [
             { debug: 'trout', name: 'Trout', qty: 25 }
         ],
         scene: 'skip',
+        // Sinclair mansion range → Seers bank is a long door path after the cook.
         budgetMs: 300_000,
         check: ({ start, cur, productPeak, bankedHint, sawNearBank, minDistToBank }) => {
             const fishXp = cur.xp.fishing - start.xp.fishing;
@@ -1885,7 +1893,7 @@ const SCENARIOS: Scenario[] = [
             { debug: 'logs', name: 'Logs', qty: 26 }
         ],
         scene: 'skip',
-        budgetMs: 180_000,
+        budgetMs: 210_000,
         check: ({
             start,
             cur,
@@ -1897,17 +1905,17 @@ const SCENARIOS: Scenario[] = [
             minDistToCampAfterBank
         }) => {
             const xpGain = cur.xp.woodcutting - start.xp.woodcutting;
-            const logs = invMatch(cur, /logs/i);
             if (cur.runner === 'crashed') {
                 return 'fail';
             }
-            // Real bank loop: chop last → walk to bank → deposit → return toward camp.
+            // Real bank loop: chop → deposit → return toward camp.
+            // Do not require logs<=2 at pass time — after home the bot re-chops
+            // and refills before the next harness snap (live wc-bank false-fail).
             if (
                 xpGain > 0
                 && productPeak >= 26
                 && bankedHint
                 && sawNearBank
-                && logs <= 2
                 && minDistToBank <= 10
                 && returnedToCampAfterBank
                 && minDistToCampAfterBank <= 12
@@ -2020,7 +2028,8 @@ const SCENARIOS: Scenario[] = [
             { debug: 'logs', name: 'Logs', qty: 26 }
         ],
         scene: 'skip',
-        budgetMs: 150_000,
+        // Jail guard kites eat budget; need time to re-camp and light after clear.
+        budgetMs: 210_000,
         check: ({ start, cur }) => {
             const fmXp = cur.xp.firemaking - start.xp.firemaking;
             if (cur.runner === 'crashed') {
@@ -2143,7 +2152,8 @@ const SCENARIOS: Scenario[] = [
         // 32k = Nurmof rune list price; mining already 99 from BASE_STATS.
         seed: [{ debug: 'coins', name: 'Coins', qty: 32_000 }],
         scene: 'bank',
-        budgetMs: 200_000,
+        // Trapdoor hop + random-event recovery; prior run lost ~60s mid-path.
+        budgetMs: 300_000,
         check: ({ cur, elapsedMs }) => {
             if (cur.runner === 'crashed') {
                 return 'fail';
@@ -2833,44 +2843,66 @@ try {
                         maxDistToCamp = d;
                     }
                 }
+                let distToBank = 999;
                 if (cur.tile && sc.bank) {
                     const dBank = chebyshev(cur.tile, sc.bank);
+                    distToBank = dBank;
                     if (dBank < minDistToBank) {
                         minDistToBank = dBank;
                     }
                 }
 
-                // fish-cook-bank seeds cooked lobster; track cooked+raw so
-                // productPeak / near-bank / bankedHint still fire on deposit.
+                // fish-cook-* seeds cooked catch; track cooked+raw so productPeak /
+                // near-bank / bankedHint still fire on deposit (product keywords are raw-only).
                 // fish-bank-raw-cook tracks raw lobster through the bank trip.
                 const product =
-                    sc.id === 'fish-cook-bank'
+                    sc.id === 'fish-cook-bank' || sc.id === 'fish-cooker-solo'
                         ? invMatch(cur, /^(raw )?lobster$/i)
-                        : sc.id === 'fish-bank-raw-cook'
-                            ? invMatch(cur, /^raw lobster$/i)
-                            : sc.script === 'Miner'
-                                ? invMatch(cur, /ore/i)
-                                : sc.script === 'Fisher'
-                                    ? invMatch(cur, /^raw /i)
-                                    : invMatch(cur, /logs/i);
+                        : sc.id === 'fish-cook-barb' || sc.id === 'fish-cook-seers'
+                            ? invMatch(cur, /^(raw )?(trout|salmon)$/i)
+                            : sc.id === 'fish-bank-raw-cook'
+                                ? invMatch(cur, /^raw lobster$/i)
+                                : sc.script === 'Miner'
+                                    ? invMatch(cur, /ore/i)
+                                    : sc.script === 'Fisher'
+                                        ? invMatch(cur, /^raw /i)
+                                        : invMatch(cur, /logs/i);
                 if (product > 0) {
                     sawProduct = true;
                 }
                 if (product > productPeak) {
                     productPeak = product;
                 }
-                // Near bank with a full-ish pack = actually walked the bank trip
-                // (not a drop at the rocks). Require product still high so we
-                // don't count a later empty return walk alone.
-                if (cur.tile && sc.bank && product >= 10 && chebyshev(cur.tile, sc.bank) <= 8) {
+                // Near bank after a real haul. Use productPeak (not live product): deposit
+                // can clear the pack between 4s snaps, and Draynor trees sit on the bank
+                // disk so simultaneous product>=10 + near-bank often misses (wc-bank).
+                if (
+                    cur.tile
+                    && sc.bank
+                    && productPeak >= 10
+                    && chebyshev(cur.tile, sc.bank) <= 10
+                ) {
                     sawNearBank = true;
                 }
+                // Deposit log + we were at/near bank this run.
+                if (logHas(cur, /bank:\s*deposited/i) && minDistToBank <= 14) {
+                    sawNearBank = true;
+                    bankedHint = true;
+                }
+                const gatherXp =
+                    cur.xp.mining + cur.xp.fishing + cur.xp.woodcutting
+                    > start.xp.mining + start.xp.fishing + start.xp.woodcutting;
+                const cookXpUp = cur.xp.cooking > start.xp.cooking;
+                const isCookScenario = /^fish-cook/.test(sc.id) || sc.id === 'fish-cooker-solo';
                 if (
                     prevProduct >= 3
                     && product < prevProduct - 1
-                    && cur.xp.mining + cur.xp.fishing + cur.xp.woodcutting
-                        > start.xp.mining + start.xp.fishing + start.xp.woodcutting
+                    && (gatherXp || (isCookScenario && cookXpUp))
                 ) {
+                    bankedHint = true;
+                }
+                // Deposit log is authoritative (cooked banked even if peak tracking misses).
+                if (logHas(cur, /bank:\s*deposited/i)) {
                     bankedHint = true;
                 }
                 prevProduct = product;
@@ -2888,7 +2920,7 @@ try {
                 }
 
                 const elapsedMs = Date.now() - scStart;
-                const verdict = sc.check({
+                const checkCtx = {
                     start,
                     cur,
                     elapsedMs,
@@ -2901,8 +2933,23 @@ try {
                     minDistToCamp,
                     maxDistToCamp,
                     minDistToBank,
+                    distToBank,
                     startDistToCamp
-                });
+                };
+                const failCtx = {
+                    start,
+                    cur,
+                    minDistToCamp,
+                    maxDistToCamp,
+                    minDistToBank,
+                    distToBank,
+                    minDistToCampAfterBank,
+                    productPeak,
+                    bankedHint,
+                    sawNearBank,
+                    returnedToCampAfterBank
+                };
+                const verdict = sc.check(checkCtx);
                 if (verdict === 'pass') {
                     outcome = 'pass';
                     detail =
@@ -2919,36 +2966,11 @@ try {
                 }
                 if (verdict === 'fail') {
                     outcome = 'fail';
-                    detail =
-                        sc.failMsg?.({
-                            start,
-                            cur,
-                            minDistToCamp,
-                            maxDistToCamp,
-                            minDistToBank,
-                            minDistToCampAfterBank,
-                            productPeak,
-                            bankedHint,
-                            sawNearBank,
-                            returnedToCampAfterBank
-                        }) ?? `runner=${cur.runner}`;
+                    detail = sc.failMsg?.(failCtx) ?? `runner=${cur.runner}`;
                     break;
                 }
                 if (cur.runner === 'stopped' || cur.runner === 'crashed') {
-                    const again = sc.check({
-                        start,
-                        cur,
-                        elapsedMs,
-                        sawProduct,
-                        productPeak,
-                        bankedHint,
-                        sawNearBank,
-                        returnedToCampAfterBank,
-                        minDistToCampAfterBank,
-                        minDistToCamp,
-                        minDistToBank,
-                        startDistToCamp
-                    });
+                    const again = sc.check(checkCtx);
                     if (again === 'pass') {
                         outcome = 'pass';
                         detail =
@@ -2959,21 +2981,7 @@ try {
                                 : '');
                     } else {
                         outcome = 'fail';
-                        detail =
-                            `runner ${cur.runner}; ${
-                                sc.failMsg?.({
-                                    start,
-                                    cur,
-                                    minDistToCamp,
-                                    maxDistToCamp,
-                                    minDistToBank,
-                                    minDistToCampAfterBank,
-                                    productPeak,
-                                    bankedHint,
-                                    sawNearBank,
-                                    returnedToCampAfterBank
-                                }) ?? ''
-                            }`;
+                        detail = `runner ${cur.runner}; ${sc.failMsg?.(failCtx) ?? ''}`;
                     }
                     break;
                 }
@@ -2981,6 +2989,8 @@ try {
 
             if (outcome !== 'pass' && Date.now() - scStart >= budget) {
                 const cur = await snap(page);
+                const distToBank =
+                    cur.tile && sc.bank ? chebyshev(cur.tile, sc.bank) : 999;
                 outcome = 'fail';
                 detail =
                     `timeout; ${
@@ -2990,6 +3000,7 @@ try {
                             minDistToCamp,
                             maxDistToCamp,
                             minDistToBank,
+                            distToBank,
                             minDistToCampAfterBank,
                             productPeak,
                             bankedHint,

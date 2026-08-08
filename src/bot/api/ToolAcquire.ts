@@ -2,6 +2,10 @@ import Tile from './Tile.js';
 import type { FishingGearPiece, FishingMethod } from './FishingMethods.js';
 import { BROKEN_PICKAXE } from './MiningRocks.js';
 import { AXES, HAMMER, PICKAXES, type ToolReq, type ToolTier } from './Tools.js';
+import { Execution } from './Execution.js';
+import { Game } from './Game.js';
+import { Traversal } from './Traversal.js';
+import { Locs } from './queries/Locs.js';
 
 export { BROKEN_PICKAXE, HAMMER };
 
@@ -642,4 +646,89 @@ export function shopableMissingFishingGear(
     count: (name: string) => number
 ): string[] {
     return gear.filter(g => count(g.name) < g.min && fishingShopCost(g.name) != null).map(g => g.name);
+}
+
+/**
+ * Whether Nurmof (or another underground vendor) needs an explicit surface hop
+ * before the stand walk. Pure geography — used by {@link walkToToolVendor}.
+ */
+export function needsToolVendorSurfaceHop(
+    vendor: ToolVendor,
+    here: { x: number; z: number; level: number } | null
+): boolean {
+    if (!vendor.hopFrom || !vendor.hopLoc || !vendor.hopAction || !here) {
+        return false;
+    }
+    if (!(vendor.stand.z > 9000 && here.z < 9000)) {
+        return false;
+    }
+    const dx = Math.abs(here.x - vendor.stand.x);
+    const dz = Math.abs(here.z - vendor.stand.z);
+    return Math.max(dx, dz) > 20;
+}
+
+/**
+ * Walk to a tool vendor. Nurmof gets an explicit surface trapdoor hop when
+ * still above ground so pathing does not stall at the mine entrance.
+ * Lives in api/ so Miner/WC/Fisher scripts do not re-copy hop logic.
+ */
+export async function walkToToolVendor(
+    vendor: ToolVendor,
+    log: (m: string) => void = () => {}
+): Promise<boolean> {
+    let here = Game.tile();
+    // Already underground (Nurmof stand plane) — skip surface hop.
+    if (here && vendor.stand.z > 9000 && here.z > 9000) {
+        return Traversal.walkResilient(vendor.stand, { radius: 4, timeoutMs: 120_000, log });
+    }
+    if (needsToolVendorSurfaceHop(vendor, here) && vendor.hopFrom && vendor.hopLoc && vendor.hopAction) {
+        log(`acquire: hop ${vendor.hopLoc} @ ${vendor.hopFrom}`);
+        if (!(await Traversal.walkResilient(vendor.hopFrom, { radius: 2, timeoutMs: 90_000, log }))) {
+            return false;
+        }
+        here = Game.tile();
+        // Walk may have pathfind-looped underground already — go straight to stand.
+        if (here && here.z > 9000) {
+            log('acquire: already underground after hop walk — skipping trapdoor');
+            return Traversal.walkResilient(vendor.stand, { radius: 4, timeoutMs: 120_000, log });
+        }
+
+        const findHop = () =>
+            Locs.query().name(vendor.hopLoc!).action(vendor.hopAction!).nearest()
+            ?? Locs.query().name(vendor.hopLoc!).nearest();
+
+        // Prefer action match; fall back to name-only (scene load / action list lag).
+        let trap = findHop();
+        if (!trap) {
+            // Close in one more step on the hop pin, then re-query.
+            await Traversal.walkResilient(vendor.hopFrom, { radius: 0, timeoutMs: 20_000, log });
+            trap = findHop();
+        }
+        if (trap) {
+            const op =
+                trap.actions().includes(vendor.hopAction)
+                    ? vendor.hopAction
+                    : (trap.actions().find(a => /climb-down|enter|open/i.test(a)) ?? vendor.hopAction);
+            // Two tries — first interact can miss after a long surface approach.
+            for (let tryHop = 0; tryHop < 2; tryHop++) {
+                log(`acquire: ${op} ${trap.name ?? vendor.hopLoc}${tryHop > 0 ? ' (retry)' : ''}`);
+                await trap.interact(op);
+                const entered = await Execution.delayUntilTicks(() => {
+                    const t = Game.tile();
+                    return t !== null && t.z >= 9000;
+                }, 17);
+                if (entered) {
+                    break;
+                }
+                trap = findHop() ?? trap;
+            }
+            here = Game.tile();
+            if (!here || here.z < 9000) {
+                log(`acquire: ${vendor.hopLoc} hop did not enter dungeon — will path to stand`);
+            }
+        } else {
+            log(`acquire: no ${vendor.hopLoc} in scene at hop — pathing to stand`);
+        }
+    }
+    return Traversal.walkResilient(vendor.stand, { radius: 4, timeoutMs: 120_000, log });
 }

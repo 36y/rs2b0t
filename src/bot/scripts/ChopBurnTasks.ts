@@ -12,12 +12,12 @@ import { reader } from '../adapter/ClientAdapter.js';
 import { GameMessages } from '../events/gameMessages.js';
 import {
     CANT_LIGHT,
-    FIRE_LIGHT_MS,
-    FIRE_START_MS,
+    FIRE_LIGHT_TICKS,
+    FIRE_START_TICKS,
     TINDERBOX,
     burnLaneWant,
     findBurnLane,
-    fireReactionMs,
+    fireReactionTicks,
     inFirePlot,
     isBurnWest,
     runInDir,
@@ -122,6 +122,24 @@ class ChopBurnLoad implements Task {
 
         while (this.bot.logCount() > 0) {
             if (EventSignal.pending() || (Game.inCombat() && hostileFaceTarget())) {
+                // Yield to FleeCombat / events. If we have already walked off the
+                // burn plot (Jail guard kite), end the load so we can re-enter
+                // chop-then-burn near the plot after combat instead of soft-locking
+                // with burningLoad=true and no lights.
+                const here = Game.tile();
+                const p = this.bot.burnPlotOrNull();
+                if (
+                    here
+                    && p
+                    && !inFirePlot(here, p)
+                    && Math.max(
+                        Math.abs(here.x - Math.floor((p.x0 + p.x1) / 2)),
+                        Math.abs(here.z - Math.floor((p.z0 + p.z1) / 2))
+                    ) > 16
+                ) {
+                    this.bot.log('burn: combat kite left the plot — ending load to re-camp');
+                    this.bot.endBurningLoad();
+                }
                 return;
             }
             plot = this.bot.burnPlotOrNull() ?? plot;
@@ -150,7 +168,7 @@ class ChopBurnLoad implements Task {
                 this.bot.setBurnLaneLeft(this.bot.burnLaneLeft() - 1);
                 stalls = 0;
                 laneFails = 0;
-                await Execution.delay(fireReactionMs());
+                await Execution.delayTicks(fireReactionTicks());
                 continue;
             }
             this.bot.setBurnLaneLeft(0);
@@ -245,10 +263,20 @@ class ChopBurnLoad implements Task {
         if (!(await tinder.useOn(logs))) {
             return 'stalled';
         }
-        if (!(await Execution.delayUntil(() => this.bot.logCount() < held || blocked() || Game.animating(), FIRE_START_MS))) {
+        if (
+            !(await Execution.delayUntilTicks(
+                () => this.bot.logCount() < held || blocked() || Game.animating(),
+                FIRE_START_TICKS
+            ))
+        ) {
             return 'stalled';
         }
-        if (!(await Execution.delayUntil(() => lit() || blocked() || EventSignal.pending(), FIRE_LIGHT_MS))) {
+        if (
+            !(await Execution.delayUntilTicks(
+                () => lit() || blocked() || EventSignal.pending(),
+                FIRE_LIGHT_TICKS
+            ))
+        ) {
             return 'stalled';
         }
         return blocked() ? 'blocked' : lit() ? 'lit' : 'stalled';
