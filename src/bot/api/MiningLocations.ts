@@ -81,6 +81,16 @@ export const MINING_LOCATIONS: MiningLocation[] = [
         'Underground seed; surface hop ~3019,3449'
     ),
     mine(
+        'Edgeville Dungeon Mine',
+        // Clear west-side stand beside the 3134–3143,9868–9880 mixed-rock field.
+        // Navigation enters through the public Edgeville trapdoor when no Brass key
+        // is held, opens the two dungeon gates, and returns by the exit ladder.
+        new Tile(3132, 9874, 0),
+        BANK.edgeville,
+        ['copper', 'tin', 'iron', 'coal', 'silver', 'mithril', 'adamantite'],
+        'Underground; public Edgeville trapdoor route, no Brass key required'
+    ),
+    mine(
         'Fight Arena Mine',
         // Adjacent stand — previous 2630,3145 was inside a rock loc.
         new Tile(2631, 3146, 0),
@@ -182,6 +192,15 @@ export const MINING_LOCATIONS: MiningLocation[] = [
         BANK.edgeville,
         ['iron', 'coal', 'mithril', 'adamantite'],
         'Wilderness — aggressive Hobgoblins; bank out at Edgeville'
+    ),
+    mine(
+        'Wilderness Skeleton Mine',
+        // Walkable centre stand in the level-10 Wilderness coal field. The 34
+        // coal-rock placements span 3009–3023,3586–3598 around this point.
+        new Tile(3018, 3590, 0),
+        BANK.edgeville,
+        ['coal'],
+        'Wilderness — aggressive Skeletons; bank out at Edgeville'
     ),
     mine(
         'Heroes Guild',

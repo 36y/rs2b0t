@@ -24,9 +24,10 @@ describe('resolveMiningLocation', () => {
         expect(resolveMiningLocation('Auto', new Tile(3080, 3420, 0))?.name).toBe('Barbarian Village');
     });
 
-    test('Auto freeform at wilderness skeleton mine (outside every mine camp chunk)', () => {
-        // 3018,3590 — iron/coal rocks; not same 64×64 as any MINING_LOCATIONS spot.
-        expect(resolveMiningLocation('Auto', new Tile(3018, 3590, 0))).toBeNull();
+    test('Auto snaps at the Wilderness Skeleton Mine', () => {
+        expect(resolveMiningLocation('Auto', new Tile(3018, 3590, 0))?.name).toBe(
+            'Wilderness Skeleton Mine'
+        );
     });
 
     test('named match is case-insensitive', () => {
@@ -50,6 +51,31 @@ describe('resolveMiningLocation', () => {
         expect(resolveMiningLocation('Auto', new Tile(3088, 3758, 0))?.name).toBe(
             'Wilderness Hobgoblin Mine'
         );
+    });
+
+    test('Edgeville Dungeon Mine uses its clear mixed-rock stand and Edgeville bank', () => {
+        const loc = resolveMiningLocation('edgeville dungeon mine', new Tile(0, 0, 0));
+        expect(loc?.name).toBe('Edgeville Dungeon Mine');
+        expect(loc?.spot).toEqual(new Tile(3132, 9874, 0));
+        expect(loc?.bankStand).toEqual(new Tile(3094, 3493, 0));
+        expect(loc?.resources).toEqual([
+            'copper',
+            'tin',
+            'iron',
+            'coal',
+            'silver',
+            'mithril',
+            'adamantite'
+        ]);
+        expect(loc?.notes).toContain('no Brass key required');
+    });
+
+    test('named Wilderness Skeleton Mine selects the verified coal field', () => {
+        const loc = resolveMiningLocation('WILDERNESS SKELETON MINE', new Tile(0, 0, 0));
+        expect(loc?.name).toBe('Wilderness Skeleton Mine');
+        expect(loc?.spot).toEqual(new Tile(3018, 3590, 0));
+        expect(loc?.bankStand).toEqual(new Tile(3094, 3493, 0));
+        expect(loc?.resources).toEqual(['coal']);
     });
 });
 
@@ -98,7 +124,9 @@ describe('MINING_LOCATIONS table', () => {
             'Al Kharid Mine',
             'Mining Guild',
             'Lava Maze Runite Mine',
-            'Wilderness Hobgoblin Mine'
+            'Wilderness Hobgoblin Mine',
+            'Edgeville Dungeon Mine',
+            'Wilderness Skeleton Mine'
         ]) {
             expect(names.has(n), n).toBe(true);
         }

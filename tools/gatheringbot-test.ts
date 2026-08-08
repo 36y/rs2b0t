@@ -1067,8 +1067,10 @@ const SPOT = {
     /** Willows NW of Crafting Guild — Auto freeform WC (outside every WC camp chunk). */
     // Was 2910,3328 (~25N of the stand); willows sit closer to the guild wall.
     willowsNwCg: { x: 2910, z: 3303, level: 0 },
-    /** Wilderness skeleton mine (coal) — Auto freeform mine. */
+    /** Wilderness Skeleton Mine (coal) known-camp seed. */
     skelMine: { x: 3018, z: 3590, level: 0 },
+    /** Clear west-side stand beside the Edgeville Dungeon mixed-rock field. */
+    edgevilleDungeonMine: { x: 3132, z: 9874, level: 0 },
     /** Ardougne river fly fishing — Auto freeform fish. */
     ardyRiverFly: { x: 2566, z: 3374, level: 0 }
 } as const;
@@ -2451,10 +2453,10 @@ const SCENARIOS: Scenario[] = [
             `distStart=${minDistToCamp} tile=${cur.tile ? `${cur.tile.x},${cur.tile.z}` : '?'}`
     },
     {
-        id: 'auto-freeform-mine-skel',
-        tags: ['freeform', 'auto', 'mining', 'mine', 'wildy'],
+        id: 'mine-wilderness-skeleton',
+        tags: ['known-camp', 'auto', 'mining', 'mine', 'wildy'],
         script: 'Miner',
-        // Wilderness skeleton mine is coal rocks — outside every MINING_LOCATIONS chunk.
+        // Auto now recognizes the Wilderness Skeleton Mine as a known coal camp.
         start: SPOT.skelMine,
         camp: SPOT.skelMine,
         settings: {
@@ -2471,21 +2473,50 @@ const SCENARIOS: Scenario[] = [
             if (cur.runner === 'crashed') {
                 return 'fail';
             }
-            if (logHas(cur, /location:\s*(Barbarian|Varrock|Dwarven|Lava Maze|Mining Guild)/i)) {
-                return 'fail';
-            }
-            const freeform = logHas(cur, /location:\s*no preset\s*—\s*nearest bank/i);
+            const selected = logHas(cur, /location:\s*Wilderness Skeleton Mine\s*\(auto\)/i);
             const xpGain = cur.xp.mining - start.xp.mining;
             // Coal is not "* ore"; count coal + any ore product.
             const haul = invMatch(cur, /^(coal|.+ ore)$/i);
-            if (freeform && (xpGain > 0 || haul > 0) && minDistToCamp <= 50) {
+            if (selected && (xpGain > 0 || haul > 0) && minDistToCamp <= 50) {
                 return 'pass';
             }
             return 'wait';
         },
         failMsg: ({ start, cur, minDistToCamp }) =>
-            `freeform=${logHas(cur, /location:\s*no preset/i)} ` +
-            `namedSnap=${logHas(cur, /location:\s*(Barbarian|Varrock|Dwarven|Lava)/i)} ` +
+            `selected=${logHas(cur, /location:\s*Wilderness Skeleton Mine\s*\(auto\)/i)} ` +
+            `mineXpΔ=${cur.xp.mining - start.xp.mining} haul=${invMatch(cur, /^(coal|.+ ore)$/i)} ` +
+            `distStart=${minDistToCamp} tile=${cur.tile ? `${cur.tile.x},${cur.tile.z}` : '?'}`
+    },
+    {
+        id: 'mine-edgeville-dungeon',
+        tags: ['known-camp', 'mining', 'mine', 'dungeon', 'edgeville'],
+        script: 'Miner',
+        start: SPOT.edgevilleDungeonMine,
+        camp: SPOT.edgevilleDungeonMine,
+        settings: {
+            rocks: 'Coal',
+            location: 'Edgeville Dungeon Mine',
+            toolAcquire: 'Off',
+            forgetfulBank: false,
+            leashRadius: 40
+        },
+        seed: [{ debug: 'rune_pickaxe', name: 'Rune pickaxe', qty: 1 }],
+        scene: 'rocks',
+        budgetMs: 200_000,
+        check: ({ start, cur, minDistToCamp }) => {
+            if (cur.runner === 'crashed') {
+                return 'fail';
+            }
+            const selected = logHas(cur, /location:\s*Edgeville Dungeon Mine;/i);
+            const xpGain = cur.xp.mining - start.xp.mining;
+            const haul = invMatch(cur, /^(coal|.+ ore)$/i);
+            if (selected && (xpGain > 0 || haul > 0) && minDistToCamp <= 50) {
+                return 'pass';
+            }
+            return 'wait';
+        },
+        failMsg: ({ start, cur, minDistToCamp }) =>
+            `selected=${logHas(cur, /location:\s*Edgeville Dungeon Mine;/i)} ` +
             `mineXpΔ=${cur.xp.mining - start.xp.mining} haul=${invMatch(cur, /^(coal|.+ ore)$/i)} ` +
             `distStart=${minDistToCamp} tile=${cur.tile ? `${cur.tile.x},${cur.tile.z}` : '?'}`
     },

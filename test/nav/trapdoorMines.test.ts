@@ -5,6 +5,8 @@ import path from 'node:path';
 
 import { PathFinder, type TransportEdgeData } from '#/bot/nav/PathFinder.js';
 import { matchesTransportLoc } from '#/bot/nav/WalkExecutor.js';
+import { loadDefaultNavEdges } from '#/bot/nav/loadTransportGraph.js';
+import { emptyWorldStateData } from '#/bot/nav/worldStateData.js';
 import doorsJson from '#/bot/nav/data/doors.json';
 import stairsJson from '#/bot/nav/data/stairEdges.json';
 import transports from '#/bot/nav/data/transports.json';
@@ -52,6 +54,16 @@ function loadPack(): PathFinder {
     }
     const finder = new PathFinder(bytes as Uint8Array);
     finder.addEdges(doorsJson as never, transports as never, stairsJson as never);
+    return finder;
+}
+
+function loadDefaultPack(): PathFinder {
+    let bytes: Uint8Array = new Uint8Array(fs.readFileSync(PACK_PATH));
+    if (bytes[0] === 0x1f && bytes[1] === 0x8b) {
+        bytes = new Uint8Array(gunzipSync(bytes));
+    }
+    const finder = new PathFinder(bytes as Uint8Array);
+    loadDefaultNavEdges(finder);
     return finder;
 }
 
@@ -129,5 +141,29 @@ describe('Dwarven Mine + Edgeville trapdoor paths', () => {
             w => w.transport?.locName === 'Ladder' && w.transport?.action === 'Climb-up'
         );
         expect(climb).toBeDefined();
+    });
+
+    test.skipIf(!HAS_COLLISION_PACK)('pack: Miner can bank the Edgeville Dungeon Mine without a Brass key', () => {
+        const finder = loadDefaultPack();
+        const bank = { x: 3094, z: 3493, level: 0 };
+        const mine = { x: 3132, z: 9874, level: 0 };
+        const state = emptyWorldStateData(true);
+
+        expect(finder.walkable(mine.x, mine.z, mine.level)).toBe(true);
+        for (const [from, to] of [[bank, mine], [mine, bank]] as const) {
+            const route = finder.findPath(from, to, { state });
+            expect(route.ok).toBe(true);
+            if (!route.ok) {
+                continue;
+            }
+            expect(
+                route.waypoints.some(w =>
+                    w.transport?.locName === (from === bank ? 'Trapdoor' : 'Ladder')
+                )
+            ).toBe(true);
+            expect(route.waypoints.some(w => w.transport?.locName === 'Gate')).toBe(true);
+            // Empty inventory must not plan through the Brass-key-only hut door.
+            expect(route.waypoints.some(w => w.transport?.locX === 3115 && w.transport?.locZ === 3450)).toBe(false);
+        }
     });
 });

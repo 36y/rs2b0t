@@ -603,7 +603,7 @@ Tags: `gathering`, `banking`, `drop`
 |---|---|---|---|
 | `rocks` | string[] | `["Iron"]` | Rock types — one of: Clay, Copper, Tin, Iron, Silver, Coal, Gold, Mithril, Adamantite, Runite |
 | `leashRadius` | number (2–64) | `10` | Leash radius (tiles) |
-| `location` | string | `"Auto"` | Location / full inventory — one of: Auto, Al Kharid Mine, Barbarian Village, Coal Trucks, Crafting Guild, Desert Mining Camp, Dwarven Mine, Fight Arena Mine, Grand Tree Mine, Heroes Guild, Lava Maze Runite Mine, Legends Guild Iron (east), Legends Guild Iron (west), Mining Guild, North Brimhaven Mine, Rimmington Mine, Shilo Village, South-east Ardougne Mine, Southeast Varrock Mine, Southwest Varrock Mine, West Lumbridge Swamp Mine, Wilderness Hobgoblin Mine, None |
+| `location` | string | `"Auto"` | Location / full inventory — one of: Auto, Al Kharid Mine, Barbarian Village, Coal Trucks, Crafting Guild, Desert Mining Camp, Dwarven Mine, Edgeville Dungeon Mine, Fight Arena Mine, Grand Tree Mine, Heroes Guild, Lava Maze Runite Mine, Legends Guild Iron (east), Legends Guild Iron (west), Mining Guild, North Brimhaven Mine, Rimmington Mine, Shilo Village, South-east Ardougne Mine, Southeast Varrock Mine, Southwest Varrock Mine, West Lumbridge Swamp Mine, Wilderness Hobgoblin Mine, Wilderness Skeleton Mine, None |
 | `food` | string | `"Lobster"` | Food — one of: Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
 | `foodWithdraw` | number (0–27) | `0` | Food to withdraw |
 | `tickManip` | string | `"Off"` | Tick manip — one of: Off |
