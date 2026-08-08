@@ -6,7 +6,7 @@ import {
     isGrindForeign,
     packForcesBank,
     slotFreeingAction,
-    threatApplies,
+    underPlayerAttack,
     wantsGroundItem,
     WILDY_MIN_Z,
     type SlotFreeingState
@@ -47,18 +47,18 @@ describe('inWilderness', () => {
     });
 });
 
-describe('threatApplies', () => {
-    test('players at the dragon field are a threat', () => {
-        expect(threatApplies(3814, 1)).toBe(true);
+describe('underPlayerAttack', () => {
+    test('retaliating at a player in the wilderness is an attack', () => {
+        expect(underPlayerAttack(3814, true)).toBe(true);
+    });
+    test('fighting only dragons is not', () => {
+        expect(underPlayerAttack(3814, false)).toBe(false);
     });
     test('players in Varrock on a clue trail are not', () => {
-        expect(threatApplies(3424, 6)).toBe(false);
+        expect(underPlayerAttack(3424, true)).toBe(false);
     });
-    test('an empty field is never a threat', () => {
-        expect(threatApplies(3814, 0)).toBe(false);
-    });
-    test('an unknown position is never a threat', () => {
-        expect(threatApplies(null, 3)).toBe(false);
+    test('an unknown position is never an attack', () => {
+        expect(underPlayerAttack(null, true)).toBe(false);
     });
 });
 

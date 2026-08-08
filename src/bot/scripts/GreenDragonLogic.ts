@@ -12,11 +12,12 @@ export function inWilderness(z: number): boolean {
 }
 
 /**
- * Players only count as a threat above the ditch. A clue trail walks through
- * Varrock and Falador, and treating those crowds as PKers aborts every trail.
+ * A PKer only registers once auto-retaliate points us back at them. The
+ * wilderness gate is what ends the threat: our face target does not decay when
+ * they leave, so without it the bot would never stop fleeing.
  */
-export function threatApplies(z: number | null, playersNear: number): boolean {
-    return z !== null && playersNear > 0 && inWilderness(z);
+export function underPlayerAttack(z: number | null, retaliatingAtPlayer: boolean): boolean {
+    return z !== null && retaliatingAtPlayer && inWilderness(z);
 }
 
 /**

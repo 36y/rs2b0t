@@ -22,10 +22,9 @@ import { combatKeepNames } from '../api/combat/keepList.js';
 import { depositAllExcept } from '../api/Banking.js';
 import { GroundItems } from '../api/queries/GroundItems.js';
 import { Npcs, type Npc } from '../api/queries/Npcs.js';
-import { Players } from '../api/queries/Players.js';
 import { Traversal } from '../api/Traversal.js';
 import { SolveClue } from '../clues/SolveClue.js';
-import { AT_BANK_RADIUS, RETURN_HOLD_MS, escapeNeeded, isGrindForeign, packForcesBank, slotFreeingAction, threatApplies, wantsGroundItem, type SlotAction } from './GreenDragonLogic.js';
+import { AT_BANK_RADIUS, RETURN_HOLD_MS, escapeNeeded, isGrindForeign, packForcesBank, slotFreeingAction, underPlayerAttack, wantsGroundItem, type SlotAction } from './GreenDragonLogic.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 
@@ -33,8 +32,6 @@ const TARGET = 'Green dragon';
 const DEFAULT_ANCHOR = new Tile(3096, 3814, 0);
 const DEFAULT_BANK = new Tile(3094, 3493, 0);
 const FIELD_RADIUS = 22;
-const LOCAL_PLAYER_SLOT = 2047;
-const THREAT_RADIUS = 6;
 const ASSERT_BATCH = 5;
 const ASSERT_RETRY_MS = 60_000;
 
@@ -135,12 +132,26 @@ function fieldDragons(): Npc[] {
     return Npcs.query().name(TARGET).where(n => inField(n.tile()) && !n.targetsAnotherPlayer()).results();
 }
 /**
- * Players only count above the ditch. A clue trail walks through Varrock and
- * Falador, and treating those crowds as PKers aborts the trail on every pass.
+ * Players standing nearby are almost all bots. Only an actual attack counts,
+ * which auto-retaliate surfaces by pointing our own face target at them.
  */
-function nearbyThreat(): boolean {
-    const near = Players.query().where(p => p.index !== LOCAL_PLAYER_SLOT && p.distance() <= THREAT_RADIUS).results().length;
-    return threatApplies(Game.tile()?.z ?? null, near);
+function underAttack(): boolean {
+    return underPlayerAttack(Game.tile()?.z ?? null, Game.attackedByPlayer());
+}
+
+/** No retaliate, no signal — the bot would never notice a PKer. */
+async function assertAutoRetaliate(bot: GreenDragon): Promise<void> {
+    for (let attempt = 0; attempt < 3; attempt++) {
+        if (Game.autoRetaliateOn()) {
+            return;
+        }
+        Game.setAutoRetaliate(true);
+        if (await Execution.delayUntil(() => Game.autoRetaliateOn(), 2000)) {
+            bot.log('auto-retaliate enabled');
+            return;
+        }
+    }
+    bot.log('WARNING: auto-retaliate is OFF and would not enable — the bot cannot detect a player attacking it.');
 }
 function hasVarrockRunes(): boolean {
     return VARROCK_TELE_RUNES.every(r => Inventory.count(r.rune) >= r.count);
@@ -362,17 +373,17 @@ function atBank(): boolean {
 class Escape implements Task {
     constructor(private bot: GreenDragon) {}
     validate(): boolean {
-        return escapeNeeded({ threat: nearbyThreat(), hpFraction: hpFrac(), panicHp: PANIC_HP, hasFood: hasFood(), atBank: atBank() });
+        return escapeNeeded({ threat: underAttack(), hpFraction: hpFrac(), panicHp: PANIC_HP, hasFood: hasFood(), atBank: atBank() });
     }
     async execute(): Promise<void> {
-        if (nearbyThreat()) {
+        if (underAttack()) {
             this.bot.holdReturn(RETURN_HOLD_MS);
         }
         if (TELE_ESCAPE && hasVarrockRunes()) {
             const me = Game.tile();
             if (me && me.z > TELE_SAFE_Z) {
                 this.bot.setStatus('escaping — running south to teleport range');
-                this.bot.log(`escaping (${nearbyThreat() ? 'player near' : 'low hp'}) — running to <=lvl20`);
+                this.bot.log(`escaping (${underAttack() ? 'under attack' : 'low hp'}) — running to <=lvl20`);
                 await Traversal.walkResilient(new Tile(ANCHOR.x, TELE_SAFE_Z - 5, 0), { radius: 4, attempts: 3, timeoutMs: 60_000, log: m => this.bot.log(`  ${m}`) });
                 return;
             }
@@ -384,7 +395,7 @@ class Escape implements Task {
             this.bot.log('Varrock teleport did not fire — fleeing on foot');
         }
         this.bot.setStatus('escaping — fleeing to the bank');
-        this.bot.log(`escaping (${nearbyThreat() ? 'player near' : 'low hp'}) — fleeing to ${BANK_TILE}`);
+        this.bot.log(`escaping (${underAttack() ? 'under attack' : 'low hp'}) — fleeing to ${BANK_TILE}`);
         await Traversal.walkResilient(BANK_TILE, { radius: 3, attempts: 6, timeoutMs: 240_000, log: m => this.bot.log(`  ${m}`) });
     }
 }
@@ -392,7 +403,7 @@ class Escape implements Task {
 class BankRun implements Task {
     constructor(private bot: GreenDragon) {}
     validate(): boolean {
-        if (nearbyThreat()) {
+        if (underAttack()) {
             return false;
         }
         if (needsResupply(this.bot)) {
@@ -591,7 +602,7 @@ class BuryBones implements Task {
 class FreeSlot implements Task {
     constructor(private bot: GreenDragon) {}
     validate(): boolean {
-        return !nearbyThreat() && slotDecision().action !== 'none';
+        return !underAttack() && slotDecision().action !== 'none';
     }
     async execute(): Promise<void> {
         await freeSlotForLoot(this.bot);
@@ -601,7 +612,7 @@ class FreeSlot implements Task {
 class LootCorpse implements Task {
     constructor(private bot: GreenDragon) {}
     validate(): boolean {
-        if (nearbyThreat()) {
+        if (underAttack()) {
             return false;
         }
         if (findLoot() === null) {
@@ -663,13 +674,13 @@ class Fight implements Task {
     private targetIdx: number | null = null;
     constructor(private bot: GreenDragon) {}
     validate(): boolean {
-        return !nearbyThreat() && hpFrac() >= PANIC_HP && fieldDragons().length > 0;
+        return !underAttack() && hpFrac() >= PANIC_HP && fieldDragons().length > 0;
     }
     async execute(): Promise<void> {
         this.bot.setStatus('fighting green dragons');
         const deadline = performance.now() + 120_000;
         while (performance.now() < deadline) {
-            if (EventSignal.pending() || this.bot.died || ChatDialog.canContinue() || nearbyThreat()) {
+            if (EventSignal.pending() || this.bot.died || ChatDialog.canContinue() || underAttack()) {
                 return;
             }
             // Hand back to the loop so BankRun can restock — this inner cycle
@@ -776,6 +787,8 @@ export default class GreenDragon extends TaskBot {
             enabled: () => SOLVE_CLUES
         });
 
+        await assertAutoRetaliate(this);
+
         this.log(`GreenDragon — style ${STYLE} w/ ${WEAPON} + ${SHIELD}${STYLE === 'mage' ? ` (${SPELL})` : ''}, food '${FOOD_NAME}' (reserve ${FOOD_RESERVE}), escape '${TELE_ESCAPE ? 'Varrock tele' : 'flee to bank'}', clues ${SOLVE_CLUES ? 'on' : 'off'}${BURY_BONES ? `, burying ${BONE_NAME}` : ''}, field ${ANCHOR}, bank ${BANK_TILE}`);
         this.vlog(`verbose logging on — loot set [${[...LOOT_SET].join(', ')}], common junk ${BANK_COMMON ? 'on' : 'off'}`);
 
@@ -790,7 +803,10 @@ export default class GreenDragon extends TaskBot {
                     this.solveClue?.noteDeath();
                     this.log('died! recovering');
                 },
-                onRecovered: () => { this.died = false; }
+                onRecovered: () => {
+                    this.died = false;
+                    void assertAutoRetaliate(this);
+                }
             })),
             traced('Escape', new Escape(this)),
             traced('Eat', new Eat(this)),

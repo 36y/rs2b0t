@@ -740,6 +740,10 @@ export const reader = {
         return raw?.selfSlot ?? -1;
     },
 
+    selfFaceEntity(): number {
+        return raw?.localPlayer?.faceEntity ?? -1;
+    },
+
     players(): PlayerSnapshot[] {
         const out: PlayerSnapshot[] = [];
         if (!raw || !raw.localPlayer) {
@@ -1027,25 +1031,8 @@ export const reader = {
             return cachedRetaliateControls;
         }
 
-        for (const root of IfType.list) {
-            if (!root?.children) {
-                continue;
-            }
-            const hasRetaliate = root.children.some(c => IfType.list[c]?.text === 'Auto retaliate');
-            if (!hasRetaliate || root.children.length <= 7) {
-                continue;
-            }
-
-            const off = root.children[6];
-            const on = root.children[7];
-            if (IfType.list[on]?.buttonType !== undefined && IfType.list[off] !== undefined) {
-                cachedRetaliateControls = { onComId: on, offComId: off };
-                return cachedRetaliateControls;
-            }
-            break;
-        }
-
-        return null;
+        cachedRetaliateControls = readRetaliateControls();
+        return cachedRetaliateControls;
     },
 
     toWorld(lx: number, lz: number): WorldTile | null {
@@ -1518,6 +1505,30 @@ function walkComponents(rootComId: number): IfType[] {
     }
 
     return out;
+}
+
+// player_controls.rs2: controls:com_2 toggles retaliate on, com_3 off. com_6/com_7
+// have no if_button handler, so the old indices sent presses the server discarded.
+export function readRetaliateControls(): { onComId: number; offComId: number } | null {
+    for (const root of IfType.list) {
+        if (!root?.children) {
+            continue;
+        }
+
+        const hasRetaliate = root.children.some(c => IfType.list[c]?.text === 'Auto retaliate');
+        if (!hasRetaliate || root.children.length <= 3) {
+            continue;
+        }
+
+        const on = root.children[2];
+        const off = root.children[3];
+        if (IfType.list[on]?.buttonType !== undefined && IfType.list[off] !== undefined) {
+            return { onComId: on, offComId: off };
+        }
+        break;
+    }
+
+    return null;
 }
 
 /** Read each select button together with the style text rendered beside it. */
