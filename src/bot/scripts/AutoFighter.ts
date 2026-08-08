@@ -32,16 +32,20 @@ import { Npcs, type Npc } from '../api/queries/Npcs.js';
 import { matchesEntityName } from '../api/queries/Query.js';
 import { SettingsStore, type SettingsSchema } from '../runtime/Settings.js';
 import Tile from '../api/Tile.js';
-import { countMatching, matchesAny, shouldBank, shouldEat, shouldPanic, slotsMatching } from './ArdyFighterLogic.js';
+import { countMatching, matchesAny, shouldBank, shouldEat, shouldPanic } from './ArdyFighterLogic.js';
 import {
     autoBankEnabled,
     BANKING_OPTIONS,
+    BURIAL_BONE_NAME,
     CUSTOM_COORDINATES,
     DEFAULT_CUSTOM_SPOT,
     DEFAULT_LOOT,
+    isBurialBone,
     resolveKillingSpot,
+    shouldBuryRegularBones,
     SPOT_OPTIONS,
-    START_POSITION
+    START_POSITION,
+    wantsAutoFighterLoot
 } from './AutoFighterData.js';
 import { SolveClue } from '../clues/SolveClue.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
@@ -86,6 +90,7 @@ export const SETTINGS: SettingsSchema = {
     foodWithdraw: { type: 'number', default: 10, min: 0, max: 27, label: 'Food to carry' },
     panicHp: { type: 'number', default: 25, min: 0, max: 100, label: 'Panic below HP% (no food)' },
     loot: { type: 'string[]', default: DEFAULT_LOOT, label: 'Loot item names (contains)', help: 'defaults to gem-table items + clue scrolls, nothing else' },
+    buryBones: { type: 'boolean', default: false, label: 'Bury regular bones', group: 'Banking & loot', help: 'pick up and bury regular Bones for Prayer XP (always looted when on)' },
     solveClues: { type: 'boolean', default: true, label: 'Solve clue drops', group: 'Clues' },
     banking: { type: 'string', default: 'Auto', options: BANKING_OPTIONS, label: 'Banking', help: 'Auto = bank loot at the nearest bank and return; None = no loot-only bank trips' },
     bankAtLootSlots: { type: 'number', default: 12, min: 1, max: 27, label: 'Bank at loot slots', showIf: { key: 'banking', anyOf: ['Auto'] } },
@@ -99,6 +104,7 @@ let FOOD = 'Trout';
 let FOOD_WITHDRAW = 10;
 let PANIC_AT = 0.25;
 let LOOT = DEFAULT_LOOT;
+let BURY_BONES = false;
 let SOLVE_CLUES = true;
 let BANK_AT = 12;
 let AUTO_BANK = true;
@@ -119,8 +125,16 @@ function foodCount(): number {
 function needEat(): boolean {
     return shouldEat(Skills.effective('hitpoints'), Skills.level('hitpoints'), foodHealAmount(FOOD), foodCount());
 }
+function isLoot(name: string | null): boolean {
+    return wantsAutoFighterLoot(name, LOOT, BURY_BONES);
+}
+function lootCount(): number {
+    return Inventory.items()
+        .filter(item => isLoot(item.name))
+        .reduce((sum, item) => sum + item.count, 0);
+}
 function lootSlots(): number {
-    return slotsMatching(Inventory.items(), LOOT);
+    return Inventory.items().filter(item => isLoot(item.name)).length;
 }
 function wieldedNames(): string[] {
     return Equipment.items().map(i => i.name ?? '');
@@ -150,14 +164,14 @@ function fullyOutOfSupplies(): boolean {
     return supplyMetric() === 0;
 }
 
-export function shouldKeepBankItem(name: string, id: number, food: string, bankCommon: boolean, ammo: string[] = [], gear: string[] = []): boolean {
+export function shouldKeepBankItem(name: string, id: number, food: string, bankCommon: boolean, ammo: string[] = [], gear: string[] = [], buryBones = false): boolean {
     const n = name.toLowerCase();
     const genericCasket = id === RANDOM_EVENT_CASKET_ID;
     const ammoMatch = ammo.some(a => a.toLowerCase() === n);
     const gearMatch = gear.some(g => g.toLowerCase() === n);
     return matchesAny(name, [food]) || n === 'coins' || KIT.includes(n) || n.includes('clue')
         || (n.includes('casket') && !genericCasket) || (genericCasket && !bankCommon)
-        || ammoMatch || gearMatch;
+        || ammoMatch || gearMatch || (buryBones && isBurialBone(name));
 }
 
 export default class AutoFighter extends TaskBot {
@@ -165,6 +179,7 @@ export default class AutoFighter extends TaskBot {
 
     private kills = 0;
     private looted = 0;
+    private buried = 0;
     private eats = 0;
     private trips = 0;
     private deaths = 0;
@@ -189,6 +204,7 @@ export default class AutoFighter extends TaskBot {
         FOOD_WITHDRAW = this.settings.num('foodWithdraw', 10);
         PANIC_AT = this.settings.num('panicHp', 25) / 100;
         LOOT = this.settings.list('loot', DEFAULT_LOOT).map(s => s.trim().toLowerCase());
+        BURY_BONES = this.settings.bool('buryBones', false);
         SOLVE_CLUES = this.settings.bool('solveClues', true);
         BANK_AT = this.settings.num('bankAtLootSlots', 12);
         AUTO_BANK = autoBankEnabled(this.settings.str('banking', 'Auto'));
@@ -246,7 +262,7 @@ export default class AutoFighter extends TaskBot {
 
         this.startedAt = Date.now();
         this.xpAtStart = COMBAT_SKILLS.reduce((n, sk) => n + Skills.xp(sk), 0);
-        this.log(`AutoFighter starting — '${TARGET}' at ${spotMode} ${ANCHOR} r${LEASH}, style ${STYLE}${STYLE === 'mage' ? ` (${SPELL}, ${RUNES_WITHDRAW} casts)` : STYLE === 'range' ? ` (${RANGE_MODE === 0 ? 'accurate' : RANGE_MODE === 1 ? 'rapid' : 'longrange'}, ${AMMO}x${AMMO_WITHDRAW})` : ` (${MELEE_STYLE})`}, banking ${AUTO_BANK ? 'auto' : 'none'}, food '${FOOD}'x${FOOD_WITHDRAW}, loot [${LOOT.join(', ')}]`);
+        this.log(`AutoFighter starting — '${TARGET}' at ${spotMode} ${ANCHOR} r${LEASH}, style ${STYLE}${STYLE === 'mage' ? ` (${SPELL}, ${RUNES_WITHDRAW} casts)` : STYLE === 'range' ? ` (${RANGE_MODE === 0 ? 'accurate' : RANGE_MODE === 1 ? 'rapid' : 'longrange'}, ${AMMO}x${AMMO_WITHDRAW})` : ` (${MELEE_STYLE})`}, banking ${AUTO_BANK ? 'auto' : 'none'}, food '${FOOD}'x${FOOD_WITHDRAW}, loot [${LOOT.join(', ')}]${BURY_BONES ? `, burying ${BURIAL_BONE_NAME}` : ''}`);
 
         this.on('chat.message', e => {
             if (/oh dear.*you are dead/i.test(e.text)) {
@@ -269,9 +285,10 @@ export default class AutoFighter extends TaskBot {
                     this.died = false;
                 }
             }),
-            new LootDrops(this),
             new EatFood(this),
             new PanicRetreat(this),
+            new BuryBones(this),
+            new LootDrops(this),
             new ReequipGear(this),
             this.solveClue!,
             new BankRun(this),
@@ -297,7 +314,7 @@ export default class AutoFighter extends TaskBot {
         const xph = mins > 0.5 ? `${((xp / mins) * 60 / 1000).toFixed(1)}k` : '—';
         p.row(`Runtime: ${fmtDuration(mins)}`, `Kills: ${this.kills}`, `XP/hr: ${xph}`);
         p.row(STYLE === 'mage' ? `Casts: ${castsLeft()}` : STYLE === 'range' ? `Ammo: ${totalAmmo()}` : `Style: ${MELEE_STYLE}`, `Food: ${foodCount()}`, this.deaths ? `Deaths: ${this.deaths}` : `Trips: ${this.trips}`);
-        p.row(`Clues: ${this.cluesSolved}`, `Clue: ${this.solveClue?.clueStatus() ?? 'idle'}`);
+        p.row(`Clues: ${this.cluesSolved}`, `Clue: ${this.solveClue?.clueStatus() ?? 'idle'}`, `Bones: ${this.buried}`);
         p.bar('HP', Skills.hpFraction());
         p.gap();
         ScriptRunner.paintControls(p);
@@ -307,6 +324,7 @@ export default class AutoFighter extends TaskBot {
     setStatus(s: string): void { this.status = s; }
     countKill(): void { this.kills++; }
     countLoot(): void { this.looted++; }
+    countBurial(): void { this.buried++; }
     countEat(): void { this.eats++; }
     countTrip(): void { this.trips++; }
     noteSupplyEmpty(v: boolean): void { this.supplyEmpty = v; }
@@ -317,7 +335,7 @@ class LootDrops implements Task {
     constructor(private bot: AutoFighter) {}
     private find() {
         return GroundItems.query()
-            .where(g => matchesAny(g.name, LOOT))
+            .where(g => isLoot(g.name))
             .within(LEASH + 4)
             .nearest();
     }
@@ -335,16 +353,16 @@ class LootDrops implements Task {
         const find = () => GroundItems.query()
             .where(item => item.id === id && item.tile().equals(tile))
             .nearest();
-        const before = countMatching(Inventory.items(), LOOT);
+        const before = lootCount();
         const status = await Reach.entityOp({
             find,
             op: 'Take',
-            expect: () => countMatching(Inventory.items(), LOOT) > before,
+            expect: () => lootCount() > before,
             expectMs: 5000,
             what: drop.name ?? 'loot',
             log: message => this.bot.log(message)
         });
-        if (status === 'done' && countMatching(Inventory.items(), LOOT) > before) {
+        if (status === 'done' && lootCount() > before) {
             this.bot.countLoot();
         }
     }
@@ -412,6 +430,41 @@ class PanicRetreat implements Task {
     }
 }
 
+class BuryBones implements Task {
+    constructor(private bot: AutoFighter) {}
+
+    validate(): boolean {
+        return (
+            !EventSignal.pending() &&
+            shouldBuryRegularBones({
+                enabled: BURY_BONES,
+                inCombat: Game.inCombat(),
+                bankOpen: Bank.isOpen(),
+                boneCount: Inventory.count(BURIAL_BONE_NAME),
+                inventoryFull: Inventory.isFull()
+            })
+        );
+    }
+
+    async execute(): Promise<void> {
+        const bones = Inventory.first(BURIAL_BONE_NAME);
+        if (!bones) {
+            return;
+        }
+        this.bot.setStatus(`burying ${BURIAL_BONE_NAME.toLowerCase()}`);
+        const before = Inventory.count(BURIAL_BONE_NAME);
+        if (!(await bones.interact('Bury'))) {
+            this.bot.log(`no Bury op on ${BURIAL_BONE_NAME}? ops=[${bones.actions().join(', ')}]`);
+            await Execution.delayTicks(2);
+            return;
+        }
+        if (await Execution.delayUntil(() => Inventory.count(BURIAL_BONE_NAME) < before, 3000)) {
+            this.bot.countBurial();
+            this.bot.log(`buried ${BURIAL_BONE_NAME}`);
+        }
+    }
+}
+
 class BankRun implements Task {
     constructor(private bot: AutoFighter) {}
     validate(): boolean {
@@ -453,7 +506,7 @@ class BankRun implements Task {
         if (!(await Bank.openNearest(BOOTH.name, BOOTH.op, m => this.bot.log(`  ${m}`)))) {
             return;
         }
-        await Bank.depositAllMatching((name, id) => !shouldKeepBankItem(name, id, FOOD, BANK_COMMON, STYLE === 'range' ? [AMMO] : [], TRACKED_GEAR), m => this.bot.log(`  ${m}`));
+        await Bank.depositAllMatching((name, id) => !shouldKeepBankItem(name, id, FOOD, BANK_COMMON, STYLE === 'range' ? [AMMO] : [], TRACKED_GEAR, BURY_BONES), m => this.bot.log(`  ${m}`));
         for (let guard = 0; guard < FOOD_WITHDRAW && foodCount() < FOOD_WITHDRAW && !Inventory.isFull(); guard++) {
             const before = foodCount();
             if (!(await Bank.withdraw(FOOD, 'Withdraw-1'))) {

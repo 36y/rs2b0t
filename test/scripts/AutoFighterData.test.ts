@@ -4,11 +4,14 @@ import { SETTINGS, shouldKeepBankItem } from '#/bot/scripts/AutoFighter.js';
 import {
     autoBankEnabled,
     BANKING_OPTIONS,
+    BURIAL_BONE_NAME,
     CUSTOM_COORDINATES,
     DEFAULT_LOOT,
     resolveKillingSpot,
+    shouldBuryRegularBones,
     SPOT_OPTIONS,
-    START_POSITION
+    START_POSITION,
+    wantsAutoFighterLoot
 } from '#/bot/scripts/AutoFighterData.js';
 import { matchesEntityName } from '#/bot/api/queries/Query.js';
 import { resolveControl } from '#/bot/ui/paramControls.js';
@@ -77,5 +80,51 @@ describe('AutoFighter data', () => {
         expect(shouldKeepBankItem('Bronze arrow', 882, 'Trout', true, [], ['Bronze arrow'])).toBe(true);
         expect(shouldKeepBankItem('Iron arrow', 884, 'Trout', true, ['Bronze arrow'], [])).toBe(false);
         expect(shouldKeepBankItem('Maple shortbow', 853, 'Trout', true, [], ['Maple shortbow'])).toBe(true);
+    });
+
+    test('burying regular bones is optional and defaults off', () => {
+        expect(SETTINGS.buryBones).toMatchObject({
+            type: 'boolean',
+            default: false,
+            label: 'Bury regular bones'
+        });
+        expect(wantsAutoFighterLoot(BURIAL_BONE_NAME, DEFAULT_LOOT, false)).toBe(false);
+        expect(
+            shouldBuryRegularBones({
+                enabled: false,
+                inCombat: false,
+                bankOpen: false,
+                boneCount: 1,
+                inventoryFull: false
+            })
+        ).toBe(false);
+    });
+
+    test('enabling burial forces only regular Bones into the loot filter', () => {
+        expect(wantsAutoFighterLoot('Bones', DEFAULT_LOOT, true)).toBe(true);
+        expect(wantsAutoFighterLoot(' bones ', DEFAULT_LOOT, true)).toBe(true);
+        expect(wantsAutoFighterLoot('Big bones', DEFAULT_LOOT, true)).toBe(false);
+        expect(wantsAutoFighterLoot('Dragon bones', DEFAULT_LOOT, true)).toBe(false);
+        expect(wantsAutoFighterLoot('Big bones', ['big bones'], true)).toBe(true);
+    });
+
+    test('burial waits for combat and bank interfaces but works with a full inventory', () => {
+        const ready = {
+            enabled: true,
+            inCombat: false,
+            bankOpen: false,
+            boneCount: 1,
+            inventoryFull: true
+        };
+        expect(shouldBuryRegularBones(ready)).toBe(true);
+        expect(shouldBuryRegularBones({ ...ready, inCombat: true })).toBe(false);
+        expect(shouldBuryRegularBones({ ...ready, bankOpen: true })).toBe(false);
+        expect(shouldBuryRegularBones({ ...ready, boneCount: 0 })).toBe(false);
+    });
+
+    test('banking protects carried Bones only while burial is enabled', () => {
+        expect(shouldKeepBankItem('Bones', 526, 'Trout', true, [], [], false)).toBe(false);
+        expect(shouldKeepBankItem('Bones', 526, 'Trout', true, [], [], true)).toBe(true);
+        expect(shouldKeepBankItem('Big bones', 532, 'Trout', true, [], [], true)).toBe(false);
     });
 });

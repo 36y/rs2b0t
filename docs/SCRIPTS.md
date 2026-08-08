@@ -137,6 +137,7 @@ Tags: `combat`, `clues`, `banking`, `afk`
 | `foodWithdraw` | number (0–27) | `10` | Food to carry |
 | `panicHp` | number (0–100) | `25` | Panic below HP% (no food) |
 | `loot` | string[] | `["clue scroll","uncut sapphire","uncut emerald","uncut ruby","uncut diamond","half of a key","chaos talisman","nature talisman"]` | Loot item names (contains) |
+| `buryBones` | boolean | `false` | Bury regular bones |
 | `solveClues` | boolean | `true` | Solve clue drops |
 | `banking` | string | `"Auto"` | Banking — one of: Auto, None |
 | `bankAtLootSlots` | number (1–27) | `12` | Bank at loot slots |
