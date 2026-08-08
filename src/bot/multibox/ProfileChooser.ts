@@ -16,6 +16,14 @@ export class ProfileChooser {
                 this.close();
             }
         });
+        this.el.addEventListener('keydown', ev => {
+            if (ev.key !== 'Escape' || this.el.hidden || !this.el.isConnected) {
+                return;
+            }
+            ev.preventDefault();
+            ev.stopPropagation();
+            this.close();
+        });
 
         const box = document.createElement('div');
         box.className = 'mbx-chooser';

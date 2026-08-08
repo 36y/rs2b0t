@@ -106,4 +106,29 @@ describe('ProfileChooser', () => {
         expect(loaded).toEqual([]);
         expect(chooser.el.hidden).toBe(false);
     });
+
+    test('Escape closes the chooser and consumes the key only while open', () => {
+        const { chooser } = make();
+        chooser.open();
+        const input = chooser.el.querySelector('#mbx-new-user') as HTMLInputElement;
+        expect(document.activeElement).toBe(input);
+
+        const close = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+        expect(input.dispatchEvent(close)).toBe(false);
+        expect(chooser.el.hidden).toBe(true);
+
+        const alreadyClosed = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+        expect(input.dispatchEvent(alreadyClosed)).toBe(true);
+    });
+
+    test('a detached chooser neither consumes Escape nor closes', () => {
+        const { chooser } = make();
+        chooser.open();
+        const input = chooser.el.querySelector('#mbx-new-user') as HTMLInputElement;
+        chooser.el.remove();
+
+        const escape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+        expect(input.dispatchEvent(escape)).toBe(true);
+        expect(chooser.el.hidden).toBe(false);
+    });
 });
