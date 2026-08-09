@@ -2,7 +2,21 @@ import { BotHost } from '../BotHost.js';
 import { isNavPathPaintEnabled } from '../nav/pathOverlay.js';
 import { paintNavPath } from '../nav/pathOverlay.js';
 import { PathPublish } from '../nav/pathPublish.js';
+import { AutoRelogin } from '../runtime/AutoRelogin.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
+import { paintLoginQueue } from './LoginQueuePaint.js';
+
+export function shouldPaintOverlay(opts: {
+    pathEnabled: boolean;
+    pathTiles: number;
+    scriptPaintReady: boolean;
+    hasOnPaint: boolean;
+    loginQueued: boolean;
+}): boolean {
+    const pathLabels = opts.pathEnabled && opts.pathTiles > 0;
+    const botPaint = opts.hasOnPaint && opts.scriptPaintReady;
+    return pathLabels || botPaint || opts.loginQueued;
+}
 
 export default class Overlay {
     private readonly ctx2d: CanvasRenderingContext2D | null;
@@ -23,12 +37,20 @@ export default class Overlay {
         }
 
         const path = PathPublish.get();
+        const pathEnabled = isNavPathPaintEnabled();
         const pathLabels =
-            isNavPathPaintEnabled() && path !== null && path.tiles.length > 0;
+            pathEnabled && path !== null && path.tiles.length > 0;
         const bot = ScriptRunner.paintBot;
         const botPaint = Boolean(bot?.onPaint);
+        const loginQueueStatus = AutoRelogin.loginQueueStatus();
 
-        if (!pathLabels && !botPaint) {
+        if (!shouldPaintOverlay({
+            pathEnabled,
+            pathTiles: path?.tiles.length ?? 0,
+            scriptPaintReady: bot !== null,
+            hasOnPaint: Boolean(bot?.onPaint),
+            loginQueued: loginQueueStatus !== null
+        })) {
             if (this.hadContent) {
                 ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 this.hadContent = false;
@@ -52,17 +74,28 @@ export default class Overlay {
             }
         }
 
-        if (!botPaint || !bot?.onPaint) {
-            return;
+        if (loginQueueStatus !== null) {
+            try {
+                ctx.save();
+                paintLoginQueue(ctx, loginQueueStatus);
+            } catch (err) {
+                console.error('[rs2b0t] login queue paint error', err);
+            } finally {
+                ctx.restore();
+            }
         }
 
-        try {
-            ctx.save();
-            bot.onPaint(ctx);
-        } catch (err) {
-            console.error('[rs2b0t] onPaint error', err);
-        } finally {
-            ctx.restore();
+        // Script paint owns the final layer. The queue card is normally title-only,
+        // but this ordering prevents it obscuring a future script that paints there.
+        if (botPaint && bot?.onPaint) {
+            try {
+                ctx.save();
+                bot.onPaint(ctx);
+            } catch (err) {
+                console.error('[rs2b0t] onPaint error', err);
+            } finally {
+                ctx.restore();
+            }
         }
     }
 }

@@ -129,9 +129,9 @@ export const LOGIN_ATTEMPT_SPACING_MS = 1000;
 export const LOGIN_BATCH_COOLDOWN_MS = 16000;
 ```
 
-Slots request a permit through the [`LoginCoordination`](../src/bot/runtime/LoginCoordination.ts)
-interface, which the single-instance client also implements as a no-op — so the same
-client code runs both standalone and in a wall.
+Each slot gets an identity-bound [`LoginCoordination`](../src/bot/runtime/LoginCoordination.ts)
+client. A denied, due request keeps its FIFO place across polls, giving the canvas a
+live `position of total`; granting or removing a slot immediately compacts the queue.
 
 ## Resource telemetry
 

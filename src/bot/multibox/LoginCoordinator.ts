@@ -1,5 +1,9 @@
 // docs/MULTIBOX.md#login-coordination
-import type { LoginCoordination } from '../runtime/LoginCoordination.js';
+import type {
+    LoginCoordination,
+    LoginCoordinationRegistry,
+    LoginQueueStatus
+} from '../runtime/LoginCoordination.js';
 
 export const LOGIN_BATCH_SIZE = 4;
 export const LOGIN_ATTEMPT_SPACING_MS = 1000;
@@ -18,8 +22,9 @@ export interface LoginCoordinatorOptions {
  * The production server permits four attempts for one client UID, then rejects
  * the fifth until that UID has been idle for 15 seconds. The cooldown is measured
  * from the latest permit because each attempt refreshes the server-side TTL.
+ * Denied clients retain FIFO order until they receive a permit or leave the queue.
  */
-export class LoginCoordinator implements LoginCoordination {
+export class LoginCoordinator implements LoginCoordinationRegistry {
     private readonly now: () => number;
     private readonly batchSize: number;
     private readonly spacingMs: number;
@@ -27,6 +32,7 @@ export class LoginCoordinator implements LoginCoordination {
     private permitsInBatch = 0;
     private lastPermitAt: number | null = null;
     private blockedUntil = 0;
+    private queue: object[] = [];
 
     constructor(options: LoginCoordinatorOptions = {}) {
         this.now = options.now ?? (() => performance.now());
@@ -45,9 +51,23 @@ export class LoginCoordinator implements LoginCoordination {
         }
     }
 
-    requestPermit(): boolean {
+    register(): LoginCoordination {
+        const request = {};
+        return {
+            requestPermit: () => this.requestPermit(request),
+            queueStatus: () => this.queueStatus(request),
+            leaveQueue: () => this.cancel(request),
+            holdFor: delayMs => this.holdFor(delayMs)
+        };
+    }
+
+    private requestPermit(request: object): boolean {
+        if (!this.queue.includes(request)) {
+            this.queue.push(request);
+        }
+
         const now = this.readNow();
-        if (now === null || now < this.blockedUntil) {
+        if (now === null || now < this.blockedUntil || this.queue[0] !== request) {
             return false;
         }
 
@@ -63,9 +83,25 @@ export class LoginCoordinator implements LoginCoordination {
             return false;
         }
 
+        this.queue.shift();
         this.permitsInBatch++;
         this.lastPermitAt = now;
         return true;
+    }
+
+    private queueStatus(request: object): LoginQueueStatus | null {
+        const index = this.queue.indexOf(request);
+        if (index < 0) {
+            return null;
+        }
+        return { position: index + 1, total: this.queue.length };
+    }
+
+    private cancel(request: object): void {
+        const index = this.queue.indexOf(request);
+        if (index >= 0) {
+            this.queue.splice(index, 1);
+        }
     }
 
     holdFor(delayMs: number): void {

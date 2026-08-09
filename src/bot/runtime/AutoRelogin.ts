@@ -2,7 +2,10 @@ import { actions, reader } from '../adapter/ClientAdapter.js';
 import { BotHost } from '../BotHost.js';
 import { Credentials, type Creds } from './Credentials.js';
 import { LoginBackoff } from './LoginBackoff.js';
-import type { LoginCoordination } from './LoginCoordination.js';
+import type {
+    LoginCoordination,
+    LoginQueueStatus
+} from './LoginCoordination.js';
 import { ScriptRunner } from './ScriptRunner.js';
 
 const FIRST_RETRY_MS = 6000;
@@ -22,7 +25,6 @@ class AutoReloginImpl {
     private backoff = new LoginBackoff();
     private rateLimitedAttempt = 0;
     private coordination: LoginCoordination | null = null;
-    private waitingForPermit = false;
 
     enable(autoLogin = false): void {
         this.autoLogin = this.autoLogin || autoLogin;
@@ -39,7 +41,7 @@ class AutoReloginImpl {
             // Title-screen checkbox off must stop in-flight reconnect attempts (#215).
             // Script-active reconnect still uses scriptActive() separately.
             this.reconnecting = false;
-            this.waitingForPermit = false;
+            this.cancelQueuedLogin();
             this.attempts = 0;
             this.nextAttemptAt = 0;
             this.rateLimitedAttempt = 0;
@@ -52,9 +54,17 @@ class AutoReloginImpl {
         return this.autoLogin;
     }
 
+    /** Live FIFO position while waiting for the shared multibox login permit. */
+    loginQueueStatus(): LoginQueueStatus | null {
+        return this.coordination?.queueStatus() ?? null;
+    }
+
     setLoginCoordination(coordination: LoginCoordination | null): void {
+        if (coordination === this.coordination) {
+            return;
+        }
+        this.cancelQueuedLogin();
         this.coordination = coordination;
-        this.waitingForPermit = false;
     }
 
     setCredentials(username: string, password: string): void {
@@ -62,6 +72,7 @@ class AutoReloginImpl {
             Credentials.save(username, password);
         } else {
             Credentials.clear();
+            this.cancelQueuedLogin();
         }
     }
 
@@ -71,10 +82,23 @@ class AutoReloginImpl {
 
     loginNow(): boolean {
         const c = this.creds();
-        if (!c || reader.ingame() || (this.coordination !== null && !this.coordination.requestPermit())) {
+        if (!c || reader.ingame()) {
             return false;
         }
+        if (this.coordination !== null) {
+            const wasQueued = this.coordination.queueStatus() !== null;
+            if (!this.coordination.requestPermit()) {
+                if (!wasQueued) {
+                    this.coordination.leaveQueue();
+                }
+                return false;
+            }
+        }
         return actions.login(c.username, c.password);
+    }
+
+    private cancelQueuedLogin(): void {
+        this.coordination?.leaveQueue();
     }
 
     private scriptActive(): boolean {
@@ -91,6 +115,7 @@ class AutoReloginImpl {
 
     private onFrame(): void {
         if (reader.ingame()) {
+            this.cancelQueuedLogin();
             const live = actions.loginCredentials();
             const saved = this.creds();
             if (live.username.length > 0 && (!saved || live.username !== saved.username || live.password !== saved.password)) {
@@ -107,7 +132,6 @@ class AutoReloginImpl {
                 this.attempts = 0;
                 this.backoff.reset();
                 this.rateLimitedAttempt = 0;
-                this.waitingForPermit = false;
             }
 
             this.wasIngame = true;
@@ -136,6 +160,7 @@ class AutoReloginImpl {
         }
 
         if (!this.reconnecting || !c) {
+            this.cancelQueuedLogin();
             return;
         }
 
@@ -156,19 +181,20 @@ class AutoReloginImpl {
         if (this.attempts >= MAX_ATTEMPTS) {
             this.log('error', `auto-login: giving up after ${MAX_ATTEMPTS} attempts`);
             this.reconnecting = false;
-            this.waitingForPermit = false;
+            this.cancelQueuedLogin();
             return;
         }
 
-        if (this.coordination !== null && !this.coordination.requestPermit()) {
-            if (!this.waitingForPermit) {
-                this.waitingForPermit = true;
-                this.log('info', 'auto-login: queued by multibox login coordinator');
+        if (this.coordination !== null) {
+            const wasQueued = this.loginQueueStatus() !== null;
+            if (!this.coordination.requestPermit()) {
+                if (!wasQueued) {
+                    this.log('info', 'auto-login: queued by multibox login coordinator');
+                }
+                return;
             }
-            return;
         }
 
-        this.waitingForPermit = false;
         if (!actions.login(c.username, c.password)) {
             this.nextAttemptAt = performance.now() + BUSY_RETRY_MS;
             return;

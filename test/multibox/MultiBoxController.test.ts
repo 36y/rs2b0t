@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { LoginCoordinator } from '#/bot/multibox/LoginCoordinator.js';
 import { MultiBoxController } from '#/bot/multibox/MultiBoxController.js';
 import type { Account, RenderMode, SlotHandle, SlotOps, SlotStatus } from '#/bot/multibox/types.js';
 import type { LoginCoordination } from '#/bot/runtime/LoginCoordination.js';
@@ -48,14 +49,18 @@ describe('MultiBoxController', () => {
         expect(c.snapshot().length).toBe(2);
     });
 
-    test('every bot receives the same wall-level login coordinator', () => {
+    test('bots receive distinct FIFO clients backed by one permit budget', () => {
         const ops = new FakeOps();
-        const coordination: LoginCoordination = { requestPermit: () => true, holdFor: () => {} };
-        const c = new MultiBoxController(ops, coordination);
+        const coordinator = new LoginCoordinator({ now: () => 0 });
+        const c = new MultiBoxController(ops, coordinator);
         c.add();
         c.add();
-        expect(ops.handles[0].loginCoordination).toBe(coordination);
-        expect(ops.handles[1].loginCoordination).toBe(coordination);
+        const first = ops.handles[0].loginCoordination!;
+        const second = ops.handles[1].loginCoordination!;
+        expect(first).not.toBe(second);
+        expect(first.requestPermit()).toBe(true);
+        expect(second.requestPermit()).toBe(false);
+        expect(second.queueStatus()).toEqual({ position: 1, total: 1 });
     });
 
     test('an explicit account (automation) injects creds before arming auto-login', () => {
@@ -219,6 +224,24 @@ describe('MultiBoxController', () => {
         expect(ops.handles[0].destroyed).toBe(true);
         expect(c.focusedId).toBeNull();
         expect(c.snapshot()).toEqual([]);
+    });
+
+    test('remove releases a queued slot from the parent before iframe teardown', () => {
+        const ops = new FakeOps();
+        const coordinator = new LoginCoordinator({ now: () => 0 });
+        const c = new MultiBoxController(ops, coordinator);
+        const alice = c.add({ username: 'alice', password: 'a' })!;
+        c.add({ username: 'bob', password: 'b' });
+        const aliceLogin = ops.handles[0].loginCoordination!;
+        const bobLogin = ops.handles[1].loginCoordination!;
+        coordinator.holdFor(5000);
+        aliceLogin.requestPermit();
+        bobLogin.requestPermit();
+        expect(bobLogin.queueStatus()).toEqual({ position: 2, total: 2 });
+
+        c.remove(alice.id);
+
+        expect(bobLogin.queueStatus()).toEqual({ position: 1, total: 1 });
     });
 });
 

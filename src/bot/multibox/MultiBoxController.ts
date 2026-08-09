@@ -1,5 +1,8 @@
 import type { Account, RenderMode, SlotHandle, SlotOps, SlotSnapshot } from './types.js';
-import type { LoginCoordination } from '../runtime/LoginCoordination.js';
+import type {
+    LoginCoordination,
+    LoginCoordinationRegistry
+} from '../runtime/LoginCoordination.js';
 import { LoginCoordinator } from './LoginCoordinator.js';
 
 export const MAIN_TAB = 'Main';
@@ -8,6 +11,7 @@ interface Slot {
     id: number;
     account: Account;
     handle: SlotHandle;
+    loginCoordination: LoginCoordination;
     mode: RenderMode;
     tab: string;
 }
@@ -27,7 +31,7 @@ export class MultiBoxController {
 
     constructor(
         private ops: SlotOps,
-        private loginCoordination: LoginCoordination = new LoginCoordinator()
+        private loginCoordinator: LoginCoordinationRegistry = new LoginCoordinator()
     ) {}
 
     tabs(): string[] {
@@ -55,8 +59,16 @@ export class MultiBoxController {
             throw new Error(`unknown tab '${tab}' for bot '${acct.username}'`);
         }
         const handle = this.ops.spawn(acct);
-        handle.setLoginCoordination(this.loginCoordination);
-        const slot: Slot = { id: this.nextId++, account: acct, handle, mode: 'background', tab };
+        const loginCoordination = this.loginCoordinator.register();
+        handle.setLoginCoordination(loginCoordination);
+        const slot: Slot = {
+            id: this.nextId++,
+            account: acct,
+            handle,
+            loginCoordination,
+            mode: 'background',
+            tab
+        };
         this.slots.push(slot);
         if (account) {
             handle.setCredentials(acct.username, acct.password);
@@ -78,6 +90,9 @@ export class MultiBoxController {
         if (!slot) {
             return;
         }
+        // Release the parent-owned FIFO entry even if the iframe stopped responding.
+        slot.loginCoordination.leaveQueue();
+        slot.handle.setLoginCoordination(null);
         slot.handle.destroy();
         this.slots = this.slots.filter(s => s.id !== id);
         if (this.focusedId === id) {
