@@ -89,39 +89,49 @@ describe('Duel Arena geography', () => {
 
 describe('target-driven melee style', () => {
     test('chooses the stat with the larger remaining gap', () => {
-        expect(targetMeleeStyle(20, 40, 99, 99)).toBe('attack');
-        expect(targetMeleeStyle(40, 20, 99, 99)).toBe('strength');
-        expect(targetMeleeStyle(60, 60, 70, 99)).toBe('strength');
-        expect(targetMeleeStyle(60, 60, 99, 70)).toBe('attack');
+        expect(targetMeleeStyle(20, 40, 1, 99, 99, 1)).toBe('attack');
+        expect(targetMeleeStyle(40, 20, 1, 99, 99, 1)).toBe('strength');
+        expect(targetMeleeStyle(60, 60, 1, 70, 99, 1)).toBe('strength');
+        expect(targetMeleeStyle(60, 60, 1, 99, 70, 1)).toBe('attack');
+        expect(targetMeleeStyle(60, 60, 1, 70, 70, 50)).toBe('defence');
     });
 
-    test('uses Attack for exact ties and never emits controlled/defence', () => {
-        expect(targetMeleeStyle(1, 1, 99, 99)).toBe('attack');
-        expect(targetMeleeStyle(99, 99, 99, 99)).toBe('attack');
-        expect(['attack', 'strength']).toContain(targetMeleeStyle(120, 120, 99, 99));
+    test('defaults Defence to complete and preserves Attack, Strength, Defence tie priority', () => {
+        expect(targetMeleeStyle(1, 1, 1, 99, 99, 1)).toBe('attack');
+        expect(targetMeleeStyle(99, 98, 1, 99, 99, 1)).toBe('strength');
+        expect(targetMeleeStyle(90, 80, 70, 99, 99, 89)).toBe('strength');
+        expect(targetMeleeStyle(80, 90, 70, 99, 99, 89)).toBe('attack');
+        expect(targetMeleeStyle(99, 99, 1, 99, 99, 2)).toBe('defence');
+        expect(targetMeleeStyle(120, 120, 120, 99, 99, 99)).toBe('attack');
     });
 
-    test('fails closed when CombatStyle would fall back to Defence', () => {
+    test('accepts exact Defence and rejects every wrong-stat fallback', () => {
         expect(exactTrainingMode('attack', { requested: 'attack', effective: 'attack', mode: 0 })).toBe(0);
         expect(exactTrainingMode('strength', { requested: 'strength', effective: 'strength', mode: 1 })).toBe(1);
+        expect(exactTrainingMode('defence', { requested: 'defence', effective: 'defence', mode: 3 })).toBe(3);
         expect(exactTrainingMode('attack', { requested: 'attack', effective: 'defence', mode: 3 })).toBeNull();
         expect(exactTrainingMode('strength', { requested: 'strength', effective: 'controlled', mode: 2 })).toBeNull();
+        expect(exactTrainingMode('defence', { requested: 'defence', effective: 'controlled', mode: 2 })).toBeNull();
         expect(exactTrainingMode('attack', null)).toBeNull();
     });
 
-    test('requires exact Attack and Strength modes, rejecting a bow-like Accurate interface', () => {
+    test('requires exact Defence only while its opt-in target remains outstanding', () => {
         const attack = { requested: 'attack', effective: 'attack', mode: 0 } as const;
         const strength = { requested: 'strength', effective: 'strength', mode: 1 } as const;
-        expect(hasExactMeleeStyles(attack, strength)).toBe(true);
-        expect(hasExactMeleeStyles(attack, null)).toBe(false);
-        expect(hasExactMeleeStyles(attack, { requested: 'strength', effective: 'defence', mode: 2 })).toBe(false);
+        const defence = { requested: 'defence', effective: 'defence', mode: 3 } as const;
+        expect(hasExactMeleeStyles(attack, strength, null, false)).toBe(true);
+        expect(hasExactMeleeStyles(attack, strength, defence, true)).toBe(true);
+        expect(hasExactMeleeStyles(attack, strength, null, true)).toBe(false);
+        expect(hasExactMeleeStyles(attack, null, defence, false)).toBe(false);
+        expect(hasExactMeleeStyles(attack, { requested: 'strength', effective: 'defence', mode: 2 }, defence, true)).toBe(false);
     });
 
-    test('finishes only after both configured targets are reached', () => {
-        expect(duelTargetsReached(5, 5, 5, 5)).toBe(true);
-        expect(duelTargetsReached(6, 7, 5, 5)).toBe(true);
-        expect(duelTargetsReached(4, 99, 5, 5)).toBe(false);
-        expect(duelTargetsReached(99, 4, 5, 5)).toBe(false);
+    test('finishes only after all three configured targets are reached', () => {
+        expect(duelTargetsReached(5, 5, 1, 5, 5, 1)).toBe(true);
+        expect(duelTargetsReached(6, 7, 9, 5, 5, 8)).toBe(true);
+        expect(duelTargetsReached(4, 99, 99, 5, 5, 5)).toBe(false);
+        expect(duelTargetsReached(99, 4, 99, 5, 5, 5)).toBe(false);
+        expect(duelTargetsReached(99, 99, 4, 5, 5, 5)).toBe(false);
     });
 });
 

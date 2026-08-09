@@ -1,6 +1,8 @@
 import type { ChatLine, WorldTile } from '../adapter/ClientAdapter.js';
 import type { CombatStyleResolution, MeleeCombatStyle } from '../api/CombatStyle.js';
 
+export type DuelTrainingStyle = Extract<MeleeCombatStyle, 'attack' | 'strength' | 'defence'>;
+
 export interface Rect {
     minX: number;
     maxX: number;
@@ -64,25 +66,50 @@ export function shouldCenterDuelLobby(tile: WorldTile | null, visibleTargets: nu
     ) > DUEL_LOBBY_CENTER_RADIUS;
 }
 
-/** Train the stat with the larger remaining gap; Attack wins a true tie. */
-export function targetMeleeStyle(attackLevel: number, strengthLevel: number, targetAttack: number, targetStrength: number): Extract<MeleeCombatStyle, 'attack' | 'strength'> {
+/** Train the stat with the largest remaining gap; ties prefer Attack, then Strength. */
+export function targetMeleeStyle(
+    attackLevel: number,
+    strengthLevel: number,
+    defenceLevel: number,
+    targetAttack: number,
+    targetStrength: number,
+    targetDefence: number
+): DuelTrainingStyle {
     const attackGap = Math.max(0, targetAttack - attackLevel);
     const strengthGap = Math.max(0, targetStrength - strengthLevel);
-    return strengthGap > attackGap ? 'strength' : 'attack';
+    const defenceGap = Math.max(0, targetDefence - defenceLevel);
+    if (strengthGap > attackGap && strengthGap >= defenceGap) {
+        return 'strength';
+    }
+    return defenceGap > attackGap ? 'defence' : 'attack';
 }
 
-export function duelTargetsReached(attackLevel: number, strengthLevel: number, targetAttack: number, targetStrength: number): boolean {
-    return attackLevel >= targetAttack && strengthLevel >= targetStrength;
+export function duelTargetsReached(
+    attackLevel: number,
+    strengthLevel: number,
+    defenceLevel: number,
+    targetAttack: number,
+    targetStrength: number,
+    targetDefence: number
+): boolean {
+    return attackLevel >= targetAttack && strengthLevel >= targetStrength && defenceLevel >= targetDefence;
 }
 
-/** A fallback to Defence/Controlled violates this script's two-stat contract. */
-export function exactTrainingMode(style: Extract<MeleeCombatStyle, 'attack' | 'strength'>, resolution: CombatStyleResolution | null): number | null {
+/** Never accept a fallback that would train a stat other than the selected target. */
+export function exactTrainingMode(style: DuelTrainingStyle, resolution: CombatStyleResolution | null): number | null {
     return resolution?.effective === style ? resolution.mode : null;
 }
 
 /** Accurate alone is not proof of melee: ranged interfaces also offer it. */
-export function hasExactMeleeStyles(attack: CombatStyleResolution | null, strength: CombatStyleResolution | null): boolean {
-    return exactTrainingMode('attack', attack) !== null && exactTrainingMode('strength', strength) !== null;
+export function hasExactMeleeStyles(
+    attack: CombatStyleResolution | null,
+    strength: CombatStyleResolution | null,
+    defence: CombatStyleResolution | null,
+    requireDefence: boolean
+): boolean {
+    return exactTrainingMode('attack', attack) !== null &&
+        exactTrainingMode('strength', strength) !== null &&
+        (!requireDefence || exactTrainingMode('defence', defence) !== null);
 }
 
 export interface FightAttemptSnapshot {

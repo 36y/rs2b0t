@@ -13,7 +13,6 @@ import { reader } from '../adapter/ClientAdapter.js';
 import { BotHost } from '../BotHost.js';
 import { DirectNavigator } from '../nav/DirectNavigator.js';
 import Tile from '../api/Tile.js';
-import type { MeleeCombatStyle } from '../api/CombatStyle.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import {
@@ -41,6 +40,7 @@ import {
     observeFightSignal,
     shouldCenterDuelLobby,
     targetMeleeStyle,
+    type DuelTrainingStyle,
     type FightSignalState,
     type Rect
 } from './DuelArenaLogic.js';
@@ -52,7 +52,7 @@ export const DUEL_ARENA_SETTINGS: SettingsSchema = {
         min: 1,
         max: 99,
         label: 'Target Attack level',
-        help: 'the script trains whichever of Attack and Strength is further below its target'
+        help: 'the script trains whichever configured melee stat is further below its target'
     },
     targetStrength: {
         type: 'number',
@@ -60,12 +60,20 @@ export const DUEL_ARENA_SETTINGS: SettingsSchema = {
         min: 1,
         max: 99,
         label: 'Target Strength level',
-        help: 'the script never deliberately trains Defence'
+        help: 'Attack wins a tie between equal remaining gaps'
+    },
+    targetDefence: {
+        type: 'number',
+        default: 1,
+        min: 1,
+        max: 99,
+        label: 'Target Defence level',
+        help: 'opt in above 1; the equipped weapon must offer exact Attack, Strength, and Defensive styles'
     }
 };
 
 const CHALLENGE_RESULT_WAIT_MS = 1500;
-const DUEL_XP_SKILLS = ['attack', 'strength', 'hitpoints'] as const;
+const DUEL_XP_SKILLS = ['attack', 'strength', 'defence', 'hitpoints'] as const;
 
 function sameName(a: string | null, b: string): boolean {
     return a !== null && a.trim().toLowerCase() === b.trim().toLowerCase();
@@ -81,6 +89,7 @@ export default class DuelArena extends TaskBot {
 
     private targetAttack = 99;
     private targetStrength = 99;
+    private targetDefence = 1;
     private status = 'starting';
     private opponent: string | null = null;
     private inviteQueue: string[] = [];
@@ -101,6 +110,7 @@ export default class DuelArena extends TaskBot {
         await Execution.delayUntil(() => Game.sceneReady(), 0);
         this.targetAttack = this.settings.num('targetAttack', 99);
         this.targetStrength = this.settings.num('targetStrength', 99);
+        this.targetDefence = this.settings.num('targetDefence', 1);
         this.startedAt = Date.now();
         this.xpAtStart = this.trainingXp();
 
@@ -112,7 +122,7 @@ export default class DuelArena extends TaskBot {
             }
         });
 
-        this.log(`Duel Arena trainer starting — melee only; target Attack ${this.targetAttack}, Strength ${this.targetStrength}; challenges every 5s`);
+        this.log(`Duel Arena trainer starting — melee only; targets Attack ${this.targetAttack}, Strength ${this.targetStrength}, Defence ${this.targetDefence}; challenges every 5s`);
 
         this.stopFightObserver = BotHost.addTickListener(() => this.observeFightState());
         this.observeFightState();
@@ -134,9 +144,9 @@ export default class DuelArena extends TaskBot {
         const mins = (Date.now() - this.startedAt) / 60_000;
         const xpGained = Math.max(0, this.trainingXp() - this.xpAtStart);
         paint.title(`Duel Arena — ${this.status}`);
-        paint.row(`Attack ${Skills.level('attack')}/${this.targetAttack}`, `Strength ${Skills.level('strength')}/${this.targetStrength}`, `Duels ${this.duels}`);
-        paint.row(`Style ${this.desiredStyle()}`, `Opponent ${this.opponent ?? '—'}`, `Runtime ${Math.floor(mins)}m`);
-        paint.row(`XP/hr: ${fmtXpHr(xpGained, mins)}`);
+        paint.row(`Attack ${Skills.level('attack')}/${this.targetAttack}`, `Strength ${Skills.level('strength')}/${this.targetStrength}`, `Defence ${Skills.level('defence')}/${this.targetDefence}`);
+        paint.row(`Style ${this.desiredStyle()}`, `Opponent ${this.opponent ?? '—'}`, `Duels ${this.duels}`);
+        paint.row(`Runtime ${Math.floor(mins)}m`, `XP/hr: ${fmtXpHr(xpGained, mins)}`);
         paint.end();
     }
 
@@ -148,11 +158,18 @@ export default class DuelArena extends TaskBot {
         this.status = status;
     }
 
-    desiredStyle(): Extract<MeleeCombatStyle, 'attack' | 'strength'> {
-        return targetMeleeStyle(Skills.level('attack'), Skills.level('strength'), this.targetAttack, this.targetStrength);
+    desiredStyle(): DuelTrainingStyle {
+        return targetMeleeStyle(
+            Skills.level('attack'),
+            Skills.level('strength'),
+            Skills.level('defence'),
+            this.targetAttack,
+            this.targetStrength,
+            this.targetDefence
+        );
     }
 
-    /** Never accept CombatStyle's defensive fallback: this trainer must not train Defence. */
+    /** A style is valid only when the combat interface trains exactly that stat. */
     exactStyleMode(): number | null {
         const style = this.desiredStyle();
         return exactTrainingMode(style, Game.combatStyleResolution(style));
@@ -164,11 +181,25 @@ export default class DuelArena extends TaskBot {
     }
 
     hasMeleeTrainingStyles(): boolean {
-        return hasExactMeleeStyles(Game.combatStyleResolution('attack'), Game.combatStyleResolution('strength'));
+        // Exact Attack + Strength remain the ranged-interface guard. Defence is
+        // an additional requirement only while its opt-in goal is outstanding.
+        return hasExactMeleeStyles(
+            Game.combatStyleResolution('attack'),
+            Game.combatStyleResolution('strength'),
+            Game.combatStyleResolution('defence'),
+            Skills.level('defence') < this.targetDefence
+        );
     }
 
     targetsReached(): boolean {
-        return duelTargetsReached(Skills.level('attack'), Skills.level('strength'), this.targetAttack, this.targetStrength);
+        return duelTargetsReached(
+            Skills.level('attack'),
+            Skills.level('strength'),
+            Skills.level('defence'),
+            this.targetAttack,
+            this.targetStrength,
+            this.targetDefence
+        );
     }
 
     readyToComplete(): boolean {
@@ -177,7 +208,7 @@ export default class DuelArena extends TaskBot {
 
     completeTargets(): void {
         this.setStatus('targets reached');
-        this.log(`targets reached — Attack ${Skills.level('attack')}/${this.targetAttack}, Strength ${Skills.level('strength')}/${this.targetStrength}; stopping`);
+        this.log(`targets reached — Attack ${Skills.level('attack')}/${this.targetAttack}, Strength ${Skills.level('strength')}/${this.targetStrength}, Defence ${Skills.level('defence')}/${this.targetDefence}; stopping`);
         ScriptRunner.stop('Duel Arena targets reached');
     }
 
@@ -187,6 +218,10 @@ export default class DuelArena extends TaskBot {
 
     strengthTarget(): number {
         return this.targetStrength;
+    }
+
+    defenceTarget(): number {
+        return this.targetDefence;
     }
 
     notePartner(): void {
@@ -339,7 +374,7 @@ export default class DuelArena extends TaskBot {
                 this.duels++;
                 this.opponent = null;
                 this.cadence.reset();
-                this.log(`duel complete #${this.duels} — Attack ${Skills.level('attack')}, Strength ${Skills.level('strength')}`);
+                this.log(`duel complete #${this.duels} — Attack ${Skills.level('attack')}, Strength ${Skills.level('strength')}, Defence ${Skills.level('defence')}`);
             }
         } else if (nextPen !== null) {
             this.fightSignal = observeFightSignal(this.fightSignal, reader.selfChat());
@@ -468,7 +503,7 @@ class SetTrainingStyle implements Task {
             this.bot.setStatus('equip a melee weapon');
             if (performance.now() >= this.lastFailLogAt) {
                 this.lastFailLogAt = performance.now() + 30_000;
-                this.bot.log('the current combat interface does not offer both exact Attack and Strength styles — equip a melee weapon before dueling');
+                this.bot.log('the current combat interface must offer exact Attack and Strength styles, plus Defence while that goal is outstanding — equip a suitable melee weapon before dueling');
             }
             await Execution.delayTicks(1);
             return;
@@ -480,14 +515,14 @@ class SetTrainingStyle implements Task {
             this.bot.setStatus(`equip a weapon with ${style} style`);
             if (performance.now() >= this.lastFailLogAt) {
                 this.lastFailLogAt = performance.now() + 30_000;
-                this.bot.log(`${style} is unavailable on the current combat interface — refusing the defensive fallback; equip a melee weapon that offers ${style}`);
+                this.bot.log(`${style} is unavailable on the current combat interface — refusing to train the wrong stat; equip a melee weapon that offers ${style}`);
             }
             await Execution.delayTicks(1);
             return;
         }
         Game.setCombatStyle(style);
         if (await Execution.delayUntil(() => this.bot.exactStyleSelected(), 3000)) {
-            this.bot.log(`combat style set to ${style} (Attack ${Skills.level('attack')}/${this.bot.attackTarget()}, Strength ${Skills.level('strength')}/${this.bot.strengthTarget()})`);
+            this.bot.log(`combat style set to ${style} (Attack ${Skills.level('attack')}/${this.bot.attackTarget()}, Strength ${Skills.level('strength')}/${this.bot.strengthTarget()}, Defence ${Skills.level('defence')}/${this.bot.defenceTarget()})`);
         } else if (performance.now() >= this.lastFailLogAt) {
             this.lastFailLogAt = performance.now() + 30_000;
             this.bot.log(`could not set ${style} style (combat tab not ready?) — retrying`);

@@ -123,9 +123,9 @@ ScriptRegistry.register({
 
 ScriptRegistry.register({
     name: 'Duel Arena Combat Trainer',
-    description: 'Walks to the Al Kharid Duel Arena, pairs with other players, accepts both no-stake screens, fights with melee, and alternates Attack/Strength toward configured target levels',
+    description: 'Walks to the Al Kharid Duel Arena, pairs with other players, accepts both no-stake screens, fights with melee, and trains Attack/Strength plus opt-in Defence toward configured target levels',
     category: 'Combat',
-    tags: ['duel arena', 'pvp', 'attack', 'strength', 'multibox'],
+    tags: ['duel arena', 'pvp', 'attack', 'strength', 'defence', 'multibox'],
     settingsSchema: DUEL_ARENA_SETTINGS,
     create: () => new DuelArena()
 });

@@ -213,14 +213,15 @@ Tags: `lumbridge`, `falador`, `ardougne`, `cowhide`, `bones`, `banking`, `afk`
 
 ### Duel Arena Combat Trainer
 
-Walks to the Al Kharid Duel Arena, pairs with other players, accepts both no-stake screens, fights with melee, and alternates Attack/Strength toward configured target levels
+Walks to the Al Kharid Duel Arena, pairs with other players, accepts both no-stake screens, fights with melee, and trains Attack/Strength plus opt-in Defence toward configured target levels
 
-Tags: `duel arena`, `pvp`, `attack`, `strength`, `multibox`
+Tags: `duel arena`, `pvp`, `attack`, `strength`, `defence`, `multibox`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
 | `targetAttack` | number (1–99) | `99` | Target Attack level |
 | `targetStrength` | number (1–99) | `99` | Target Strength level |
+| `targetDefence` | number (1–99) | `1` | Target Defence level |
 
 ### FireGiant
 
