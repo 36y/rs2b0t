@@ -70,6 +70,15 @@ export function gearCandidates(weapon: string, shield: string, tracked: readonly
     return out;
 }
 
+/**
+ * Gear only earns a keep slot while it is off. Keeping a worn item by name also
+ * shields a looted duplicate from the deposit — our own armour is on the drop
+ * table — so the pack silently fills with helms that never bank.
+ */
+export function gearToKeep(gear: readonly string[], worn: (name: string) => boolean): string[] {
+    return gear.filter(n => !worn(n));
+}
+
 /** Chebyshev radius around the bank stand that counts as "the flee finished". */
 export const AT_BANK_RADIUS = 8;
 

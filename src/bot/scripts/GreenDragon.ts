@@ -24,7 +24,7 @@ import { GroundItems } from '../api/queries/GroundItems.js';
 import { Npcs, type Npc } from '../api/queries/Npcs.js';
 import { Traversal } from '../api/Traversal.js';
 import { SolveClue } from '../clues/SolveClue.js';
-import { AT_BANK_RADIUS, RETURN_HOLD_MS, escapeNeeded, gearCandidates, isGrindForeign, packForcesBank, slotFreeingAction, underPlayerAttack, wantsGroundItem, type SlotAction } from './GreenDragonLogic.js';
+import { AT_BANK_RADIUS, RETURN_HOLD_MS, escapeNeeded, gearCandidates, gearToKeep, isGrindForeign, packForcesBank, slotFreeingAction, underPlayerAttack, wantsGroundItem, type SlotAction } from './GreenDragonLogic.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 
@@ -208,11 +208,11 @@ function slotDecision(): { action: SlotAction; drop: ReturnType<typeof findLoot>
     return { action, drop };
 }
 function keepNames(): string[] {
-    const extra = gearCandidates('', SHIELD, TRACKED_GEAR);
+    const extra = gearToKeep(gearCandidates(WEAPON, SHIELD, TRACKED_GEAR), n => Equipment.contains(n));
     if (TELE_ESCAPE) {
         extra.push(...VARROCK_TELE_RUNES.map(r => r.rune));
     }
-    return combatKeepNames({ food: FOOD_NAME, style: STYLE, spell: SPELL, weapon: WEAPON, extra });
+    return combatKeepNames({ food: FOOD_NAME, style: STYLE, spell: SPELL, extra });
 }
 
 async function eatOnce(bot: GreenDragon): Promise<boolean> {

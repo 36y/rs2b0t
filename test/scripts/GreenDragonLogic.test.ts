@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'bun:test';
+import { depositAllExcept } from '#/bot/api/bankRules.js';
 import {
     escapeNeeded,
     gearCandidates,
+    gearToKeep,
     inWilderness,
     isClueLike,
     isGrindForeign,
@@ -84,6 +86,27 @@ describe('gearCandidates', () => {
     test('an empty weapon or shield slot contributes nothing', () => {
         expect(gearCandidates('', '', ARMOUR)).toEqual(ARMOUR);
         expect(gearCandidates('', '', [])).toEqual([]);
+    });
+});
+
+describe('gearToKeep', () => {
+    const HELM = 'Adamant full helm';
+    const KIT = ['Rune scimitar', 'Anti-dragon shield', HELM];
+    const worn = (...names: string[]) => (n: string) => names.some(w => w.toLowerCase() === n.toLowerCase());
+
+    test('gear that is already on needs no keep slot', () => {
+        expect(gearToKeep(KIT, worn(...KIT))).toEqual([]);
+    });
+    test('gear stripped into the pack is kept so it can be re-equipped', () => {
+        expect(gearToKeep(KIT, worn('Rune scimitar', 'Anti-dragon shield'))).toEqual([HELM]);
+    });
+    test('a looted duplicate of worn armour still banks', () => {
+        const keep = gearToKeep(gearCandidates('Rune scimitar', 'Anti-dragon shield', [HELM]), worn(...KIT));
+        expect(depositAllExcept(keep)(HELM)).toBe(true);
+    });
+    test('the stripped original is not banked out from under the re-equip', () => {
+        const keep = gearToKeep(gearCandidates('Rune scimitar', 'Anti-dragon shield', [HELM]), worn('Rune scimitar'));
+        expect(depositAllExcept(keep)(HELM)).toBe(false);
     });
 });
 
