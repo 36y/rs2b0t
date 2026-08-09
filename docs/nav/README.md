@@ -43,7 +43,13 @@ bun --preload ./test/setup-dom.ts tools/nav/script-travel-corpus.ts --write
 
 # Ranked HARD routes (separate corpus)
 bun --preload ./test/setup-dom.ts tools/nav/script-route-corpus.ts --write --hardest=25
+
+# Wipe local engine harness .sav clutter (dry-run first)
+bash tools/cleanup-test-accounts.sh
 ```
+
+Travel live pacing, stuck-abort, HP/energy sustain, and env flags:
+[docs/NAV.md § Script travel OD](../NAV.md#script-travel-od-clues--gathering--quests).
 
 Harnesses that exercise teles pass `useTeleportCatalog: true` on the walk (overrides
 Global). `USE_TELEPORTS=0` forces pure-walk (no jewellery kit on travel-live).

@@ -8,7 +8,7 @@
  *   HEADED=1 bun tools/nav-stress-live.ts
  *
  * Optional: BASE=…  CASES=spell-varrock,jewellery-duel,path-paint,paint-compare  BUDGET_S=120
- * Mid-walk: ENERGY_REFILL_AT=25 (default) — poll ~1s, `~energy` when run ≤ threshold.
+ * Mid-walk: ENERGY_REFILL_AT=25 (default) — throttled sustain (SUSTAIN_EVERY_S, default 5s).
  *
  * Explore path paint (default ON when showNavPath):
  *   PATH_PAINT_SCENE_EXPAND=0|1   scene-BFS pack expand (default 1)
@@ -23,18 +23,21 @@ import {
     applyNavPaintSettings,
     cheb,
     energyRefillAtFromEnv,
-    maybeRefillEnergy,
+    maybeSustain,
     pathPaintFlagsFromEnv,
-    readRunEnergy,
     seedItem,
     seedRunes,
-    teleArrive
+    sustainEverySecFromEnv,
+    teleArrive,
+    walkPollMsFromEnv
 } from './lib/navLiveHarness.js';
 import { cheatQuiet, mainlandAccount, maxmeAndClearDialogs } from './tutorial/harness.js';
 
 const BUDGET_MS = (Number(process.env.BUDGET_S) || 120) * 1000;
 /** Client run energy is 0–100; refill via `~energy` when at or below this. */
 const ENERGY_REFILL_AT = energyRefillAtFromEnv();
+const SUSTAIN_EVERY_S = sustainEverySecFromEnv();
+const WALK_POLL_MS = walkPollMsFromEnv();
 /** Stress paint cases always enable paint; scene/client toggles from env. */
 const PATH_PAINT_SCENE_EXPAND =
     process.env.PATH_PAINT_SCENE_EXPAND !== '0' && process.env.PATH_PAINT_SCENE_EXPAND !== 'false';
@@ -209,7 +212,10 @@ async function runWalk(page: Page, opts: WalkOpts): Promise<NonNullable<Abi['__n
         }
     );
 
-    for (let i = 0; i < Math.ceil(budget / 1000) + 40; i++) {
+    const sustainClock = { t: 0 };
+    const maxPolls = Math.ceil(budget / WALK_POLL_MS) + 20;
+    const progressEveryPolls = Math.max(1, Math.round(15_000 / WALK_POLL_MS));
+    for (let i = 0; i < maxPolls; i++) {
         const done = await page.evaluate(() => {
             const g = globalThis as never as Abi;
             return (
@@ -220,14 +226,16 @@ async function runWalk(page: Page, opts: WalkOpts): Promise<NonNullable<Abi['__n
         if (done) {
             break;
         }
-        // Periodic energy watch (~1s): refill at low run so long pure-walk legs keep running.
-        await maybeRefillEnergy(page, ENERGY_REFILL_AT).catch(() => undefined);
-        if (i > 0 && i % 15 === 0) {
+        await maybeSustain(
+            page,
+            { energyRefillAt: ENERGY_REFILL_AT, everySec: SUSTAIN_EVERY_S },
+            sustainClock
+        ).catch(() => undefined);
+        if (i > 0 && i % progressEveryPolls === 0) {
             const mid = await page.evaluate(() => (globalThis as never as Abi).__rs2b0t.reader.worldTile());
-            const e = await readRunEnergy(page).catch(() => -1);
-            console.log(`    …still walking ${mid ? `${mid.x},${mid.z}` : '?'} energy=${e}%`);
+            console.log(`    …still walking ${mid ? `${mid.x},${mid.z}` : '?'}`);
         }
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(WALK_POLL_MS);
     }
 
     const result = await page.evaluate(() => (globalThis as never as Abi).__navStress);

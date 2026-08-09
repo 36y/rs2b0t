@@ -105,6 +105,9 @@ public path is [Running locally](RUNNING.md).
   `::~item <objname> <count>`, `::~bankitem`, `::~spawnloc <locname>`. `::~maxme`'s
   level-up dialogs swallow the next typed command — do cheats on the clean post-relogin
   state, or clear dialogs first.
+- Local player saves: harnesses leave `*.sav` under the engine `data/players/main/`.
+  Wipe harness junk with `bash tools/cleanup-test-accounts.sh` (dry-run default;
+  see [Testing](TESTING.md#live-harnesses)).
 
 The headless harness ABI and the end-to-end smoke are documented in
 [Testing](TESTING.md#live-harnesses).

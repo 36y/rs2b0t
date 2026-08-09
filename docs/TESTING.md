@@ -168,7 +168,20 @@ flip-flops between harness prototypes. Prefer omitting `setViewportSize` /
 Some hard-won details:
 
 - **Logging in auto-creates the account** on a local engine, so harnesses generate a
-  fresh username per run rather than sharing state.
+  fresh username per run rather than sharing state. With an always-on engine those
+  become `.sav` files under `Server/engine/data/players/main/` and never go away on
+  restart. Wipe harness junk (dry-run first):
+
+  ```bash
+  bash tools/cleanup-test-accounts.sh              # list
+  bash tools/cleanup-test-accounts.sh --apply      # delete matched prefixes
+  ```
+
+  Defaults target common tool prefixes (`nvtr`, `nv2r`, `gbs`, `vgl`, …). Override
+  with `--prefix`, or `--all-saves` (respects a small KEEP list). Prefer logout /
+  idle suites before `--apply`. Stagger multi-suite boots (`sleep 45` between
+  launches) so logins do not thrash the same title loop.
+
 - **`type()` clicks the canvas first.** Keystrokes sent without focusing the canvas
   are dropped.
 - **Cheats need a clean dialog state.** `::~maxme` raises level-up dialogs that

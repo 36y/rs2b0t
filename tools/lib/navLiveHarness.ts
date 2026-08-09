@@ -2,13 +2,52 @@
  * Shared helpers for operator nav live harnesses (tools/nav-*-live.ts, nav-*-smoke.ts).
  * Test/tooling only — not product runtime.
  *
- * Covers: cheat tele placement, energy, tick rate, path paint settings,
+ * Covers: cheat tele placement, energy/HP sustain, tick rate, path paint settings,
  * inventory seed (runes/jewellery), and a generic walkTo probe loop.
+ *
+ * **Pacing (multi-suite MacBook):** prefer shared defaults below — outer walk polls
+ * are multi-second, sustain is throttled, cheats settle without sub-100ms spins.
  */
 import type { Page } from 'playwright-core';
 
 import { setSettings } from './harness.js';
 import { cheatQuiet } from '../tutorial/harness.js';
+
+// ── pacing (shared — do not invent tighter loops in callers) ────────────────
+
+/** Outer mid-walk poll period (done/tile/stuck). Default 2s. */
+export const DEFAULT_WALK_POLL_MS = 2000;
+
+/** Energy + HP sustain period. Default 5s (see maybeSustain). */
+export const DEFAULT_SUSTAIN_EVERY_S = 5;
+
+/** Post-cheat / post-drop settle. */
+export const DEFAULT_SETTLE_MS = 400;
+
+/** Tele / inv-seed arrival polls (not 20–150ms spins). */
+export const DEFAULT_ARRIVAL_POLL_MS = 400;
+
+/** Runner stop wait step. */
+export const DEFAULT_STOP_POLL_MS = 500;
+
+/**
+ * Outer walk poll ms from env: `WALK_POLL_MS` or `WALK_POLL_S` (seconds).
+ * Floor 500ms — sub-second fleet polls are unnecessary for nav research.
+ */
+export function walkPollMsFromEnv(fallback = DEFAULT_WALK_POLL_MS): number {
+    const rawS = process.env.WALK_POLL_S;
+    const rawMs = process.env.WALK_POLL_MS;
+    let ms = fallback;
+    if (rawMs !== undefined && rawMs !== '') {
+        ms = Number(rawMs);
+    } else if (rawS !== undefined && rawS !== '') {
+        ms = Number(rawS) * 1000;
+    }
+    if (!Number.isFinite(ms) || ms < 500) {
+        return 500;
+    }
+    return Math.min(15_000, ms);
+}
 
 // ── types ───────────────────────────────────────────────────────────────────
 
@@ -114,9 +153,10 @@ export function teleCmd(t: NavTile): string {
  * This is placement seed, not a product spell/jewellery teleport.
  */
 async function teleArriveExact(page: Page, spot: NavTile, maxDist: number): Promise<void> {
-    for (let a = 0; a < 6; a++) {
+    // ~5 × ~3s max wait — not 6×16×150ms evaluate storms.
+    for (let a = 0; a < 5; a++) {
         await cheatQuiet(page, teleCmd(spot));
-        for (let p = 0; p < 16; p++) {
+        for (let p = 0; p < 8; p++) {
             const t = await page.evaluate(() => {
                 const g = globalThis as never as {
                     __rs2b0t: { reader: { worldTile(): NavTile | null } };
@@ -124,10 +164,10 @@ async function teleArriveExact(page: Page, spot: NavTile, maxDist: number): Prom
                 return g.__rs2b0t.reader.worldTile();
             });
             if (t && cheb(t, spot) <= maxDist) {
-                await page.waitForTimeout(300);
+                await page.waitForTimeout(DEFAULT_SETTLE_MS);
                 return;
             }
-            await page.waitForTimeout(150);
+            await page.waitForTimeout(DEFAULT_ARRIVAL_POLL_MS);
         }
     }
     throw new Error(`tele to ${spot.x},${spot.z},L${spot.level} failed`);
@@ -200,7 +240,7 @@ export async function teleArrive(page: Page, spot: NavTile, maxDist = 12): Promi
     await teleArriveExact(page, stand, maxDist);
 }
 
-// ── energy / tick ───────────────────────────────────────────────────────────
+// ── energy / HP sustain (cheap polls — multi-suite MacBook friendly) ────────
 
 /** Client energy 0–100. Prefer Game.energy(). */
 export async function readRunEnergy(page: Page): Promise<number> {
@@ -219,23 +259,53 @@ export async function readRunEnergy(page: Page): Promise<number> {
     });
 }
 
+/** Effective / base hitpoints (1 if unread). */
+export async function readHp(page: Page): Promise<{ effective: number; base: number }> {
+    return page.evaluate(() => {
+        const g = globalThis as never as {
+            __rs2b0t: {
+                Skills: {
+                    effective(n: string): number;
+                    level(n: string): number;
+                };
+            };
+        };
+        try {
+            return {
+                effective: g.__rs2b0t.Skills.effective('hitpoints'),
+                base: g.__rs2b0t.Skills.level('hitpoints')
+            };
+        } catch {
+            return { effective: 1, base: 1 };
+        }
+    });
+}
+
 /**
  * Full energy + run on via content debugproc `[debugproc,energy]` → `~energy`.
  * Plain `energy` is not an engine cheat and is silently ignored.
+ * One cheat + short confirm (no tight poll storm).
  */
 export async function restoreRunEnergy(page: Page): Promise<boolean> {
-    if (!(await cheatQuiet(page, '~energy', 400))) {
+    if (!(await cheatQuiet(page, '~energy', DEFAULT_SETTLE_MS + 100))) {
         return false;
     }
-    for (let attempt = 0; attempt < 4; attempt++) {
-        await page.waitForTimeout(250);
-        const e = await readRunEnergy(page);
-        if (e >= 90) {
-            return true;
-        }
-        await cheatQuiet(page, '~energy', 300);
-    }
+    await page.waitForTimeout(DEFAULT_SETTLE_MS);
     return (await readRunEnergy(page)) >= 90;
+}
+
+/**
+ * Full HP via engine `setstat hitpoints <level>` (sets base + current).
+ * No dedicated ~heal debugproc; this is the stock full-restore path.
+ */
+export async function restoreHp(page: Page, level = 99): Promise<boolean> {
+    const lv = Math.max(1, Math.min(99, level | 0));
+    if (!(await cheatQuiet(page, `setstat hitpoints ${lv}`, DEFAULT_SETTLE_MS + 100))) {
+        return false;
+    }
+    await page.waitForTimeout(DEFAULT_SETTLE_MS);
+    const hp = await readHp(page);
+    return hp.effective >= Math.min(lv, hp.base) - 1;
 }
 
 /** Mid-walk: refill when energy ≤ lowAt. Logs when it fires. */
@@ -250,6 +320,131 @@ export async function maybeRefillEnergy(page: Page, lowAt = 25): Promise<boolean
         `    energy refill: ${e}% → ${after}% (threshold ≤${lowAt}${ok ? '' : ', ~energy may have been busy/p_finduid'})`
     );
     return ok;
+}
+
+/**
+ * Mid-walk HP top-up when effective ≤ lowAt.
+ * Uses setstat (engine cheat) — not invuln; combat can still land between ticks.
+ */
+export async function maybeRestoreHp(page: Page, lowAt = 40, level = 99): Promise<boolean> {
+    if (lowAt <= 0) {
+        return false;
+    }
+    const before = await readHp(page);
+    if (before.effective > lowAt) {
+        return false;
+    }
+    const target = Math.max(before.base, Math.min(99, level | 0));
+    const ok = await restoreHp(page, target);
+    const after = await readHp(page);
+    console.log(
+        `    hp restore: ${before.effective}/${before.base} → ${after.effective}/${after.base}`
+        + ` (threshold ≤${lowAt}${ok ? '' : ', setstat may have failed'})`
+    );
+    return ok;
+}
+
+export type SustainOpts = {
+    /** Energy % threshold; omit/undefined = off. */
+    energyRefillAt?: number;
+    /** Effective HP threshold; 0/omit = off. */
+    hpRefillAt?: number;
+    /** setstat hitpoints target (default 99). */
+    hpLevel?: number;
+    /**
+     * Min seconds between sustain checks (default 5).
+     * Avoids per-second evaluate spam when many suites share a machine.
+     */
+    everySec?: number;
+};
+
+/** HP_REFILL_AT env: default 40; 0/false disables. */
+export function hpRefillAtFromEnv(fallback = 40): number {
+    const v = process.env.HP_REFILL_AT;
+    if (v === '0' || v === 'false') {
+        return 0;
+    }
+    if (v === undefined || v === '') {
+        return fallback;
+    }
+    const n = Number(v);
+    return Number.isFinite(n) ? n : fallback;
+}
+
+/** SUSTAIN_EVERY_S env: default 5. Floor 2 so we never poll harder than that. */
+export function sustainEverySecFromEnv(fallback = DEFAULT_SUSTAIN_EVERY_S): number {
+    const n = Number(process.env.SUSTAIN_EVERY_S ?? fallback);
+    if (!Number.isFinite(n) || n < 2) {
+        return 2;
+    }
+    return Math.min(60, n);
+}
+
+/**
+ * Throttled energy + HP sustain. Call from the walk poll; returns quickly when
+ * not due. Single decision path so 6 concurrent fleets stay light.
+ */
+export async function maybeSustain(
+    page: Page,
+    opts: SustainOpts,
+    lastAtMs: { t: number }
+): Promise<void> {
+    const everyMs = (opts.everySec ?? 5) * 1000;
+    const now = Date.now();
+    if (now - lastAtMs.t < everyMs) {
+        return;
+    }
+    lastAtMs.t = now;
+
+    const wantEnergy = opts.energyRefillAt !== undefined;
+    const wantHp = opts.hpRefillAt !== undefined && opts.hpRefillAt > 0;
+    if (!wantEnergy && !wantHp) {
+        return;
+    }
+
+    // One evaluate for both gauges when either is watched.
+    const snap = await page.evaluate(() => {
+        const g = globalThis as never as {
+            __rs2b0t: {
+                Game?: { energy(): number };
+                reader: { energy(): number };
+                Skills: { effective(n: string): number; level(n: string): number };
+            };
+        };
+        let energy = -1;
+        let hp = 1;
+        let hpBase = 1;
+        try {
+            energy = g.__rs2b0t.Game?.energy() ?? g.__rs2b0t.reader.energy();
+        } catch {
+            /* ignore */
+        }
+        try {
+            hp = g.__rs2b0t.Skills.effective('hitpoints');
+            hpBase = g.__rs2b0t.Skills.level('hitpoints');
+        } catch {
+            /* ignore */
+        }
+        return { energy, hp, hpBase };
+    });
+
+    if (wantEnergy && snap.energy >= 0 && snap.energy <= (opts.energyRefillAt as number)) {
+        const ok = await restoreRunEnergy(page);
+        const after = await readRunEnergy(page).catch(() => -1);
+        console.log(
+            `    energy refill: ${snap.energy}% → ${after}% (threshold ≤${opts.energyRefillAt}`
+            + `${ok ? '' : ', ~energy may have been busy/p_finduid'})`
+        );
+    }
+    if (wantHp && snap.hp <= (opts.hpRefillAt as number)) {
+        const target = Math.max(snap.hpBase, Math.min(99, opts.hpLevel ?? 99));
+        const ok = await restoreHp(page, target);
+        const after = await readHp(page).catch(() => ({ effective: -1, base: -1 }));
+        console.log(
+            `    hp restore: ${snap.hp}/${snap.hpBase} → ${after.effective}/${after.base}`
+            + ` (threshold ≤${opts.hpRefillAt}${ok ? '' : ', setstat may have failed'})`
+        );
+    }
 }
 
 export async function setTickRate(
@@ -413,7 +608,7 @@ export async function dropInvMatching(page: Page, match: RegExp): Promise<number
         return n;
     }, match.source);
     if (dropped > 0) {
-        await page.waitForTimeout(400);
+        await page.waitForTimeout(DEFAULT_SETTLE_MS);
     }
     return dropped;
 }
@@ -449,10 +644,12 @@ export async function seedItem(
     const debugName = m?.[1] ?? debugOrCmd;
     const resolvedQty = m?.[2] !== undefined ? Number(m[2]) : qty;
     const cmds = [`give ${debugName} ${resolvedQty}`, `~item ${debugName} ${resolvedQty}`];
-    for (let i = 0; i < tries; i++) {
+    // Fewer tries × coarser polls (was 8×4×200ms evaluate storm).
+    const maxTries = Math.min(tries, 6);
+    for (let i = 0; i < maxTries; i++) {
         await cheatQuiet(page, cmds[i % cmds.length]!);
-        for (let poll = 0; poll < 4; poll++) {
-            await page.waitForTimeout(200);
+        for (let poll = 0; poll < 3; poll++) {
+            await page.waitForTimeout(DEFAULT_ARRIVAL_POLL_MS);
             const ok = await page.evaluate(pattern => {
                 const g = globalThis as never as {
                     __rs2b0t: { Inventory: { items(): { name: string | null }[] } };
@@ -491,10 +688,119 @@ export async function seedRunes(page: Page): Promise<void> {
     }
 }
 
+// ── 377-style prep helpers (tools-only; condition → seed/fix) ───────────────
+
 /**
- * Seed runes + charged jewellery so product walkTo may cast/Rub.
- * When useTeleports is false, still seeds runes (spell tests can re-enable).
+ * Wait until client is ingame with scene fully built (`sceneState === 2`).
+ * Backport of LC-rs2-r377 `waitSceneReady` — seeds while scene≠2 thrash.
+ * Polls at {@link DEFAULT_STOP_POLL_MS}, not sub-100ms.
  */
+export async function waitSceneReady(page: Page, timeoutMs = 45_000): Promise<boolean> {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+        const ok = await page.evaluate(() => {
+            try {
+                const c = (globalThis as never as {
+                    rs2b0t?: { client?: { ingame: boolean; sceneState: number } };
+                }).rs2b0t?.client;
+                return !!(c?.ingame && c.sceneState === 2);
+            } catch {
+                return false;
+            }
+        });
+        if (ok) {
+            return true;
+        }
+        await page.waitForTimeout(DEFAULT_STOP_POLL_MS);
+    }
+    return false;
+}
+
+/**
+ * Batch `give <debug> <qty>` after scene ready (377 `giveItems`).
+ * Prefer this over raw give spam mid-zone-rebuild.
+ */
+export async function giveItems(
+    page: Page,
+    items: readonly (readonly [string, number] | { name: string; qty?: number })[],
+    opts?: { waitScene?: boolean }
+): Promise<string[]> {
+    if (opts?.waitScene !== false) {
+        const ok = await waitSceneReady(page, 45_000);
+        if (!ok) {
+            console.warn('giveItems: scene not ready after 45s — sending give anyway');
+        }
+    }
+    const failed: string[] = [];
+    for (const entry of items) {
+        const name = 'name' in entry ? entry.name : entry[0];
+        const qty = 'name' in entry ? (entry.qty ?? 1) : (entry[1] ?? 1);
+        const cmd = `give ${name} ${qty | 0}`;
+        if (!(await cheatQuiet(page, cmd, DEFAULT_SETTLE_MS))) {
+            failed.push(cmd);
+        }
+    }
+    if (failed.length) {
+        console.warn('giveItems failed:', failed.join('; '));
+    }
+    return failed;
+}
+
+/**
+ * Batch engine `setstat <skill> <level>` (377 `setStats`).
+ * Sets base + current; useful for skill gates and HP restore without ~maxme dialogs.
+ */
+export async function setStats(
+    page: Page,
+    stats: Record<string, number> | readonly (readonly [string, number])[],
+    opts?: { waitMs?: number }
+): Promise<string[]> {
+    const waitMs = opts?.waitMs ?? DEFAULT_SETTLE_MS;
+    const entries = Array.isArray(stats)
+        ? stats
+        : Object.entries(stats).map(([k, v]) => [k, v] as const);
+    const failed: string[] = [];
+    for (const [skill, level] of entries) {
+        const cmd = `setstat ${String(skill).toLowerCase()} ${Number(level) | 0}`;
+        if (!(await cheatQuiet(page, cmd, waitMs))) {
+            failed.push(cmd);
+        }
+    }
+    return failed;
+}
+
+/**
+ * Full run energy + run on (377 `fillRunEnergy` name; same as {@link restoreRunEnergy}).
+ */
+export async function fillRunEnergy(page: Page): Promise<boolean> {
+    return restoreRunEnergy(page);
+}
+
+/**
+ * Condition → act: if inv lacks `match`, seed via give (377 mid-quest top-up style).
+ * Returns true when item was already present or seed succeeded.
+ */
+export async function ensureInvItem(
+    page: Page,
+    debugName: string,
+    match: RegExp | string,
+    qty = 1
+): Promise<boolean> {
+    const re =
+        typeof match === 'string'
+            ? new RegExp(match.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+            : match;
+    if (await invHas(page, re)) {
+        return true;
+    }
+    try {
+        await seedItem(page, debugName, re, qty);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 /**
  * Ensure one charged copy of each jewellery seed is present.
  * Drops depleted (no charge-paren) copies first so a full pack of uncharged
@@ -523,12 +829,23 @@ export async function ensureJewellery(
     }
 }
 
+/**
+ * Seed runes + charged jewellery so product walkTo may cast/Rub.
+ * When useTeleports is false, still seeds runes (spell tests can re-enable).
+ */
 export async function seedTeleKit(
     page: Page,
     stamp: () => string,
-    opts?: { useTeleports?: boolean }
+    opts?: { useTeleports?: boolean; waitScene?: boolean }
 ): Promise<void> {
     const useTele = opts?.useTeleports ?? useTeleportsFromEnv();
+    // 377 lesson: seed after scene 2 so inv lists are real.
+    if (opts?.waitScene !== false) {
+        const ok = await waitSceneReady(page, 30_000);
+        if (!ok) {
+            console.warn(`${stamp()} seedTeleKit: scene not ready — seeding anyway`);
+        }
+    }
     await seedRunes(page);
     if (useTele) {
         await ensureJewellery(page, { useTeleports: true });
@@ -540,7 +857,76 @@ export async function seedTeleKit(
     }
 }
 
+// ── stuck / harness-abort helpers ───────────────────────────────────────────
+
+/**
+ * Convert planner path cost (run-tile units, see edgeCosts.ts) to optimistic
+ * wall-clock seconds at the live tick rate.
+ * ticks ≈ cost / 2; wall ≈ ticks * tickMs.
+ */
+export function pathCostToEstSec(cost: number, tickMs: number): number {
+    if (!(cost > 0) || !(tickMs > 0)) {
+        return 0;
+    }
+    return (cost / 2) * (tickMs / 1000);
+}
+
+/** Last `path: cost N` line from walk logs (null if none yet). */
+export function parsePathCostFromLogs(logs: readonly string[]): number | null {
+    let last: number | null = null;
+    for (const line of logs) {
+        const m = /path:\s*cost\s+(\d+)/i.exec(line);
+        if (m) {
+            last = Number(m[1]);
+        }
+    }
+    return last !== null && Number.isFinite(last) ? last : null;
+}
+
+/**
+ * True when a leg failure means the multi-leg suite is no longer valid research
+ * (wedged runner, kit seed death, tele placement failure) — not a product OD fail.
+ */
+export function isHarnessDeathDetail(detail: string): boolean {
+    return (
+        /is still running/i.test(detail)
+        || /could not seed/i.test(detail)
+        || /tele to .+\bfailed\b/i.test(detail)
+        || /HARNESS_DEATH/i.test(detail)
+    );
+}
+
+/** STUCK_ABORT default on; set 0/false to disable per-leg stuck kill. */
+export function stuckAbortFromEnv(): StuckAbortOpts | undefined {
+    if (!envDefaultOn('STUCK_ABORT')) {
+        return undefined;
+    }
+    return {
+        factor: Number(process.env.STUCK_FACTOR ?? 2.5) || 2.5,
+        minElapsedMs: (Number(process.env.STUCK_MIN_S ?? 20) || 20) * 1000,
+        noMoveMs: (Number(process.env.STUCK_NOMOVE_S ?? 12) || 12) * 1000,
+        tickMs: Number(process.env.TICK_MS ?? 300) || 300
+    };
+}
+
+/** HARNESS_SUITE_ABORT default on — kill whole travel suite on harness death. */
+export function harnessSuiteAbortFromEnv(): boolean {
+    return envDefaultOn('HARNESS_SUITE_ABORT');
+}
+
 // ── generic walkTo probe ────────────────────────────────────────────────────
+
+export type StuckAbortOpts = {
+    /**
+     * Abort leg when elapsed ≥ max(minElapsedMs, factor × estMs) and the
+     * character has not moved for noMoveMs. Est from planner path cost.
+     */
+    factor: number;
+    minElapsedMs: number;
+    noMoveMs: number;
+    /** Game tick length used by the live harness (for cost → wall seconds). */
+    tickMs: number;
+};
 
 export type RunNavWalkOpts = {
     dest: NavTile;
@@ -554,13 +940,38 @@ export type RunNavWalkOpts = {
     scriptNamePrefix?: string;
     /** When set, mid-walk energy watch refills at this threshold. */
     energyRefillAt?: number;
+    /**
+     * When set (>0), mid-walk HP restore via setstat when effective ≤ threshold.
+     * Checked on the same throttled sustain cadence as energy (not every second).
+     */
+    hpRefillAt?: number;
+    /** setstat hitpoints target when restoring (default 99). */
+    hpLevel?: number;
+    /** Sustain poll period seconds (default 5). */
+    sustainEverySec?: number;
     /** Log mid-walk position every N seconds (default 20). 0 = off. */
     progressEverySec?: number;
+    /**
+     * Outer poll period for done/tile/stuck (default {@link DEFAULT_WALK_POLL_MS}).
+     * Prefer ≥1s; sub-second is almost never useful for multi-suite fleets.
+     */
+    pollMs?: number;
+    /**
+     * Per-leg early stop when wall time ≫ path-cost estimate and no tile move
+     * (door thrash / pathfind loop). Does not abort the whole suite.
+     */
+    stuckAbort?: StuckAbortOpts;
 };
 
 type WalkSlot = {
     walkOk: boolean;
     tile: NavTile | null;
+    logs: string[];
+};
+
+type WalkMidSlot = {
+    tile: NavTile | null;
+    pathCost: number | null;
     logs: string[];
 };
 
@@ -602,7 +1013,7 @@ export async function ensureRunnerStopped(
         if (state === 'stopped' || state === 'idle' || state === 'crashed') {
             return;
         }
-        await page.waitForTimeout(250);
+        await page.waitForTimeout(DEFAULT_STOP_POLL_MS);
     }
 }
 
@@ -612,16 +1023,40 @@ export async function ensureRunnerStopped(
  *
  * Always stops the runner before return (including poll timeout) so multi-leg
  * suites never cascade with `'Nav…' is still running`.
+ *
+ * Optional {@link RunNavWalkOpts.stuckAbort}: stop this leg early when wall time
+ * far exceeds the planner path-cost estimate and the character has not moved
+ * (door thrash / pathfind loop). Product FAIL for that leg only — not suite abort.
  */
 export async function runNavWalk(page: Page, opts: RunNavWalkOpts): Promise<NavWalkResult> {
     const resultKey = opts.resultKey ?? '__navLiveWalk';
+    const midKey = `${resultKey}__mid`;
     const teleOn = opts.useTeleports !== false;
     const radius = opts.radius ?? 4;
     const progressEvery = opts.progressEverySec ?? 20;
+    const pollMs = opts.pollMs ?? walkPollMsFromEnv();
+    const stuck = opts.stuckAbort;
+    const walkStartedAt = Date.now();
+    let lastTile: NavTile | null = null;
+    let lastMoveAt = walkStartedAt;
+    let stuckReason: string | null = null;
+    /** Throttle sustain so N concurrent fleets do not evaluate every outer poll. */
+    const sustainClock = { t: 0 };
+    const maxPolls = Math.ceil(opts.budgetMs / pollMs) + 20;
 
     try {
         await page.evaluate(
-            ({ destination, budgetMs, allowTeleportIds, distanceBeforeTeleport, teleOn, radius, resultKey, prefix }) => {
+            ({
+                destination,
+                budgetMs,
+                allowTeleportIds,
+                distanceBeforeTeleport,
+                teleOn,
+                radius,
+                resultKey,
+                midKey,
+                prefix
+            }) => {
                 const g = globalThis as never as Record<string, unknown> & {
                     __rs2b0t: {
                         reader: { worldTile(): NavTile | null };
@@ -647,9 +1082,24 @@ export async function runNavWalk(page: Page, opts: RunNavWalkOpts): Promise<NavW
                     rs2b0t: { runner: { start(meta: unknown): void; stop(reason: string): void } };
                 };
                 (g as Record<string, unknown>)[resultKey] = undefined;
+                (g as Record<string, unknown>)[midKey] = {
+                    tile: null,
+                    pathCost: null,
+                    logs: []
+                } satisfies WalkMidSlot;
+
+                const publishMid = (logs: string[], pathCost: number | null): void => {
+                    (g as Record<string, unknown>)[midKey] = {
+                        tile: g.__rs2b0t.reader.worldTile(),
+                        pathCost,
+                        logs: logs.slice(-24)
+                    } satisfies WalkMidSlot;
+                };
+
                 class Probe extends g.__rs2b0t.LoopingBot {
                     override async loop(): Promise<void> {
                         const logs: string[] = [];
+                        let pathCost: number | null = null;
                         try {
                             const walkOk = await g.__rs2b0t.Traversal.walkTo(destination, {
                                 radius,
@@ -663,6 +1113,11 @@ export async function runNavWalk(page: Page, opts: RunNavWalkOpts): Promise<NavW
                                 log: m => {
                                     logs.push(m);
                                     this.log(m);
+                                    const cm = /path:\s*cost\s+(\d+)/i.exec(m);
+                                    if (cm) {
+                                        pathCost = Number(cm[1]);
+                                    }
+                                    publishMid(logs, pathCost);
                                 }
                             });
                             (g as Record<string, unknown>)[resultKey] = {
@@ -677,6 +1132,7 @@ export async function runNavWalk(page: Page, opts: RunNavWalkOpts): Promise<NavW
                                 logs: [...logs, String(e)]
                             } satisfies WalkSlot;
                         } finally {
+                            publishMid(logs, pathCost);
                             g.rs2b0t.runner.stop('harness stop');
                         }
                     }
@@ -696,44 +1152,118 @@ export async function runNavWalk(page: Page, opts: RunNavWalkOpts): Promise<NavW
                 teleOn,
                 radius,
                 resultKey,
+                midKey,
                 prefix: opts.scriptNamePrefix ?? 'NavLive'
             }
         );
 
-        for (let i = 0; i < Math.ceil(opts.budgetMs / 1000) + 40; i++) {
-            const done = await page.evaluate(
-                ({ resultKey }) => {
+        for (let i = 0; i < maxPolls; i++) {
+            // One page.evaluate per outer poll: done + mid tile/cost (no separate energy/hp).
+            const poll = await page.evaluate(
+                ({ resultKey, midKey }) => {
                     const g = globalThis as never as Record<string, unknown> & {
+                        __rs2b0t: { reader: { worldTile(): NavTile | null } };
                         rs2b0t: { runner: { state: string } };
                     };
-                    return (
+                    const state = g.rs2b0t.runner.state;
+                    const done =
                         g[resultKey] !== undefined
-                        && (g.rs2b0t.runner.state === 'stopped' || g.rs2b0t.runner.state === 'idle')
-                    );
+                        && (state === 'stopped' || state === 'idle');
+                    const slot = g[midKey] as WalkMidSlot | undefined;
+                    return {
+                        done,
+                        tile: slot?.tile ?? g.__rs2b0t.reader.worldTile(),
+                        pathCost: slot?.pathCost ?? null
+                    };
                 },
-                { resultKey }
+                { resultKey, midKey }
             );
-            if (done) {
+            if (poll.done) {
                 break;
             }
-            if (opts.energyRefillAt !== undefined) {
-                await maybeRefillEnergy(page, opts.energyRefillAt).catch(() => undefined);
+
+            if (poll.tile) {
+                if (!lastTile || cheb(poll.tile, lastTile) > 0) {
+                    lastMoveAt = Date.now();
+                }
+                lastTile = poll.tile;
             }
-            if (progressEvery > 0 && i > 0 && i % progressEvery === 0) {
-                const mid = await page.evaluate(() => {
-                    const g = globalThis as never as {
-                        __rs2b0t: { reader: { worldTile(): NavTile | null } };
-                    };
-                    return g.__rs2b0t.reader.worldTile();
-                });
-                const e = await readRunEnergy(page).catch(() => -1);
-                console.log(`    …walking ${mid ? `${mid.x},${mid.z}` : '?'} energy=${e}%`);
+
+            if (stuck && poll.pathCost !== null && poll.pathCost > 0 && !stuckReason) {
+                const elapsedMs = Date.now() - walkStartedAt;
+                const noMoveMs = Date.now() - lastMoveAt;
+                const estSec = pathCostToEstSec(poll.pathCost, stuck.tickMs);
+                const estMs = estSec * 1000;
+                const thresholdMs = Math.max(stuck.minElapsedMs, stuck.factor * estMs);
+                if (elapsedMs >= thresholdMs && noMoveMs >= stuck.noMoveMs) {
+                    stuckReason =
+                        `harness stuck abort: elapsed=${Math.round(elapsedMs / 1000)}s `
+                        + `est=${estSec.toFixed(1)}s cost=${poll.pathCost} `
+                        + `noMove=${Math.round(noMoveMs / 1000)}s `
+                        + `factor=${stuck.factor} (thrash vs path-cost estimate)`;
+                    console.log(`    …${stuckReason}`);
+                    await ensureRunnerStopped(page, 'harness stuck abort').catch(() => undefined);
+                    // Give walkTo a moment to settle into the result slot after stop.
+                    for (let w = 0; w < 12; w++) {
+                        const settled = await page.evaluate(
+                            ({ resultKey }) => {
+                                const g = globalThis as never as Record<string, unknown> & {
+                                    rs2b0t: { runner: { state: string } };
+                                };
+                                return (
+                                    g[resultKey] !== undefined
+                                    && (g.rs2b0t.runner.state === 'stopped'
+                                        || g.rs2b0t.runner.state === 'idle'
+                                        || g.rs2b0t.runner.state === 'crashed')
+                                );
+                            },
+                            { resultKey }
+                        );
+                        if (settled) {
+                            break;
+                        }
+                        await page.waitForTimeout(DEFAULT_STOP_POLL_MS);
+                    }
+                    break;
+                }
             }
-            await page.waitForTimeout(1000);
+
+            // Energy + HP on a shared slow cadence (default 5s), not every outer poll.
+            await maybeSustain(
+                page,
+                {
+                    energyRefillAt: opts.energyRefillAt,
+                    hpRefillAt: opts.hpRefillAt,
+                    hpLevel: opts.hpLevel,
+                    everySec: opts.sustainEverySec ?? DEFAULT_SUSTAIN_EVERY_S
+                },
+                sustainClock
+            ).catch(() => undefined);
+
+            // Progress ~every progressEvery seconds (scale by poll period).
+            const progressEveryPolls = Math.max(1, Math.round((progressEvery * 1000) / pollMs));
+            if (progressEvery > 0 && i > 0 && i % progressEveryPolls === 0) {
+                const costNote =
+                    poll.pathCost !== null
+                        ? ` cost=${poll.pathCost} est≈${pathCostToEstSec(poll.pathCost, stuck?.tickMs ?? 300).toFixed(0)}s`
+                        : '';
+                console.log(
+                    `    …walking ${poll.tile ? `${poll.tile.x},${poll.tile.z}` : '?'}${costNote}`
+                );
+            }
+            await page.waitForTimeout(pollMs);
         }
     } finally {
         // Poll timeout (or evaluate throw) must not leave the runner running for the next leg.
-        await ensureRunnerStopped(page, 'harness timeout').catch(() => undefined);
+        await ensureRunnerStopped(page, stuckReason ? 'harness stuck abort' : 'harness timeout').catch(
+            () => undefined
+        );
+        await page
+            .evaluate(({ midKey }) => {
+                const g = globalThis as never as Record<string, unknown>;
+                delete g[midKey];
+            }, { midKey })
+            .catch(() => undefined);
     }
 
     const result = await page.evaluate(
@@ -746,7 +1276,18 @@ export async function runNavWalk(page: Page, opts: RunNavWalkOpts): Promise<NavW
         { resultKey }
     );
     if (!result) {
-        return { walkOk: false, tile: null, logs: ['no result (timeout)'] };
+        const logs = ['no result (timeout)'];
+        if (stuckReason) {
+            logs.unshift(stuckReason);
+        }
+        return { walkOk: false, tile: lastTile, logs };
+    }
+    if (stuckReason && !result.logs.some(l => l.includes('harness stuck abort'))) {
+        return {
+            walkOk: false,
+            tile: result.tile ?? lastTile,
+            logs: [...result.logs, stuckReason]
+        };
     }
     return result;
 }

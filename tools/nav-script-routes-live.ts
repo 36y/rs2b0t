@@ -4,7 +4,7 @@
  * Always:
  *   - server tick 300ms (`speed 300`) — restored to 600 on exit
  *   - full run energy + run on before each leg (`~energy` content debugproc)
- *   - mid-walk energy watch (~1s): refill when run energy ≤ ENERGY_REFILL_AT (default 25)
+ *   - mid-walk energy/HP sustain (throttled SUSTAIN_EVERY_S, default 5s)
  *
  * Note: `energy` alone is a no-op — engine has no native energy cheat. Content
  * `[debugproc,energy]` is `~energy` (healenergy 10000 + run on). Needs p_finduid
@@ -38,6 +38,9 @@ import {
     applyNavPaintSettings,
     cheb,
     energyRefillAtFromEnv,
+    hpRefillAtFromEnv,
+    sustainEverySecFromEnv,
+    walkPollMsFromEnv,
     ensureJewellery,
     pathPaintFlagsFromEnv,
     restoreRunEnergy,
@@ -81,6 +84,9 @@ const PATH_PAINT_CLIENT_SEG = PAINT.clientSeg;
 const ARRIVAL = 8;
 /** Client run energy is 0–100; refill via `~energy` when at or below this. */
 const ENERGY_REFILL_AT = energyRefillAtFromEnv();
+const HP_REFILL_AT = hpRefillAtFromEnv();
+const SUSTAIN_EVERY_S = sustainEverySecFromEnv();
+const WALK_POLL_MS = walkPollMsFromEnv();
 const HARDEST_JSON = path.join(process.cwd(), 'tools/nav/script-routes.hardest.json');
 const TRANSPORT_HEAVY_JSON = path.join(process.cwd(), 'tools/nav/transport-heavy.routes.json');
 
@@ -284,6 +290,9 @@ async function runWalk(page: Page, opts: WalkOpts): Promise<{ walkOk: boolean; t
         allowTeleportIds: opts.allowTeleportIds,
         distanceBeforeTeleport: opts.distanceBeforeTeleport,
         energyRefillAt: ENERGY_REFILL_AT,
+        hpRefillAt: HP_REFILL_AT > 0 ? HP_REFILL_AT : undefined,
+        sustainEverySec: SUSTAIN_EVERY_S,
+        pollMs: WALK_POLL_MS,
         resultKey: '__navScriptRoute',
         scriptNamePrefix: 'NavScriptRoute'
     });

@@ -64,7 +64,8 @@ export async function runLiveWalkProof(
         pollMs?: number;
     }
 ): Promise<LiveWalkResult> {
-    const pollMs = opts.pollMs ?? 400;
+    // Align with navLiveHarness pacing — sub-second fleet polls are unnecessary.
+    const pollMs = opts.pollMs ?? 1000;
     const attempts = opts.attempts ?? 8;
 
     await page.evaluate(

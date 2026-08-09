@@ -19,15 +19,19 @@ import {
     applyNavPaintSettings,
     cheb,
     energyRefillAtFromEnv,
-    maybeRefillEnergy,
+    maybeSustain,
     pathPaintFlagsFromEnv,
     restoreRunEnergy,
-    teleArrive
+    sustainEverySecFromEnv,
+    teleArrive,
+    walkPollMsFromEnv
 } from './lib/navLiveHarness.js';
 import { cheatQuiet, mainlandAccount, maxmeAndClearDialogs } from './tutorial/harness.js';
 
 const BUDGET_MS = (Number(process.env.BUDGET_S) || 150) * 1000;
 const ENERGY_REFILL_AT = energyRefillAtFromEnv();
+const SUSTAIN_EVERY_S = sustainEverySecFromEnv();
+const WALK_POLL_MS = walkPollMsFromEnv();
 /** This harness always paints; only scene-expand / client-seg toggles come from env. */
 const PATH_PAINT_SCENE_EXPAND =
     process.env.PATH_PAINT_SCENE_EXPAND !== '0' && process.env.PATH_PAINT_SCENE_EXPAND !== 'false';
@@ -206,7 +210,10 @@ async function runWalk(page: Page, dest: Tile): Promise<NonNullable<Abi['__navPa
         { destination: dest, budgetMs: BUDGET_MS }
     );
 
-    for (let i = 0; i < Math.ceil(BUDGET_MS / 1000) + 40; i++) {
+    const sustainClock = { t: 0 };
+    const maxPolls = Math.ceil(BUDGET_MS / WALK_POLL_MS) + 20;
+    const progressEveryPolls = Math.max(1, Math.round(15_000 / WALK_POLL_MS));
+    for (let i = 0; i < maxPolls; i++) {
         const done = await page.evaluate(() => {
             const g = globalThis as never as Abi;
             return (
@@ -217,12 +224,16 @@ async function runWalk(page: Page, dest: Tile): Promise<NonNullable<Abi['__navPa
         if (done) {
             break;
         }
-        await maybeRefillEnergy(page, ENERGY_REFILL_AT).catch(() => undefined);
-        if (i > 0 && i % 15 === 0) {
+        await maybeSustain(
+            page,
+            { energyRefillAt: ENERGY_REFILL_AT, everySec: SUSTAIN_EVERY_S },
+            sustainClock
+        ).catch(() => undefined);
+        if (i > 0 && i % progressEveryPolls === 0) {
             const mid = await page.evaluate(() => (globalThis as never as Abi).__rs2b0t.reader.worldTile());
             console.log(`    …walking ${mid ? `${mid.x},${mid.z}` : '?'}`);
         }
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(WALK_POLL_MS);
     }
     const result = await page.evaluate(() => (globalThis as never as Abi).__navPaint);
     if (!result) {
