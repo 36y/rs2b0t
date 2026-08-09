@@ -25,13 +25,25 @@ Full write-up: [docs/NAV.md § Nav teleports](../NAV.md#nav-teleports).
 
 ### Live operator tools (not CI)
 
-- `tools/nav-script-routes-live.ts` — multi-OD script routes (set `LIMIT=10+`)
-- `tools/nav-script-travel-live.ts` — **every** clue / gathering / quest travel OD
-  (SEGMENT=`clues`|`quests`|`gathering-all`|`fishing`|`mining`|`woodcutting`|`firemaking`|`cooking`|`all`;
-  corpus: `tools/nav/script-travel-corpus.ts`)
+- `tools/nav-script-routes-live.ts` — multi-OD script routes (set `LIMIT=10+`);
+  HARD list from **ranked** corpus (`script-route-corpus.ts` — different tool)
+- `tools/nav-script-travel-live.ts` — **scrape** every clue / gathering / quest travel OD
+  (SEGMENT=`clues`|`quests`|`gathering-all`|`fishing`|`mining`|`woodcutting`|`firemaking`|`cooking`|`all`)
 - `tools/nav-stress-live.ts` — teles, jewellery, paint cases
 - `tools/nav-tele-smoke.ts` — Lumbridge → Varrock spell tele
 - `tools/nav-path-paint-live.ts` — pack vs client segment paint
 
+**How travel paths are chosen (per SEGMENT) + regenerate commands:**  
+[docs/NAV.md § Script travel OD](../NAV.md#script-travel-od-clues--gathering--quests)
+
+```bash
+# Inspect / regenerate travel legs (optional JSON; live builds in-process)
+bun --preload ./test/setup-dom.ts tools/nav/script-travel-corpus.ts --stats
+bun --preload ./test/setup-dom.ts tools/nav/script-travel-corpus.ts --write
+
+# Ranked HARD routes (separate corpus)
+bun --preload ./test/setup-dom.ts tools/nav/script-route-corpus.ts --write --hardest=25
+```
+
 Harnesses that exercise teles pass `useTeleportCatalog: true` on the walk (overrides
-Global). `USE_TELEPORTS=0` on script-routes forces pure-walk for those smokes.
+Global). `USE_TELEPORTS=0` forces pure-walk (no jewellery kit on travel-live).

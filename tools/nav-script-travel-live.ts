@@ -21,9 +21,12 @@
  *
  * LIMIT=0 → all legs in the segment (default 25 for safety).
  * OFFSET=N skips the first N legs (chunk long segments).
- * USE_TELEPORTS=0 pure-walk (still seeds runes only). ENERGY_REFILL_AT=25 mid-walk energy.
+ * USE_TELEPORTS=0 pure-walk (seeds runes only; walk policy tele off). ENERGY_REFILL_AT=25 mid-walk energy.
+ * USE_TELEPORTS=1 (default) seeds charged jewellery + runes and enables tele policy.
  * PATH_PAINT=1 (default) — pack path + cyan client segment + scene expand + camera yaw-follow.
  *   PATH_PAINT=0 / PATH_PAINT_SCENE_EXPAND=0 / PATH_PAINT_CLIENT_SEG=0 to turn pieces off.
+ *
+ * Proof honesty: success.png/proof only when every leg passes; any FAIL → failure screenshot + exit 1.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -99,9 +102,12 @@ function selectRoutes(): TravelRoute[] {
 const routes = selectRoutes();
 const stats = travelRouteStats(buildTravelRoutes());
 
+const KIT_SEEDED = USE_TELEPORTS;
+const PURE_WALK = !USE_TELEPORTS;
 console.log(
     `nav-script-travel-live base=${base} segment=${SEGMENT} offset=${OFFSET} limit=${LIVE_LIMIT === 0 ? 'ALL' : LIVE_LIMIT} `
-    + `legs=${routes.length} tele=${USE_TELEPORTS} pathPaint=${PAINT.paint} sceneExpand=${PAINT.sceneExpand} `
+    + `legs=${routes.length} tele=${USE_TELEPORTS} kitSeeded=${KIT_SEEDED} pureWalk=${PURE_WALK} `
+    + `pathPaint=${PAINT.paint} sceneExpand=${PAINT.sceneExpand} `
     + `clientSeg=${PAINT.clientSeg} cameraFollow=${PAINT.cameraFollow} tick=${TICK_MS}ms energy≤${ENERGY_REFILL_AT}% `
     + `budget≈${Math.round(BUDGET_MS / 1000)}s`
 );
@@ -209,41 +215,41 @@ try {
 
     const outPath = path.join(process.cwd(), 'out', `nav-script-travel-${SEGMENT}-proof.json`);
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
-    fs.writeFileSync(
-        outPath,
-        JSON.stringify(
-            {
-                segment: SEGMENT,
-                pass,
-                fail,
-                total: results.length,
-                tele: USE_TELEPORTS,
-                results
-            },
-            null,
-            2
-        )
-    );
+    const summary = {
+        segment: SEGMENT,
+        pass,
+        fail,
+        total: results.length,
+        tele: USE_TELEPORTS,
+        kitSeeded: KIT_SEEDED,
+        pureWalk: PURE_WALK,
+        results
+    };
+    fs.writeFileSync(outPath, JSON.stringify(summary, null, 2));
     console.log(`\n── summary ${pass}/${results.length} pass (wrote ${outPath}) ──`);
     for (const r of results) {
         console.log(`  ${r.ok ? 'PASS' : 'FAIL'}  ${r.id}: ${r.detail}`);
     }
 
-    await proof.writeSuccess(page, {
+    const proofBody = {
         base,
         user,
         segment: SEGMENT,
         tele: USE_TELEPORTS,
+        kitSeeded: KIT_SEEDED,
+        pureWalk: PURE_WALK,
         passed: pass,
+        fail,
         total: results.length,
         results
-    });
-
-    if (fail > 0) {
-        process.exit(1);
+    };
+    if (fail === 0) {
+        await proof.writeSuccess(page, proofBody);
+        console.log('PASS nav-script-travel-live');
+        process.exit(0);
     }
-    console.log('PASS nav-script-travel-live');
-    process.exit(0);
+    await proof.writeFailure(page, proofBody).catch(() => undefined);
+    process.exit(1);
 } catch (e) {
     console.error(e);
     process.exit(1);

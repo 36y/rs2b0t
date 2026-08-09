@@ -13,12 +13,19 @@
  *   all | clues | quests | gathering-all | fishing | mining | woodcutting
  *   | firemaking | cooking
  *
+ * How each segment picks OD ends + regenerate commands:
+ *   docs/NAV.md § Script travel OD
+ *
  *   bun --preload ./test/setup-dom.ts tools/nav/script-travel-corpus.ts --list
  *   bun --preload ./test/setup-dom.ts tools/nav/script-travel-corpus.ts --segment=fishing --write
  *   bun --preload ./test/setup-dom.ts tools/nav/script-travel-corpus.ts --segment=clues --stats
+ *
+ * Endpoints are snapped off solid locs via out/collision.lcnav.gz when present.
  */
 import fs from 'node:fs';
 import path from 'node:path';
+
+import { gunzipSync } from 'fflate';
 
 import { FISHING_LOCATIONS } from '#/bot/api/FishingLocations.js';
 import { MINING_LOCATIONS } from '#/bot/api/MiningLocations.js';
@@ -27,7 +34,7 @@ import { FISH_CAMP_COOK_PLANS, COOKING_RANGE_LOCS } from '#/bot/api/CookingRange
 import { FIRE_SPOTS } from '#/bot/scripts/FiremakingLogic.js';
 import { CLUE_DB } from '#/bot/clues/data/cluedb.js';
 import { NAV_TARGETS } from '#/bot/nav/data/navTargets.js';
-import type { NavPoint } from '#/bot/nav/PathFinder.js';
+import { PathFinder, type NavPoint } from '#/bot/nav/PathFinder.js';
 import { TALK_ANCHORS } from '#/bot/clues/data/talkAnchors.js';
 import { KILL_ANCHORS } from '#/bot/clues/data/killAnchors.js';
 
@@ -77,6 +84,47 @@ export interface TravelRoute {
 
 const keyOf = (p: NavPoint): string => `${p.x},${p.z},${p.level}`;
 
+/** Snap search/dig/rock coords off solid locs so legs start on a stand tile. */
+const ENDPOINT_SNAP_RADIUS = 3;
+const COLLISION_PACK = path.join(process.cwd(), 'out', 'collision.lcnav.gz');
+
+let endpointFinder: PathFinder | null | undefined;
+let endpointSnapMissingLogged = false;
+
+function endpointPathFinder(): PathFinder | null {
+    if (endpointFinder !== undefined) {
+        return endpointFinder;
+    }
+    try {
+        let bytes: Uint8Array = new Uint8Array(fs.readFileSync(COLLISION_PACK));
+        if (bytes[0] === 0x1f && bytes[1] === 0x8b) {
+            bytes = gunzipSync(bytes);
+        }
+        endpointFinder = new PathFinder(bytes);
+    } catch {
+        endpointFinder = null;
+        if (!endpointSnapMissingLogged) {
+            endpointSnapMissingLogged = true;
+            console.warn(
+                `script-travel-corpus: missing ${COLLISION_PACK} — endpoints not snapped to walkable`
+            );
+        }
+    }
+    return endpointFinder;
+}
+
+/**
+ * Script anchors (search furniture, dig spots, rocks) are often the loc tile itself
+ * and unwalkable. Travel legs must start/end on a standable tile, not on the loc.
+ */
+export function snapTravelEndpoint(p: NavPoint, radius = ENDPOINT_SNAP_RADIUS): NavPoint {
+    const finder = endpointPathFinder();
+    if (!finder) {
+        return { ...p };
+    }
+    return finder.snapWalkable(p, radius) ?? { ...p };
+}
+
 function asNav(t: { x: number; z: number; level?: number }): NavPoint {
     return { x: t.x, z: t.z, level: t.level ?? 0 };
 }
@@ -96,13 +144,16 @@ export function buildTravelRoutes(): TravelRoute[] {
 
     const add = (
         id: string,
-        from: NavPoint,
-        to: NavPoint,
+        fromRaw: NavPoint,
+        toRaw: NavPoint,
         note: string,
         source: string,
         segment: Exclude<TravelSegment, 'all'>,
         gathering = false
     ): void => {
+        // Prefer stand tiles: never place OD ends on solid scenery/locs.
+        const from = snapTravelEndpoint(fromRaw);
+        const to = snapTravelEndpoint(toRaw);
         if (from.x === to.x && from.z === to.z && from.level === to.level) {
             return;
         }
