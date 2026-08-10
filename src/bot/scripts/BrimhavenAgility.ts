@@ -179,7 +179,7 @@ export default class BrimhavenAgility extends TaskBot {
         const t = this.here();
         // Only snap to pillars on the real platform plane — the fall pit shares
         // x/z with pillars but has no Rope swing / ledge locs (stuck loop).
-        if (!t || !onArenaPlatform(t.level) || !inArena(t.level, t.z)) {
+        if (!t || !onArenaPlatform(t.level) || !inArena(t.x, t.z)) {
             return -1;
         }
         return platformAt(t.x, t.z);
@@ -187,7 +187,7 @@ export default class BrimhavenAgility extends TaskBot {
 
     inPitNow(): boolean {
         const t = this.here();
-        return t !== null && inArenaPit(t.level, t.z);
+        return t !== null && inArenaPit(t.x, t.z, t.level);
     }
 
     /** Active ticket pillar from the client hint arrow. */
@@ -201,7 +201,7 @@ export default class BrimhavenAgility extends TaskBot {
 
     inArenaNow(): boolean {
         const t = this.here();
-        return t !== null && inArena(t.level, t.z);
+        return t !== null && inArena(t.x, t.z);
     }
 
     countTag(): void {

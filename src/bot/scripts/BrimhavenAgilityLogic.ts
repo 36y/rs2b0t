@@ -367,8 +367,13 @@ export function pillarFromHint(hx: number, hz: number): number {
     return p >= 0 && p < TICKET_PILLAR_COUNT ? p : -1;
 }
 
-export function inArena(level: number, z: number): boolean {
-    return level >= 3 || z >= 9500;
+/**
+ * The arena occupies the dedicated m43_149 content map square. Checking the
+ * complete square keeps unrelated upper floors and dungeons from looking like
+ * the arena merely because their plane or z coordinate happens to match.
+ */
+export function inArena(x: number, z: number): boolean {
+    return x >= 2752 && x <= 2815 && z >= 9536 && z <= 9599;
 }
 
 /** True when standing on the ticket platforms (plane 3), not the fall pit below. */
@@ -381,8 +386,8 @@ export function onArenaPlatform(level: number): boolean {
  * pillars still snap by x/z, but edge locs only exist on plane 3 — treat this
  * as a pit fall and climb the rope before pathing (#user report 2802,9590,0).
  */
-export function inArenaPit(level: number, z: number): boolean {
-    return z >= 9500 && level < 3;
+export function inArenaPit(x: number, z: number, level: number): boolean {
+    return inArena(x, z) && level < 3;
 }
 
 /**

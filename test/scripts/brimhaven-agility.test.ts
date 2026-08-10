@@ -317,17 +317,23 @@ describe('BrimhavenAgility location helpers', () => {
         expect(pillarFromHint(PILLARS[5].x, PILLARS[5].z)).toBe(5);
     });
 
-    test('inArena accepts plane 3 or high underground z', () => {
-        expect(inArena(3, 3000)).toBe(true);
-        expect(inArena(0, 9560)).toBe(true);
-        expect(inArena(0, 3200)).toBe(false);
+    test('inArena accepts only the dedicated m43_149 content square', () => {
+        expect(inArena(2752, 9536)).toBe(true);
+        expect(inArena(2815, 9599)).toBe(true);
+        expect(inArena(2751, 9536)).toBe(false);
+        expect(inArena(2816, 9599)).toBe(false);
+        expect(inArena(2752, 9535)).toBe(false);
+        expect(inArena(2815, 9600)).toBe(false);
+        expect(inArena(3218, 9618)).toBe(false);
+        expect(onArenaPlatform(3) && inArena(3200, 3200)).toBe(false);
     });
 
     test('failed obstacles land in the pit (plane 0) under the same x,z as pillars', () => {
         // live report: 2802,9590,0 after missing rope swing near landing 24 (2805,9590)
-        expect(inArenaPit(0, 9590)).toBe(true);
-        expect(inArenaPit(0, 2802)).toBe(false); // surface Brimhaven, not the arena pit
-        expect(inArenaPit(3, 9590)).toBe(false);
+        expect(inArenaPit(2802, 9590, 0)).toBe(true);
+        expect(inArenaPit(3218, 9618, 0)).toBe(false); // unrelated random-event destination
+        expect(inArenaPit(2802, 2802, 0)).toBe(false); // surface Brimhaven, not the arena pit
+        expect(inArenaPit(2802, 9590, 3)).toBe(false);
         expect(onArenaPlatform(3)).toBe(true);
         expect(onArenaPlatform(0)).toBe(false);
         // pit tiles still snap by x/z — callers must gate with onArenaPlatform
