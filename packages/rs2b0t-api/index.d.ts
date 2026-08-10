@@ -1220,9 +1220,11 @@ export const FISHING_LOCATIONS: FishingLocation[];
 export const FISHING_LOCATION_OPTIONS: string[];
 export function resolveFishingLocation(setting: string, startTile: WorldTile): FishingLocation | null;
 
-export type MiningLocation = GatheringLocation;
+export type MiningLocation = GatheringLocation & { recommendedCombat?: number };
 export const MINING_LOCATIONS: MiningLocation[];
 export const MINING_LOCATION_OPTIONS: string[];
+export const MINING_LOCATION_OPTION_LABELS: Record<string, string>;
+export function miningLocationLabel(loc: Pick<MiningLocation, 'name' | 'recommendedCombat'>): string;
 export function resolveMiningLocation(setting: string, startTile: WorldTile): MiningLocation | null;
 
 export type WoodcuttingLocation = GatheringLocation;

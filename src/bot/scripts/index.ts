@@ -1,7 +1,7 @@
 import { AGILITY_SETTINGS } from './AgilityBot.js';
 import { FISHING_LOCATION_OPTIONS } from '../api/FishingLocations.js';
 import { FISHING_METHOD_OPTIONS } from '../api/FishingMethods.js';
-import { MINING_LOCATION_OPTIONS } from '../api/MiningLocations.js';
+import { MINING_LOCATION_OPTION_LABELS, MINING_LOCATION_OPTIONS } from '../api/MiningLocations.js';
 import {
     AFTER_COOK_OPTIONS,
     BURNT_POLICY_OPTIONS,
@@ -261,9 +261,10 @@ ScriptRegistry.register({
             type: 'string',
             default: 'Auto',
             options: MINING_LOCATION_OPTIONS,
+            optionLabels: MINING_LOCATION_OPTION_LABELS,
             label: 'Location / full inventory',
             help:
-                'Mine camp + full-pack behaviour. Auto = if you start in the same 64×64 map square as a known mine camp, snap to the nearest such camp and bank there; otherwise freeform (start-tile leash + nearest bank). Named camps pin spot + bank. None = power-mine (drop ore; configured food still restocks from the nearest bank).'
+                'Mine camp + full-pack behaviour. Auto = if you start in the same 64×64 map square as a known mine camp, snap to the nearest such camp and bank there; otherwise freeform (start-tile leash + nearest bank). Named camps pin spot + bank. Camps with aggressive NPCs show a recommended combat level (2× highest aggro + 1). None = power-mine (drop ore; configured food still restocks from the nearest bank).'
         },
         ...MINER_FOOD_SETTINGS,
         tickManip: {

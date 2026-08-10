@@ -76,7 +76,9 @@ import {
 import { AcquireTask, hasAll, held } from '../api/ItemAcquisition.js';
 import {
     MINING_LOCATIONS,
+    MINING_LOCATION_OPTION_LABELS,
     MINING_LOCATION_OPTIONS,
+    miningLocationLabel,
     resolveMiningLocation
 } from '../api/MiningLocations.js';
 import {
@@ -361,6 +363,8 @@ export function installAbi(): void {
         resolveFishingLocation,
         MINING_LOCATIONS,
         MINING_LOCATION_OPTIONS,
+        MINING_LOCATION_OPTION_LABELS,
+        miningLocationLabel,
         resolveMiningLocation,
         WOODCUTTING_LOCATIONS,
         WOODCUTTING_LOCATION_OPTIONS,

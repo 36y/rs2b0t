@@ -151,6 +151,8 @@ export const {
     resolveFishingLocation,
     MINING_LOCATIONS,
     MINING_LOCATION_OPTIONS,
+    MINING_LOCATION_OPTION_LABELS,
+    miningLocationLabel,
     resolveMiningLocation,
     WOODCUTTING_LOCATIONS,
     WOODCUTTING_LOCATION_OPTIONS,

@@ -3,7 +3,9 @@ import { BANK_LOCATIONS } from '#/bot/api/BankLocations.js';
 import Tile from '#/bot/api/Tile.js';
 import {
     MINING_LOCATIONS,
+    MINING_LOCATION_OPTION_LABELS,
     MINING_LOCATION_OPTIONS,
+    miningLocationLabel,
     resolveMiningLocation
 } from '#/bot/api/MiningLocations.js';
 
@@ -136,5 +138,36 @@ describe('MINING_LOCATIONS table', () => {
         const names = new Set(MINING_LOCATIONS.map(l => l.name));
         expect(names.has('Legends Guild Iron (west)')).toBe(true);
         expect(names.has('Legends Guild Iron (east)')).toBe(true);
+    });
+
+    test('recommended combat is 2× highest aggressive NPC + 1', () => {
+        const rec = (name: string) => MINING_LOCATIONS.find(l => l.name === name)?.recommendedCombat;
+        expect(rec('Al Kharid Mine')).toBe(29); // Scorpion 14
+        expect(rec('Coal Trucks')).toBe(55); // Giant bat 27
+        expect(rec('Dwarven Mine')).toBe(65); // King Scorpion 32
+        expect(rec('Edgeville Dungeon Mine')).toBe(85); // Hobgoblin 42
+        expect(rec('Lava Maze Runite Mine')).toBe(69); // Deadly red spider 34
+        expect(rec('Wilderness Hobgoblin Mine')).toBe(57); // Hobgoblin 28
+        expect(rec('Wilderness Skeleton Mine')).toBe(45); // Skeleton 22
+        expect(rec('Desert Mining Camp')).toBe(91); // Guard 45
+        // Inside guild — no resident aggro
+        expect(rec('Mining Guild')).toBeUndefined();
+        expect(rec('Rimmington Mine')).toBeUndefined();
+        expect(rec('Southeast Varrock Mine')).toBeUndefined();
+    });
+
+    test('option labels keep bare names as values and show combat rec in the UI', () => {
+        expect(miningLocationLabel({ name: 'Dwarven Mine', recommendedCombat: 65 })).toBe(
+            'Dwarven Mine (65 Combat recommended)'
+        );
+        expect(MINING_LOCATION_OPTION_LABELS['Dwarven Mine']).toBe('Dwarven Mine (65 Combat recommended)');
+        expect(MINING_LOCATION_OPTION_LABELS['Edgeville Dungeon Mine']).toBe(
+            'Edgeville Dungeon Mine (85 Combat recommended)'
+        );
+        // Safe camps are not in the label map (dropdown shows the bare name).
+        expect(MINING_LOCATION_OPTION_LABELS['Mining Guild']).toBeUndefined();
+        // Persisted options stay bare so resolve still matches.
+        expect(MINING_LOCATION_OPTIONS).toContain('Dwarven Mine');
+        expect(MINING_LOCATION_OPTIONS.some(o => o.includes('Combat recommended'))).toBe(false);
     });
 });

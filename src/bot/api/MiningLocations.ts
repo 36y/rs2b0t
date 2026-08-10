@@ -11,8 +11,14 @@ import {
  *
  * Catalog from rs2b2tgathering.csv, polished via live verify + visual stand checks.
  * All entries ship `verified: true` after pathability/resource confirmation.
+ *
+ * `recommendedCombat` is 2× highest auto-aggressive NPC combat level + 1
+ * (e.g. King Scorpion 32 → 65). Omitted when no resident aggro is expected.
  */
-export type MiningLocation = GatheringLocation;
+export type MiningLocation = GatheringLocation & {
+    /** Combat level at which resident aggressive NPCs stop auto-attacking (2×L+1). */
+    recommendedCombat?: number;
+};
 
 const BANK = {
     varrockEast: new Tile(3253, 3420, 0),
@@ -36,7 +42,8 @@ function mine(
     bankStand: Tile,
     resources: readonly string[],
     notes?: string,
-    verified = true
+    verified = true,
+    recommendedCombat?: number
 ): MiningLocation {
     return {
         name,
@@ -46,8 +53,16 @@ function mine(
         boothOp: 'Use-quickly',
         verified,
         resources,
-        notes
+        notes,
+        recommendedCombat
     };
+}
+
+/** UI label: "Dwarven Mine (65 Combat recommended)" when a rec is set. */
+export function miningLocationLabel(loc: Pick<MiningLocation, 'name' | 'recommendedCombat'>): string {
+    return loc.recommendedCombat != null
+        ? `${loc.name} (${loc.recommendedCombat} Combat recommended)`
+        : loc.name;
 }
 
 export const MINING_LOCATIONS: MiningLocation[] = [
@@ -78,7 +93,10 @@ export const MINING_LOCATIONS: MiningLocation[] = [
         new Tile(3021, 9800, 0),
         BANK.faladorEast,
         ['copper', 'tin', 'coal', 'iron'],
-        'Underground seed; surface hop ~3019,3449'
+        'Underground seed; surface hop ~3019,3449',
+        true,
+        // King Scorpion 32 → 2×32+1
+        65
     ),
     mine(
         'Edgeville Dungeon Mine',
@@ -88,7 +106,10 @@ export const MINING_LOCATIONS: MiningLocation[] = [
         new Tile(3132, 9874, 0),
         BANK.edgeville,
         ['copper', 'tin', 'iron', 'coal', 'silver', 'mithril', 'adamantite'],
-        'Underground; public Edgeville trapdoor route, no Brass key required'
+        'Underground; public Edgeville trapdoor route, no Brass key required',
+        true,
+        // Hobgoblin 42 → 2×42+1
+        85
     ),
     mine(
         'Fight Arena Mine',
@@ -102,7 +123,11 @@ export const MINING_LOCATIONS: MiningLocation[] = [
         // Prior 3299,3297 sat inside a scenery object — stand 2N.
         new Tile(3299, 3299, 0),
         BANK.alKharid,
-        ['iron', 'silver', 'mithril', 'adamantite']
+        ['iron', 'silver', 'mithril', 'adamantite'],
+        undefined,
+        true,
+        // Scorpion 14 → 2×14+1
+        29
     ),
     mine(
         'Mining Guild',
@@ -110,6 +135,7 @@ export const MINING_LOCATIONS: MiningLocation[] = [
         BANK.faladorEast,
         ['iron', 'coal', 'mithril'],
         'Requires Mining 60; underground guild seed'
+        // Inside guild door — no resident aggro; no combat rec.
     ),
     mine(
         'Crafting Guild',
@@ -123,7 +149,10 @@ export const MINING_LOCATIONS: MiningLocation[] = [
         new Tile(2582, 3481, 0),
         BANK.seers,
         ['coal'],
-        'West of Seers; seed spot'
+        'West of Seers; seed spot',
+        true,
+        // Giant bat 27 → 2×27+1
+        55
     ),
     // Rocks cluster ~3086,3416–3425; 3080,3420 was unpathable object center.
     // bank-locations.test still uses 3080,3420 as a village-area nearest-bank probe.
@@ -175,14 +204,20 @@ export const MINING_LOCATIONS: MiningLocation[] = [
         new Tile(3323, 9458, 0),
         BANK.shantay,
         ['mithril', 'adamantite'],
-        'Underground NE rocks after Tourist Trap; not auto-entered from surface'
+        'Underground NE rocks after Tourist Trap; not auto-entered from surface',
+        true,
+        // Guard/Mercenary 45 (gear-triggered) → 2×45+1
+        91
     ),
     mine(
         'Lava Maze Runite Mine',
         new Tile(3058, 3884, 0),
         BANK.edgeville,
         ['runite'],
-        'Wilderness — high risk; bank out at Edgeville'
+        'Wilderness — high risk; bank out at Edgeville',
+        true,
+        // Deadly red spider 34 → 2×34+1 (wildy may stay aggressive regardless)
+        69
     ),
     mine(
         'Wilderness Hobgoblin Mine',
@@ -191,7 +226,10 @@ export const MINING_LOCATIONS: MiningLocation[] = [
         new Tile(3093, 3751, 0),
         BANK.edgeville,
         ['iron', 'coal', 'mithril', 'adamantite'],
-        'Wilderness — aggressive Hobgoblins; bank out at Edgeville'
+        'Wilderness — aggressive Hobgoblins; bank out at Edgeville',
+        true,
+        // Hobgoblin 28 → 2×28+1 (wildy may stay aggressive regardless)
+        57
     ),
     mine(
         'Wilderness Skeleton Mine',
@@ -200,7 +238,10 @@ export const MINING_LOCATIONS: MiningLocation[] = [
         new Tile(3018, 3590, 0),
         BANK.edgeville,
         ['coal'],
-        'Wilderness — aggressive Skeletons; bank out at Edgeville'
+        'Wilderness — aggressive Skeletons; bank out at Edgeville',
+        true,
+        // Skeleton 22 → 2×22+1 (wildy may stay aggressive regardless)
+        45
     ),
     mine(
         'Heroes Guild',
@@ -242,6 +283,11 @@ export const MINING_LOCATIONS: MiningLocation[] = [
 ].sort((a, b) => a.name.localeCompare(b.name));
 
 export const MINING_LOCATION_OPTIONS = locationOptions(MINING_LOCATIONS);
+
+/** Persisted option value → UI label with combat rec where set. */
+export const MINING_LOCATION_OPTION_LABELS: Record<string, string> = Object.fromEntries(
+    MINING_LOCATIONS.filter(l => l.recommendedCombat != null).map(l => [l.name, miningLocationLabel(l)])
+);
 
 export function resolveMiningLocation(setting: string, startTile: WorldTile): MiningLocation | null {
     return resolveGatheringLocation(setting, startTile, MINING_LOCATIONS);
