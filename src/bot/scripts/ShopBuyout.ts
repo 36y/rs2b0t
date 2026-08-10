@@ -177,6 +177,19 @@ class BankTrip implements Task {
 class BuyoutPass implements Task {
     constructor(private bot: ShopBuyout) {}
 
+    private needSpaceFor(want: { obj: string; name: string; units: number }): boolean {
+        if (!this.bot.rec) return false;
+        const itemDef = this.bot.rec.items.find(i => i.obj === want.obj);
+        if (!itemDef) return false;
+        if (itemDef.stackable) {
+            // Stackable: need space only if we don't already have a stack
+            return Inventory.count(itemDef.name) === 0 && Inventory.isFull();
+        } else {
+            // Unstackable: need a free slot
+            return Inventory.isFull();
+        }
+    }
+
     validate(): boolean {
         return this.bot.inPhase('buy');
     }
@@ -188,6 +201,19 @@ class BuyoutPass implements Task {
             bot.log('[buyout] walk to the shop failed — will retry');
             return;
         }
+
+        // Check if we have space for ANY planned purchase before opening shop
+        if (bot.rec) {
+            const plan = this.plan(Math.min(Inventory.count('Coins'), bot.budgetLeft()));
+            for (const want of plan) {
+                if (this.needSpaceFor(want)) {
+                    bot.log('[buyout] inventory full — banking before opening shop');
+                    bot.toPhase('bank');
+                    return;
+                }
+            }
+        }
+
         if (!(await Shop.open(bot.keeper))) {
             bot.log(`[buyout] could not open ${bot.keeper}'s shop — will retry`);
             return;
@@ -204,6 +230,17 @@ class BuyoutPass implements Task {
                 bot.sessionSpent += spent;
                 boughtUnits += bought;
                 bot.log(`[buyout] buy ${want.obj} n=${bought} spent=${spent} (session ${bot.sessionSpent}/${bot.budgetGp}gp)`);
+                // If pack is now full and next item needs space, bank before next
+                if (bot.rec) {
+                    const plan = this.plan(Math.min(Inventory.count('Coins'), bot.budgetLeft()));
+                    for (const nextWant of plan) {
+                        if (this.needSpaceFor(nextWant)) {
+                            bot.log(`[buyout] inventory full after ${want.obj} — banking before next`);
+                            bot.toPhase('bank');
+                            return;
+                        }
+                    }
+                }
             } else {
                 bot.log(`[buyout] buy ${want.obj} n=0 of ${want.units} — stock gone or coins short`);
             }
@@ -217,7 +254,41 @@ class BuyoutPass implements Task {
             bot.toPhase('bank');
             return;
         }
+        // If we bought items, check if inventory is now full before continuing
         if (boughtUnits > 0) {
+            if (bot.rec) {
+                const plan = this.plan(Math.min(Inventory.count('Coins'), bot.budgetLeft()));
+                for (const want of plan) {
+                    if (this.needSpaceFor(want)) {
+                        bot.log('[buyout] inventory full after buying — banking before next');
+                        bot.toPhase('bank');
+                        return;
+                    }
+                }
+            }
+            // Fallback: if inventory is full and we have no coins or can't plan, bank anyway
+            if (Inventory.isFull()) {
+                bot.log('[buyout] inventory full after buying — banking to make space');
+                bot.toPhase('bank');
+                return;
+            }
+            return;
+        }
+        // Before waiting for restock, check if inventory is full and we need space for next purchase
+        if (bot.rec) {
+            const plan = this.plan(Math.min(Inventory.count('Coins'), bot.budgetLeft()));
+            for (const want of plan) {
+                if (this.needSpaceFor(want)) {
+                    bot.log('[buyout] inventory full — banking before waiting for restock');
+                    bot.toPhase('bank');
+                    return;
+                }
+            }
+        }
+        // If we bought nothing and inventory is full (e.g., full of unstackables, 0 coins), bank to make space
+        if (Inventory.isFull()) {
+            bot.log('[buyout] inventory full and nothing bought — banking to make space');
+            bot.toPhase('bank');
             return;
         }
         bot.setStatus(`waiting for restock (${Math.round(bot.recheckMs / 1000)}s)`);
@@ -236,10 +307,16 @@ class BuyoutPass implements Task {
                     stockByObj[obj] = row.count;
                 }
             }
-            const anyChosen = bot.rec.items.some(i => bot.chosen.has(i.name.toLowerCase()) && (stockByObj[i.obj] ?? 0) > 0);
-            const chosen = anyChosen ? bot.chosen : new Set(bot.rec.items.map(i => i.name.toLowerCase()));
-            if (!anyChosen && stock.length > 0) {
-                bot.log('[buyout] buyItems selection matches nothing here — buying all stock');
+            // User made a selection: stick to it even when out of stock (wait for restock).
+            // Only fall back to "buy all" if user made NO selection at all.
+            const chosen = bot.chosen.size > 0
+                ? bot.chosen
+                : new Set(bot.rec.items.map(i => i.name.toLowerCase()));
+            if (bot.chosen.size > 0) {
+                const available = bot.rec.items.some(i => bot.chosen.has(i.name.toLowerCase()) && (stockByObj[i.obj] ?? 0) > 0);
+                if (!available && stock.length > 0) {
+                    bot.log('[buyout] selected items out of stock — waiting for restock');
+                }
             }
             return buyoutPlan(bot.rec, stockByObj, coins, chosen);
         }
