@@ -2,7 +2,90 @@
  * Pure GatheringBot policy helpers (unit-tested, no live client).
  * Kept separate so task modules can import without circular deps on the bot class.
  */
+import { wildernessLevelAt, type WildTile } from '../nav/wilderness.js';
 import { combatBreaksGather } from './TickManipLogic.js';
+
+export type GatheringCombatMode =
+    | 'standard'
+    | 'wilderness-miner-npc'
+    | 'wilderness-miner-player';
+
+export interface GatheringCombatPolicy {
+    mode: GatheringCombatMode;
+    /** Combat may remain active without yielding the gather loop. */
+    allowGather: boolean;
+    /** WaitStickyCombat / FleeCombat should own combat instead of Gather. */
+    flee: boolean;
+}
+
+export function wildernessMinerAt(opts: {
+    isMiner: boolean;
+    tile: WildTile | null;
+}): boolean {
+    return opts.isMiner && opts.tile !== null && wildernessLevelAt(opts.tile) > 0;
+}
+
+/**
+ * Live incoming-player signal; clears as soon as no loaded player targets us.
+ * FleeCombat separately requires the local victim's `Game.inCombat()` signal,
+ * reducing false positives from harmless idle/follow face targets.
+ */
+export function incomingPlayerAttacker(
+    players: readonly { targetsMe: () => boolean }[]
+): boolean {
+    return players.some(player => player.targetsMe());
+}
+
+/** Re-assert the non-retaliating Wilderness Miner stance after entry or relogin. */
+export function wildernessMinerStanceNeeded(opts: {
+    isMiner: boolean;
+    tile: WildTile | null;
+    tickManipAllowCombat: boolean;
+    autoRetaliateOn: boolean;
+}): boolean {
+    return (
+        wildernessMinerAt(opts) &&
+        !opts.tickManipAllowCombat &&
+        opts.autoRetaliateOn
+    );
+}
+
+/**
+ * Resolve the gatherer's live combat policy.
+ *
+ * Wilderness Miner is the only special case: aggressive NPCs are part of those
+ * mining camps, so it holds its ground and keeps mining. A detectable player
+ * attack always restores flee behavior. Every other gatherer keeps the existing
+ * Auto / tick-manip policy unchanged.
+ */
+export function gatheringCombatPolicy(opts: {
+    isMiner: boolean;
+    tile: WildTile | null;
+    incomingPlayerAttacker: boolean;
+    autoLocation: boolean;
+    tickManipAllowCombat: boolean;
+}): GatheringCombatPolicy {
+    if (wildernessMinerAt(opts)) {
+        if (opts.incomingPlayerAttacker) {
+            return {
+                mode: 'wilderness-miner-player',
+                allowGather: false,
+                flee: true
+            };
+        }
+        return {
+            mode: 'wilderness-miner-npc',
+            allowGather: true,
+            flee: false
+        };
+    }
+
+    return {
+        mode: 'standard',
+        allowGather: opts.tickManipAllowCombat,
+        flee: !opts.autoLocation && !opts.tickManipAllowCombat
+    };
+}
 
 /** Hostile NPCs that should keep us from re-entering camp after a kite (wildy). */
 export function hostileAttackerNearby(

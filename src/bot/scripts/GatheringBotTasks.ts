@@ -225,6 +225,25 @@ export class MinerEatFood implements Task {
     }
 }
 
+/** Keep non-tick Wilderness Miner from retaliating after zone entry or relogin. */
+export class MaintainWildernessMinerStance implements Task {
+    constructor(private bot: GatheringBot) {}
+
+    validate(): boolean {
+        return this.bot.wildernessMinerStanceNeeded();
+    }
+
+    async execute(): Promise<void> {
+        this.bot.setStatus('combat: Auto Retaliate off');
+        if (Game.setAutoRetaliate(false)) {
+            this.bot.log('combat: Wilderness Miner re-asserted Auto Retaliate off');
+        }
+        // One toggle is enough for this execution; wait for its varp before the
+        // scheduler can validate the task again.
+        await Execution.delayUntilTicks(() => !Game.autoRetaliateOn(), 3);
+    }
+}
+
 /**
  * Sticky combatCycle with no face-target attacker: wait (do not east-kite).
  * Lets burn/gather resume once the cycle drains instead of deadlocking the loop.
@@ -234,12 +253,13 @@ export class WaitStickyCombat implements Task {
 
     validate(): boolean {
         return (
-            Game.inCombat()
+            this.bot.mobFleeEnabled()
+            && Game.inCombat()
             && !EventSignal.pending()
             && !shouldFleeCombat({
                 inCombat: true,
                 eventPending: false,
-                hasAttacker: this.hasAttacker()
+                hasAttacker: this.hasAttacker() || this.bot.wildernessMinerPlayerAttack()
             })
         );
     }
@@ -282,10 +302,13 @@ export class FleeCombat implements Task {
     constructor(private bot: GatheringBot) {}
 
     validate(): boolean {
+        if (!this.bot.mobFleeEnabled()) {
+            return false;
+        }
         return shouldFleeCombat({
             inCombat: Game.inCombat(),
             eventPending: EventSignal.pending(),
-            hasAttacker: this.attacker() !== null
+            hasAttacker: this.attacker() !== null || this.bot.wildernessMinerPlayerAttack()
         });
     }
 
@@ -341,8 +364,11 @@ export class FleeCombat implements Task {
             await Execution.delayTicks(1);
             return;
         }
-        const attacker = this.attacker();
-        if (!attacker) {
+        const playerAttack = this.bot.wildernessMinerPlayerAttack();
+        // The policy exposes a live incoming-player target as a boolean; this task
+        // does not retain that player's tile, so use the direction-neutral escape step.
+        const attacker = playerAttack ? null : this.attacker();
+        if (!attacker && !playerAttack) {
             // validate should have filtered this; still avoid a blind kite.
             this.bot.setStatus('combat: waiting clear (no attacker)');
             await Execution.delayUntilTicks(() => !Game.inCombat() || this.attacker() !== null, 7);
@@ -353,7 +379,7 @@ export class FleeCombat implements Task {
         this.bot.noteCombatFlee(20);
 
         const dest = this.fleeTile(here, attacker, FLEE_STEP);
-        const who = attacker.name ?? 'attacker';
+        const who = playerAttack ? 'player attacker' : (attacker?.name ?? 'attacker');
         this.bot.setStatus(`combat: fleeing ${who} → ${dest.x},${dest.z}`);
         this.bot.log(`combat: under attack by ${who} — walking off to ${dest.x},${dest.z}`);
 

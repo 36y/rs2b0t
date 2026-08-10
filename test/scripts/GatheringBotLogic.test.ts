@@ -6,6 +6,7 @@ import {
     NAMED_CAMP_LEASH_FLOOR,
     effectiveGatherLeash,
     fishingSessionBroken,
+    gatheringCombatPolicy,
     gatherHuntRadius,
     gatherSpotRangeOrigin,
     hostileAttackerNearby,
@@ -218,6 +219,84 @@ describe('shouldFleeCombat (no blind kite on sticky combatCycle)', () => {
 
     test('yields while a random event is pending', () => {
         expect(shouldFleeCombat({ inCombat: true, eventPending: true, hasAttacker: true })).toBe(false);
+    });
+});
+
+describe('gatheringCombatPolicy (Wilderness Miner)', () => {
+    const policy = (overrides: Partial<Parameters<typeof gatheringCombatPolicy>[0]> = {}) =>
+        gatheringCombatPolicy({
+            isMiner: true,
+            tile: { x: 3018, z: 3590, level: 0 },
+            incomingPlayerAttacker: false,
+            autoLocation: false,
+            tickManipAllowCombat: false,
+            ...overrides
+        });
+
+    test('holds ground and gathers through NPC combat at a surface Wilderness mine', () => {
+        expect(policy()).toEqual({
+            mode: 'wilderness-miner-npc',
+            allowGather: true,
+            flee: false
+        });
+        // Plane 1 is still the surface Wilderness zone.
+        expect(policy({ tile: { x: 3093, z: 3751, level: 1 } }).mode).toBe(
+            'wilderness-miner-npc'
+        );
+    });
+
+    test('recognizes the canonical underground Wilderness strip', () => {
+        expect(policy({ tile: { x: 3100, z: 9920, level: 0 } })).toEqual({
+            mode: 'wilderness-miner-npc',
+            allowGather: true,
+            flee: false
+        });
+    });
+
+    test('does not treat the Edgeville Dungeon Mine as Wilderness', () => {
+        expect(policy({ tile: { x: 3132, z: 9874, level: 0 } })).toEqual({
+            mode: 'standard',
+            allowGather: false,
+            flee: true
+        });
+    });
+
+    test('a detectable player attack vetoes mining and restores flee', () => {
+        expect(
+            policy({
+                incomingPlayerAttacker: true,
+                autoLocation: true,
+                tickManipAllowCombat: true
+            })
+        ).toEqual({
+            mode: 'wilderness-miner-player',
+            allowGather: false,
+            flee: true
+        });
+    });
+
+    test('non-Miner gatherers keep standard named, Auto, and tick-manip behavior', () => {
+        expect(policy({ isMiner: false })).toEqual({
+            mode: 'standard',
+            allowGather: false,
+            flee: true
+        });
+        expect(policy({ isMiner: false, autoLocation: true })).toEqual({
+            mode: 'standard',
+            allowGather: false,
+            flee: false
+        });
+        expect(policy({ isMiner: false, tickManipAllowCombat: true })).toEqual({
+            mode: 'standard',
+            allowGather: true,
+            flee: false
+        });
+    });
+
+    test('missing and out-of-zone tiles use the standard policy', () => {
+        expect(policy({ tile: null }).mode).toBe('standard');
+        expect(policy({ tile: { x: 3094, z: 3493, level: 0 } }).mode).toBe('standard');
+        expect(policy({ tile: { x: 2943, z: 3590, level: 0 } }).mode).toBe('standard');
     });
 });
 

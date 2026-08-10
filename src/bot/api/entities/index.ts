@@ -121,6 +121,10 @@ export class Player implements Locatable {
         return this.snap.inCombat;
     }
 
+    targetsMe(): boolean {
+        return this.snap.faceEntity >= 32768 && this.snap.faceEntity - 32768 === reader.selfSlot();
+    }
+
     tile(): Tile {
         return Tile.from(this.snap.tile);
     }

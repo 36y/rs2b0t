@@ -169,7 +169,14 @@ import {
     executeToolAcquirePlan as execToolAcquirePlan,
     type ToolAcquireHost
 } from '../api/ToolAcquireExec.js';
-import { hostileAttackerNearby } from './GatheringBotLogic.js';
+import {
+    gatheringCombatPolicy,
+    hostileAttackerNearby,
+    incomingPlayerAttacker,
+    wildernessMinerAt,
+    wildernessMinerStanceNeeded,
+    type GatheringCombatPolicy
+} from './GatheringBotLogic.js';
 import {
     minerFoodConfig,
     minerFoodRestockNeeded,
@@ -190,6 +197,7 @@ import {
     FleeCombat,
     Gather,
     HandleGatherMuleTrade,
+    MaintainWildernessMinerStance,
     MuleBankHaul,
     MuleGoMeet,
     MuleRequestOrWait,
@@ -234,9 +242,13 @@ export {
 // Pure policy (also in GatheringBotLogic) — re-export for existing test/import paths.
 export {
     fishingSessionBroken,
+    gatheringCombatPolicy,
     hostileAttackerNearby,
+    incomingPlayerAttacker,
     shouldFleeCombat,
-    shouldYieldGathering
+    shouldYieldGathering,
+    wildernessMinerAt,
+    wildernessMinerStanceNeeded
 } from './GatheringBotLogic.js';
 
 export const GATHERING_SETTINGS: SettingsSchema = {
@@ -723,6 +735,8 @@ export default class GatheringBot extends TaskBot {
 
         // Combat policy:
         // - Tick-manip retaliate methods: Auto Retaliate ON, no FleeCombat (may die).
+        // - Wilderness Miner: hold ground against NPCs so an aggressive camp remains mineable.
+        //   A detectable player attack still yields to FleeCombat.
         // - Location Auto: expert / may-die — leave combat alone (no flee babysitting).
         // - Named/None AFK: Auto Retaliate off + FleeCombat walks hits off.
         if (this.tickManip.allowCombat) {
@@ -731,6 +745,12 @@ export default class GatheringBot extends TaskBot {
             } else {
                 this.log('combat: could not enable Auto Retaliate (controls missing?)');
             }
+        } else if (wildernessMinerAt({ isMiner: this.mining(), tile: Game.tile() })) {
+            // MaintainWildernessMinerStance owns the one OFF toggle and waits for
+            // its varp, including after later zone entry or relogin.
+            this.log(
+                'combat: Wilderness Miner holds ground against NPCs; player attacks still flee'
+            );
         } else if (!isAutoLocation(this.locationSetting)) {
             if (Game.setAutoRetaliate(false)) {
                 this.log('combat: Auto Retaliate off (gather — flee, do not fight)');
@@ -804,8 +824,13 @@ export default class GatheringBot extends TaskBot {
         const bankMule = this.isMuleReceiver();
         const gatherTools =
             !muleSide && (this.mining() || this.woodcutting() || this.toolReqs.length > 0) && !this.fishing;
-        // Flee only for AFK named/None — Auto and retaliate tick-manip skip FleeCombat.
-        const mobFlee = !muleSide && !isAutoLocation(this.locationSetting) && !this.tickManip.allowCombat;
+        // Miner always carries the combat tasks so its live wilderness policy can
+        // switch from holding NPC aggro to fleeing a detectable player attack.
+        // Other gatherers retain the old named/None-only registration policy.
+        const mobFlee =
+            !muleSide &&
+            (this.mining() ||
+                (!isAutoLocation(this.locationSetting) && !this.tickManip.allowCombat));
         // Tannerfishing is a power-train (cook/eat on the pier) — drop haul, no bank loop.
         const tannerPower = this.tickManip.cookEatInterleave;
         // Cooker always runs cook tasks; gatherer/solo use cookOn when enabled.
@@ -816,9 +841,12 @@ export default class GatheringBot extends TaskBot {
             new ContinueDialog(),
             ...(minerFoodLoop ? [new MinerEatFood(this)] : []),
             // Sticky combatCycle (no face target) — wait; do not thrash-walk.
-            ...(mobFlee ? [new WaitStickyCombat(this), new FleeCombat(this)] : []),
             // Named/None only: break multi-combat pulls (wildy spiders) by walking off.
             // Auto / retaliate tick-manip = may-die — no mob flee.
+            ...(mobFlee ? [new WaitStickyCombat(this), new FleeCombat(this)] : []),
+            // Entry/relogin can restore Auto Retaliate. Re-assert the Wilderness
+            // Miner stance after dialog/eating/player flee, before any gather work.
+            new MaintainWildernessMinerStance(this),
             ...(!muleSide && this.tickManip.shortbowRapid ? [new EnsureShortbowRapid(this)] : []),
             ...(!muleSide && this.tickManip.cookEatInterleave ? [new TannerfishSustain(this)] : []),
             ...(!muleSide && this.tickManip.useKnifeDelay ? [new TrimKnifeDelayLogs(this)] : []),
@@ -876,10 +904,17 @@ export default class GatheringBot extends TaskBot {
      * multi-combat (Lava Maze spiders) or while a hostile is still in our face.
      */
     shouldSuppressCampReentry(): boolean {
+        const combat = this.combatPolicy();
+        // Preserve a player-attack kite hold even after the face-target signal clears.
         if (Game.tick() < this.combatClearUntilTick) {
             return true;
         }
-        if (isAutoLocation(this.locationSetting) || this.tickManip.allowCombat) {
+        // Aggressive wilderness NPCs are expected camp occupants. Their presence
+        // alone must not keep Miner away from its rocks.
+        if (combat.mode === 'wilderness-miner-npc') {
+            return false;
+        }
+        if (!combat.flee) {
             return false;
         }
         return hostileAttackerNearby(
@@ -1792,7 +1827,36 @@ export default class GatheringBot extends TaskBot {
 
     /** Gather while in combat (retaliate methods). */
     allowCombatGather(): boolean {
-        return this.tickManip.allowCombat;
+        return this.combatPolicy().allowGather;
+    }
+
+    /** Whether WaitStickyCombat / FleeCombat own the current combat state. */
+    mobFleeEnabled(): boolean {
+        return this.combatPolicy().flee;
+    }
+
+    /** Player-attack signal for the wilderness-only Miner override. */
+    wildernessMinerPlayerAttack(): boolean {
+        return this.combatPolicy().mode === 'wilderness-miner-player';
+    }
+
+    wildernessMinerStanceNeeded(): boolean {
+        return wildernessMinerStanceNeeded({
+            isMiner: this.mining(),
+            tile: Game.tile(),
+            tickManipAllowCombat: this.tickManip.allowCombat,
+            autoRetaliateOn: Game.autoRetaliateOn()
+        });
+    }
+
+    private combatPolicy(): GatheringCombatPolicy {
+        return gatheringCombatPolicy({
+            isMiner: this.mining(),
+            tile: Game.tile(),
+            incomingPlayerAttacker: incomingPlayerAttacker(Players.query().results()),
+            autoLocation: isAutoLocation(this.locationSetting),
+            tickManipAllowCombat: this.tickManip.allowCombat
+        });
     }
 
     /** Mark a resource roll tick for knife-delay / timed reclick planners. */

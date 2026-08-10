@@ -171,6 +171,7 @@ export interface PlayerSnapshot {
     tile: WorldTile;
     distance: number;
     inCombat: boolean;
+    faceEntity: number;
 }
 
 export interface LocSnapshot {
@@ -766,7 +767,8 @@ export const reader = {
                 name: player.name,
                 tile: { x, z, level: raw.minusedlevel },
                 distance: Math.max(Math.abs(x - px), Math.abs(z - pz)),
-                inCombat: combatShowing(player.combatCycle)
+                inCombat: combatShowing(player.combatCycle),
+                faceEntity: player.faceEntity
             });
         }
 

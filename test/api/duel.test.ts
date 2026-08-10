@@ -32,7 +32,8 @@ function player(index: number): Player {
         name: `Bot ${index}`,
         tile: { x: 3368, z: 3274, level: 0 },
         distance: 1,
-        inCombat: false
+        inCombat: false,
+        faceEntity: -1
     });
 }
 
