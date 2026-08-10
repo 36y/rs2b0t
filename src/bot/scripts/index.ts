@@ -61,6 +61,7 @@ import NatureCrafter, { SETTINGS as NATURECRAFTER_SETTINGS } from './NatureCraft
 import MuleCrafter, { SETTINGS as MULECRAFTER_SETTINGS } from './MuleCrafter.js';
 import RoguesPurse from './RoguesPurse.js';
 import HerbloreSecondaries, { HERBLORE_SECONDARIES_SETTINGS } from './HerbloreSecondaries.js';
+import HerbCleaner, { HERB_CLEANER_SETTINGS } from './HerbCleaner.js';
 import ShopBuyout, { SHOPBUYOUT_SETTINGS } from './ShopBuyout.js';
 import FlaxRunner, { SETTINGS as FLAXRUNNER_SETTINGS } from './FlaxRunner.js';
 import { ShopRunner, SHOPRUNNER_SETTINGS } from './ShopRunner.js';
@@ -487,6 +488,16 @@ ScriptRegistry.register({
     tags: ['herblore', 'secondaries', 'banking', 'shopping', 'loot'],
     settingsSchema: HERBLORE_SECONDARIES_SETTINGS,
     create: () => new HerbloreSecondaries()
+});
+
+ScriptRegistry.register({
+    name: 'HerbCleaner',
+    description:
+        'Banks at the nearest bank, withdraws unidentified herbs, cleans (identifies) every one your Herblore level allows — lowest-level first — deposits the cleaned herbs, and repeats. Leave all herbs unchecked to clean everything you can; check specific herbs to restrict the run to a subset. Each bank cycle deposits everything from your pack, so start with nothing valuable carried',
+    category: 'Herblore',
+    tags: ['herblore', 'identify', 'clean', 'banking', 'members'],
+    settingsSchema: HERB_CLEANER_SETTINGS,
+    create: () => new HerbCleaner()
 });
 
 ScriptRegistry.register({
