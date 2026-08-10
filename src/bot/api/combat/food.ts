@@ -1,5 +1,5 @@
 export const FOOD_OPTIONS: string[] = [
-    'Lobster', 'Swordfish', 'Tuna', 'Salmon', 'Trout', 'Pike', 'Bass', 'Herring', 'Sardine', 'Anchovies', 'Shrimps',
+    'Shark', 'Lobster', 'Swordfish', 'Tuna', 'Salmon', 'Trout', 'Pike', 'Bass', 'Herring', 'Sardine', 'Anchovies', 'Shrimps',
     'Cooked meat', 'Cooked chicken', 'Bread', 'Stew',
     'Cake', 'Chocolate cake', 'Plain pizza', 'Meat pizza', 'Anchovy pizza', 'Pineapple pizza', 'Redberry pie', 'Meat pie', 'Apple pie'
 ];
@@ -33,6 +33,7 @@ const FOOD_HEAL: Record<string, number> = {
     lobster: 12,
     bass: 13,
     swordfish: 14,
+    shark: 20,
     'cooked meat': 3,
     'cooked chicken': 3,
     bread: 5,

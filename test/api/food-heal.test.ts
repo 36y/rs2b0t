@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import {
+    FOOD_OPTIONS,
     MIN_EAT_HP,
     eatAtHpThreshold,
     foodHealAmount,
@@ -12,6 +13,7 @@ describe('foodHealAmount', () => {
         expect(foodHealAmount('Trout')).toBe(7);
         expect(foodHealAmount('Lobster')).toBe(12);
         expect(foodHealAmount('Swordfish')).toBe(14);
+        expect(foodHealAmount('Shark')).toBe(20);
         expect(foodHealAmount('Cake')).toBe(4);
         expect(foodHealAmount('2/3 cake')).toBe(4);
         expect(foodHealAmount('slice of cake')).toBe(4);
@@ -40,5 +42,14 @@ describe('shouldEatToUseFood (#465)', () => {
     test('shouldEatFood resolves heal from the food name', () => {
         expect(shouldEatFood('Trout', { hp: 33, maxHp: 40, foodCount: 1 })).toBe(true); // 40-7=33
         expect(shouldEatFood('Trout', { hp: 34, maxHp: 40, foodCount: 1 })).toBe(false);
+        // Shark 20 → eat when max−hp ≥ 20
+        expect(shouldEatFood('Shark', { hp: 79, maxHp: 99, foodCount: 1 })).toBe(true);
+        expect(shouldEatFood('Shark', { hp: 80, maxHp: 99, foodCount: 1 })).toBe(false);
+    });
+});
+
+describe('FOOD_OPTIONS', () => {
+    test('includes Shark so combat scripts (MossGiant, etc.) can select it', () => {
+        expect(FOOD_OPTIONS).toContain('Shark');
     });
 });

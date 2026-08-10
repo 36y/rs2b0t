@@ -44,7 +44,7 @@ Tags: `brimhaven`, `arena`, `tickets`, `banking`, `food`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
-| `food` | string | `"Lobster"` | Food — one of: Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
+| `food` | string | `"Lobster"` | Food — one of: Shark, Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
 | `foodWithdraw` | number (1–27) | `25` | Food per trip |
 | `bankAtTickets` | number (1–5000) | `1000` | Bank at X tickets |
 
@@ -152,7 +152,7 @@ Tags: `wilderness`, `edgeville`, `ardougne`, `yanille`, `herbs`, `banking`
 | Setting | Type | Default | Notes |
 |---|---|---|---|
 | `location` | string | `"Edgeville Dungeon"` | Location — one of: Edgeville Dungeon, Chaos Druid Tower, Yanille Dungeon |
-| `food` | string | `"Lobster"` | Food — one of: Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
+| `food` | string | `"Lobster"` | Food — one of: Shark, Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
 | `combatStyleIndex` | string | `"1"` | Combat style — one of: 0 — first button, 1 — second button, 2 — third button, 3 — fourth button |
 | `foodWithdraw` | number (1–27) | `12` | Food per trip |
 | `panicHp` | number (1–98) | `35` | Bank below HP% (no food) |
@@ -241,7 +241,7 @@ Tags: `waterfall`, `safespot`, `members`, `banking`
 | `rangeStyle` | string | `"rapid"` | Ranged style — one of: accurate, rapid, longrange |
 | `ammo` | string | `"Iron arrow"` | Ammo — one of: Bronze arrow, Iron arrow, Steel arrow, Mithril arrow, Adamant arrow, Rune arrow |
 | `ammoWithdraw` | number (1–5000) | `500` | Ammo per bank trip |
-| `food` | string | `"Lobster"` | Food — one of: Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
+| `food` | string | `"Lobster"` | Food — one of: Shark, Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
 | `foodWithdraw` | number (1–27) | `20` | Food to withdraw per bank run |
 | `panicHp` | number (1–98) | `25` | Panic-to-bank below HP% |
 | `loot` | string[] | `["Adamant javelin","Big bones","Blood rune","Chaos rune","Chaos talisman","Coins","Death rune","Dragon med helm","Dragon spear","Dragonstone","Fire battlestaff","Fire rune","Half of a key","Herb","Law rune","Lobster","Mithril sq shield","Nature rune","Nature talisman","Rune 2h sword","Rune arrow","Rune battleaxe","Rune javelin","Rune kiteshield","Rune scimitar","Rune spear","Rune sq shield","Runite bar","Shield left half","Silver ore","Steel arrow","Steel axe","Steel bar","Strength potion(2)","Uncut diamond","Uncut emerald","Uncut ruby","Uncut sapphire"]` | Loot to pick up (drop table) — one of: Adamant javelin, Big bones, Blood rune, Chaos rune, Chaos talisman, Coins, Death rune, Dragon med helm, Dragon spear, Dragonstone, Fire battlestaff, Fire rune, Half of a key, Herb, Law rune, Lobster, Mithril sq shield, Nature rune, Nature talisman, Rune 2h sword, Rune arrow, Rune battleaxe, Rune javelin, Rune kiteshield, Rune scimitar, Rune spear, Rune sq shield, Runite bar, Shield left half, Silver ore, Steel arrow, Steel axe, Steel bar, Strength potion(2), Uncut diamond, Uncut emerald, Uncut ruby, Uncut sapphire |
@@ -269,7 +269,7 @@ Tags: `wilderness`, `dragons`, `hides`
 | `spell` | string | `"Fire Strike"` | Autocast spell — one of: Wind Strike, Water Strike, Earth Strike, Fire Strike, Wind Bolt, Water Bolt, Earth Bolt, Fire Bolt, Wind Blast, Water Blast, Earth Blast, Fire Blast, Wind Wave, Water Wave, Earth Wave, Fire Wave |
 | `runesWithdraw` | number (1–1000) | `150` | Casts of runes per bank trip |
 | `shield` | string | `"Dragonfire shield"` | Anti-dragon shield — one of: Dragonfire shield |
-| `food` | string | `"Lobster"` | Food — one of: Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
+| `food` | string | `"Lobster"` | Food — one of: Shark, Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
 | `foodWithdraw` | number (1–27) | `20` | Food to withdraw per bank run |
 | `panicHp` | number (1–98) | `30` | Escape below HP% |
 | `foodReserve` | number (0–27) | `4` | Food kept back from slot-freeing |
@@ -292,7 +292,7 @@ Tags: `combat`, `giants`, `edgeville`, `varrock`, `banking`, `looting`
 |---|---|---|---|
 | `meleeStyle` | string | `"strength"` | Melee style — one of: attack, strength, controlled, defence |
 | `weapon` | string | `""` | Weapon to wield |
-| `food` | string | `"Trout"` | Food — one of: Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
+| `food` | string | `"Trout"` | Food — one of: Shark, Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
 | `foodWithdraw` | number (1–27) | `12` | Food per trip |
 | `loot` | string[] | `["Limpwurt root","Big bones"]` | Loot to pick up — one of: Beer, Big bones, Body talisman, Chaos rune, Chaos talisman, Coins, Cosmic rune, Death rune, Dragon spear, Fire rune, Half of a key, Herb, Iron arrow, Iron dagger, Iron full helm, Iron kiteshield, Law rune, Limpwurt root, Mind rune, Nature rune, Nature talisman, Rune javelin, Rune spear, Shield left half, Steel arrow, Steel longsword, Uncut diamond, Uncut emerald, Uncut ruby, Uncut sapphire, Water rune |
 | `bankCommonJunk` | boolean | `true` | Also grab shared gems/junk |
@@ -316,7 +316,7 @@ Tags: `ardougne`, `safespot`, `afk`
 | `rangeStyle` | string | `"rapid"` | Ranged style — one of: accurate, rapid, longrange |
 | `ammo` | string | `"Iron arrow"` | Bow ammo — one of: Bronze arrow, Iron arrow, Steel arrow, Mithril arrow, Adamant arrow, Rune arrow |
 | `ammoWithdraw` | number (1–5000) | `500` | Projectiles per bank trip |
-| `food` | string | `"Lobster"` | Food — one of: Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
+| `food` | string | `"Lobster"` | Food — one of: Shark, Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
 | `foodWithdraw` | number (1–27) | `20` | Food to withdraw per bank run |
 | `panicHp` | number (1–98) | `25` | Panic-to-bank below HP% |
 | `loot` | string[] | `["Air rune","Big bones","Black sq shield","Blood rune","Chaos rune","Chaos talisman","Coins","Cosmic rune","Death rune","Dragon spear","Earth rune","Half of a key","Herb","Law rune","Magic staff","Mithril spear","Mithril sword","Nature rune","Nature talisman","Rune javelin","Rune spear","Shield left half","Steel bar","Steel kiteshield","Steel med helm","Uncut diamond","Uncut emerald","Uncut ruby","Uncut sapphire"]` | Loot to pick up (drop table) — one of: Air rune, Big bones, Black sq shield, Blood rune, Chaos rune, Chaos talisman, Coal, Coins, Cosmic rune, Death rune, Dragon spear, Earth rune, Half of a key, Herb, Iron arrow, Law rune, Magic staff, Mithril spear, Mithril sword, Nature rune, Nature talisman, Rune javelin, Rune spear, Shield left half, Spinach roll, Steel arrow, Steel bar, Steel kiteshield, Steel med helm, Uncut diamond, Uncut emerald, Uncut ruby, Uncut sapphire |
@@ -537,7 +537,7 @@ Tags: `herblore`, `secondaries`, `banking`, `shopping`, `loot`
 | Setting | Type | Default | Notes |
 |---|---|---|---|
 | `secondary` | string | `"Red spiders' eggs"` | Secondary — one of: Red spiders' eggs, Snape grass, Eye of newt, Chocolate dust, White berries, Toad's legs |
-| `food` | string | `"Lobster"` | Food — one of: Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
+| `food` | string | `"Lobster"` | Food — one of: Shark, Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
 | `foodWithdraw` | number (0–27) | `10` | Food to withdraw |
 
 ### RoguesPurse
@@ -605,7 +605,7 @@ Tags: `gathering`, `banking`, `drop`
 | `rocks` | string[] | `["Iron"]` | Rock types — one of: Clay, Copper, Tin, Iron, Silver, Coal, Gold, Mithril, Adamantite, Runite |
 | `leashRadius` | number (2–64) | `10` | Leash radius (tiles) |
 | `location` | string | `"Auto"` | Location / full inventory — one of: Auto, Al Kharid Mine, Barbarian Village, Coal Trucks, Crafting Guild, Desert Mining Camp, Dwarven Mine, Edgeville Dungeon Mine, Fight Arena Mine, Grand Tree Mine, Heroes Guild, Lava Maze Runite Mine, Legends Guild Iron (east), Legends Guild Iron (west), Mining Guild, North Brimhaven Mine, Rimmington Mine, Shilo Village, South-east Ardougne Mine, Southeast Varrock Mine, Southwest Varrock Mine, West Lumbridge Swamp Mine, Wilderness Hobgoblin Mine, Wilderness Skeleton Mine, None |
-| `food` | string | `"Lobster"` | Food — one of: Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
+| `food` | string | `"Lobster"` | Food — one of: Shark, Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
 | `foodWithdraw` | number (0–27) | `0` | Food to withdraw |
 | `tickManip` | string | `"Off"` | Tick manip — one of: Off |
 | `muleMode` | string | `"Off"` | Mule mode — one of: Off, Gatherer, Mule, Cooker, Supplier |
