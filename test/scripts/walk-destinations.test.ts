@@ -2,8 +2,8 @@ import { expect, test } from 'bun:test';
 
 import { WALK_DESTINATIONS, WALK_OPTIONS, resolveDestination } from '#/bot/api/WalkDestinations.js';
 
-test('has all 11 named destinations with unique names', () => {
-    expect(WALK_DESTINATIONS.length).toBe(11);
+test('has all 12 named destinations with unique names', () => {
+    expect(WALK_DESTINATIONS.length).toBe(12);
     const names = WALK_DESTINATIONS.map(d => d.name);
     expect(new Set(names).size).toBe(names.length);
 });
@@ -25,6 +25,7 @@ test('canonical coords match their source (teleport landings + banks)', () => {
     expect(at('Falador')).toMatchObject({ x: 2965, z: 3378 });
     expect(at('Yanille')).toMatchObject({ x: 2612, z: 3092 });
     expect(at("Seers' Village")).toMatchObject({ x: 2725, z: 3491 });
+    expect(at('Catherby')).toMatchObject({ x: 2809, z: 3441 });
 });
 
 test('resolveDestination is case-insensitive and rejects unknowns', () => {

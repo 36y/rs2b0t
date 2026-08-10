@@ -5,7 +5,7 @@
 
 # Bundled scripts
 
-The client ships **51 scripts** across 20 categories. They double as worked
+The client ships **52 scripts** across 20 categories. They double as worked
 examples of the [scripting API](API.md) — the source for each is under
 [`src/bot/scripts/`](../src/bot/scripts/).
 
@@ -670,13 +670,13 @@ Tags: `shopping`, `banking`, `worldwalker`
 
 ### WalkTo
 
-Walks to a chosen destination and stops — Lumbridge, Varrock, Falador, Ardougne, Rellekka, Taverley (centre); Draynor, Al Kharid, Edgeville, Seers, Yanille (bank); or a custom tile
+Walks to a chosen destination and stops — Lumbridge, Varrock, Falador, Ardougne, Rellekka, Taverley (centre); Draynor, Al Kharid, Edgeville, Seers, Catherby, Yanille (bank); or a custom tile
 
 Tags: `navigation`, `utility`, `web-walk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
-| `destination` | string | `"Lumbridge"` | Destination — one of: Lumbridge, Varrock, Falador, Ardougne, Rellekka, Taverley, Draynor, Al Kharid, Edgeville, Seers' Village, Yanille |
+| `destination` | string | `"Lumbridge"` | Destination — one of: Lumbridge, Varrock, Falador, Ardougne, Rellekka, Taverley, Draynor, Al Kharid, Edgeville, Seers' Village, Catherby, Yanille |
 | `customTile` | tile | `{"x":0,"z":0,"level":0}` | Custom tile (x,z) |
 | `arriveRadius` | number (0–12) | `3` | Arrive within (tiles) |
 

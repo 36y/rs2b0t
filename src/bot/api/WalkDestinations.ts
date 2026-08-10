@@ -16,6 +16,7 @@ export const WALK_DESTINATIONS: WalkDestination[] = [
     { name: 'Al Kharid', tile: new Tile(3269, 3167, 0) }, // bank
     { name: 'Edgeville', tile: new Tile(3094, 3493, 0) }, // bank
     { name: "Seers' Village", tile: new Tile(2725, 3491, 0) }, // bank
+    { name: 'Catherby', tile: new Tile(2809, 3441, 0) }, // bank
     { name: 'Yanille', tile: new Tile(2612, 3092, 0) } // bank
 ];
 

@@ -631,7 +631,7 @@ ScriptRegistry.register({
 
 ScriptRegistry.register({
     name: 'WalkTo',
-    description: 'Walks to a chosen destination and stops — Lumbridge, Varrock, Falador, Ardougne, Rellekka, Taverley (centre); Draynor, Al Kharid, Edgeville, Seers, Yanille (bank); or a custom tile',
+    description: 'Walks to a chosen destination and stops — Lumbridge, Varrock, Falador, Ardougne, Rellekka, Taverley (centre); Draynor, Al Kharid, Edgeville, Seers, Catherby, Yanille (bank); or a custom tile',
     category: 'Navigation',
     tags: ['navigation', 'utility', 'web-walk'],
     settingsSchema: WALKTO_SETTINGS,
