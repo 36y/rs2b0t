@@ -256,6 +256,14 @@ class ScriptRunnerImpl {
         }
 
         ctx.resume();
+
+        // If the previous loop() is still in-flight (e.g. blocked on a
+        // non-Execution promise that won't resolve while the scheduler was
+        // paused), clear the flag so the pump can launch a fresh iteration.
+        // The stale .then() handler will fire later — it only sets timing
+        // gates (scheduleNextLoop) and bumps loopCount, which is harmless.
+        ctx.loopInFlight = false;
+
         try {
             bot?.onResume?.();
         } catch (err) {
