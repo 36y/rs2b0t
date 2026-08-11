@@ -43,9 +43,12 @@ export const PACK_UNREACHABLE: Record<number, string> = {
     //     %troll_quest >= ^troll_started (Troll Stronghold *started*, not Death
     //     Plateau). Climbing boots are demanded only when coordz(coord) = 3611,
     //     i.e. from the far southern approach, not from these tiles.
-    // So the shortcut rocks look bakeable today behind Agility 15 alone.
-    3526: 'Trollheim: troll_mountain_shortcut_climbingrocks1/2 @ (2885,3683) not baked — Agility 15, no quest gate',
-    3528: 'Trollheim: troll_mountain_shortcut_climbingrocks1/2 @ (2885,3683) not baked — Agility 15, no quest gate',
+    // 3526 / 3528 are no longer islands. The Troll Stronghold route (#264) baked
+    // the whole way up — stile, the three secret-way rock climbs, the troll pass
+    // and the stronghold — so Trollheim now joins the mainland graph. It costs
+    // Agility 15 and worn Climbing boots for the (2856,3612) ascent; the two
+    // mountain shortcut rocks named below stayed unbaked because both their
+    // endpoints already sit inside that component.
 
     // ---- KIT: an item or skill, no quest -----------------------------------
     // 2811 Baxtorian rope baked (#369); 2790 sewer web baked (#370); 3579 Entrana ferry+planks (#368).

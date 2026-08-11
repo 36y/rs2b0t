@@ -7404,5 +7404,828 @@
     "options": [
       "Pull"
     ]
+  },
+  {
+    "from": {
+      "x": 2817,
+      "z": 3561,
+      "level": 0
+    },
+    "to": {
+      "x": 2817,
+      "z": 3564,
+      "level": 0
+    },
+    "locName": "Stile",
+    "action": "Climb-over",
+    "kind": "shortcut",
+    "locId": 3730,
+    "locX": 2817,
+    "locZ": 3562,
+    "debugName": "death_fullstyle",
+    "options": [
+      "Climb-over"
+    ],
+    "note": "Tenzing: \"use the back door to my hut, hop over the stile and follow that path\""
+  },
+  {
+    "from": {
+      "x": 2817,
+      "z": 3564,
+      "level": 0
+    },
+    "to": {
+      "x": 2817,
+      "z": 3561,
+      "level": 0
+    },
+    "locName": "Stile",
+    "action": "Climb-over",
+    "kind": "shortcut",
+    "locId": 3730,
+    "locX": 2817,
+    "locZ": 3562,
+    "debugName": "death_fullstyle",
+    "options": [
+      "Climb-over"
+    ]
+  },
+  {
+    "from": {
+      "x": 2856,
+      "z": 3611,
+      "level": 0
+    },
+    "to": {
+      "x": 2856,
+      "z": 3613,
+      "level": 0
+    },
+    "locName": "Rocks",
+    "action": "Climb",
+    "kind": "shortcut",
+    "locId": 3748,
+    "locX": 2856,
+    "locZ": 3612,
+    "debugName": "troll_climbingrocks",
+    "options": [
+      "Climb"
+    ],
+    "requires": {
+      "skills": [
+        {
+          "name": "agility",
+          "level": 15
+        }
+      ],
+      "worn": [
+        {
+          "name": "Climbing boots",
+          "count": 1
+        }
+      ]
+    }
+  },
+  {
+    "from": {
+      "x": 2856,
+      "z": 3613,
+      "level": 0
+    },
+    "to": {
+      "x": 2856,
+      "z": 3611,
+      "level": 0
+    },
+    "locName": "Rocks",
+    "action": "Climb",
+    "kind": "shortcut",
+    "locId": 3748,
+    "locX": 2856,
+    "locZ": 3612,
+    "debugName": "troll_climbingrocks",
+    "options": [
+      "Climb"
+    ],
+    "requires": {
+      "skills": [
+        {
+          "name": "agility",
+          "level": 15
+        }
+      ]
+    }
+  },
+  {
+    "from": {
+      "x": 2857,
+      "z": 3611,
+      "level": 0
+    },
+    "to": {
+      "x": 2857,
+      "z": 3613,
+      "level": 0
+    },
+    "locName": "Rocks",
+    "action": "Climb",
+    "kind": "shortcut",
+    "locId": 3748,
+    "locX": 2857,
+    "locZ": 3612,
+    "debugName": "troll_climbingrocks",
+    "options": [
+      "Climb"
+    ],
+    "requires": {
+      "skills": [
+        {
+          "name": "agility",
+          "level": 15
+        }
+      ],
+      "worn": [
+        {
+          "name": "Climbing boots",
+          "count": 1
+        }
+      ]
+    }
+  },
+  {
+    "from": {
+      "x": 2857,
+      "z": 3613,
+      "level": 0
+    },
+    "to": {
+      "x": 2857,
+      "z": 3611,
+      "level": 0
+    },
+    "locName": "Rocks",
+    "action": "Climb",
+    "kind": "shortcut",
+    "locId": 3748,
+    "locX": 2857,
+    "locZ": 3612,
+    "debugName": "troll_climbingrocks",
+    "options": [
+      "Climb"
+    ],
+    "requires": {
+      "skills": [
+        {
+          "name": "agility",
+          "level": 15
+        }
+      ]
+    }
+  },
+  {
+    "from": {
+      "x": 2858,
+      "z": 3626,
+      "level": 0
+    },
+    "to": {
+      "x": 2861,
+      "z": 3626,
+      "level": 0
+    },
+    "locName": "Rocks",
+    "action": "Climb",
+    "kind": "shortcut",
+    "options": [
+      "Climb"
+    ],
+    "requires": {
+      "skills": [
+        {
+          "name": "agility",
+          "level": 15
+        }
+      ]
+    },
+    "locId": 3790,
+    "debugName": "troll_climbingrocks_top",
+    "locX": 2859,
+    "locZ": 3626
+  },
+  {
+    "from": {
+      "x": 2861,
+      "z": 3626,
+      "level": 0
+    },
+    "to": {
+      "x": 2858,
+      "z": 3626,
+      "level": 0
+    },
+    "locName": "Rocks",
+    "action": "Climb",
+    "kind": "shortcut",
+    "options": [
+      "Climb"
+    ],
+    "requires": {
+      "skills": [
+        {
+          "name": "agility",
+          "level": 15
+        }
+      ]
+    },
+    "locId": 3791,
+    "debugName": "troll_climbingrocks_bottom",
+    "locX": 2860,
+    "locZ": 3626
+  },
+  {
+    "from": {
+      "x": 2858,
+      "z": 3627,
+      "level": 0
+    },
+    "to": {
+      "x": 2861,
+      "z": 3627,
+      "level": 0
+    },
+    "locName": "Rocks",
+    "action": "Climb",
+    "kind": "shortcut",
+    "options": [
+      "Climb"
+    ],
+    "requires": {
+      "skills": [
+        {
+          "name": "agility",
+          "level": 15
+        }
+      ]
+    },
+    "locId": 3790,
+    "debugName": "troll_climbingrocks_top",
+    "locX": 2859,
+    "locZ": 3627
+  },
+  {
+    "from": {
+      "x": 2861,
+      "z": 3627,
+      "level": 0
+    },
+    "to": {
+      "x": 2858,
+      "z": 3627,
+      "level": 0
+    },
+    "locName": "Rocks",
+    "action": "Climb",
+    "kind": "shortcut",
+    "options": [
+      "Climb"
+    ],
+    "requires": {
+      "skills": [
+        {
+          "name": "agility",
+          "level": 15
+        }
+      ]
+    },
+    "locId": 3791,
+    "debugName": "troll_climbingrocks_bottom",
+    "locX": 2860,
+    "locZ": 3627
+  },
+  {
+    "from": {
+      "x": 2877,
+      "z": 3622,
+      "level": 0
+    },
+    "to": {
+      "x": 2880,
+      "z": 3622,
+      "level": 0
+    },
+    "locName": "Rocks",
+    "action": "Climb",
+    "kind": "shortcut",
+    "options": [
+      "Climb"
+    ],
+    "requires": {
+      "skills": [
+        {
+          "name": "agility",
+          "level": 15
+        }
+      ]
+    },
+    "locId": 3791,
+    "debugName": "troll_climbingrocks_bottom",
+    "locX": 2878,
+    "locZ": 3622
+  },
+  {
+    "from": {
+      "x": 2880,
+      "z": 3622,
+      "level": 0
+    },
+    "to": {
+      "x": 2877,
+      "z": 3622,
+      "level": 0
+    },
+    "locName": "Rocks",
+    "action": "Climb",
+    "kind": "shortcut",
+    "options": [
+      "Climb"
+    ],
+    "requires": {
+      "skills": [
+        {
+          "name": "agility",
+          "level": 15
+        }
+      ]
+    },
+    "locId": 3790,
+    "debugName": "troll_climbingrocks_top",
+    "locX": 2879,
+    "locZ": 3622
+  },
+  {
+    "from": {
+      "x": 2877,
+      "z": 3623,
+      "level": 0
+    },
+    "to": {
+      "x": 2880,
+      "z": 3623,
+      "level": 0
+    },
+    "locName": "Rocks",
+    "action": "Climb",
+    "kind": "shortcut",
+    "options": [
+      "Climb"
+    ],
+    "requires": {
+      "skills": [
+        {
+          "name": "agility",
+          "level": 15
+        }
+      ]
+    },
+    "locId": 3791,
+    "debugName": "troll_climbingrocks_bottom",
+    "locX": 2878,
+    "locZ": 3623
+  },
+  {
+    "from": {
+      "x": 2880,
+      "z": 3623,
+      "level": 0
+    },
+    "to": {
+      "x": 2877,
+      "z": 3623,
+      "level": 0
+    },
+    "locName": "Rocks",
+    "action": "Climb",
+    "kind": "shortcut",
+    "options": [
+      "Climb"
+    ],
+    "requires": {
+      "skills": [
+        {
+          "name": "agility",
+          "level": 15
+        }
+      ]
+    },
+    "locId": 3790,
+    "debugName": "troll_climbingrocks_top",
+    "locX": 2879,
+    "locZ": 3623
+  },
+  {
+    "from": {
+      "x": 2903,
+      "z": 3643,
+      "level": 0
+    },
+    "to": {
+      "x": 2907,
+      "z": 10019,
+      "level": 0
+    },
+    "locName": "Cave Entrance",
+    "action": "Enter",
+    "kind": "dungeon",
+    "locId": 3757,
+    "locX": 2903,
+    "locZ": 3644,
+    "debugName": "troll_pass_entrance",
+    "options": [
+      "Enter"
+    ]
+  },
+  {
+    "from": {
+      "x": 2907,
+      "z": 10019,
+      "level": 0
+    },
+    "to": {
+      "x": 2904,
+      "z": 3643,
+      "level": 0
+    },
+    "locName": "Cave Exit",
+    "action": "Exit",
+    "kind": "dungeon",
+    "locId": 3758,
+    "locX": 2906,
+    "locZ": 10017,
+    "debugName": "troll_pass_exit",
+    "options": [
+      "Exit"
+    ]
+  },
+  {
+    "from": {
+      "x": 2907,
+      "z": 3654,
+      "level": 0
+    },
+    "to": {
+      "x": 2907,
+      "z": 10035,
+      "level": 0
+    },
+    "locName": "Cave Entrance",
+    "action": "Enter",
+    "kind": "dungeon",
+    "locId": 3757,
+    "locX": 2907,
+    "locZ": 3652,
+    "debugName": "troll_pass_entrance",
+    "options": [
+      "Enter"
+    ]
+  },
+  {
+    "from": {
+      "x": 2907,
+      "z": 10035,
+      "level": 0
+    },
+    "to": {
+      "x": 2908,
+      "z": 3654,
+      "level": 0
+    },
+    "locName": "Cave Exit",
+    "action": "Exit",
+    "kind": "dungeon",
+    "locId": 3758,
+    "locX": 2906,
+    "locZ": 10036,
+    "debugName": "troll_pass_exit",
+    "options": [
+      "Exit"
+    ]
+  },
+  {
+    "from": {
+      "x": 2840,
+      "z": 3690,
+      "level": 0
+    },
+    "to": {
+      "x": 2837,
+      "z": 10090,
+      "level": 2
+    },
+    "locName": "Stronghold",
+    "action": "Enter",
+    "kind": "dungeon",
+    "locId": 3771,
+    "locX": 2839,
+    "locZ": 3689,
+    "debugName": "troll_stronghold_door",
+    "options": [
+      "Enter"
+    ]
+  },
+  {
+    "from": {
+      "x": 2837,
+      "z": 10090,
+      "level": 2
+    },
+    "to": {
+      "x": 2840,
+      "z": 3690,
+      "level": 0
+    },
+    "locName": "Exit",
+    "action": "Leave",
+    "kind": "dungeon",
+    "locId": 3774,
+    "locX": 2838,
+    "locZ": 10090,
+    "debugName": "troll_stronghold_top_exit_mid",
+    "options": [
+      "Leave"
+    ]
+  },
+  {
+    "from": {
+      "x": 2843,
+      "z": 10110,
+      "level": 2
+    },
+    "to": {
+      "x": 2841,
+      "z": 10108,
+      "level": 1
+    },
+    "locName": "Stone Staircase",
+    "action": "Climb-down",
+    "kind": "stair",
+    "locId": 3789,
+    "locX": 2843,
+    "locZ": 10108,
+    "debugName": "troll_stronghold_stairstop",
+    "options": [
+      "Climb-down"
+    ]
+  },
+  {
+    "from": {
+      "x": 2842,
+      "z": 10107,
+      "level": 1
+    },
+    "to": {
+      "x": 2845,
+      "z": 10108,
+      "level": 2
+    },
+    "locName": "Stone Staircase",
+    "action": "Climb-up",
+    "kind": "stair",
+    "locId": 3788,
+    "locX": 2842,
+    "locZ": 10108,
+    "debugName": "troll_stronghold_stairs",
+    "options": [
+      "Climb-up"
+    ]
+  },
+  {
+    "from": {
+      "x": 2847,
+      "z": 10107,
+      "level": 1
+    },
+    "to": {
+      "x": 2848,
+      "z": 10107,
+      "level": 1
+    },
+    "locName": "Prison Door",
+    "action": "Unlock",
+    "kind": "door",
+    "locId": 3780,
+    "locX": 2848,
+    "locZ": 10107,
+    "debugName": "troll_stronghold_prison_door_closed",
+    "options": [
+      "Unlock"
+    ]
+  },
+  {
+    "from": {
+      "x": 2848,
+      "z": 10107,
+      "level": 1
+    },
+    "to": {
+      "x": 2847,
+      "z": 10107,
+      "level": 1
+    },
+    "locName": "Prison Door",
+    "action": "Unlock",
+    "kind": "door",
+    "locId": 3780,
+    "locX": 2848,
+    "locZ": 10107,
+    "debugName": "troll_stronghold_prison_door_closed",
+    "options": [
+      "Unlock"
+    ]
+  },
+  {
+    "from": {
+      "x": 2851,
+      "z": 10107,
+      "level": 1
+    },
+    "to": {
+      "x": 2852,
+      "z": 10105,
+      "level": 0
+    },
+    "locName": "Stone Staircase",
+    "action": "Climb-down",
+    "kind": "stair",
+    "locId": 3789,
+    "locX": 2852,
+    "locZ": 10107,
+    "debugName": "troll_stronghold_stairstop",
+    "options": [
+      "Climb-down"
+    ]
+  },
+  {
+    "from": {
+      "x": 2852,
+      "z": 10105,
+      "level": 0
+    },
+    "to": {
+      "x": 2852,
+      "z": 10109,
+      "level": 1
+    },
+    "locName": "Stone Staircase",
+    "action": "Climb-up",
+    "kind": "stair",
+    "locId": 3788,
+    "locX": 2852,
+    "locZ": 10106,
+    "debugName": "troll_stronghold_stairs",
+    "options": [
+      "Climb-up"
+    ]
+  },
+  {
+    "from": {
+      "x": 2823,
+      "z": 10050,
+      "level": 0
+    },
+    "to": {
+      "x": 2827,
+      "z": 3646,
+      "level": 0
+    },
+    "locName": "Exit",
+    "action": "Open",
+    "kind": "dungeon",
+    "locId": 3761,
+    "locX": 2823,
+    "locZ": 10048,
+    "debugName": "troll_stronghold_exit",
+    "options": [
+      "Open"
+    ]
+  },
+  {
+    "from": {
+      "x": 2833,
+      "z": 3627,
+      "level": 0
+    },
+    "to": {
+      "x": 2833,
+      "z": 3629,
+      "level": 0
+    },
+    "locName": "Rocks",
+    "action": "Climb",
+    "kind": "shortcut",
+    "locId": 3748,
+    "locX": 2833,
+    "locZ": 3628,
+    "debugName": "troll_climbingrocks",
+    "options": [
+      "Climb"
+    ],
+    "requires": {
+      "skills": [
+        {
+          "name": "agility",
+          "level": 15
+        }
+      ]
+    }
+  },
+  {
+    "from": {
+      "x": 2833,
+      "z": 3629,
+      "level": 0
+    },
+    "to": {
+      "x": 2833,
+      "z": 3627,
+      "level": 0
+    },
+    "locName": "Rocks",
+    "action": "Climb",
+    "kind": "shortcut",
+    "locId": 3748,
+    "locX": 2833,
+    "locZ": 3628,
+    "debugName": "troll_climbingrocks",
+    "options": [
+      "Climb"
+    ],
+    "requires": {
+      "skills": [
+        {
+          "name": "agility",
+          "level": 15
+        }
+      ]
+    }
+  },
+  {
+    "from": {
+      "x": 2834,
+      "z": 3627,
+      "level": 0
+    },
+    "to": {
+      "x": 2834,
+      "z": 3629,
+      "level": 0
+    },
+    "locName": "Rocks",
+    "action": "Climb",
+    "kind": "shortcut",
+    "locId": 3748,
+    "locX": 2834,
+    "locZ": 3628,
+    "debugName": "troll_climbingrocks",
+    "options": [
+      "Climb"
+    ],
+    "requires": {
+      "skills": [
+        {
+          "name": "agility",
+          "level": 15
+        }
+      ]
+    }
+  },
+  {
+    "from": {
+      "x": 2834,
+      "z": 3629,
+      "level": 0
+    },
+    "to": {
+      "x": 2834,
+      "z": 3627,
+      "level": 0
+    },
+    "locName": "Rocks",
+    "action": "Climb",
+    "kind": "shortcut",
+    "locId": 3748,
+    "locX": 2834,
+    "locZ": 3628,
+    "debugName": "troll_climbingrocks",
+    "options": [
+      "Climb"
+    ],
+    "requires": {
+      "skills": [
+        {
+          "name": "agility",
+          "level": 15
+        }
+      ]
+    }
   }
 ]

@@ -2,7 +2,7 @@ import Tile from '../../../api/Tile.js';
 import type { QuestSnapshot } from '../../engine/types.js';
 import type { NpcStop } from '../../exec/primitives.js';
 
-/** Display / inventory names from content obj configs. */
+/** Display names from the content obj configs. */
 export const ITEM = {
     CLIMBING_BOOTS: 'Climbing boots',
     PRISON_KEY: 'Prison key',
@@ -11,11 +11,13 @@ export const ITEM = {
     COINS: 'Coins'
 } as const;
 
-export const FOOD_TARGET = 18;
-export const COIN_FLOAT = 500;
 export const BOOT_COST = 12;
+/** Enough for the boots several times over, and nothing worth a second bank trip. */
+export const COIN_FLOAT = 500;
+export const FOOD_TARGET = 16;
+/** Below this the loadout is spent and the module walks back down for more. */
+export const FOOD_FLOOR = 4;
 
-/** Combat food the module will withdraw / sustain on. */
 export const COMBAT_FOODS = [
     'Shark',
     'Swordfish',
@@ -27,93 +29,105 @@ export const COMBAT_FOODS = [
     'Bread'
 ] as const;
 
-/** Falador West — nearest listed bank to Burthorpe. */
+/** Falador West — Burthorpe has no bank on this content. */
 export const FALADOR_WEST_BANK = new Tile(2946, 3369, 0);
 
-// --- surface anchors (Burthorpe / Death Plateau secret way / arena) ----------
+export const TILE = {
+    DENULTH: new Tile(2896, 3528, 0),
+    DUNSTAN: new Tile(2919, 3574, 0),
+    TENZING: new Tile(2820, 3556, 0),
+    /** troll_champion map spawn; he is re-added at (2912,3613) when missing. */
+    DAD: new Tile(2911, 3612, 0),
+    /** Arena Entrance stand, west side of the door pair. */
+    ARENA_GATE: new Tile(2896, 3618, 0),
+    /** troll_general map spawn on the stronghold top floor. */
+    GENERAL: new Tile(2831, 10086, 2),
+    /** Stronghold arrival from the surface door. */
+    STRONGHOLD_TOP: new Tile(2837, 10090, 2),
+    /** West of the Prison Door, on the locked side's approach. */
+    PRISON_DOOR: new Tile(2847, 10107, 1),
+    /** Prison-floor landing from the lower staircase. */
+    PRISON_LANDING: new Tile(2852, 10105, 0),
+    /** Stand outside Godric's cell door (2832,10078). */
+    GODRIC_CELL: new Tile(2833, 10078, 0),
+    /** Stand outside Mad Eadgar's cell door (2832,10082). */
+    EADGAR_CELL: new Tile(2833, 10082, 0)
+} as const;
 
-export const DENULTH_TILE = new Tile(2896, 3528, 0);
-export const DUNSTAN_TILE = new Tile(2919, 3574, 0);
-/** Tenzing's hut (post–Death Plateau boot shop). */
-export const TENZING_TILE = new Tile(2820, 3555, 0);
-/** Death Plateau secret-path climbing rocks (boots required at z≈3611). */
-export const DEATH_ROCKS = new Tile(2880, 3595, 0);
-/** Dad spawn zone 0_45_56_32_29. */
-export const DAD_ARENA = new Tile(2912, 3613, 0);
-export const ARENA_ENTRANCE = new Tile(2907, 3607, 0);
-/** Stronghold surface entrance (Enter → multi-level dungeon). */
-export const STRONGHOLD_DOOR = new Tile(2840, 3690, 0);
+/**
+ * Where the character is, in the only terms `decide()` cares about: whether a
+ * bank trip is still cheap. Everything past the stile is committed ground —
+ * re-provisioning from up there means climbing back down the secret way.
+ */
+export type TrollZone = 'stronghold' | 'trollPass' | 'mountain' | 'arena' | 'secretWay' | 'mainland' | 'unknown';
 
-// --- stronghold interior (z ≥ 10000 content plane) ---------------------------
-
-/** Arrival after Stronghold Enter: 2_44_157_21_42. */
-export const STRONGHOLD_TOP = new Tile(2837, 10090, 2);
-/** Generals camp near top floor fire. */
-export const GENERAL_CAMP = new Tile(2830, 10080, 2);
-/** Prison level cells: Godric 0_44_157_11_29, Eadgar 0_44_157_11_33. */
-export const PRISON_FLOOR = new Tile(2830, 10070, 0);
-export const GODRIC_CELL = new Tile(2827, 10077, 0);
-export const EADGAR_CELL = new Tile(2827, 10081, 0);
-export const PRISON_DOOR_AREA = new Tile(2835, 10062, 0);
-
-export type TrollArea =
-    | 'burthorpe'
-    | 'secretPath'
-    | 'arena'
-    | 'trollheim'
-    | 'stronghold'
-    | 'mainland'
-    | 'unknown';
-
-export function trollArea(tile: QuestSnapshot['tile']): TrollArea {
+export function trollZone(tile: QuestSnapshot['tile']): TrollZone {
     if (!tile) {
         return 'unknown';
     }
-    // Stronghold interior uses content map squares 44,157 / 45,156 (z ~10000+).
-    if (tile.z >= 9900 && tile.z <= 10200 && tile.x >= 2800 && tile.x <= 2950) {
+    const { x, z, level } = tile;
+    // Stronghold interior: mapsquare 44,157 across all three levels.
+    if (x >= 2816 && x <= 2879 && z >= 10048 && z <= 10111) {
         return 'stronghold';
     }
-    if (tile.level === 0 && tile.x >= 2895 && tile.x <= 2930 && tile.z >= 3600 && tile.z <= 3635) {
+    // The troll pass cave between the arena and the northern mountain.
+    if (x >= 2880 && x <= 2943 && z >= 9984 && z <= 10047) {
+        return 'trollPass';
+    }
+    if (level !== 0) {
+        return 'unknown';
+    }
+    if (x >= 2879 && x <= 2925 && z >= 3596 && z <= 3648) {
         return 'arena';
     }
-    if (tile.level === 0 && tile.x >= 2800 && tile.x <= 2940 && tile.z >= 3575 && tile.z <= 3620) {
-        return 'secretPath';
+    if (x >= 2828 && x <= 2920 && z >= 3649 && z <= 3711) {
+        return 'mountain';
     }
-    // Camp / mountain north of the arena after Dad.
-    if (tile.level === 0 && tile.x >= 2810 && tile.x <= 2940 && tile.z > 3620 && tile.z < 3720) {
-        return 'trollheim';
+    // Everything above the stile on the secret way, plus the north-west pocket
+    // the prison's back door opens onto.
+    if (x >= 2812 && x <= 2882 && z >= 3563 && z <= 3648) {
+        return 'secretWay';
     }
-    if (tile.level === 0 && tile.x >= 2880 && tile.x <= 2940 && tile.z >= 3480 && tile.z < 3580) {
-        return 'burthorpe';
-    }
-    if (tile.level === 0 && tile.z < 5000) {
-        return 'mainland';
-    }
-    return 'unknown';
+    return 'mainland';
 }
 
-export const DENULTH: NpcStop = {
+/** True once the character is past the stile: no more cheap bank trips. */
+export function committed(zone: TrollZone): boolean {
+    return zone !== 'mainland' && zone !== 'unknown';
+}
+
+export const DENULTH_START: NpcStop = {
     npc: 'Denulth',
-    anchor: DENULTH_TILE,
+    anchor: TILE.DENULTH,
     leash: 8,
     prefer: [
         'How goes your fight with the trolls?',
         'Is there anything I can do to help?',
-        "I'll get Godric back!",
-        'Do you have any quests for me?'
+        "I'll get Godric back!"
     ]
 };
 
-export const DUNSTAN: NpcStop = {
+export const DUNSTAN_FINISH: NpcStop = {
     npc: 'Dunstan',
-    anchor: DUNSTAN_TILE,
-    leash: 6,
-    prefer: []
+    anchor: TILE.DUNSTAN,
+    leash: 8,
+    prefer: ['Nothing, thanks.']
 };
 
-export const TENZING_BUY_BOOTS: NpcStop = {
+/**
+ * Tenzing's post-quest shop is a dialogue, not a shop interface, and it loops:
+ * after every purchase he asks "Was there anything else?" and re-offers the
+ * same five options. A plain preference list matches "Can I buy some Climbing
+ * boots?" again and buys until the pack is full, so the exit is driven off what
+ * he just said rather than off the options.
+ */
+export const TENZING_BOOTS: NpcStop = {
     npc: 'Tenzing',
-    anchor: TENZING_TILE,
+    anchor: TILE.TENZING,
     leash: 6,
-    prefer: ['Can I buy some Climbing boots?', 'OK, sounds good.']
+    prefer: ['Can I buy some Climbing boots?', 'OK, sounds good.', 'Nothing, thanks!']
 };
+
+export const TENZING_DONE_RULES = [
+    { whenLine: 'was there anything else', choose: 'Nothing, thanks!' }
+] as const;
