@@ -447,10 +447,10 @@ bun run smoke http://localhost:8888 user pass     # another engine, named accoun
 
 [`tools/e2e-smoke.ts`](../tools/e2e-smoke.ts) is the single harness that stands in
 for the whole client. It boots `bot.html`, logs in, asserts the adapter banner is
-empty and the tick counter is advancing, then starts `QuestDashboard` from the
-library and drives it through pause, resume and stop — checking that the overlay
-actually paints and that a paused script makes no progress. Screenshots land in
-`out/`, and any page error fails the run.
+empty and the tick counter is advancing, then starts a looping bundled script
+(`AIO Teleport`) from the library and drives it through pause, resume and stop —
+checking that the overlay actually paints and that a paused script makes no
+progress. Screenshots land in `out/`, and any page error fails the run.
 
 It does **not** deploy. Deploy first (`bun run b0t`, or
 [`tools/deploy-local.sh`](../tools/deploy-local.sh)) or it loads a stale client.

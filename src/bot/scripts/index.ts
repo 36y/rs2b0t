@@ -31,7 +31,6 @@ import CookBot, { SETTINGS as COOKBOT_SETTINGS } from './CookBot.js';
 import GatheringBot, { GATHERING_SETTINGS } from './GatheringBot.js';
 import Woodcutter, { WOODCUTTER_SETTINGS } from './Woodcutter.js';
 import { FORGETFUL_BANK_SETTING, TOOL_ACQUIRE_SETTING } from '../api/ToolAcquire.js';
-import QuestDashboard from '../quests/QuestDashboard.js';
 import AIOQuester, { AIO_SETTINGS } from './AIOQuester.js';
 import MossGiant, { SETTINGS as MOSSGIANT_SETTINGS } from './MossGiant.js';
 import GreenDragon, { SETTINGS as GREENDRAGON_SETTINGS } from './GreenDragon.js';
@@ -88,14 +87,6 @@ ScriptRegistry.register({
     tags: ['teleport', 'magic', 'banking', 'aio'],
     settingsSchema: AIOTELEPORT_SETTINGS,
     create: () => new AIOTeleport()
-});
-
-ScriptRegistry.register({
-    name: 'QuestDashboard',
-    description: 'Reports DONE/READY/BLOCKED eligibility for all quests',
-    category: 'Quest',
-    tags: ['quests', 'overlay', 'dashboard'],
-    create: () => new QuestDashboard()
 });
 
 ScriptRegistry.register({

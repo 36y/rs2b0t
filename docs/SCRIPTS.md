@@ -5,7 +5,7 @@
 
 # Bundled scripts
 
-The client ships **53 scripts** across 20 categories. They double as worked
+The client ships **52 scripts** across 20 categories. They double as worked
 examples of the [scripting API](API.md) — the source for each is under
 [`src/bot/scripts/`](../src/bot/scripts/).
 
@@ -26,7 +26,7 @@ Settings listed here are the parameters the panel exposes before you start a scr
 - [Money making](#money-making) — 2
 - [Navigation](#navigation) — 1
 - [Prayer](#prayer) — 1
-- [Quest](#quest) — 3
+- [Quest](#quest) — 2
 - [Runecrafting](#runecrafting) — 3
 - [Smithing](#smithing) — 2
 - [Thieving](#thieving) — 3
@@ -726,12 +726,6 @@ Tags: `quest`, `queue`, `aio`
 Alfred Grimhand's Barcrawl — banks for the drinks, gets the card from the outpost guard, tours all ten bars nearest-first and hands it back in (opens the Barbarian Outpost gate)
 
 Tags: `miniquest`, `barcrawl`, `barbarian outpost`, `gate`
-
-### QuestDashboard
-
-Reports DONE/READY/BLOCKED eligibility for all quests
-
-Tags: `quests`, `overlay`, `dashboard`
 
 ## Runecrafting
 

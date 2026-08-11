@@ -112,11 +112,13 @@ try {
     const runnerState = (): Promise<string> => page.evaluate(() => (globalThis as never as RunnerGlobal).rs2b0t.runner.state);
     const logLength = (): Promise<number> => page.evaluate(() => (globalThis as never as RunnerGlobal).rs2b0t.runner.ctx?.log.length ?? 0);
 
-    await startFromLibrary(page, 'Quest', 'QuestDashboard');
+    // Any looping script is fine — used to exercise start/pause/resume/stop + paint.
+    await startFromLibrary(page, 'Magic', 'AIO Teleport');
     await page.getByRole('button', { name: 'Start' }).click();
 
-    await page.waitForFunction(() => ((globalThis as never as { rs2b0t: { runner: { ctx: { log: { msg: string }[] } | null } } }).rs2b0t.runner.ctx?.log ?? []).filter(l => l.msg.toLowerCase().includes('quest')).length >= 2, undefined, { timeout: 20000 });
-    console.log('QuestDashboard: looping and logging');
+    await page.waitForFunction(() => (globalThis as never as RunnerGlobal).rs2b0t.runner.state === 'running', undefined, { timeout: 20000 });
+    await page.waitForFunction(() => ((globalThis as never as RunnerGlobal).rs2b0t.runner.ctx?.log.length ?? 0) >= 1, undefined, { timeout: 20000 });
+    console.log('AIO Teleport: looping and logging');
 
     await page.waitForFunction(
         () => {
@@ -130,8 +132,8 @@ try {
         },
         undefined,
         { timeout: 10000 }
-    ).catch(() => fail('overlay not painted while QuestDashboard running'));
-    console.log('QuestDashboard: overlay painted');
+    ).catch(() => fail('overlay not painted while AIO Teleport running'));
+    console.log('AIO Teleport: overlay painted');
 
     await page.screenshot({ path: 'out/e2e-smoke-runtime.png' });
 
@@ -147,21 +149,19 @@ try {
         () => (globalThis as never as RunnerGlobal).rs2b0t.runner.ctx?.loopCount ?? 0
     );
     if (loopsWhilePaused !== pausedLoops) fail('script looped while paused');
-    console.log('QuestDashboard: paused cleanly (no progress while paused)');
+    console.log('AIO Teleport: paused cleanly (no progress while paused)');
 
     await page.getByRole('button', { name: 'Resume' }).click();
-    // Prefer loopCount over log growth: dashboard only logs when eligibility changes
-    // (plus one forced pulse on resume), so log length is a flaky liveness signal.
     await page.waitForFunction(
         n => ((globalThis as never as RunnerGlobal).rs2b0t.runner.ctx?.loopCount ?? 0) > n,
         pausedLoops,
         { timeout: 15000 }
     );
-    console.log('QuestDashboard: resumed');
+    console.log('AIO Teleport: resumed');
 
     await page.getByRole('button', { name: 'Stop' }).click();
     await page.waitForFunction(() => (globalThis as never as { rs2b0t: { runner: { state: string } } }).rs2b0t.runner.state === 'stopped', undefined, { timeout: 10000 });
-    console.log('QuestDashboard: stopped cleanly');
+    console.log('AIO Teleport: stopped cleanly');
 
     await page.screenshot({ path: 'out/e2e-smoke.png' });
     console.log('screenshots: out/e2e-smoke.png, out/e2e-smoke-runtime.png');

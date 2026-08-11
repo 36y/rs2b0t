@@ -284,8 +284,7 @@ levels, prerequisite quests) and [`ItemChecker`](../src/bot/quests/ItemChecker.t
 (inventory and bank).
 
 Items are `mustHave` or `acquirable` — the difference between "you cannot start this"
-and "the bot will go and get it". `QuestDashboard` renders the result; `AIOQuester`
-consumes it to choose what to run.
+and "the bot will go and get it". `AIOQuester` consumes eligibility to choose what to run.
 
 ### Official reqs vs bot-proven floors (polish goal)
 

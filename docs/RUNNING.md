@@ -237,9 +237,9 @@ bun run smoke http://localhost:8888 user pass     # another engine, named accoun
 ```
 
 `bun run smoke` drives one browser through boot, login, and a full start / pause /
-resume / stop cycle of `QuestDashboard`, writing screenshots to `out/`. It does not
-deploy — deploy first, or it loads a stale client. Nine further per-subsystem
-harnesses live in `tools/` and are run individually. See
+resume / stop cycle of a bundled looping script (`AIO Teleport`), writing screenshots
+to `out/`. It does not deploy — deploy first, or it loads a stale client. Nine further
+per-subsystem harnesses live in `tools/` and are run individually. See
 [Testing](TESTING.md#the-end-to-end-smoke).
 
 ## Troubleshooting
