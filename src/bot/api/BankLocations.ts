@@ -84,7 +84,13 @@ export const BANK_LOCATIONS: BankLocation[] = [
     { name: 'Canifis', tile: new Tile(3512, 3480, 0), requires: { quest: 'Priest in Peril' } },
     { name: 'Shilo Village', tile: new Tile(2852, 2954, 0), requires: { quest: 'Shilo Village' } },
     { name: 'Fishing Guild', tile: new Tile(2586, 3420, 0), requires: { skill: { name: 'fishing', level: 68 } } },
-    { name: 'Shantay Pass', tile: new Tile(3309, 3120, 0) },
+    // Chest bank: Use the "Bank chest", then continue the chat until the bank opens.
+    // There is no Bank booth here — quest openBankLeg used to hardcode booths and loop forever.
+    {
+        name: 'Shantay Pass',
+        tile: new Tile(3309, 3120, 0),
+        access: { name: 'Bank chest', op: 'Use' }
+    },
     // Gundai's cellar, where magearena_ladder_to_cellar lands. Nothing to do with
     // Kolodion's arena teleport: you slash the two bigweb_slashable webs along
     // z=3957 and climb down at (3091,3958) — all three already baked as edges.

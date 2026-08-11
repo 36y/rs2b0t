@@ -210,3 +210,32 @@ test('Miner nearest-bank flow carries Duel Arena chest access through', async ()
     });
     expect(deposited).toBe(true);
 });
+
+test('Shantay Pass open uses Bank chest (not Bank booth)', async () => {
+    // Standing on the Shantay stand with no booth in scene — Tourist Trap buy-for-coins path.
+    (Locs as any).query = queryReturning([]);
+    (Game as any).tile = () => ({ x: 3308, z: 3120, level: 0 });
+    (Traversal as any).walkResilient = async () => true;
+    (Execution as any).delayTicks = async () => {};
+
+    let access: any = null;
+    (Bank as any).isOpen = () => false;
+    (Bank as any).openNearestAccess = async (value: any) => {
+        access = value;
+        return true;
+    };
+    (Bank as any).openBooth = async () => {
+        throw new Error('must not openBooth at Shantay');
+    };
+    (Bank as any).openNearest = async () => {
+        throw new Error('must not openNearest(Bank booth) at Shantay');
+    };
+
+    const result = await Banking.open({
+        stand: { x: 3309, z: 3120, level: 0 },
+        log: () => {}
+    });
+
+    expect(result).toBe(true);
+    expect(access).toEqual({ name: 'Bank chest', op: 'Use' });
+});

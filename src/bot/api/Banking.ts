@@ -248,6 +248,16 @@ export const Banking = {
             } else {
                 await Traversal.walkResilient(stand, { radius: 2, timeoutMs: 120_000, log });
             }
+            // Shantay / Duel Arena / Gundai: the known bank's access beats a generic booth name.
+            const known = nearestBank(stand);
+            if (
+                known
+                && (known.access || known.npcAccess)
+                && bankDistance(stand, known.tile) <= nearbyRadius
+            ) {
+                log(`bank: ${known.name} uses ${known.npcAccess ? 'npc' : 'object'} access`);
+                return openAccess(known, { name: boothName, op: boothOp }, log);
+            }
             return Bank.openBooth(stand, boothName, boothOp, log);
         }
 

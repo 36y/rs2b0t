@@ -8,6 +8,7 @@ import { Inventory } from '../../api/hud/Inventory.js';
 import { Modals } from '../../api/hud/Modals.js';
 import { Shop } from '../../api/hud/Shop.js';
 import { bankDistance, nearestBanks } from '../../api/BankLocations.js';
+import { Banking } from '../../api/Banking.js';
 import { Navigator } from '../../nav/Navigator.js';
 import { GroundItems } from '../../api/queries/GroundItems.js';
 import { Locs } from '../../api/queries/Locs.js';
@@ -16,9 +17,6 @@ import { Traversal } from '../../api/Traversal.js';
 import { QUEST_ROCK_TYPES, ROCK_TYPES } from '../../api/MiningRocks.js';
 import type { QuestStep } from '../engine/types.js';
 import { gotoNpc, talkThrough, type LadderHop } from './primitives.js';
-
-const BANK_NAME = 'Bank booth';
-const BANK_OP = 'Use-quickly';
 
 /** How deep into the straight-line shortlist to look before giving up. */
 const BANK_CANDIDATES = 6;
@@ -64,10 +62,9 @@ export async function openBankLeg(noBankMsg: string, override: Tile | undefined,
         log(noBankMsg);
         return false;
     }
-    if (!(await Traversal.walkResilient(bankTile, { radius: 3, attempts: 6, timeoutMs: 300_000, log }))) {
-        return false;
-    }
-    return Bank.openNearest(BANK_NAME, BANK_OP, log);
+    // Banking.open honours Shantay's Bank chest (+ continue) and other non-booth access.
+    // Hardcoding "Bank booth" / Use-quickly looped forever at Shantay during Tourist Trap buys.
+    return Banking.open({ stand: bankTile, log });
 }
 
 async function ensureAt(anchor: Tile, radius: number, log: (m: string) => void): Promise<boolean> {

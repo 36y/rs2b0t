@@ -55,7 +55,17 @@ test('Duel Arena opens its chest before using the bank action', () => {
         op: 'Bank',
         openFirst: { name: 'Closed chest', op: 'Open' }
     });
-    expect(BANK_LOCATIONS.filter(bank => bank.access).map(bank => bank.name)).toEqual(['Duel Arena']);
+});
+
+test('Shantay Pass banks via the Bank chest (Use then continue chat)', () => {
+    const shantay = BANK_LOCATIONS.find(b => b.name === 'Shantay Pass');
+    expect(shantay?.tile.x).toBe(3309);
+    expect(shantay?.tile.z).toBe(3120);
+    expect(shantay?.access).toEqual({ name: 'Bank chest', op: 'Use' });
+    expect(BANK_LOCATIONS.filter(bank => bank.access).map(bank => bank.name).sort()).toEqual([
+        'Duel Arena',
+        'Shantay Pass'
+    ]);
 });
 
 test('nearestBank returns the closest bank on the same level', () => {
