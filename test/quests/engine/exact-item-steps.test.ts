@@ -3,29 +3,27 @@
 import { afterEach, expect, test } from 'bun:test';
 
 import Tile from '#/bot/api/Tile.js';
-import { Traversal } from '#/bot/api/Traversal.js';
+import { Banking } from '#/bot/api/Banking.js';
 import { Bank } from '#/bot/api/hud/Bank.js';
 import { executeStep } from '#/bot/quests/exec/steps.js';
 
 const originals = {
-    bankOpenNearest: Bank.openNearest,
+    bankingOpen: Banking.open,
     bankWithdrawX: Bank.withdrawX,
     bankWithdrawXById: Bank.withdrawXById,
-    bankDepositAllMatching: Bank.depositAllMatching,
-    walkResilient: Traversal.walkResilient
+    bankDepositAllMatching: Bank.depositAllMatching
 };
 
 afterEach(() => {
-    (Bank as any).openNearest = originals.bankOpenNearest;
+    (Banking as any).open = originals.bankingOpen;
     (Bank as any).withdrawX = originals.bankWithdrawX;
     (Bank as any).withdrawXById = originals.bankWithdrawXById;
     (Bank as any).depositAllMatching = originals.bankDepositAllMatching;
-    (Traversal as any).walkResilient = originals.walkResilient;
 });
 
 function bankOpens(): void {
-    (Traversal as any).walkResilient = async () => true;
-    (Bank as any).openNearest = async () => true;
+    // openBankLeg uses Banking.open (Shantay chest + booths), not Bank.openNearest.
+    (Banking as any).open = async () => true;
 }
 
 test('withdraw steps route exact item specs through the ID-aware helper', async () => {
