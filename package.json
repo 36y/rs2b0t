@@ -25,7 +25,6 @@
         "gen:dropdb": "bun tools/combat/gen-dropdb.ts",
         "gen:itemdb": "bun tools/items/gen-itemdb.ts",
         "gen:scriptdocs": "bun tools/gen-scriptdocs.ts",
-        "verify:gather-locs": "bun tools/verify-gathering-locations.ts",
         "verify:gatheringbot": "bun tools/gatheringbot-test.ts",
         "verify:thievingbot": "bun tools/thievingbot-test.ts",
         "verify:coaltrucks": "bun tools/coaltrucks-test.ts",
