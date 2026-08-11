@@ -10,6 +10,7 @@ import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import { GLOBAL_SETTINGS_CORE, NAV_SETTINGS, SettingsStore } from '../runtime/Settings.js';
 import ScriptLibrary from './ScriptLibrary.js';
 import ParamsModal from './ParamsModal.js';
+import { LoadoutPanel } from './LoadoutPanel.js';
 import { isVisible, summarize } from './paramControls.js';
 import { el } from './dom.js';
 
@@ -36,6 +37,7 @@ export default class BotPanel {
     private unsubLog: (() => void) | null = null;
     private settingsBox: HTMLElement;
     private paramsModal!: ParamsModal;
+    private readonly loadoutPanel = new LoadoutPanel();
     private rendererControl?: RendererControl;
     private rendererToggle?: HTMLInputElement;
 
@@ -127,8 +129,15 @@ export default class BotPanel {
                     + 'understanding the effect can break scripts that assume those defaults.'
             })
         );
+        const loadoutBtn = document.createElement('button');
+        loadoutBtn.className = 'rs2b0t-button rs2b0t-param-edit';
+        loadoutBtn.textContent = 'Loadouts';
+        loadoutBtn.title = 'Gear and supplies you have declared, for scripts to wear.';
+        loadoutBtn.addEventListener('click', () => this.loadoutPanel.open());
+
         settingsBtns.appendChild(globalBtn);
         settingsBtns.appendChild(navBtn);
+        settingsBtns.appendChild(loadoutBtn);
         settings.appendChild(settingsBtns);
 
         root.appendChild(settings);
@@ -137,6 +146,7 @@ export default class BotPanel {
             () => isActiveState(ScriptRunner.state),
             () => this.renderSettings()
         );
+        document.body.appendChild(this.loadoutPanel.root);
         this.paramsModal.setGlobalExtra(this.buildCredentials());
 
         ScriptRegistry.onChange(() => {

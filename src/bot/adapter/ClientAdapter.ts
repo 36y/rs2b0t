@@ -1329,6 +1329,20 @@ export const reader = {
         }
 
         return out;
+    },
+
+    /**
+     * Raw item icon pixels, for the loadout picker. Deliberately not a canvas or
+     * a data URL: DOM belongs to src/bot/ui/, so the conversion lives there.
+     * Null whenever the cache is not loaded or the id has no sprite.
+     */
+    itemIconPixels(id: number): { width: number; height: number; data: Int32Array } | null {
+        try {
+            const sprite = ObjType.getSprite(id, 1, 0);
+            return sprite ? { width: sprite.wi, height: sprite.hi, data: sprite.data } : null;
+        } catch {
+            return null;
+        }
     }
 };
 

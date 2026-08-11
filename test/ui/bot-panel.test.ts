@@ -134,3 +134,21 @@ test('wall start and stop use the script selected in the bot panel', async () =>
     // a script that does not exist.
     ScriptRegistry.unregister(name);
 });
+
+test('the bot panel offers a Loadouts button that opens the panel', () => {
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+
+    const host = {
+        selfTestMissing: [],
+        addDrawListener: () => {}
+    } as unknown as BotHostImpl;
+
+    new BotPanel(root, host);
+
+    const btn = Array.from(root.querySelectorAll('button'))
+        .find(b => b.textContent === 'Loadouts') as HTMLButtonElement | undefined;
+    expect(btn).toBeDefined();
+    btn!.click();
+    expect(document.querySelector('[data-slot=righthand]')).not.toBeNull();
+});

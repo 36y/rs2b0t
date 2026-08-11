@@ -500,6 +500,21 @@ export const MAP_PICKER_SETTINGS: SettingsSchema = {
     }
 };
 
+/**
+ * Player-defined loadouts. Storage only — the Loadout panel owns editing, so
+ * this never appears in a settings modal.
+ */
+export const LOADOUT_SETTINGS_NS = 'Loadouts';
+
+export const LOADOUT_SETTINGS: SettingsSchema = {
+    sets: {
+        type: 'string',
+        default: '[]',
+        label: 'Loadouts',
+        help: 'JSON written by the Loadout panel'
+    }
+};
+
 const hasSession = typeof sessionStorage !== 'undefined';
 const hasLocal = typeof localStorage !== 'undefined';
 
