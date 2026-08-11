@@ -21,6 +21,7 @@ import { nextQuest, queueRows, type QueueRow } from './queue.js';
 import type { QuestModule, QuestProgress, QuestSnapshot, QuestStep } from './types.js';
 import { NO_PROGRESS_PARK, NO_PROGRESS_WARN, ProgressWatchdog, progressSignature } from './watchdog.js';
 import { FAIL_WARN, StepTracker, formatDuration, formatTile, invDelta } from './trace.js';
+import { GameMessages } from '../../events/gameMessages.js';
 import type AIOQuester from '../../scripts/AIOQuester.js';
 
 const PARK_GIVE_UP = 3;
@@ -172,10 +173,24 @@ export class QuestEngine implements Task {
         }
 
         if (this.host.consumeDeath() && this.runningId !== null) {
-            const dead = this.nameOf(this.runningId, elig);
+            const deadId = this.runningId;
+            const dead = this.nameOf(deadId, elig);
             this.host.log(`died during ${dead} — re-provisioning and resuming`);
-            this.provisioned.delete(this.runningId);
-            this.deposited.delete(this.runningId);
+            const chat = GameMessages.recent(10);
+            if (chat.length > 0) {
+                this.host.log(`  chat: ${chat.map(m => m.text).join(' | ')}`);
+            }
+            const deadModule = defById(deadId);
+            if (deadModule?.observe) {
+                const progress = await deadModule.readProgress?.();
+                const stage = progress ? progress.stage : await deadModule.readStage?.();
+                const deathSnap = this.buildSnapshot(deadModule, stage, progress);
+                for (const line of deadModule.observe(deathSnap, { kind: 'wait', reason: 'death' })) {
+                    this.host.log(`  ${line}`);
+                }
+            }
+            this.provisioned.delete(deadId);
+            this.deposited.delete(deadId);
             this.resetWatchdog();
             this.waitKey = '';
             this.waitCount = 0;
@@ -333,6 +348,11 @@ export class QuestEngine implements Task {
             this.host.log(`${verbose ? `[t${++this.tick}] ` : ''}${stepLine}${repeat} · ${context}`);
             this.lastStepLogged = stepLine;
             this.stepSubLog.clear();
+            if (module.observe) {
+                for (const line of module.observe(snap, step)) {
+                    this.host.log(`  ${line}`);
+                }
+            }
         }
 
         if (step.kind === 'wait') {
@@ -375,6 +395,11 @@ export class QuestEngine implements Task {
         if (announce || !ok) {
             const after = this.buildSnapshot(module, stage, progress);
             this.host.log(`  → ${ok ? 'ok' : 'FAILED'} in ${formatDuration(took)} · ${invDelta(snap.inv, after.inv)}`);
+            if (!ok && module.observe) {
+                for (const line of module.observe(after, step)) {
+                    this.host.log(`  ${line}`);
+                }
+            }
         }
 
         // The no-progress watchdog below only counts steps that *succeeded*, so a

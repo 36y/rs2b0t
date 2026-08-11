@@ -30,6 +30,14 @@ class GameMessagesImpl {
         return this.ring.some(m => m.seq > mark && pattern.test(m.text));
     }
 
+    /** Newest-first slice of the ring (for death / failure dumps). */
+    recent(limit = 8): GameMessage[] {
+        if (limit <= 0 || this.ring.length === 0) {
+            return [];
+        }
+        return this.ring.slice(-limit).reverse();
+    }
+
     reset(): void {
         this.ring = [];
         this.lastSeq = 0;

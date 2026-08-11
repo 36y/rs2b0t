@@ -111,5 +111,10 @@ export interface QuestModule {
      * Return null when the account looks fine.
      */
     warnReadiness?: () => string | null;
+    /**
+     * Extra log lines when this quest decides a step (or on death). Pilot for
+     * Tourist Trap observability — copy-pasteable context for stuck runs.
+     */
+    observe?: (snap: QuestSnapshot, step: QuestStep) => readonly string[];
     decide(snap: QuestSnapshot): QuestStep;
 }

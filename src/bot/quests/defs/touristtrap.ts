@@ -1789,6 +1789,51 @@ function remakePrototypeStep(snap: QuestSnapshot, needDart: boolean): QuestStep 
     return custom('forge the prototype dart tip', forgePrototypeTip);
 }
 
+function stepLabel(step: QuestStep): string {
+    switch (step.kind) {
+        case 'talk': return `talk ${step.stop.npc}`;
+        case 'buy': return `buy ${step.qty}× ${step.item} @ ${step.shop.npc}`;
+        case 'withdraw': return `withdraw ${step.items.map(i => `${i.name}×${i.qty}`).join(',')}`;
+        case 'deposit': return `deposit keep=${step.keep.join('|')}`;
+        case 'custom': return step.name;
+        case 'wait': return `wait:${step.reason}`;
+        case 'equip': return `equip ${step.item}`;
+        case 'scanBank': return 'scanBank';
+        case 'done': return 'done';
+        default: return step.kind;
+    }
+}
+
+/**
+ * Copy-pasteable context for stuck Tourist Trap runs (engine logs these via observe).
+ * Keep dense — operators paste the whole log into agents.
+ */
+export function observeTouristTrap(snap: QuestSnapshot, step: QuestStep): readonly string[] {
+    const area = touristTrapArea(snap.tile);
+    const tile = snap.tile ? `(${snap.tile.x},${snap.tile.z}${snap.tile.level ? `,L${snap.tile.level}` : ''})` : '(no tile)';
+    const skins = chargedWaterskins(snap);
+    const desertWorn = DESERT_OUTFIT.filter(n => worn(snap, n)).length;
+    const slaveOwned = SLAVE_OUTFIT.filter(n => ownedNow(snap, n) > 0).length;
+    const lines = [
+        `tt: stage=${snap.stage ?? '?'} journal=${snap.journal} area=${area} tile=${tile} free=${snap.freeSlots ?? '?'} bankKnown=${snap.bankKnown === true}`,
+        `tt: skins=${skins}/4 pass=${heldCount(snap, ITEM.PASS)} coins=${heldCount(snap, ITEM.COINS)} `
+            + `pick=${ownedNow(snap, ITEM.PICKAXE)} metalKey=${heldCount(snap, ITEM.METAL_KEY)} `
+            + `bedabinKey=${heldCount(snap, ITEM.BEDABIN_KEY)} pineapple=${heldCount(snap, ITEM.PINEAPPLE)} `
+            + `anaBarrel=${heldCount(snap, ITEM.ANA_BARREL)} barrel=${heldCount(snap, ITEM.BARREL)}`,
+        `tt: desertWorn=${desertWorn}/${DESERT_OUTFIT.length} slaveOwned=${slaveOwned}/${SLAVE_OUTFIT.length} `
+            + `kebabs=${heldCount(snap, ITEM.KEBAB)} plans=${heldCount(snap, ITEM.PLANS)} `
+            + `dartTip=${heldCount(snap, ITEM.DART_TIP)} dart=${heldCount(snap, ITEM.DART)}`,
+        `tt: decide→ ${stepLabel(step)}`
+    ];
+    if ((area === 'desert' || area === 'irena' || area === 'bedabin') && skins === 0) {
+        lines.push('tt: WARN 0 charged waterskins in the desert — thirst death risk');
+    }
+    if (step.kind === 'wait' && step.reason === 'death') {
+        lines.push('tt: death dump — next loop re-provisions (ownsInventory) then re-decides from journal');
+    }
+    return lines;
+}
+
 export function decide(snap: QuestSnapshot): QuestStep {
     if (snap.journal === 'complete' || (snap.stage ?? 0) >= TOURIST_TRAP_STAGE.COMPLETE) {
         return { kind: 'done' };
@@ -2027,5 +2072,6 @@ export const touristtrap: QuestModule = {
     tools: ['bronze pickaxe'],
     ownsInventory: true,
     readStage: readTouristTrapStage,
+    observe: observeTouristTrap,
     decide
 };

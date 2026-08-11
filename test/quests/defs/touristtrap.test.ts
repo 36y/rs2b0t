@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
     decide,
+    observeTouristTrap,
     parseTouristTrapJournal,
     runSurfaceRescueCheckpoint,
     strictTouristTrapChoice,
@@ -855,5 +856,39 @@ describe('Tourist Trap surface rescue orchestration', () => {
         const run = harness({ cart: [false, false, false], recapture: false });
         expect(await runSurfaceRescueCheckpoint(run.operations, run.log)).toBe(false);
         expect(run.logs).toContain('deep-mine recapture did not complete; current area=campSurface');
+    });
+});
+
+describe('Tourist Trap observe (logging pilot)', () => {
+    test('dumps stage, area, skins, and decide step', () => {
+        const s = snap({
+            stage: TOURIST_TRAP_STAGE.STARTED,
+            tile: CAPTAIN,
+            inv: [
+                ['Waterskin(4)', 2],
+                ['Shantay pass', 1],
+                ['Coins', 900]
+            ],
+            worn: [...DESERT_WORN]
+        });
+        const step = decide(s);
+        const lines = observeTouristTrap(s, step);
+        expect(lines.some(l => l.includes('stage=1'))).toBe(true);
+        expect(lines.some(l => l.includes('area=desert') || l.includes('area='))).toBe(true);
+        expect(lines.some(l => l.includes('skins=2/4'))).toBe(true);
+        expect(lines.some(l => l.startsWith('tt: decide→'))).toBe(true);
+        expect(lines.some(l => l.includes('WARN') && l.includes('waterskin'))).toBe(false);
+    });
+
+    test('warns when in desert with zero charged waterskins', () => {
+        const s = snap({
+            stage: TOURIST_TRAP_STAGE.STARTED,
+            tile: CAPTAIN,
+            inv: [['Coins', 100]],
+            worn: [...DESERT_WORN]
+        });
+        const lines = observeTouristTrap(s, { kind: 'wait', reason: 'death' });
+        expect(lines.some(l => l.includes('WARN') && l.includes('0 charged waterskins'))).toBe(true);
+        expect(lines.some(l => l.includes('death dump'))).toBe(true);
     });
 });

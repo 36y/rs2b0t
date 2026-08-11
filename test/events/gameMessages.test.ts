@@ -40,4 +40,12 @@ describe('GameMessages', () => {
         expect(CANT_REACH.test("I can't reach that!")).toBe(true);
         expect(CANT_REACH.test('You can reach that')).toBe(false);
     });
+
+    test('recent returns newest-first limited slice', () => {
+        GameMessages.record('a');
+        GameMessages.record('b');
+        GameMessages.record('c');
+        expect(GameMessages.recent(2).map(m => m.text)).toEqual(['c', 'b']);
+        expect(GameMessages.recent(10).map(m => m.text)).toEqual(['c', 'b', 'a']);
+    });
 });
