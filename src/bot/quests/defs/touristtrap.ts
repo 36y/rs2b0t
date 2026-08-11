@@ -173,7 +173,10 @@ const MINE_ENTRANCE = new Tile(3301, 3036, 0);
 // (3279, 9420) tile is visually plausible but belongs to a sealed collision component.
 const CAVE_GUARD = new Tile(3278, 9415, 0);
 const AL_SHABIM = new Tile(3171, 3025, 0);
-const BEDABIN_TENT = new Tile(3169, 3046, 0);
+// Interior tent tiles (e.g. 3169,3046) are a sealed collision component — walk
+// stops as "unreachable" from Shantay/Irena with best≈135. Approach one tile
+// south of the door, then Walk-through into the tent for the anvil.
+const BEDABIN_TENT_APPROACH = new Tile(3169, 3045, 0);
 const EXPERIMENTAL_ANVIL = new Tile(3171, 3048, 0);
 const CAMP_LADDER = new Tile(3290, 3036, 0);
 const SIAD_BOOKCASE = new Tile(3284, 3032, 1);
@@ -1098,17 +1101,23 @@ async function showPlansToAl(log: (m: string) => void): Promise<boolean> {
 }
 
 async function enterPrototypeTent(log: (m: string) => void): Promise<boolean> {
-    if (!(await walk(BEDABIN_TENT, 3, log))) return false;
+    if (!(await walk(BEDABIN_TENT_APPROACH, 3, log))) {
+        log('could not reach the Bedabin experimental tent approach (3169,3045)');
+        return false;
+    }
     const guard = Npcs.query().where(npc => npc.id === NPC.BEDABIN_GUARD).within(8).nearest();
     const plans = Inventory.first(ITEM.PLANS);
-    if (!guard || !plans || !(await plans.useOn(guard))) return false;
+    if (!guard || !plans || !(await plans.useOn(guard))) {
+        log('could not show the technical plans to the Bedabin guard at the tent');
+        return false;
+    }
     if (!(await drainInteractionDialog([], log))) return false;
     return Execution.delayUntil(() => touristTrapArea(Game.tile()) === 'bedabinTent', 8000);
 }
 
 async function exitPrototypeTent(log: (m: string) => void): Promise<boolean> {
     if (touristTrapArea(Game.tile()) !== 'bedabinTent') return true;
-    if (!(await interactLoc([LOC.BEDABIN_TENT_DOOR], 'Walk-through', BEDABIN_TENT, log))) return false;
+    if (!(await interactLoc([LOC.BEDABIN_TENT_DOOR], 'Walk-through', BEDABIN_TENT_APPROACH, log))) return false;
     return Execution.delayUntil(() => touristTrapArea(Game.tile()) === 'bedabin', 8000);
 }
 
