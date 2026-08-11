@@ -14,6 +14,75 @@ describe('AutoRelogin title-screen flag (#215)', () => {
         AutoRelogin.setAutoLogin(false);
         expect(AutoRelogin.isAutoLogin()).toBe(false);
     });
+
+    test('onAutoLoginChange notifies when the flag flips', () => {
+        const seen: boolean[] = [];
+        const off = AutoRelogin.onAutoLoginChange(on => seen.push(on));
+        AutoRelogin.setAutoLogin(true);
+        AutoRelogin.setAutoLogin(true); // no-op: same value
+        AutoRelogin.setAutoLogin(false);
+        off();
+        AutoRelogin.setAutoLogin(true); // unsubscribed
+        expect(seen).toEqual([true, false]);
+        AutoRelogin.setAutoLogin(false);
+    });
+
+    test('title screen does not auto-login when the checkbox is off and no script is running', () => {
+        const original = {
+            ingame: reader.ingame,
+            loginMessage: reader.loginMessage,
+            login: actions.login
+        };
+        let loginCalls = 0;
+        try {
+            reader.ingame = () => false;
+            reader.loginMessage = () => '';
+            actions.login = () => {
+                loginCalls++;
+                return true;
+            };
+            AutoRelogin.setCredentials('title-off-test', 'test');
+            AutoRelogin.setAutoLogin(false);
+            AutoRelogin.enable();
+            BotHost.onFrame();
+            BotHost.onFrame();
+            expect(loginCalls).toBe(0);
+        } finally {
+            AutoRelogin.setAutoLogin(false);
+            AutoRelogin.setCredentials('', '');
+            reader.ingame = original.ingame;
+            reader.loginMessage = original.loginMessage;
+            actions.login = original.login;
+        }
+    });
+
+    test('title screen auto-logins when the checkbox is on', () => {
+        const original = {
+            ingame: reader.ingame,
+            loginMessage: reader.loginMessage,
+            login: actions.login
+        };
+        let loginCalls = 0;
+        try {
+            reader.ingame = () => false;
+            reader.loginMessage = () => '';
+            actions.login = () => {
+                loginCalls++;
+                return true;
+            };
+            AutoRelogin.setCredentials('title-on-test', 'test');
+            AutoRelogin.setAutoLogin(true);
+            AutoRelogin.enable();
+            BotHost.onFrame();
+            expect(loginCalls).toBe(1);
+        } finally {
+            AutoRelogin.setAutoLogin(false);
+            AutoRelogin.setCredentials('', '');
+            reader.ingame = original.ingame;
+            reader.loginMessage = original.loginMessage;
+            actions.login = original.login;
+        }
+    });
 });
 
 describe('AutoRelogin multibox permit state', () => {

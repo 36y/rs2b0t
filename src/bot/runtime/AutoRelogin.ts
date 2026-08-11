@@ -16,6 +16,7 @@ const MAX_ATTEMPTS = 15;
 class AutoReloginImpl {
     private enabled = false;
     private autoLogin = false;
+    private autoLoginListeners = new Set<(on: boolean) => void>();
 
     private wasIngame = false;
     private reconnecting = false;
@@ -27,7 +28,10 @@ class AutoReloginImpl {
     private coordination: LoginCoordination | null = null;
 
     enable(autoLogin = false): void {
-        this.autoLogin = this.autoLogin || autoLogin;
+        // Notify UI even when already enabled — Multibox / URL may arm after the panel paints (#215).
+        if (autoLogin && !this.autoLogin) {
+            this.setAutoLogin(true);
+        }
         if (this.enabled) {
             return;
         }
@@ -36,22 +40,41 @@ class AutoReloginImpl {
     }
 
     setAutoLogin(on: boolean): void {
+        const was = this.autoLogin;
         this.autoLogin = on;
-        if (!on) {
-            // Title-screen checkbox off must stop in-flight reconnect attempts (#215).
-            // Script-active reconnect still uses scriptActive() separately.
-            this.reconnecting = false;
-            this.cancelQueuedLogin();
-            this.attempts = 0;
-            this.nextAttemptAt = 0;
-            this.rateLimitedAttempt = 0;
-            this.backoff.reset();
+        // Title checkbox off stops title-only reconnects. A running/paused script
+        // still reconnects via scriptActive() — do not clear that mid-flight (#215).
+        if (!on && !this.scriptActive()) {
+            this.clearReconnect();
+        }
+        if (was !== on) {
+            for (const cb of this.autoLoginListeners) {
+                cb(on);
+            }
         }
     }
 
     /** Whether title-screen auto-login is armed (UI should mirror this). */
     isAutoLogin(): boolean {
         return this.autoLogin;
+    }
+
+    /** Keep the Global checkbox in sync when Multibox / URL / console arms the flag. */
+    onAutoLoginChange(cb: (on: boolean) => void): () => void {
+        this.autoLoginListeners.add(cb);
+        return () => {
+            this.autoLoginListeners.delete(cb);
+        };
+    }
+
+    private clearReconnect(): void {
+        this.reconnecting = false;
+        this.wePaused = false;
+        this.cancelQueuedLogin();
+        this.attempts = 0;
+        this.nextAttemptAt = 0;
+        this.rateLimitedAttempt = 0;
+        this.backoff.reset();
     }
 
     /** Live FIFO position while waiting for the shared multibox login permit. */
@@ -139,7 +162,11 @@ class AutoReloginImpl {
         }
 
         const c = this.creds();
-        const wantLogin = c !== null && (this.autoLogin || this.scriptActive() || this.reconnecting);
+        // Title-screen auto-login is checkbox-only. A running/paused script still
+        // reconnects after a disconnect so unattended scripts survive a DC (#215).
+        // Mid-reconnect does NOT keep logging in after the script is stopped and
+        // the checkbox is off — that was "cannot turn off autologin" in Multibox.
+        const wantLogin = c !== null && (this.autoLogin || this.scriptActive());
 
         if (this.wasIngame) {
             this.wasIngame = false;
@@ -157,6 +184,9 @@ class AutoReloginImpl {
             this.reconnecting = true;
             this.attempts = 0;
             this.nextAttemptAt = performance.now();
+        } else if (this.reconnecting && !wantLogin) {
+            this.clearReconnect();
+            return;
         }
 
         if (!this.reconnecting || !c) {

@@ -63,12 +63,15 @@ describe('MultiBoxController', () => {
         expect(second.queueStatus()).toEqual({ position: 1, total: 1 });
     });
 
-    test('an explicit account (automation) injects creds before arming auto-login', () => {
+    test('an explicit account injects creds without forcing title auto-login (#215)', () => {
         const ops = new FakeOps();
         const c = new MultiBoxController(ops);
         const snap = c.add({ username: 'alice', password: 'x' });
         expect(snap?.username).toBe('alice');
-        expect(ops.handles[0].calls).toEqual(['loginCoordination', 'creds:alice', 'mode:focused', 'autoLogin:true']);
+        // Vault restore / automation loads creds; title auto-login stays off until
+        // the Global checkbox or ?autologin=1 arms it (scripts still reconnect).
+        expect(ops.handles[0].calls).toEqual(['loginCoordination', 'creds:alice', 'mode:focused']);
+        expect(ops.handles[0].calls).not.toContain('autoLogin:true');
     });
 
     test('a newly added bot becomes the focused one', () => {

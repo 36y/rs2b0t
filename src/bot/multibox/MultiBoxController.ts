@@ -44,8 +44,9 @@ export class MultiBoxController {
 
     // A bot is added empty — its login is typed into the bot's own panel, so there
     // is nothing to prompt for here. `account` is for automation and vault
-    // restores, which inject credentials and arm auto-login (creds must land
-    // before auto-login is armed).
+    // restores, which inject credentials only. Title-screen auto-login stays off
+    // unless the bot's Global checkbox (or ?autologin=1) arms it; a running
+    // script still reconnects on its own (#215).
     add(account?: Account): SlotSnapshot | null {
         const acct: Account = account ?? { username: `bot${this.nextId}`, password: '' };
         if (acct.username.length === 0) {
@@ -79,9 +80,6 @@ export class MultiBoxController {
             this.focusedId = slot.id;
         }
         this.applyModes();
-        if (account) {
-            handle.setAutoLogin(true);
-        }
         return this.snap(slot);
     }
 
