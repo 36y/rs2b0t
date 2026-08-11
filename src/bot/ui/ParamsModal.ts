@@ -118,7 +118,28 @@ export default class ParamsModal {
         if (this.scriptName === 'Global' && this.showGlobalExtra && this.globalExtra) {
             this.bodyEl.appendChild(this.globalExtra);
         }
-        const disabled = this.isActive();
+        // Script params lock while a script runs so mid-run schema changes do not
+        // desync the bot. Global / Nav (same storage ns) stay live — lamp skill,
+        // run, bank junk, path paint, etc. are meant to be tweakable mid-session.
+        const lockScriptParams = this.scriptName !== 'Global' && this.isActive();
+        const disabled = lockScriptParams;
+        if (lockScriptParams) {
+            const note = el('div', 'rs2b0t-param-intro');
+            Object.assign(note.style, {
+                margin: '0 0 10px',
+                padding: '8px 10px',
+                borderRadius: '4px',
+                border: '1px solid #664',
+                background: '#1a1810',
+                color: '#dbb',
+                fontSize: '12px',
+                lineHeight: '1.45'
+            });
+            note.textContent =
+                'Script is running — these parameters are locked. Stop the script to edit them. '
+                + 'Global settings (lamp skill, auto-login, …) stay editable while a script runs.';
+            this.bodyEl.appendChild(note);
+        }
         const deps = visibilityDeps(this.schema);
         const valueOf = (key: string): string => (this.schema[key] ? SettingsStore.displayString(this.scriptName, key, this.schema[key]) : '');
         const collapsed = this.collapsed.get(this.scriptName) ?? new Set<string>();

@@ -262,6 +262,9 @@ export default class BotPanel {
         edit.className = 'rs2b0t-button rs2b0t-param-edit';
         edit.textContent = '✎ Edit parameters';
         edit.disabled = active;
+        edit.title = active
+            ? 'Stop the script to edit its parameters. Global settings stay editable while it runs.'
+            : 'Open script parameters';
         edit.addEventListener('click', () => this.paramsModal.open(meta.name, schema));
         this.settingsBox.appendChild(edit);
     }

@@ -75,6 +75,38 @@ test('Escape closes the open modal and stops propagation (nested hosts)', () => 
     expect(outerSawEscape).toBe(false);
 });
 
+test('script params disable while active, with a lock banner', () => {
+    const modal = new ParamsModal(() => true, () => {});
+    modal.open('DemoLock', schema);
+    const intro = document.querySelector('.rs2b0t-param-intro');
+    expect(intro?.textContent ?? '').toContain('Script is running');
+    expect(intro?.textContent ?? '').toContain('Global settings');
+    const sel = document.querySelector('.rs2b0t-param-select') as HTMLSelectElement | null;
+    const range = document.querySelector('.rs2b0t-param-range') as HTMLInputElement | null;
+    expect(sel?.disabled ?? range?.disabled).toBe(true);
+    modal.close();
+});
+
+test('Global settings stay editable while a script is active', () => {
+    const globalSchema: SettingsSchema = {
+        lampSkill: {
+            type: 'string',
+            default: 'strength',
+            options: ['strength', 'mining', 'attack'],
+            label: 'Genie lamp skill'
+        }
+    };
+    const modal = new ParamsModal(() => true, () => {});
+    modal.open('Global', globalSchema, { title: 'Global settings' });
+    expect(document.querySelector('.rs2b0t-param-intro')).toBeNull();
+    const sel = document.querySelector('.rs2b0t-param-select') as HTMLSelectElement;
+    expect(sel.disabled).toBe(false);
+    sel.value = 'mining';
+    sel.dispatchEvent(new Event('change'));
+    expect(SettingsStore.saved('Global', 'lampSkill')).toBe('mining');
+    modal.close();
+});
+
 test('group headers collapse/expand and remember state across re-renders', () => {
     SettingsStore.save('Styled2', 'style', 'mage');
     const modal = new ParamsModal(() => false, () => {});

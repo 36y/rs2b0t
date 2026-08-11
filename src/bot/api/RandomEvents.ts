@@ -16,6 +16,7 @@ import { GroundItems } from './queries/GroundItems.js';
 import { MIME_SQUARE, performMimeStage } from './solvers/Mime.js';
 import { rubLamp, solveAllBoxes } from './solvers/StrangeBox.js';
 import { MAZE_SQUARE, solveMaze } from './maze/solveMaze.js';
+import { SettingsStore } from '../runtime/Settings.js';
 
 const DIALOG_EVENT_NPCS = ['genie', 'drunken dwarf', 'mysterious old man', 'sandwich lady', 'frog'];
 const PICK_EVENT_NPCS = ['strange plant'];
@@ -201,6 +202,11 @@ class RandomEventsImpl {
         this.lampSkill = skill;
     }
 
+    /** Live Global setting, with setLampSkill / default as fallback for tests. */
+    private resolveLampSkill(): string {
+        return SettingsStore.globalBag().str('lampSkill', this.lampSkill);
+    }
+
     private cooledDown(sig: string): boolean {
         const until = this.cooldownUntil.get(sig);
         return until !== undefined && performance.now() < until;
@@ -381,7 +387,8 @@ class RandomEventsImpl {
                 acted = await solveAllBoxes(log);
                 break;
             case 'lamp':
-                acted = await rubLamp(this.lampSkill, log);
+                // Read Global.lampSkill each time so mid-run changes apply without restart.
+                acted = await rubLamp(this.resolveLampSkill(), log);
                 break;
             default:
                 break;
