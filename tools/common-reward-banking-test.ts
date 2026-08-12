@@ -1,7 +1,8 @@
-import { boot, bringUpOffIsland, launchBrowser, login, startFromLibrary, type } from './lib/harness.js';
+import { boot, bringUpOffIsland, launchBrowser, login, positionalArgs, startFromLibrary, type } from './lib/harness.js';
 import type { Page } from 'playwright-core';
 
-const base = process.argv[2] ?? 'http://localhost:8890';
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8890');
+const base = args[0];
 const BANK_TELE = '::tele 0,41,51,31,22'; // East Ardougne bank stand (2655, 3286)
 
 function fail(message: string): never {

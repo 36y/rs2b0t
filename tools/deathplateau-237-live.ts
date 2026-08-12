@@ -4,13 +4,14 @@
  * Stages (death_equiproom): 0 start, 10 Eohric, 20 Harold duty, 40 ale, 50 gamble,
  *   55 IOU, 60 combo, 70 unlocked door. Map track uses flags + inventory.
  */
-import { launchBrowser } from './lib/harness.js';
+import { launchBrowser, positionalArgs } from './lib/harness.js';
 import { cheatQuiet, getServerVarQuiet, mainlandAccount, relog, startScript } from './tutorial/harness.js';
 
-const base = process.argv[2] ?? 'http://localhost:8890';
-const seedStage = Number(process.env.DEATH_STAGE ?? process.argv[3] ?? '55');
-const minutes = Number(process.env.MINUTES ?? process.argv[4] ?? '15');
-const user = process.argv[5] ?? `dp${Date.now().toString(36).slice(-6)}`;
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8890');
+const base = args[0];
+const seedStage = Number(process.env.DEATH_STAGE ?? args[1] ?? '55');
+const minutes = Number(process.env.MINUTES ?? args[2] ?? '15');
+const user = args[3] ?? `dp${Date.now().toString(36).slice(-6)}`;
 const target = Number(process.env.DEATH_TARGET ?? '80');
 
 const browser = await launchBrowser();

@@ -5,10 +5,11 @@
 // wait"). Teleport across regions and require a real, populated scene each time.
 //
 //   bun tools/scene-rebuild-test.ts [http://localhost:8888]
-import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login } from './lib/harness.js';
+import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, positionalArgs } from './lib/harness.js';
 
-const base = process.argv[2] ?? 'http://localhost:8888';
-const user = process.argv[3] ?? `scene${Date.now().toString(36).slice(-5)}`;
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8888');
+const base = args[0];
+const user = args[1] ?? `scene${Date.now().toString(36).slice(-5)}`;
 
 const STOPS = [
     { name: 'Varrock west bank', x: 3185, z: 3436 },

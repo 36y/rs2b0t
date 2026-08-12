@@ -4,11 +4,12 @@
 //
 //   bun tools/lostcity-spirit-eat-393-live.ts [http://localhost:8890]
 import { type Page } from 'playwright-core';
-import { launchBrowser } from './lib/harness.js';
+import { launchBrowser, positionalArgs } from './lib/harness.js';
 import { cheatQuiet, getServerVarQuiet, mainlandAccount, relog, startScript } from './tutorial/harness.js';
 
-const base = process.argv[2] ?? 'http://localhost:8890';
-const user = process.argv[3] ?? `lcs${Date.now().toString(36).slice(-6)}`;
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8890');
+const base = args[0];
+const user = args[1] ?? `lcs${Date.now().toString(36).slice(-6)}`;
 const FOOD_START = 20;
 // With eatBelow 0.5 and one spirit fight, burning more than half the load is a fail.
 const FOOD_MIN_LEFT = 10;

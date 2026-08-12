@@ -1,10 +1,11 @@
 // Live proof #374 — Miner at Fight Arena prefers nearest iron (not a far rock).
 //
 //   bun tools/fight-arena-iron-374-live.ts [http://localhost:8890]
-import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login } from './lib/harness.js';
+import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, positionalArgs } from './lib/harness.js';
 
-const base = process.argv[2] ?? 'http://localhost:8890';
-const user = process.argv[3] ?? `fa${Date.now().toString(36).slice(-6)}`;
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8890');
+const base = args[0];
+const user = args[1] ?? `fa${Date.now().toString(36).slice(-6)}`;
 const CAMP = { x: 2631, z: 3146 };
 
 interface Api {

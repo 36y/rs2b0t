@@ -3,10 +3,11 @@
 // Vials of water to come back from the fountain.
 //
 //   bun tools/vialfiller-test.ts [http://localhost:8888]
-import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login } from './lib/harness.js';
+import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, positionalArgs } from './lib/harness.js';
 
-const base = process.argv[2] ?? 'http://localhost:8888';
-const user = process.argv[3] ?? `vial${Date.now().toString(36).slice(-5)}`;
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8888');
+const base = args[0];
+const user = args[1] ?? `vial${Date.now().toString(36).slice(-5)}`;
 const BANK_STAND = { x: 2946, z: 3369 };
 const SEED_VIALS = 15;
 

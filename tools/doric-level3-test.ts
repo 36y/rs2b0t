@@ -13,12 +13,13 @@
 import { createHash } from 'node:crypto';
 import { chromium, type Browser, type Page } from 'playwright-core';
 
-import { startFromLibrary } from './lib/harness.js';
+import { positionalArgs, startFromLibrary } from './lib/harness.js';
 import { cheatQuiet, getServerVarQuiet, mainlandAccount, relog } from './tutorial/harness.js';
 
-const base = process.argv[2] ?? 'http://127.0.0.1:8990';
-const mode = process.argv[3] ?? 'all';
-const budgetMinutes = Number(process.argv[4]) || 40;
+const args = positionalArgs(process.argv.slice(2), 'http://127.0.0.1:8990');
+const base = args[0];
+const mode = args[1] ?? 'all';
+const budgetMinutes = Number(args[2]) || 40;
 const budgetMs = budgetMinutes * 60_000;
 const serverTickMs = 300;
 const proofPath = 'out/doric-level3-proof.json';

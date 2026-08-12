@@ -8,10 +8,11 @@
  * Seeds ore at the Al Kharid furnace, spawns macro_swarm, starts SmelterBot,
  * asserts a random-event intercept + swarm despawn + smelt progress.
  */
-import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, setSettings } from './lib/harness.js';
+import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, positionalArgs, setSettings } from './lib/harness.js';
 
-const base = process.argv[2] ?? 'http://localhost:8890';
-const user = process.argv[3] ?? `sm${Date.now().toString(36).slice(-6)}`;
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8890');
+const base = args[0];
+const user = args[1] ?? `sm${Date.now().toString(36).slice(-6)}`;
 
 const FURNACE = { x: 3275, z: 3185 };
 

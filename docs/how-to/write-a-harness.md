@@ -15,11 +15,16 @@ rs2b0t.registry   // the script registry
 rs2b0t.actions
 ```
 
+Read arguments through `parseArgs` or `positionalArgs`, never `process.argv[N]` directly.
+Why: `tools/e2e.ts` appends `--no-deploy` to every harness, so raw indexing reads a flag as
+the engine base and the harness dies before it reaches the engine.
+
 [`tools/lib/harness.ts`](../../tools/lib/harness.ts) holds the shared parts:
 
 | Helper | Job |
 |---|---|
-| `parseArgs(argv, defaults)` | `--base`, `--minutes`, positional rest |
+| `parseArgs(argv, defaults)` | `--base`, `--minutes`, positional rest (unknown flags dropped) |
+| `positionalArgs(argv, fallbackBase)` | flag-stripped positionals; index 0 is always the engine base |
 | `launchBrowser({ swiftshader })` | a configured Playwright browser |
 | `HARNESS_VIEWPORT` | preferred page size **1280×720** (Playwright default) |
 | `boot(page)` | wait until `client.constructor.loopCycle > 10` |

@@ -1,7 +1,8 @@
-import { launchBrowser, startFromLibrary } from './lib/harness.js';
+import { launchBrowser, positionalArgs, startFromLibrary } from './lib/harness.js';
 
-const base = process.argv[2] ?? 'http://localhost:8890';
-const username = process.argv[3] ?? `relog${Date.now().toString(36).slice(-7)}`;
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8890');
+const base = args[0];
+const username = args[1] ?? `relog${Date.now().toString(36).slice(-7)}`;
 
 function fail(msg: string): never {
     console.error(`FAIL: ${msg}`);

@@ -13,10 +13,11 @@
  *
  * Deploy first: `~/redeploy.sh` (needs botclient.js + collision.lcnav.gz on the engine).
  */
-import { launchBrowser, fail } from './lib/harness.js';
+import { fail, launchBrowser, positionalArgs } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';
 
-const base = process.argv[2] ?? 'http://localhost:8890';
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8890');
+const base = args[0];
 const proof = createHarnessProof({ issue: 443, slug: 'walkable-map-picker' });
 const browser = await launchBrowser({ swiftshader: true });
 const page = await browser.newPage();

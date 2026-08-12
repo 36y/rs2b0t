@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { parseArgs } from '../../tools/lib/harness.js';
+import { parseArgs, positionalArgs } from '../../tools/lib/harness.js';
 
 describe('parseArgs', () => {
     test('url-first: base URL then minutes', () => {
@@ -73,5 +73,64 @@ describe('parseArgs', () => {
 
     test('a wss:// url (contains ://) is treated as the base', () => {
         expect(parseArgs(['wss://w1.example.com/'])).toEqual({ base: 'wss://w1.example.com/', minutes: 0, rest: [] });
+    });
+
+    test('the runner\'s global flags never reach rest — rest is a scenario filter', () => {
+        expect(parseArgs(['--no-deploy'])).toEqual({ base: 'http://localhost:8890', minutes: 0, rest: [] });
+    });
+
+    test('a real filter survives alongside a global flag', () => {
+        expect(parseArgs(['--no-deploy', 'mine-bank'])).toEqual({
+            base: 'http://localhost:8890',
+            minutes: 0,
+            rest: ['mine-bank']
+        });
+    });
+});
+
+describe('positionalArgs', () => {
+    const FB = 'http://localhost:8890';
+
+    test('the runner case: a lone --no-deploy leaves the fallback base at index 0', () => {
+        expect(positionalArgs(['--no-deploy'], FB)).toEqual([FB]);
+    });
+
+    test('a positional base is kept at index 0', () => {
+        expect(positionalArgs(['http://localhost:8888', 'user1'], FB)).toEqual(['http://localhost:8888', 'user1']);
+    });
+
+    test('later positionals keep their index when the base is absent', () => {
+        expect(positionalArgs(['--no-deploy', 'user1', 'soak'], FB)).toEqual([FB, 'user1', 'soak']);
+    });
+
+    test('--base wins over the fallback and stays at index 0', () => {
+        expect(positionalArgs(['--base', 'http://localhost:9999', 'user1'], FB)).toEqual([
+            'http://localhost:9999',
+            'user1'
+        ]);
+    });
+
+    test('--base wins over a positional base too', () => {
+        expect(positionalArgs(['http://localhost:8888', '--base', 'http://localhost:9999'], FB)).toEqual([
+            'http://localhost:9999'
+        ]);
+    });
+
+    test('the value of a value-taking flag is not mistaken for a positional', () => {
+        expect(positionalArgs(['--minutes', '5', 'user1'], FB)).toEqual([FB, 'user1']);
+    });
+
+    test('short flags are stripped as well', () => {
+        expect(positionalArgs(['-v', 'user1'], FB)).toEqual([FB, 'user1']);
+    });
+
+    test('ordering is preserved across many positionals', () => {
+        expect(positionalArgs(['http://h:1', 'user1', 'a', 'b', 'c'], FB)).toEqual([
+            'http://h:1',
+            'user1',
+            'a',
+            'b',
+            'c'
+        ]);
     });
 });

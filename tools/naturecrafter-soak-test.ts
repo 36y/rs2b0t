@@ -4,13 +4,14 @@
 // Usage: bun tools/naturecrafter-soak-test.ts [base] [budget-min] [num-runners] [rune]
 
 import type { Page } from 'playwright-core';
-import { boot, bringUpOffIsland, fail, launchBrowser, login, type } from './lib/harness.js';
+import { boot, bringUpOffIsland, fail, launchBrowser, login, positionalArgs, type } from './lib/harness.js';
 import { cheatQuiet, startScript } from './tutorial/harness.js';
 
-const base = process.argv[2] || 'http://localhost:8890';
-const budgetMin = Number(process.argv[3]) || 60;
-const NUM_RUNNERS = Number(process.argv[4]) || 8;
-const RUNE = process.argv[5] || 'Air runes';
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8890');
+const base = args[0];
+const budgetMin = Number(args[1]) || 60;
+const NUM_RUNNERS = Number(args[2]) || 8;
+const RUNE = args[3] || 'Air runes';
 
 interface RuneRoute {
     talisman: string;

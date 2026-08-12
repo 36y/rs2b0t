@@ -4,9 +4,10 @@
 // and proves the whole tab state (list, order, membership, active) restores.
 //
 //   bun tools/multibox-tabs-test.ts [http://localhost:8888]
-import { fail, launchBrowser } from './lib/harness.js';
+import { fail, launchBrowser, positionalArgs } from './lib/harness.js';
 
-const base = process.argv[2] ?? 'http://localhost:8888';
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8888');
+const base = args[0];
 const tag = Date.now().toString(36).slice(-6);
 const users = [`tab${tag}a`, `tab${tag}b`, `tab${tag}c`] as const;
 const PASSPHRASE = 'tabs-e2e';

@@ -2,10 +2,11 @@
 // Seeds a real macro_cube and watches the always-on guardian try to solve it.
 //
 //   bun tools/strangebox-repro-live.ts [http://localhost:8888]
-import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login } from './lib/harness.js';
+import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, positionalArgs } from './lib/harness.js';
 
-const base = process.argv[2] ?? 'http://localhost:8888';
-const user = process.argv[3] ?? `sbx${Date.now().toString(36).slice(-5)}`;
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8888');
+const base = args[0];
+const user = args[1] ?? `sbx${Date.now().toString(36).slice(-5)}`;
 
 interface Api {
     __rs2b0t: {

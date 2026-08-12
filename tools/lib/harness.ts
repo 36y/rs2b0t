@@ -7,6 +7,34 @@ export function fail(msg: string): never {
     process.exit(1);
 }
 
+/** Flags that consume the argument after them. Their values are not positionals. */
+const VALUE_FLAGS = new Set(['--base', '--minutes', '--stage', '--engine']);
+
+/**
+ * Positional argv for harnesses that index their arguments.
+ *
+ * The e2e runner appends global flags (`--no-deploy`) to every harness, so raw
+ * `process.argv[2]` indexing reads a flag as the engine base. This strips flags
+ * and guarantees index 0 is the base — `--base` first, then a positional URL,
+ * then `fallbackBase` — so every later index keeps the argument it always had.
+ */
+export function positionalArgs(argv: string[], fallbackBase: string): string[] {
+    let flagBase: string | undefined;
+    const bare: string[] = [];
+    for (let i = 0; i < argv.length; i++) {
+        const a = argv[i];
+        if (VALUE_FLAGS.has(a)) {
+            if (a === '--base' && i + 1 < argv.length) flagBase = argv[i + 1];
+            i++;
+            continue;
+        }
+        if (a.startsWith('-')) continue;
+        bare.push(a);
+    }
+    const positionalBase = bare[0]?.includes('://') ? bare.shift() : undefined;
+    return [flagBase ?? positionalBase ?? fallbackBase, ...bare];
+}
+
 export function parseArgs(argv: string[], defaults?: { base?: string; minutes?: number }): { base: string; minutes: number; rest: string[] } {
     let base: string | undefined;
     let minutes: number | undefined;
@@ -18,6 +46,8 @@ export function parseArgs(argv: string[], defaults?: { base?: string; minutes?: 
         if (a.startsWith('http') || a.includes('://')) { base = a; continue; }
         const n = Number(a);
         if (a.trim() !== '' && Number.isFinite(n)) { minutes = n; continue; }
+        // rest is a scenario filter; the runner's global flags must never land in it
+        if (a.startsWith('-')) continue;
         rest.push(a);
     }
     return {

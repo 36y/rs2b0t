@@ -13,11 +13,12 @@
  * Proof: out/issue-randomevents-proof.json + screenshots/
  */
 import { mkdir } from 'node:fs/promises';
-import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login } from './lib/harness.js';
+import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, positionalArgs } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';
 
-const base = process.argv[2] ?? 'http://localhost:8890';
-const user = process.argv[3] ?? `re${Date.now().toString(36).slice(-6)}`;
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8890');
+const base = args[0];
+const user = args[1] ?? `re${Date.now().toString(36).slice(-6)}`;
 const proof = createHarnessProof({ issue: 0, slug: 'randomevents-swarm-maze' });
 
 interface Api {

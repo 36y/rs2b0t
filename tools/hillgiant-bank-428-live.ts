@@ -4,10 +4,11 @@
 //
 //   ENGINE_DIR=... sh tools/deploy-local.sh   # once
 //   bun tools/hillgiant-bank-428-live.ts [http://localhost:8890]
-import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, setSettings } from './lib/harness.js';
+import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, positionalArgs, setSettings } from './lib/harness.js';
 
-const base = process.argv[2] ?? 'http://localhost:8890';
-const user = process.argv[3] ?? `hgw${Date.now().toString(36).slice(-5)}`;
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8890');
+const base = args[0];
+const user = args[1] ?? `hgw${Date.now().toString(36).slice(-5)}`;
 
 const WEST = { x: 3185, z: 3440 };
 const EAST = { x: 3253, z: 3420 };

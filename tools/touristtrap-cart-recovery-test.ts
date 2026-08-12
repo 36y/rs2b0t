@@ -1,6 +1,6 @@
 import type { Page } from 'playwright-core';
 
-import { launchBrowser, startFromLibrary } from './lib/harness.js';
+import { launchBrowser, positionalArgs, startFromLibrary } from './lib/harness.js';
 import {
     cheatQuiet,
     getServerVarQuiet,
@@ -8,9 +8,10 @@ import {
     relog
 } from './tutorial/harness.js';
 
-const base = process.argv[2] ?? 'http://127.0.0.1:8950';
-const username = process.argv[3] ?? `ttc${Date.now().toString(36).slice(-7)}`;
-const budgetMinutes = Number(process.argv[4]) || 10;
+const args = positionalArgs(process.argv.slice(2), 'http://127.0.0.1:8950');
+const base = args[0];
+const username = args[1] ?? `ttc${Date.now().toString(36).slice(-7)}`;
+const budgetMinutes = Number(args[2]) || 10;
 const budgetMs = budgetMinutes * 60_000;
 
 const RESCUE_MASK = 0x1f000;

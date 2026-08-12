@@ -3,10 +3,11 @@
 // script, and asserts: pay/enter → tag at least one pillar → optional spike hop.
 //
 //   bun tools/brimhaven-agility-test.ts [http://localhost:8888]
-import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, setSettings } from './lib/harness.js';
+import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, positionalArgs, setSettings } from './lib/harness.js';
 
-const base = process.argv[2] ?? 'http://localhost:8888';
-const user = process.argv[3] ?? `bag${Date.now().toString(36).slice(-5)}`;
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8888');
+const base = args[0];
+const user = args[1] ?? `bag${Date.now().toString(36).slice(-5)}`;
 
 // Cap'n Izzy / ladder stand at Brimhaven arena entrance
 const ENTRANCE = { x: 2809, z: 3194 };

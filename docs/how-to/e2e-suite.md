@@ -43,15 +43,15 @@ without editing a list.
 | Piped or cron | the same line, printed every 30 seconds, so a log records progress without carriage returns |
 | `--verbose` / `-v` | every line the child emits, prefixed |
 
-Full child output always reaches `out/regress/logs/<harness>.log` regardless of mode.
+Full child output always reaches `out/e2e/logs/<harness>.log` regardless of mode.
 
 ## The report
 
-`out/regress/report.md`, with per-harness logs in `out/regress/logs/`.
+`out/e2e/report.md`, with per-harness logs in `out/e2e/logs/`.
 
 It leads with **newly broken since the baseline**, then newly fixed, then still broken.
 A suite where twelve things always fail tells you nothing; the diff against
-`out/regress/latest.json` is what identifies a regression.
+`out/e2e/latest.json` is what identifies a regression.
 
 The first run has no baseline, so everything failing appears under "failing, no baseline
 entry".

@@ -1,6 +1,6 @@
 import type { Page } from 'playwright-core';
 
-import { launchBrowser } from './lib/harness.js';
+import { launchBrowser, positionalArgs } from './lib/harness.js';
 import {
     cheatQuiet,
     getServerVarQuiet,
@@ -9,10 +9,11 @@ import {
     startScript
 } from './tutorial/harness.js';
 
-const base = process.argv[2] ?? 'http://localhost:9020';
-const mode = process.argv[3] ?? 'staged';
-const username = process.argv[4] ?? (mode === 'full' ? 'v148full' : 'v148stage');
-const budgetMinutes = Number(process.argv[5]) || (mode === 'full' ? 45 : 35);
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:9020');
+const base = args[0];
+const mode = args[1] ?? 'staged';
+const username = args[2] ?? (mode === 'full' ? 'v148full' : 'v148stage');
+const budgetMinutes = Number(args[3]) || (mode === 'full' ? 45 : 35);
 const budgetMs = budgetMinutes * 60_000;
 
 const START_LEVELS: Record<string, number> = {

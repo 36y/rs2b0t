@@ -17,13 +17,14 @@
 //
 // Usage: bun tools/firegiant-test.ts [base] [user] [budget-min] [style]
 
-import { launchBrowser } from './lib/harness.js';
+import { launchBrowser, positionalArgs } from './lib/harness.js';
 import { cheatQuiet, getServerVarQuiet, mainlandAccount, relog, startScript } from './tutorial/harness.js';
 
-const base = process.argv[2] || 'http://localhost:8890';
-const username = process.argv[3] || `fg${Date.now().toString(36).slice(-6)}`;
-const budgetMin = Number(process.argv[4]) || 40;
-const style = process.argv[5] || 'melee';
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8890');
+const base = args[0];
+const username = args[1] || `fg${Date.now().toString(36).slice(-6)}`;
+const budgetMin = Number(args[2]) || 40;
+const style = args[3] || 'melee';
 const BUDGET_MS = budgetMin * 60_000;
 
 function fail(msg: string): never { console.error(`FAIL: ${msg}`); process.exit(1); }

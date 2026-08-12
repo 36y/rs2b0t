@@ -10,10 +10,11 @@
  *   bun tools/aio-skip-quest-432-live.ts [http://127.0.0.1:8888]
  */
 import type { Page } from 'playwright-core';
-import { launchBrowser } from './lib/harness.js';
+import { launchBrowser, positionalArgs } from './lib/harness.js';
 import { cheatQuiet, mainlandAccount, startScript, teleTo } from './tutorial/harness.js';
 
-const base = process.argv[2] ?? 'http://127.0.0.1:8888';
+const args = positionalArgs(process.argv.slice(2), 'http://127.0.0.1:8888');
+const base = args[0];
 const username = `sk${Date.now().toString(36).slice(-7)}`;
 const BUDGET_MS = 8 * 60_000;
 

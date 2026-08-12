@@ -11,10 +11,11 @@
 //      flakes on the known nav-island destinations.
 //
 //   bun tools/greendragon-test.ts [http://localhost:8888]
-import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, setSettings } from './lib/harness.js';
+import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, positionalArgs, setSettings } from './lib/harness.js';
 import type { Page } from 'playwright-core';
 
-const base = process.argv[2] ?? 'http://localhost:8888';
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8888');
+const base = args[0];
 
 const ANCHOR = { x: 3096, z: 3814 };
 /**

@@ -16,6 +16,8 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { errorTail } from './lib/e2e-report.js';
+
 type Status = 'pass' | 'fail' | 'timeout' | 'skip';
 type Level = 'quick' | 'smart' | 'full';
 interface Result { name: string; kind: 'gate' | 'harness'; status: Status; ms: number; note: string; }
@@ -186,7 +188,7 @@ async function run(label: string, cmd: string[], logFile: string, budgetMs: numb
     const ms = Date.now() - started;
     const text = lines.join('\n');
     const timedOut = ms >= budgetMs - 1000;
-    const tail = lines.filter(l => l.trim()).slice(-3).join(' | ').slice(0, 240);
+    const tail = errorTail(lines);
     const status: Status = timedOut ? 'timeout' : verdict ? verdict(text) : code === 0 ? 'pass' : 'fail';
     return { status, ms, tail };
 }
@@ -226,8 +228,8 @@ function report(now: Run, before: Run | null): string {
         section('Newly fixed', newlyFixed, 'Nothing newly fixed.'),
         section('Still broken', stillBroken, 'Nothing carried over.'),
         section('Failing, no baseline entry', untracked, 'Nothing new and failing.'),
-        '## Everything\n\n| Item | Status | Time |\n|---|---|---|\n' +
-            now.results.map(r => `| ${ICON[r.status]} ${r.name} | ${r.status} | ${mins(r.ms)} |`).join('\n') + '\n',
+        '## Everything\n\n| Item | Status | Time | Last output |\n|---|---|---|---|\n' +
+            now.results.map(r => `| ${ICON[r.status]} ${r.name} | ${r.status} | ${mins(r.ms)} | ${r.note} |`).join('\n') + '\n',
         `Logs: \`${LOGS}/\`\n`
     ].join('\n');
 }
@@ -245,7 +247,7 @@ console.log(`e2e: level=${level} commit=${git}`);
 for (const { name, cmd, verdict } of OFFLINE_GATES) {
     const r = await run(name, cmd, join(LOGS, `${name.replace(/\W+/g, '-')}.log`), 20 * 60_000, verdict);
     now.results.push({ name, kind: 'gate', status: r.status, ms: r.ms, note: r.status === 'pass' ? '' : r.tail });
-    console.log(`  ${ICON[r.status]} ${name} (${mins(r.ms)})`);
+    console.log(`  ${ICON[r.status]} ${name} (${mins(r.ms)})${r.status === 'pass' ? '' : `\n      ${r.tail}`}`);
 }
 
 if (!has('gates-only')) {
@@ -266,7 +268,7 @@ if (!has('gates-only')) {
                 if (engine) cmd.push('--base', engine);
                 const r = await run(`[${i + 1}/${files.length}] ${file}`, cmd, join(LOGS, `${file}.log`), budget);
                 now.results.push({ name: file, kind: 'harness', status: r.status, ms: r.ms, note: r.status === 'pass' ? '' : r.tail });
-                console.log(`  ${ICON[r.status]} ${file} (${mins(r.ms)})`);
+                console.log(`  ${ICON[r.status]} ${file} (${mins(r.ms)})${r.status === 'pass' ? '' : `\n      ${r.tail}`}`);
             }
         } else {
             console.log('deploy failed — harnesses would test a stale bundle, so none were run');

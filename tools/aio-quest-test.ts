@@ -31,7 +31,7 @@
  * @see docs/reference/quest-eligibility.md#official-reqs-vs-bot-proven-floors-polish-goal
  */
 import type { Page } from 'playwright-core';
-import { launchBrowser } from './lib/harness.js';
+import { launchBrowser, positionalArgs } from './lib/harness.js';
 import {
     cheatQuiet,
     clearChatDialogs,
@@ -45,17 +45,18 @@ import {
 } from './tutorial/harness.js';
 import { QUESTS } from '../src/bot/quests/data/quests.js';
 
-const base = process.argv[2] || 'http://localhost:8890';
-const username = process.argv[3] || `aq${Date.now().toString(36).slice(-7)}`;
-const questsCsv = (process.argv[4] || 'runemysteries').trim();
-const budgetMin = Number(process.argv[5]) || 25;
-const giveCsv = (process.argv[6] || '').trim();
-const statsCsv = (process.argv[7] || '').trim();
-const foodSetting = (process.argv[8] || '').trim();
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8890');
+const base = args[0];
+const username = args[1] || `aq${Date.now().toString(36).slice(-7)}`;
+const questsCsv = (args[2] || 'runemysteries').trim();
+const budgetMin = Number(args[3]) || 25;
+const giveCsv = (args[4] || '').trim();
+const statsCsv = (args[5] || '').trim();
+const foodSetting = (args[6] || '').trim();
 /** Raw debugprocs (not ~maxme — use statsCsv=max). e.g. `speed 300`. */
-const cheatsCsv = (process.argv[9] || '').trim();
+const cheatsCsv = (args[7] || '').trim();
 /** World `x,z[,level]` or engine `level,mx,mz,lx,lz`. */
-const teleArg = (process.argv[10] || '').trim();
+const teleArg = (args[8] || '').trim();
 const BUDGET_MS = budgetMin * 60_000;
 
 function fail(msg: string): never { console.error(`FAIL: ${msg}`); process.exit(1); }

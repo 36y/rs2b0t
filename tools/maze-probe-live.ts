@@ -4,9 +4,10 @@
  * Content: mapzone 0_45_71, 16-door NW route ending chamber door 2910,4576,
  * then Touch Strange shrine 3634 → end_macro_maze.
  */
-import { boot, bringUpOffIsland, cheatQuiet, launchBrowser, login } from './lib/harness.js';
+import { boot, bringUpOffIsland, cheatQuiet, launchBrowser, login, positionalArgs } from './lib/harness.js';
 
-const base = process.argv[2] ?? 'http://localhost:8890';
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8890');
+const base = args[0];
 const user = `mz${Date.now().toString(36).slice(-5)}`;
 const browser = await launchBrowser({ swiftshader: true });
 const page = await browser.newPage();

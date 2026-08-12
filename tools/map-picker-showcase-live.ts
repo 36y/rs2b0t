@@ -14,9 +14,10 @@
  */
 import { mkdir } from 'node:fs/promises';
 import { writeFileSync } from 'node:fs';
-import { boot, fail, launchBrowser, login } from './lib/harness.js';
+import { boot, fail, launchBrowser, login, positionalArgs } from './lib/harness.js';
 
-const base = process.argv[2] ?? 'http://localhost:8890';
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8890');
+const base = args[0];
 const user = process.env.BOT_USER ?? `mpsh${Date.now().toString(36).slice(-5)}`;
 const pass = process.env.BOT_PASS ?? 'test';
 const shotDir = 'screenshots';

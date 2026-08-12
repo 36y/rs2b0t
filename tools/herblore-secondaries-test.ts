@@ -2,10 +2,11 @@
 // asserts the bot loots / buys / grinds at least one unit.
 //
 //   bun tools/herblore-secondaries-test.ts [http://localhost:8888] [secondary-name]
-import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, setSettings } from './lib/harness.js';
+import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, positionalArgs, setSettings } from './lib/harness.js';
 
-const base = process.argv[2] ?? 'http://localhost:8888';
-const only = process.argv[3]?.toLowerCase();
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8888');
+const base = args[0];
+const only = args[1]?.toLowerCase();
 
 type Case = {
     key: string;

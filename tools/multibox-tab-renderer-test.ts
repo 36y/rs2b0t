@@ -3,9 +3,10 @@
 // RenderGate frame counter, not a proxy for it.
 //
 //   bun tools/multibox-tab-renderer-test.ts [http://localhost:8888]
-import { fail, launchBrowser } from './lib/harness.js';
+import { fail, launchBrowser, positionalArgs } from './lib/harness.js';
 
-const base = process.argv[2] ?? 'http://localhost:8888';
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8888');
+const base = args[0];
 const tag = Date.now().toString(36).slice(-6);
 const users = [`rnd${tag}a`, `rnd${tag}b`] as const;
 const PASSPHRASE = 'renderer-e2e';

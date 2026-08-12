@@ -16,10 +16,11 @@
  *   tools/attach-live-proof-to-pr.sh --pr <n> --issue 0 --slug map-picker-basemap \
  *     --harness 'HEADED=0 bun tools/map-picker-basemap-live.ts http://localhost:8890'
  */
-import { boot, fail, launchBrowser, login } from './lib/harness.js';
+import { boot, fail, launchBrowser, login, positionalArgs } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';
 
-const base = process.argv[2] ?? 'http://localhost:8890';
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8890');
+const base = args[0];
 const user = process.env.BOT_USER ?? `mp${Date.now().toString(36).slice(-6)}`;
 const pass = process.env.BOT_PASS ?? 'test';
 const proof = createHarnessProof({ issue: 0, slug: 'map-picker-basemap' });

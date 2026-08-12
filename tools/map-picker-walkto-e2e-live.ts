@@ -19,18 +19,11 @@
  *   out/issue0-map-picker-walkto-e2e-proof.json
  *   screenshots/issue0-map-picker-walkto-e2e-success.png
  */
-import {
-    boot,
-    cheatQuiet,
-    fail,
-    launchBrowser,
-    login,
-    setSettings,
-    stopScript
-} from './lib/harness.js';
+import { boot, cheatQuiet, fail, launchBrowser, login, positionalArgs, setSettings, stopScript } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';
 
-const base = process.argv[2] ?? 'http://localhost:8890';
+const args = positionalArgs(process.argv.slice(2), 'http://localhost:8890');
+const base = args[0];
 const user = process.env.BOT_USER ?? `mp${Date.now().toString(36).slice(-6)}`;
 const pass = process.env.BOT_PASS ?? 'test';
 /** Stand near Varrock west bank area — walkable mainland. */
