@@ -1,4 +1,4 @@
-import { MiniMenuAction } from '#/client/MiniMenuAction.js';
+import { MiniMenuAction } from '#/client/shell/MiniMenuAction.js';
 import { actions, reader } from '../../../adapter/ClientAdapter.js';
 import { Execution } from '../../../api/execution/Execution.js';
 import { Game } from '../../../api/game/Game.js';

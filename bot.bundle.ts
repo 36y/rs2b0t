@@ -67,12 +67,12 @@ if (!fs.existsSync('out')) {
     fs.mkdirSync('out');
 }
 
-fs.copyFileSync('src/3rdparty/tinymidipcm/tinymidipcm.wasm', 'out/tinymidipcm.wasm');
+fs.copyFileSync('src/client/3rdparty/tinymidipcm/tinymidipcm.wasm', 'out/tinymidipcm.wasm');
 
 const entrypoints: [entry: string, output: string][] = [
     ['src/bot/main.ts', 'botclient.js'],
     ['src/bot/multibox/main.ts', 'multibox.js'],
-    ['src/io/OnDemandWorker.ts', 'ondemandworker.js'],
+    ['src/client/io/OnDemandWorker.ts', 'ondemandworker.js'],
     ['src/bot/nav/NavWorker.ts', 'navworker.js']
 ];
 

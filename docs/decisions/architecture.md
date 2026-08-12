@@ -21,7 +21,9 @@ src/bot/nav/         pathfinder and walker internals             │
 src/bot/data/        inert catalogs                              │
 src/bot/geometry/    Tile, Area, distance                       ─┘
 src/bot/adapter/     ClientAdapter — the ONLY place that names client internals
-src/client/ …        the vendored era browser client
+src/client/          the vendored era browser client
+src/client/shell/    Client, GameShell, and the rest of the former src/client/*.ts
+src/client/dash3d|io|config|graphics|mapview|sound|util|datastruct|wordfilter|3rdparty
 ```
 
 A module belongs in `api/` iff it is a facade over one game interface, one

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import { readSelectButtonLabelsByVarp } from '#/bot/adapter/ClientAdapter.js';
-import IfType, { ButtonType, ComponentType } from '#/config/IfType.js';
+import IfType, { ButtonType, ComponentType } from '#/client/config/IfType.js';
 
 const COM_MODE_VARP = 43;
 const originalInterfaces = IfType.list;

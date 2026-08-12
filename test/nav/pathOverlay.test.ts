@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { locHullHeight, resolveLocModelExtents } from '#/bot/adapter/ClientAdapter.js';
-import Model from '#/dash3d/Model.js';
-import ModelSource from '#/dash3d/ModelSource.js';
+import Model from '#/client/dash3d/Model.js';
+import ModelSource from '#/client/dash3d/ModelSource.js';
 import { PathPublish, formatHopLabel } from '#/bot/nav/pathPublish.js';
 import {
     GAME_VIEW_CLIP,

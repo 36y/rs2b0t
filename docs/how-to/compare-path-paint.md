@@ -68,7 +68,7 @@ All three harnesses take `PATH_PAINT_SCENE_EXPAND=0|1` and `PATH_PAINT_CLIENT_SE
 | Walk expand and segment publish | `src/bot/nav/WalkExecutor.ts` |
 | Scene paint and path line | `src/bot/nav/pathScenePaint.ts` |
 | Settings | `src/bot/runtime/Settings.ts` |
-| Client walk and path capture | `src/client/Client.ts` |
+| Client walk and path capture | `src/client/shell/Client.ts` |
 | Adapter world path | `src/bot/adapter/ClientAdapter.ts` |
 | Step flags, fallback BFS | `src/bot/nav/geometry/localReach.ts` |
 

@@ -1,5 +1,5 @@
 import Tile from '../geometry/Tile.js';
-import { WORLDMAP_KEY_NAMES } from '../../mapview/worldmapKeyNames.js';
+import { WORLDMAP_KEY_NAMES } from '../../client/mapview/worldmapKeyNames.js';
 import { boxKey } from './box.js';
 
 type SettingType = 'boolean' | 'number' | 'string' | 'string[]' | 'tile';

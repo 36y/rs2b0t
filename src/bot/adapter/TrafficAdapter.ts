@@ -1,6 +1,6 @@
-import type { TrafficTotals } from '#/io/TrafficMeter.js';
+import type { TrafficTotals } from '#/client/io/TrafficMeter.js';
 
-export type { TrafficTotals } from '#/io/TrafficMeter.js';
+export type { TrafficTotals } from '#/client/io/TrafficMeter.js';
 
 export type TrafficSnapshot =
     | { status: 'measuring' }

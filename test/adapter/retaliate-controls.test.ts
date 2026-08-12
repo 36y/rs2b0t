@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import { readRetaliateControls } from '#/bot/adapter/ClientAdapter.js';
-import IfType, { ButtonType, ComponentType } from '#/config/IfType.js';
+import IfType, { ButtonType, ComponentType } from '#/client/config/IfType.js';
 
 const originalInterfaces = IfType.list;
 

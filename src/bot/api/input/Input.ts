@@ -1,4 +1,4 @@
-import { MiniMenuAction } from '#/client/MiniMenuAction.js';
+import { MiniMenuAction } from '#/client/shell/MiniMenuAction.js';
 
 import { actions } from '../../adapter/ClientAdapter.js';
 

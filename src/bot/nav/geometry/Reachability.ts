@@ -2,7 +2,7 @@ import { reader, type WorldTile } from '../../adapter/ClientAdapter.js';
 import { canReachLocal, canStepLocal, type ReachOptions } from './localReach.js';
 import type { ArrivalProbe } from './arrival.js';
 import { chebyshev } from './followMath.js';
-import { CollisionFlag } from '#/dash3d/CollisionFlag.js';
+import { CollisionFlag } from '#/client/dash3d/CollisionFlag.js';
 
 const ARRIVAL_MAX_STEPS = 512;
 

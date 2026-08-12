@@ -3,7 +3,7 @@
  */
 
 // eslint-disable-next-line no-restricted-imports -- TODO: route through ClientAdapter
-import { Client } from '#/client/Client.js';
+import { Client } from '#/client/shell/Client.js';
 
 import { reader } from '../adapter/ClientAdapter.js';
 import { Equipment } from '../api/equipment/Equipment.js';

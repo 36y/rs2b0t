@@ -1,5 +1,5 @@
-import { BUILD_INFO, formatBuildInfo } from '../../config/buildInfo.js';
-import { installWorkerClockHub } from '../../util/WorkerClock.js';
+import { BUILD_INFO, formatBuildInfo } from '../runtime/buildInfo.js';
+import { installWorkerClockHub } from '../runtime/WorkerClock.js';
 import { installDiagnostics } from './installDiagnostics.js';
 import { TrafficCollector } from '../adapter/TrafficAdapter.js';
 import { DomSlotOps, orderedSlotElements } from './DomSlotOps.js';

@@ -1,5 +1,5 @@
-import ClientStream from '#/io/ClientStream.js';
-import Packet from '#/io/Packet.js';
+import ClientStream from '#/client/io/ClientStream.js';
+import Packet from '#/client/io/Packet.js';
 
 const host = process.argv[2] ?? 'localhost:8081';
 

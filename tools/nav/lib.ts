@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { unzipSync } from 'fflate';
 
-import { bunzip2 } from '#/io/BZip2.js';
+import { bunzip2 } from '#/client/io/BZip2.js';
 
 export class Reader {
     readonly data: Uint8Array;

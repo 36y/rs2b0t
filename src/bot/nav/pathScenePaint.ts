@@ -7,9 +7,9 @@
  */
 
 // eslint-disable-next-line no-restricted-imports -- TODO: route through ClientAdapter
-import type { Client } from '#/client/Client.js';
+import type { Client } from '#/client/shell/Client.js';
 // eslint-disable-next-line no-restricted-imports -- TODO: route through ClientAdapter
-import Pix2D from '#/graphics/Pix2D.js';
+import Pix2D from '#/client/graphics/Pix2D.js';
 
 import { reader } from '../adapter/ClientAdapter.js';
 import {

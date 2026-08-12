@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { ServerProt } from '#/io/ServerProt.js';
+import { ServerProt } from '#/client/io/ServerProt.js';
 import {
     anyDirty,
     applyDirty,

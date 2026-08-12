@@ -1,4 +1,4 @@
-import { CollisionFlag } from '#/dash3d/CollisionFlag.js';
+import { CollisionFlag } from '#/client/dash3d/CollisionFlag.js';
 
 export type FlagsAt = (lx: number, lz: number) => number | null;
 

@@ -246,10 +246,10 @@ async function bake(jagBytes: Uint8Array): Promise<BakeResult> {
 
     (globalThis as { __basemapJag?: Uint8Array }).__basemapJag = jagBytes;
 
-    const { MapView } = await import('#/mapview/MapView.js');
-    const JagFile = (await import('#/io/JagFile.js')).default;
-    const PixMap = (await import('#/graphics/PixMap.js')).default;
-    const { sleep } = await import('#/util/JsUtil.js');
+    const { MapView } = await import('#/client/mapview/MapView.js');
+    const JagFile = (await import('#/client/io/JagFile.js')).default;
+    const PixMap = (await import('#/client/graphics/PixMap.js')).default;
+    const { sleep } = await import('#/client/util/JsUtil.js');
 
     class BakeMapView extends MapView {
         override async run(): Promise<void> {
@@ -479,8 +479,8 @@ async function main(): Promise<void> {
 
 /** Export media `mapmarker` sprite (index 0 = classic pin) to a small RGBA PNG. */
 async function extractMapmarkerPng(mediaBytes: Uint8Array, spriteIndex: number): Promise<Uint8Array> {
-    const JagFile = (await import('#/io/JagFile.js')).default;
-    const Pix32 = (await import('#/graphics/Pix32.js')).default;
+    const JagFile = (await import('#/client/io/JagFile.js')).default;
+    const Pix32 = (await import('#/client/graphics/Pix32.js')).default;
     const jag = new JagFile(mediaBytes);
     const s = Pix32.depack(jag, 'mapmarker', spriteIndex);
     const w = s.owi;

@@ -1,10 +1,10 @@
 import { afterAll, afterEach, describe, expect, mock, test } from 'bun:test';
 
-mock.module('#3rdparty/audio.js', () => ({ playWave: async (): Promise<void> => {}, setWaveVolume: (): void => {} }));
-mock.module('#3rdparty/tinymidipcm.js', () => ({ playMidi: (): void => {}, setMidiVolume: (): void => {}, stopMidi: (): void => {} }));
+mock.module('#/client/3rdparty/audio.js', () => ({ playWave: async (): Promise<void> => {}, setWaveVolume: (): void => {} }));
+mock.module('#/client/3rdparty/tinymidipcm.js', () => ({ playMidi: (): void => {}, setMidiVolume: (): void => {}, stopMidi: (): void => {} }));
 
 const { attach, detach, invalidateLocSnapshots, reader } = await import('#/bot/adapter/ClientAdapter.js');
-const { default: LocType } = await import('#/config/LocType.js');
+const { default: LocType } = await import('#/client/config/LocType.js');
 
 // LocType reads the game config cache, which a unit test has no reason to load.
 LocType.list = ((id: number) => ({ name: `loc${id}`, op: ['Mine'] })) as unknown as typeof LocType.list;

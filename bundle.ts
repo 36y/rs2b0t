@@ -147,15 +147,15 @@ if (!fs.existsSync('out')) {
     fs.mkdirSync('out');
 }
 
-fs.copyFileSync('src/3rdparty/tinymidipcm/tinymidipcm.wasm', 'out/tinymidipcm.wasm');
+fs.copyFileSync('src/client/3rdparty/tinymidipcm/tinymidipcm.wasm', 'out/tinymidipcm.wasm');
 
 const args = process.argv.slice(2);
 const prod = args[0] !== 'dev';
 
 const entrypoints = [
-    'src/client/Client.ts',
-    'src/mapview/MapView.ts',
-    'src/io/OnDemandWorker.ts'
+    'src/client/shell/Client.ts',
+    'src/client/mapview/MapView.ts',
+    'src/client/io/OnDemandWorker.ts'
 ];
 
 for (const file of entrypoints) {

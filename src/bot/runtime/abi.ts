@@ -1,5 +1,5 @@
 // docs/decisions/architecture.md#the-abi-boundary
-import { BUILD_INFO } from '../../config/buildInfo.js';
+import { BUILD_INFO } from './buildInfo.js';
 import { reader } from '../adapter/ClientAdapter.js';
 import { PathPublish } from '../nav/pathPublish.js';
 import { isNavPathPaintEnabled } from '../nav/pathOverlay.js';

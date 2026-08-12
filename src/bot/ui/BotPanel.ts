@@ -1,4 +1,4 @@
-import { BUILD_INFO } from '../../config/buildInfo.js';
+import { BUILD_INFO } from '../runtime/buildInfo.js';
 import { reader } from '../adapter/ClientAdapter.js';
 import type { BotHostImpl } from '../runtime/BotHost.js';
 import { AutoRelogin } from '../runtime/AutoRelogin.js';

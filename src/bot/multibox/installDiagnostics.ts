@@ -6,7 +6,7 @@
 import { FreezeWatch } from '../runtime/diag/FreezeWatch.js';
 import { InputLatency, browserObserverFactory } from '../runtime/diag/InputLatency.js';
 import type { FrameSample } from '../runtime/diag/BotDiag.js';
-import { installWorkerClockHub } from '../../util/WorkerClock.js';
+import { installWorkerClockHub } from '../runtime/WorkerClock.js';
 import { DiagSampler } from './DiagSampler.js';
 
 /** The subset of a bot frame this needs; the wall owns the iframes. */

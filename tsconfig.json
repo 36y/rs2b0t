@@ -8,7 +8,6 @@
 
         "baseUrl": "src",
         "paths": {
-            "#3rdparty/*": ["3rdparty/*"],
             "#/*": ["*"]
         },
 

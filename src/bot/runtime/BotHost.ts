@@ -1,4 +1,4 @@
-import { ServerProt } from '#/io/ServerProt.js';
+import { ServerProt } from '#/client/io/ServerProt.js';
 
 import { attach as adapterAttach, invalidateLocSnapshots, reader, setPacketListener } from '../adapter/ClientAdapter.js';
 import { GameMessages } from '../api/chatbox/gameMessages.js';

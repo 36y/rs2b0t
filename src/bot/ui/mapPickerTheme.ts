@@ -3,7 +3,7 @@
  * Not part of Global settings.
  */
 import { parseHtmlColor, rgba } from '../nav/pathPaintTheme.js';
-import { WORLDMAP_KEY_NAMES } from '../../mapview/worldmapKeyNames.js';
+import { WORLDMAP_KEY_NAMES } from '../../client/mapview/worldmapKeyNames.js';
 import {
     MAP_PICKER_SETTINGS,
     MAP_PICKER_SETTINGS_NS,

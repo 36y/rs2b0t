@@ -4,9 +4,10 @@
  * Not called on picker open, not on a timer, not when settings change — only from
  * the Rebuild button path. Freezes the tab briefly while worldmap.jag decodes + paints.
  */
-import { sleep } from '#/util/JsUtil.js';
 // eslint-disable-next-line no-restricted-imports -- TODO: route through ClientAdapter
-import { canvas, canvas2d } from '#/graphics/Canvas.js';
+import { sleep } from '#/client/util/JsUtil.js';
+// eslint-disable-next-line no-restricted-imports -- TODO: route through ClientAdapter
+import { canvas, canvas2d } from '#/client/graphics/Canvas.js';
 import {
     BASEMAP_SCHEMA,
     DEFAULT_MAP_ORIGIN,
@@ -190,9 +191,9 @@ async function regenerateBasemapOnce(prefs: BasemapBakePrefs): Promise<Regenerat
         }
     }
 
-    const { MapView } = await import('#/mapview/MapView.js');
-    const JagFile = (await import('#/io/JagFile.js')).default;
-    const PixMap = (await import('#/graphics/PixMap.js')).default;
+    const { MapView } = await import('#/client/mapview/MapView.js');
+    const JagFile = (await import('#/client/io/JagFile.js')).default;
+    const PixMap = (await import('#/client/graphics/PixMap.js')).default;
 
     const prev = {
         labels: MapView.shouldDrawLabels,

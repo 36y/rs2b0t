@@ -21,7 +21,7 @@ bun test test/docs       # the manual's own integrity
 | [`test/runtime/`](../../test/runtime/) | scheduler, registry, settings, diagnostics |
 | [`test/tools/`](../../test/tools/) | tooling libraries, including doc links |
 | [`test/ui/`](../../test/ui/) | panel and overlay |
-| [`test/adapter/`](../../test/adapter/) · [`test/config/`](../../test/config/) · [`test/io/`](../../test/io/) · [`test/client/`](../../test/client/) · [`test/util/`](../../test/util/) · [`test/docs/`](../../test/docs/) | targeted |
+| [`test/adapter/`](../../test/adapter/) · [`test/client/`](../../test/client/) · [`test/docs/`](../../test/docs/) | targeted |
 
 ### Collision pack (nav)
 

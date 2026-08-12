@@ -22,7 +22,7 @@ import BotPanel from './ui/BotPanel.js';
 import Overlay from './ui/Overlay.js';
 import { installPaintInput } from './ui/PaintInput.js';
 import { paintState } from './api/paint/paintLogic.js';
-import { BUILD_INFO, formatBuildInfo } from '../config/buildInfo.js';
+import { BUILD_INFO, formatBuildInfo } from './runtime/buildInfo.js';
 import './scripts/index.js';
 
 export { BotClient, BotHost };

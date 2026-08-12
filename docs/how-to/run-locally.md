@@ -13,7 +13,7 @@ Production target is [rs2b2t](https://rs2b2t.com) only.
 |---|---|
 | [Bun](https://bun.sh) | builds and tests this repo |
 | Node 24+ | the engine runs on it, as do the Electron and Playwright harnesses |
-| `git submodule update --init` | `src/3rdparty/` holds the MIDI and bzip2 helpers |
+| `git submodule update --init` | `src/client/3rdparty/` holds the MIDI and bzip2 helpers |
 
 ## Get an engine
 

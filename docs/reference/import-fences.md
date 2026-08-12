@@ -6,8 +6,8 @@ Five fences in [`eslint.config.ts`](../../eslint.config.ts) declare the layering
 
 | Fence | Applies to | Allows |
 |---|---|---|
-| Client internals | `src/bot/**`, except `src/bot/adapter/**` and `src/bot/runtime/BotClient.ts` | the four protocol const-enums |
-| DOM | `src/bot/**`, except `src/bot/ui/`, `src/bot/main.ts`, and `src/bot/multibox/{DomSlotOps,ProfileChooser,TabBar,VaultPrompt,main}.ts` | — |
+| Client internals | `src/bot/**`, except `src/bot/adapter/**` and `src/bot/runtime/BotClient.ts` | the four protocol const-enums and `worldmapKeyNames` |
+| DOM | `src/bot/**`, except `src/bot/ui/`, `src/bot/main.ts`, `src/bot/multibox/{DomSlotOps,ProfileChooser,TabBar,VaultPrompt,main}.ts` and `src/bot/runtime/WorkerClock.ts` | — |
 | api leaf | `src/bot/api/**` | `runtime/{Settings,BotHost,Scheduler}` only — never script lifecycle |
 | data inert | `src/bot/data/**` | value imports from `geometry/` only; type-only imports anywhere |
 | abi surface | `src/bot/runtime/abi.ts` | `api/`, `data/`, `geometry/`, `nav/`, `adapter/`, and `runtime/{Settings,defineBot}` |
@@ -44,13 +44,24 @@ harness hooks, absent from `packages/rs2b0t-api/index.d.ts` and consumed only by
 `tools/merlin-mordred-353-live.ts`. A new quest import there still errors.
 
 Exempt from the client fence: the protocol const-enums `ServerProt`, `ClientProt`,
-`CollisionFlag` and `MiniMenuAction`. They are inlined at build time and carry no runtime
-coupling.
+`CollisionFlag` and `MiniMenuAction`, plus `mapview/worldmapKeyNames`. They are inlined
+at build time and carry no runtime coupling.
 
-Four imports carry a line-scoped `eslint-disable-next-line` with a TODO, in
-`nav/pathScenePaint.ts`, `nav/worldStateLive.ts` and `ui/basemapRegen.ts`. They predate
-the fence firing and need adapter accessors. The disables are per line rather than per
-file, so a new client import in those files still errors.
+Five imports carry a line-scoped `eslint-disable-next-line` with a TODO, in
+`nav/pathScenePaint.ts`, `nav/worldStateLive.ts` and `ui/basemapRegen.ts` (two). They
+predate the fence firing and need adapter accessors. The disables are per line rather
+than per file, so a new client import in those files still errors.
+
+## The client pattern is `#/client/*/*`, not `#/client/*`
+
+Gitignore semantics forbid re-including a file whose parent directory is excluded. Both
+`\#/client/*` and `\#/client/**` match the directory segment `#/client/io`, which makes
+`#/client/io/ServerProt.js` unreachable by any `!` negation — all four exemptions start
+erroring. `\#/client/*/*` matches files two levels deep and never the directory itself,
+so the negations survive.
+
+Why: a one-line prefix would otherwise be the obvious simplification, and it silently
+breaks every exemption rather than failing loudly.
 
 ## The fence was inert until 2026-08-11
 
@@ -75,7 +86,7 @@ while repealing another on the same files.
 
 | Fence | Probe |
 |---|---|
-| client internals | add `import { Client } from '#/client/Client.js';` to a file in each fenced tree |
+| client internals | add `import { sleep } from '#/client/util/JsUtil.js';` to a file in each fenced tree |
 | api leaf | add `import { ScriptRunner } from '../../runtime/ScriptRunner.js';` to `src/bot/api/game/Game.ts` |
 | data inert | add a value import of `api/skills/Skills.js` to any `src/bot/data/*.ts` |
 | abi surface | add `import { Supervisor } from './Supervisor.js';` to `src/bot/runtime/abi.ts` |

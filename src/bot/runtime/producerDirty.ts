@@ -6,7 +6,7 @@
  * cache of last snapshots and only re-diff a family after a relevant opcode
  * (or a login seed / safety resync).
  */
-import { ServerProt } from '#/io/ServerProt.js';
+import { ServerProt } from '#/client/io/ServerProt.js';
 
 type ProducerFamily = 'skills' | 'inventory' | 'varps' | 'chat';
 

@@ -1,10 +1,10 @@
-import type ClientNpc from '#/dash3d/ClientNpc.js';
-import type ClientObj from '#/dash3d/ClientObj.js';
-import type ClientPlayer from '#/dash3d/ClientPlayer.js';
-import type CollisionMap from '#/dash3d/CollisionMap.js';
-import type World from '#/dash3d/World.js';
-import type LinkList from '#/datastruct/LinkList.js';
-import type Packet from '#/io/Packet.js';
+import type ClientNpc from '#/client/dash3d/ClientNpc.js';
+import type ClientObj from '#/client/dash3d/ClientObj.js';
+import type ClientPlayer from '#/client/dash3d/ClientPlayer.js';
+import type CollisionMap from '#/client/dash3d/CollisionMap.js';
+import type World from '#/client/dash3d/World.js';
+import type LinkList from '#/client/datastruct/LinkList.js';
+import type Packet from '#/client/io/Packet.js';
 
 export interface RawClient {
     ingame: boolean;
