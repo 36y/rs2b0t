@@ -4,17 +4,17 @@ import {
     resolveRunAnchor,
     shouldWalkHomeToGatherAnchor,
     tileWithinLeash
-} from '../api/skilling/Anchor.js';
-import { TaskBot } from '../api/core/Bot.js';
-import { Execution } from '../api/core/Execution.js';
-import { Game } from '../api/core/Game.js';
-import Tile from '../api/core/Tile.js';
-import { Bank, withdrawOp } from '../api/hud/Bank.js';
-import { ChatDialog } from '../api/hud/ChatDialog.js';
-import { Equipment } from '../api/hud/Equipment.js';
-import { Inventory } from '../api/hud/Inventory.js';
-import { Paint } from '../api/hud/Paint.js';
-import { Skills } from '../api/hud/Skills.js';
+} from '../api/tasks/Anchor.js';
+import { TaskBot } from '../api/bot/Bot.js';
+import { Execution } from '../api/execution/Execution.js';
+import { Game } from '../api/game/Game.js';
+import Tile from '../geometry/Tile.js';
+import { Bank, withdrawOp } from '../api/bank/Bank.js';
+import { ChatDialog } from '../api/dialogue/ChatDialog.js';
+import { Equipment } from '../api/equipment/Equipment.js';
+import { Inventory } from '../api/inventory/Inventory.js';
+import { Paint } from '../api/paint/Paint.js';
+import { Skills } from '../api/skills/Skills.js';
 import {
     foodCount as countFood,
     foodForms,
@@ -22,21 +22,21 @@ import {
     isFoodItem
 } from '../api/combat/food.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
-import { Locs } from '../api/entities/Locs.js';
-import { Npcs } from '../api/entities/Npcs.js';
-import { Traversal } from '../nav/Traversal.js';
+import { Locs } from '../api/locs/Locs.js';
+import { Npcs } from '../api/npcs/Npcs.js';
+import { Traversal } from '../api/walking/Traversal.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import { cookSurfaceForFishCamp, resolveFishCampCookSurface } from '../api/skilling/CookingRanges.js';
-import { resolveFishingLocation, type FishingLocation } from '../api/skilling/FishingLocations.js';
-import { effectiveGatherLeash, isAutoLocation, NAMED_CAMP_LEASH_FLOOR } from '../api/skilling/GatherCamp.js';
+import { cookSurfaceForFishCamp, resolveFishCampCookSurface } from '../data/cookingRanges.js';
+import { resolveFishingLocation, type FishingLocation } from '../data/fishingLocations.js';
+import { effectiveGatherLeash, isAutoLocation, NAMED_CAMP_LEASH_FLOOR } from './GatherCamp.js';
 import {
     DEFAULT_CHASE_RADIUS,
     resolveCampRadius,
     resolveChaseRadius,
     type GatheringLocation
-} from '../api/skilling/GatheringLocations.js';
-import { Players } from '../api/entities/Players.js';
+} from '../data/gatheringLocations.js';
+import { Players } from '../api/players/Players.js';
 import {
     DEFAULT_TRADE_RANGE,
     muleCookerActive,
@@ -48,10 +48,10 @@ import {
     parsePartnerList,
     type MuleMode,
     MULE_MODE_OPTIONS
-} from '../api/mule/PartnerTrade.js';
-import { resolveMiningLocation } from '../api/skilling/MiningLocations.js';
-import { resolveWoodcuttingLocation } from '../api/skilling/WoodcuttingLocations.js';
-import { BROKEN_PICKAXE, ROCK_OPTIONS, resolveRockIds } from '../api/skilling/MiningRocks.js';
+} from '../api/trade/PartnerTrade.js';
+import { resolveMiningLocation } from '../data/miningLocations.js';
+import { resolveWoodcuttingLocation } from '../data/woodcuttingLocations.js';
+import { BROKEN_PICKAXE, ROCK_OPTIONS, resolveRockIds } from '../data/miningRocks.js';
 import {
     TINDERBOX,
     expandLocalFirePlot,
@@ -92,7 +92,7 @@ import {
     resolveFishMethod,
     spotMatchesMethod,
     type FishingMethod
-} from '../api/skilling/FishingMethods.js';
+} from '../data/fishingMethods.js';
 import {
     cookBatchAfterLoad,
     cookFilterLabel,
@@ -133,7 +133,7 @@ import {
     purgePackAtBank,
     waitBankReady,
     withdrawCoins
-} from '../api/banking/Banking.js';
+} from '../api/bank/Banking.js';
 import {
     fmtDuration,
     fmtXpGained as fmtXpGainedPaint,
@@ -142,7 +142,7 @@ import {
     paintClip,
     paintSkillShort,
     paintSkillTitle
-} from '../api/hud/paintLogic.js';
+} from '../api/paint/paintLogic.js';
 import { driveDialog } from '../quests/exec/primitives.js';
 import {
     AXE_BAR_FOR,
@@ -168,7 +168,7 @@ import {
     executeFishingGearShopCart as execFishingGearShopCart,
     executeToolAcquirePlan as execToolAcquirePlan,
     type ToolAcquireHost
-} from '../api/acquisition/ToolAcquireExec.js';
+} from './ToolAcquireExec.js';
 import {
     gatheringCombatPolicy,
     hostileAttackerNearby,
@@ -221,7 +221,7 @@ export {
     HOME_ARRIVE_RADIUS,
     shouldSoftHomeFromGatherMiss,
     shouldWalkHomeToGatherAnchor
-} from '../api/skilling/Anchor.js';
+} from '../api/tasks/Anchor.js';
 export {
     effectiveGatherLeash,
     gatherHuntRadius,
@@ -231,13 +231,13 @@ export {
     resourceWithinCamp,
     spotWithinGatherRange,
     START_TILE_LEASH_FLOOR
-} from '../api/skilling/GatherCamp.js';
-export { DEFAULT_CHASE_RADIUS } from '../api/skilling/GatheringLocations.js';
+} from './GatherCamp.js';
+export { DEFAULT_CHASE_RADIUS } from '../data/gatheringLocations.js';
 export {
     LOCAL_MINE_PREFER_RADIUS,
     pickNearestPreferLocal,
     shouldCooldownGatherTile
-} from '../api/skilling/TargetPick.js';
+} from './TargetPick.js';
 
 // Pure policy (also in GatheringBotLogic) — re-export for existing test/import paths.
 export {
@@ -1022,12 +1022,12 @@ export default class GatheringBot extends TaskBot {
         return walkToToolVendor(vendor, log);
     }
 
-    /** @see bankPace in api/banking/Banking */
+    /** @see bankPace in api/bank/Banking */
     async bankPace(log?: (m: string) => void): Promise<void> {
         return bankPace(log);
     }
 
-    /** @see waitBankReady in api/banking/Banking */
+    /** @see waitBankReady in api/bank/Banking */
     async waitBankReady(log: (m: string) => void = m => this.log(`  ${m}`)): Promise<boolean> {
         return waitBankReady(log);
     }

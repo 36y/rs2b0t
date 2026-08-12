@@ -4,10 +4,10 @@ mock.module('#3rdparty/audio.js', () => ({ playWave: async (): Promise<void> => 
 mock.module('#3rdparty/tinymidipcm.js', () => ({ playMidi: (): void => {}, setMidiVolume: (): void => {}, stopMidi: (): void => {} }));
 
 const { RandomEventGuardian } = await import('#/bot/runtime/RandomEventGuardian.js');
-const { RandomEvents } = await import('#/bot/api/randomevents/RandomEvents.js');
-const { Game } = await import('#/bot/api/core/Game.js');
+const { RandomEvents } = await import('#/bot/runtime/randomevents/RandomEvents.js');
+const { Game } = await import('#/bot/api/game/Game.js');
 const { BotHost } = await import('#/bot/runtime/BotHost.js');
-const { Execution } = await import('#/bot/api/core/Execution.js');
+const { Execution } = await import('#/bot/api/execution/Execution.js');
 const { Scheduler } = await import('#/bot/runtime/Scheduler.js');
 const { ScriptContext } = await import('#/bot/runtime/ScriptContext.js');
 const { ScriptRunner } = await import('#/bot/runtime/ScriptRunner.js');

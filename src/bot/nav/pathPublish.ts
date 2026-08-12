@@ -29,7 +29,7 @@ export interface PublishedPathTile {
     teleportId?: string;
 }
 
-export interface PublishedPath {
+interface PublishedPath {
     tiles: PublishedPathTile[];
     pathIdx: number;
     /** Optional next click target index for highlight. */

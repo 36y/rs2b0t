@@ -151,11 +151,3 @@ export function isBasemapManifest(v: unknown): v is BasemapManifest {
         typeof m.sizeTiles.h === 'number'
     );
 }
-
-export function isWorldmapKeyIndex(v: unknown): v is WorldmapKeyIndex {
-    if (!v || typeof v !== 'object') {
-        return false;
-    }
-    const k = v as WorldmapKeyIndex;
-    return Array.isArray(k.names) && k.placements != null && typeof k.placements === 'object';
-}

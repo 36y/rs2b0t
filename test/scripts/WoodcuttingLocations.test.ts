@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test';
-import { BANK_LOCATIONS } from '#/bot/api/banking/BankLocations.js';
-import Tile from '#/bot/api/core/Tile.js';
+import { BANK_LOCATIONS } from '#/bot/api/bank/BankLocations.js';
+import Tile from '#/bot/geometry/Tile.js';
 import {
     WOODCUTTING_LOCATIONS,
     WOODCUTTING_LOCATION_OPTIONS,
     resolveWoodcuttingLocation
-} from '#/bot/api/skilling/WoodcuttingLocations.js';
+} from '#/bot/data/woodcuttingLocations.js';
 
 const bankTiles = new Set(BANK_LOCATIONS.map(b => `${b.tile.x},${b.tile.z},${b.tile.level}`));
 

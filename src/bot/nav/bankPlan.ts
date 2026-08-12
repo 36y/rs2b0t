@@ -22,7 +22,7 @@ export interface MissingItem {
     count: number;
 }
 
-export interface BankPlanInput {
+interface BankPlanInput {
     /** Cost of walking direct with real inventory (no bank). */
     directCost: number;
     /** True if direct path already uses a teleport hop. */
@@ -35,7 +35,7 @@ export interface BankPlanInput {
     missing: MissingItem[];
 }
 
-export type BankPlan =
+type BankPlan =
     | { action: 'skip'; reason: string }
     | { action: 'bank'; missing: MissingItem[]; estimatedCost: number };
 

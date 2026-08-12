@@ -1,13 +1,13 @@
 import { actions, reader } from '../../adapter/ClientAdapter.js';
-import { Execution } from '../../api/core/Execution.js';
-import { Game } from '../../api/core/Game.js';
-import Tile from '../../api/core/Tile.js';
-import { Inventory } from '../../api/hud/Inventory.js';
-import { Quests } from '../../api/hud/Quests.js';
-import { GroundItems } from '../../api/entities/GroundItems.js';
-import { Locs } from '../../api/entities/Locs.js';
-import { Npcs } from '../../api/entities/Npcs.js';
-import { Traversal } from '../../nav/Traversal.js';
+import { Execution } from '../../api/execution/Execution.js';
+import { Game } from '../../api/game/Game.js';
+import Tile from '../../geometry/Tile.js';
+import { Inventory } from '../../api/inventory/Inventory.js';
+import { Quests } from '../../api/questlog/Quests.js';
+import { GroundItems } from '../../api/grounditems/GroundItems.js';
+import { Locs } from '../../api/locs/Locs.js';
+import { Npcs } from '../../api/npcs/Npcs.js';
+import { Traversal } from '../../api/walking/Traversal.js';
 import { DirectNavigator } from '../../nav/DirectNavigator.js';
 import { QUESTS } from '../data/quests.js';
 import type { QuestModule, QuestSnapshot, QuestStep } from '../engine/types.js';
@@ -37,7 +37,7 @@ export function parseDruidicRitualJournal(lines: readonly string[] | string): nu
     return undefined;
 }
 
-export async function readDruidicRitualStage(): Promise<number | undefined> {
+async function readDruidicRitualStage(): Promise<number | undefined> {
     const status = Quests.status('Druidic Ritual');
     if (status === 'complete') return DRUIDIC_RITUAL_STAGE.COMPLETE;
     if (status === 'notStarted') return DRUIDIC_RITUAL_STAGE.NOT_STARTED;
@@ -78,7 +78,7 @@ const CAULDRON_INSIDE = new Tile(2892, 9831, 0);
 const CAULDRON_ID = 2142;
 const SUIT_OF_ARMOUR_ID = 453;
 
-export const DRUIDIC_RITUAL_HOPS: LadderHop[] = [
+const DRUIDIC_RITUAL_HOPS: LadderHop[] = [
     {
         stand: DUNGEON_SURFACE,
         locName: 'Ladder',

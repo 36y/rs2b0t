@@ -1,24 +1,24 @@
-import { TaskBot, type Task } from '../api/core/Bot.js';
-import { Execution } from '../api/core/Execution.js';
-import { Game } from '../api/core/Game.js';
-import Tile from '../api/core/Tile.js';
-import { depositAllExcept } from '../api/banking/Banking.js';
-import { ChatDialog } from '../api/hud/ChatDialog.js';
-import { Inventory } from '../api/hud/Inventory.js';
-import { Bank } from '../api/hud/Bank.js';
-import { Paint } from '../api/hud/Paint.js';
-import { Trade } from '../api/hud/Trade.js';
+import { TaskBot, type Task } from '../api/bot/Bot.js';
+import { Execution } from '../api/execution/Execution.js';
+import { Game } from '../api/game/Game.js';
+import Tile from '../geometry/Tile.js';
+import { depositAllExcept } from '../api/bank/Banking.js';
+import { ChatDialog } from '../api/dialogue/ChatDialog.js';
+import { Inventory } from '../api/inventory/Inventory.js';
+import { Bank } from '../api/bank/Bank.js';
+import { Paint } from '../api/paint/Paint.js';
+import { Trade } from '../api/trade/Trade.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
-import { Locs, type Loc } from '../api/entities/Locs.js';
-import { Players } from '../api/entities/Players.js';
-import type { Player } from '../api/entities/index.js';
-import { Traversal } from '../nav/Traversal.js';
+import { Locs, type Loc } from '../api/locs/Locs.js';
+import { Players } from '../api/players/Players.js';
+import type { Player } from '../api/model/Player.js';
+import { Traversal } from '../api/walking/Traversal.js';
 import { Reachability } from '../nav/geometry/Reachability.js';
 import { walkOpening } from '../nav/walkOpening.js';
-import { EventSignal } from '../api/randomevents/EventSignal.js';
+import { EventSignal } from '../api/execution/EventSignal.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import { fmtDuration } from '../api/hud/paintLogic.js';
+import { fmtDuration } from '../api/paint/paintLogic.js';
 import {
     FLAX_FIELD, FLAX_GATE, SPINNING_WHEEL_AREA, BANK_ENTRANCE, BANK_STAND, LADDER_TILE,
     MEET_TILE, TRADE_RANGE, TRADE_REQUEST_COOLDOWN_MS, TRADE_FAIL_COOLDOWN_MS,
@@ -27,7 +27,7 @@ import {
     LOCAL_PICK_RADIUS, POCKET_CAP, CARVE_DROP,
     partnerNameMatches, flaxUnitsInOffer, spinnerNeedsClearPack, canReceiveFlaxOffer,
 } from './FlaxRunnerLogic.js';
-import { driveActivePartnerTrade } from '../api/mule/drivePartnerTrade.js';
+import { driveActivePartnerTrade } from './drivePartnerTrade.js';
 
 const LEASH = 8;
 const BOOTH = { op: 'Use-quickly' };

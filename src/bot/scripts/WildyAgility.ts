@@ -1,24 +1,24 @@
 import { foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
 import type { WorldTile } from '../adapter/ClientAdapter.js';
 import { actions, reader } from '../adapter/ClientAdapter.js';
-import { TaskBot, type Task } from '../api/core/Bot.js';
-import { Execution } from '../api/core/Execution.js';
-import { EventSignal } from '../api/randomevents/EventSignal.js';
-import { Game } from '../api/core/Game.js';
-import Tile from '../api/core/Tile.js';
-import { Traversal } from '../nav/Traversal.js';
+import { TaskBot, type Task } from '../api/bot/Bot.js';
+import { Execution } from '../api/execution/Execution.js';
+import { EventSignal } from '../api/execution/EventSignal.js';
+import { Game } from '../api/game/Game.js';
+import Tile from '../geometry/Tile.js';
+import { Traversal } from '../api/walking/Traversal.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
 import { DeathRecovery } from '../api/tasks/DeathRecovery.js';
-import { Bank } from '../api/hud/Bank.js';
-import { ChatDialog } from '../api/hud/ChatDialog.js';
-import { Inventory } from '../api/hud/Inventory.js';
-import { Paint } from '../api/hud/Paint.js';
+import { Bank } from '../api/bank/Bank.js';
+import { ChatDialog } from '../api/dialogue/ChatDialog.js';
+import { Inventory } from '../api/inventory/Inventory.js';
+import { Paint } from '../api/paint/Paint.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
-import { Skills } from '../api/hud/Skills.js';
-import { Locs, type Loc } from '../api/entities/Locs.js';
-import { CANT_REACH, GameMessages } from '../events/gameMessages.js';
+import { Skills } from '../api/skills/Skills.js';
+import { Locs, type Loc } from '../api/locs/Locs.js';
+import { CANT_REACH, GameMessages } from '../api/chatbox/gameMessages.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import { fmtDuration } from '../api/hud/paintLogic.js';
+import { fmtDuration } from '../api/paint/paintLogic.js';
 import {
     COURSE_CENTRE,
     COURSE_OBSTACLES,
@@ -47,8 +47,8 @@ import {
     southOfRidge,
     type RidgeOutcome
 } from './WildyAgilityLogic.js';
-import { scriptFood } from '../api/items/loadoutPlan.js';
-import { LOADOUT_SETTING } from '../api/items/loadoutSetting.js';
+import { scriptFood } from '../api/loadout/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../api/loadout/loadoutSetting.js';
 
 // Lowered because the default wait is 24 ticks and obstacle clears can take ~20.
 const LAP_RETRY_LIMIT = 2;

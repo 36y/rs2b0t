@@ -19,7 +19,7 @@ export interface DangerZoneRect {
     level?: number;
 }
 
-export interface KnownDangerZone {
+interface KnownDangerZone {
     id: string;
     label: string;
     rects: readonly DangerZoneRect[];
@@ -37,13 +37,13 @@ export interface KnownDangerZone {
     help?: string;
 }
 
-export interface DangerZoneEndpoint {
+interface DangerZoneEndpoint {
     x: number;
     z: number;
     level: number;
 }
 
-export interface DangerZoneResolveContext {
+interface DangerZoneResolveContext {
     /** Include catalog entries marked automatic. Off by default for backwards compatibility. */
     includeAutomatic?: boolean;
     /** Current player combat level. Unknown levels fail safe and keep conditional zones active. */

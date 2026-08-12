@@ -10,9 +10,9 @@ import type { FrameSample } from '../runtime/diag/BotDiag.js';
 import type { FreezeWatch } from '../runtime/diag/FreezeWatch.js';
 
 export const HOT_INTERVAL_MS = 1000;
-export const HOT_CAPACITY = 600; // 10 minutes
+const HOT_CAPACITY = 600; // 10 minutes
 export const COLD_INTERVAL_MS = 30_000;
-export const COLD_CAPACITY = 2880; // 24 hours
+const COLD_CAPACITY = 2880; // 24 hours
 
 const BOT_FIELDS = ['logicMs', 'drawMs', 'logicMaxMs', 'drawMaxMs', 'logicCount', 'drawCount', 'ingame'] as const;
 const WALL_FIELDS = ['botCount', 'stallMs', 'inputMaxMs', 'inputCount', 'freezeCount'] as const;
@@ -61,12 +61,12 @@ class Tier {
     }
 }
 
-export interface InputLatencySource {
+interface InputLatencySource {
     /** Worst input handler duration since the previous call, and how many landed. */
     drain(): { maxMs: number; count: number };
 }
 
-export interface DiagSamplerOptions {
+interface DiagSamplerOptions {
     collect: () => FrameSample[];
     freeze: FreezeWatch;
     input: InputLatencySource;

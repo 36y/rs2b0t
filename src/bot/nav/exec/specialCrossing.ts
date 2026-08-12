@@ -4,16 +4,16 @@
 
 import type { WorldTile } from '../../adapter/ClientAdapter.js';
 import { actions, reader } from '../../adapter/ClientAdapter.js';
-import { Banking, isDisposableGatherJunk } from '../../api/banking/Banking.js';
-import { Execution } from '../../api/core/Execution.js';
-import { Bank } from '../../api/hud/Bank.js';
-import { ChatDialog } from '../../api/hud/ChatDialog.js';
-import { Equipment } from '../../api/hud/Equipment.js';
-import { Inventory } from '../../api/hud/Inventory.js';
-import { Quests } from '../../api/hud/Quests.js';
-import { Skills } from '../../api/hud/Skills.js';
-import { Locs } from '../../api/entities/Locs.js';
-import { Npcs } from '../../api/entities/Npcs.js';
+import { Banking, isDisposableGatherJunk } from '../../api/bank/Banking.js';
+import { Execution } from '../../api/execution/Execution.js';
+import { Bank } from '../../api/bank/Bank.js';
+import { ChatDialog } from '../../api/dialogue/ChatDialog.js';
+import { Equipment } from '../../api/equipment/Equipment.js';
+import { Inventory } from '../../api/inventory/Inventory.js';
+import { Quests } from '../../api/questlog/Quests.js';
+import { Skills } from '../../api/skills/Skills.js';
+import { Locs } from '../../api/locs/Locs.js';
+import { Npcs } from '../../api/npcs/Npcs.js';
 import { Reachability } from '../geometry/Reachability.js';
 import {
     matchesUseItem,
@@ -43,7 +43,7 @@ export interface PathStepTile extends WorldTile {
     transport?: TransportInfo;
 }
 
-export type WalkToFn = (
+type WalkToFn = (
     dest: WorldTile,
     opts?: { radius?: number; timeoutMs?: number; log?: (msg: string) => void }
 ) => Promise<boolean>;

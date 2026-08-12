@@ -1,4 +1,4 @@
-import Tile from '../../../api/core/Tile.js';
+import Tile from '../../../geometry/Tile.js';
 import type { NpcStop } from '../../exec/primitives.js';
 
 /** Falador West — nearest era-correct bank to Burthorpe (no Burthorpe bank). */
@@ -88,13 +88,6 @@ export const DENULTH_START: NpcStop = {
     ]
 };
 
-export const DENULTH_CERT: NpcStop = {
-    npc: 'Denulth',
-    anchor: TILE.DENULTH,
-    leash: 8,
-    prefer: []
-};
-
 export const DENULTH_FINISH: NpcStop = {
     npc: 'Denulth',
     anchor: TILE.DENULTH,
@@ -121,20 +114,6 @@ export const HAROLD_DUTY: NpcStop = {
     anchor: TILE.HAROLD,
     leash: 5,
     prefer: ["You're the guard that was on duty last night?"]
-};
-
-export const HAROLD_DRINK: NpcStop = {
-    npc: 'Harold',
-    anchor: TILE.HAROLD,
-    leash: 5,
-    prefer: ['Can I buy you a drink?']
-};
-
-export const HAROLD_GAMBLE: NpcStop = {
-    npc: 'Harold',
-    anchor: TILE.HAROLD,
-    leash: 5,
-    prefer: ['Would you like to gamble?']
 };
 
 export const SABA_PATH: NpcStop = {
@@ -166,13 +145,6 @@ export const DUNSTAN_SPIKES: NpcStop = {
         'Tenzing has asked me to bring you his climbing boots',
         'Yes, but I still want them.'
     ]
-};
-
-export const DUNSTAN_CERT: NpcStop = {
-    npc: 'Dunstan',
-    anchor: TILE.DUNSTAN,
-    leash: 8,
-    prefer: []
 };
 
 /** death_dice root interface pack id. */

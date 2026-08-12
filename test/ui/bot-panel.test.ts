@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test } from 'bun:test';
-import { LoopingBot } from '#/bot/api/core/Bot.js';
+import { LoopingBot } from '#/bot/api/bot/Bot.js';
 import type { BotHostImpl } from '#/bot/runtime/BotHost.js';
 import { ScriptRegistry } from '#/bot/runtime/ScriptRegistry.js';
 import { ScriptRunner } from '#/bot/runtime/ScriptRunner.js';

@@ -8,8 +8,7 @@
  */
 
 import type { EssenceReturnId } from './essenceExit.js';
-import { ESSENCE_EXIT_RETURNS, essenceReturnIdFromTile } from './essenceExit.js';
-import type { NavPoint } from './types.js';
+import { essenceReturnIdFromTile } from './essenceExit.js';
 
 /** Map entry NPC / loc display names → return id. */
 const NPC_TO_RETURN: Readonly<Record<string, EssenceReturnId>> = {
@@ -21,9 +20,6 @@ const NPC_TO_RETURN: Readonly<Record<string, EssenceReturnId>> = {
     cromperty: 'cromperty',
     brimstail: 'brimstail'
 };
-
-/** Catalog debugName prefix → return id (ess_entry_aubury). */
-const ENTRY_DEBUG_RE = /^ess_entry_([a-z]+)/i;
 
 let sessionReturn: EssenceReturnId | undefined;
 /** Optional harness override (cheat-tele into mine without wizard). */
@@ -118,27 +114,3 @@ export const EssenceSession = {
         this.clear();
     }
 };
-
-/** Surface tile for a return id (content constants). */
-export function essenceSessionReturnTile(id: EssenceReturnId): NavPoint {
-    return ESSENCE_EXIT_RETURNS[id];
-}
-
-export function essenceReturnIdFromEntryDebugName(debugName: string | undefined): EssenceReturnId | null {
-    if (!debugName) {
-        return null;
-    }
-    const m = ENTRY_DEBUG_RE.exec(debugName);
-    if (!m) {
-        return null;
-    }
-    const key = m[1]!.toLowerCase();
-    if (key in ESSENCE_EXIT_RETURNS) {
-        return key as EssenceReturnId;
-    }
-    // distentor spelling in catalog
-    if (key === 'distentor') {
-        return 'distentor';
-    }
-    return null;
-}

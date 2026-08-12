@@ -1,20 +1,20 @@
-import { TaskBot, type Task } from '../api/core/Bot.js';
-import { Execution } from '../api/core/Execution.js';
-import { Game } from '../api/core/Game.js';
-import Tile from '../api/core/Tile.js';
-import { ChatDialog } from '../api/hud/ChatDialog.js';
-import { Inventory } from '../api/hud/Inventory.js';
-import { Bank } from '../api/hud/Bank.js';
-import { Paint } from '../api/hud/Paint.js';
+import { TaskBot, type Task } from '../api/bot/Bot.js';
+import { Execution } from '../api/execution/Execution.js';
+import { Game } from '../api/game/Game.js';
+import Tile from '../geometry/Tile.js';
+import { ChatDialog } from '../api/dialogue/ChatDialog.js';
+import { Inventory } from '../api/inventory/Inventory.js';
+import { Bank } from '../api/bank/Bank.js';
+import { Paint } from '../api/paint/Paint.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
-import { Locs, type Loc } from '../api/entities/Locs.js';
-import { Traversal } from '../nav/Traversal.js';
+import { Locs, type Loc } from '../api/locs/Locs.js';
+import { Traversal } from '../api/walking/Traversal.js';
 import { Reachability } from '../nav/geometry/Reachability.js';
-import { EventSignal } from '../api/randomevents/EventSignal.js';
+import { EventSignal } from '../api/execution/EventSignal.js';
 import { actions, reader } from '../adapter/ClientAdapter.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import { fmtDuration } from '../api/hud/paintLogic.js';
+import { fmtDuration } from '../api/paint/paintLogic.js';
 
 const DEFAULT_FIELD = new Tile(2741, 3444, 0);      // centre of the flax field
 const DEFAULT_FIELD_GATE = new Tile(2736, 3443, 0); // the opening on the west side

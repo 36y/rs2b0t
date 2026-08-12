@@ -12,7 +12,7 @@ export const TRAIL_FOOD_CAP = 10;
 /** Sextant + watch + chart, fetched after banking when the bank had none. */
 export const COORD_TOOL_SLOTS = 3;
 
-export interface TrailFoodBudget {
+interface TrailFoodBudget {
     /** What the host would take for its own grind. */
     hostWant: number;
     heldFood: number;

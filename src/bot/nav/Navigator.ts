@@ -4,7 +4,7 @@ import type { WorldStateData } from './worldStateData.js';
 
 export type PathResult = PathOutcome & { elapsedMs?: number };
 
-export type FindPathOpts = {
+type FindPathOpts = {
     avoidDoors?: { x: number; z: number }[];
     timeoutMs?: number;
     maxExpansions?: number;

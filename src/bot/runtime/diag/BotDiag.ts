@@ -24,11 +24,11 @@ export interface FrameSample {
 }
 
 /** Reads live client state without importing Client, which would be a cycle. */
-export interface DiagClientView {
+interface DiagClientView {
     ingame: boolean;
 }
 
-export class BotDiagnostics {
+class BotDiagnostics {
     readonly timer: PhaseTimer;
     private view: DiagClientView | null = null;
 

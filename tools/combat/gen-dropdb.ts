@@ -3,7 +3,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 const CONTENT = process.env.CONTENT_DIR ?? join(homedir(), 'code', 'rs2b2t-content');
-const OUT = 'src/bot/api/combat/data/dropdb.ts';
+const OUT = 'src/bot/data/dropdb.ts';
 const DROP_DIR = join(CONTENT, 'scripts', 'drop tables', 'scripts');
 
 function filesUnder(root: string, ext: string): string[] {

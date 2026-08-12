@@ -2,7 +2,7 @@ import { settingOptionLabel, type SettingDef, type SettingsSchema } from '../run
 import { el } from './dom.js';
 import { WorldMapPicker } from './WorldMapPicker';
 
-export interface SettingGroup {
+interface SettingGroup {
     name: string;
     keys: string[];
 }

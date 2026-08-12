@@ -10,7 +10,7 @@
  * single hit could kill, both eat immediately. A missed attack is cheap; a
  * missed meal is a death.
  */
-export interface EatTimingInput {
+interface EatTimingInput {
     /** True only on the tick the attack animation began. */
     attackedThisTick: boolean;
     /** 0–1. */

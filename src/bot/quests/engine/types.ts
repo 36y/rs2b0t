@@ -1,6 +1,6 @@
-import type Tile from '../../api/core/Tile.js';
+import type Tile from '../../geometry/Tile.js';
 import type { WorldTile } from '../../adapter/ClientAdapter.js';
-import type { QuestStatus } from '#/bot/api/hud/Quests.js';
+import type { QuestStatus } from '#/bot/api/questlog/Quests.js';
 import type { QuestRecord } from '../types.js';
 import type { NpcStop, LadderHop } from '../exec/primitives.js';
 

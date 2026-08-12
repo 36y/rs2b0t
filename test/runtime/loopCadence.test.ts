@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { resolveLoopCadence } from '#/bot/api/core/Bot.js';
+import { resolveLoopCadence } from '#/bot/api/bot/Bot.js';
 
 describe('resolveLoopCadence', () => {
     test('0 → frame', () => {

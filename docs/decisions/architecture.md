@@ -13,14 +13,21 @@ would have produced.
 ## Layers
 
 ```
-src/bot/scripts/     the bots themselves            ─┐
-src/bot/api/         core, entities, hud, movement, …  │  bot code
-src/bot/nav|quests|  subsystems                      │
-    clues|shops                                      │
-src/bot/runtime/     script lifecycle, ABI, settings ─┘
+src/bot/scripts/     the bots themselves                        ─┐
+src/bot/quests|clues subsystems                                  │
+src/bot/runtime/     script lifecycle, ABI, settings, solvers    │  bot code
+src/bot/api/         one directory per game-facing noun          │
+src/bot/nav/         pathfinder and walker internals             │
+src/bot/data/        inert catalogs                              │
+src/bot/geometry/    Tile, Area, distance                       ─┘
 src/bot/adapter/     ClientAdapter — the ONLY place that names client internals
 src/client/ …        the vendored era browser client
 ```
+
+A module belongs in `api/` iff it is a facade over one game interface, one
+entity collection, or one reusable script behaviour. One directory per noun,
+sized to what that noun needs; single-file directories are expected. Not
+catalogs, not solvers, not engines, not sole-consumer helpers.
 
 [`src/bot/adapter/ClientAdapter.ts`](../../src/bot/adapter/ClientAdapter.ts) is the whole
 boundary, and it has exactly two halves:
@@ -40,10 +47,8 @@ A script calls `npc.interact('Attack')`. What happens:
 
 1. The entity wrapper resolves `'Attack'` to an **op number** by reading the client's
    own op list for that entity — the same strings the right-click menu shows.
-2. It calls [`ActionRouter.driver`](../../src/bot/input/ActionRouter.ts), which is a
-   [`DirectInputDriver`](../../src/bot/input/DirectInputDriver.ts) implementing the
-   [`InputDriver`](../../src/bot/input/InputDriver.ts) interface.
-3. The driver maps `(entity kind, op)` to a `MiniMenuAction` constant — for an NPC,
+2. It calls [`Input`](../../src/bot/api/input/Input.ts).
+3. `Input` maps `(entity kind, op)` to a `MiniMenuAction` constant — for an NPC,
    op 2 becomes `OP_NPC2` — and calls `actions.menuAction(action, a, b, c)`.
 4. The adapter writes those four values into the client's **own** `menuAction`,
    `menuParamA/B/C` arrays at a scratch slot and calls the client's

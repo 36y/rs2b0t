@@ -9,7 +9,7 @@ export type TrafficSnapshot =
 
 type ChannelFactory = () => BroadcastChannel | null;
 
-export interface TrafficCollectorOptions {
+interface TrafficCollectorOptions {
     channelFactory?: ChannelFactory;
     now?: () => number;
     publisherTimeoutMs?: number;

@@ -1,4 +1,4 @@
-import { paintState, toCanvasPoint } from '#/bot/api/hud/paintLogic.js';
+import { paintState, toCanvasPoint } from '#/bot/api/paint/paintLogic.js';
 
 export function installPaintInput(canvas: HTMLElement): void {
     const point = (e: MouseEvent): { x: number; y: number } => {

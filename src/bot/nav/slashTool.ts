@@ -68,7 +68,7 @@ export const WEB_SLASH_SUCCESS = /you slash the web apart/i;
 export const WEB_SLASH_FAIL = /you fail to cut through it/i;
 export const WEB_SLASH_NO_BLADE = /only a sharp blade can cut through this sticky web/i;
 
-export type WebSlashChat = 'success' | 'fail' | 'no_blade' | null;
+type WebSlashChat = 'success' | 'fail' | 'no_blade' | null;
 
 export function classifyWebSlashChat(text: string): WebSlashChat {
     if (WEB_SLASH_SUCCESS.test(text)) {

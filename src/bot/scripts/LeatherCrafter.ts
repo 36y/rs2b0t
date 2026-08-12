@@ -1,17 +1,17 @@
 import { reader, actions } from '../adapter/ClientAdapter.js';
-import { LoopingBot } from '../api/core/Bot.js';
-import { Execution } from '../api/core/Execution.js';
-import { Game } from '../api/core/Game.js';
-import Tile from '../api/core/Tile.js';
-import { Traversal } from '../nav/Traversal.js';
-import { Bank } from '../api/hud/Bank.js';
-import { Inventory } from '../api/hud/Inventory.js';
-import { Paint } from '../api/hud/Paint.js';
-import { Skills } from '../api/hud/Skills.js';
-import { ActionRouter } from '../input/ActionRouter.js';
+import { LoopingBot } from '../api/bot/Bot.js';
+import { Execution } from '../api/execution/Execution.js';
+import { Game } from '../api/game/Game.js';
+import Tile from '../geometry/Tile.js';
+import { Traversal } from '../api/walking/Traversal.js';
+import { Bank } from '../api/bank/Bank.js';
+import { Inventory } from '../api/inventory/Inventory.js';
+import { Paint } from '../api/paint/Paint.js';
+import { Skills } from '../api/skills/Skills.js';
+import { Input } from '../api/input/Input.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import { fmtDuration } from '../api/hud/paintLogic.js';
+import { fmtDuration } from '../api/paint/paintLogic.js';
 import { issueHardLeatherBurst } from './LeatherCrafterLogic.js';
 
 const NEEDLE = 1733;
@@ -43,7 +43,7 @@ interface LeatherKind {
 
 // levels/quantities are the engine's craft_leather_table; chaps deliberately has
 // no make10 because all three of its buttons make one (engine-side)
-export const LEATHERS: Record<string, LeatherKind> = {
+const LEATHERS: Record<string, LeatherKind> = {
     Leather: {
         leatherId: 1741,
         flow: 'interface',
@@ -146,7 +146,7 @@ async function withdrawXById(id: number, count: number): Promise<WithdrawResult>
         return 'retry';
     }
     const before = invById(id);
-    if (!(await ActionRouter.driver.invButton(item.id, item.slot, item.comId, op))) {
+    if (!(await Input.invButton(item.id, item.slot, item.comId, op))) {
         return 'retry';
     }
     if (!(await Execution.delayUntil(() => reader.countDialogOpen(), 3000))) {
@@ -178,7 +178,7 @@ async function depositAllExceptIds(keep: Set<number>): Promise<boolean> {
         if (op === -1) {
             return false;
         }
-        if (!(await ActionRouter.driver.invButton(item.id, item.slot, item.comId, op))) {
+        if (!(await Input.invButton(item.id, item.slot, item.comId, op))) {
             return false;
         }
         if (!(await Execution.delayUntil(() => !reader.bankSideItems().some(i => i.slot === item.slot && i.id === item.id), 2000))) {

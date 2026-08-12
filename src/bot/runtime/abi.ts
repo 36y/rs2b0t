@@ -11,14 +11,14 @@ import {
     tileInDangerZones
 } from '../nav/data/dangerZones.js';
 import { SettingsStore } from './Settings.js';
-import { Area } from '../api/core/Area.js';
+import { Area } from '../geometry/Area.js';
 import {
     BANK_LOCATIONS,
     bankDistance,
     bankUnlocked,
     nearestBank,
     nearestUsableBank
-} from '../api/banking/BankLocations.js';
+} from '../api/bank/BankLocations.js';
 import {
     Banking,
     COMMON_BANK_LOOT,
@@ -31,8 +31,8 @@ import {
     parseBankStrategy,
     resolveBankOpenRoute,
     shouldBankNow
-} from '../api/banking/Banking.js';
-import { AbstractBot, BranchTask, LeafTask, LoopingBot, TaskBot, TreeBot } from '../api/core/Bot.js';
+} from '../api/bank/Banking.js';
+import { AbstractBot, BranchTask, LeafTask, LoopingBot, TaskBot, TreeBot } from '../api/bot/Bot.js';
 import {
     AL_KHARID_BANK,
     COW_LOCATIONS,
@@ -43,13 +43,13 @@ import {
     needsTollCoins,
     resolveCowLocation,
     shouldBootstrapTollCoins
-} from '../api/skilling/CowKillerLocations.js';
-import { Execution } from '../api/core/Execution.js';
+} from '../data/cowKillerLocations.js';
+import { Execution } from '../api/execution/Execution.js';
 import {
     FISHING_LOCATIONS,
     FISHING_LOCATION_OPTIONS,
     resolveFishingLocation
-} from '../api/skilling/FishingLocations.js';
+} from '../data/fishingLocations.js';
 import {
     ALL_FISHING_GEAR_NAMES,
     FISHING_METHODS,
@@ -62,8 +62,8 @@ import {
     missingFishingGear,
     resolveFishMethod,
     spotMatchesMethod
-} from '../api/skilling/FishingMethods.js';
-import { Game } from '../api/core/Game.js';
+} from '../data/fishingMethods.js';
+import { Game } from '../api/game/Game.js';
 import {
     DEFAULT_BOOTH_NAME,
     DEFAULT_BOOTH_OP,
@@ -72,7 +72,7 @@ import {
     locationOptions,
     resolveGatheringLocation,
     sameMapSquare
-} from '../api/skilling/GatheringLocations.js';
+} from '../data/gatheringLocations.js';
 import { AcquireTask, hasAll, held } from '../api/acquisition/ItemAcquisition.js';
 import {
     MINING_LOCATIONS,
@@ -80,7 +80,7 @@ import {
     MINING_LOCATION_OPTIONS,
     miningLocationLabel,
     resolveMiningLocation
-} from '../api/skilling/MiningLocations.js';
+} from '../data/miningLocations.js';
 import {
     BROKEN_PICKAXE,
     GAS_ROCK_IDS,
@@ -88,18 +88,18 @@ import {
     ROCK_OPTIONS,
     ROCK_TYPES,
     resolveRockIds
-} from '../api/skilling/MiningRocks.js';
+} from '../data/miningRocks.js';
 import {
     ARDOUGNE_PICKPOCKET_TARGETS,
     PICKPOCKET_TARGETS,
     PICKPOCKET_TARGET_NAMES
-} from '../api/skilling/PickpocketTargets.js';
+} from '../data/pickpocketTargets.js';
 import {
     DEFAULT_RUNE,
     RUNE_OPTIONS,
     RUNES
-} from '../api/skilling/RuneCraftLocations.js';
-import Tile from '../api/core/Tile.js';
+} from '../data/runeCraftLocations.js';
+import Tile from '../geometry/Tile.js';
 import {
     AXE_BAR_FOR,
     AXE_SHOP_COSTS,
@@ -170,43 +170,50 @@ import {
     toolRestockPlan,
     toolsNeedingEquip
 } from '../api/acquisition/Tools.js';
-import { Traversal } from '../nav/Traversal.js';
+import { Traversal } from '../api/walking/Traversal.js';
 import {
     WALK_DESTINATIONS,
     WALK_OPTIONS,
     resolveDestination
-} from '../nav/WalkDestinations.js';
+} from '../api/map/WalkDestinations.js';
 import {
     WOODCUTTING_LOCATIONS,
     WOODCUTTING_LOCATION_OPTIONS,
     resolveWoodcuttingLocation
-} from '../api/skilling/WoodcuttingLocations.js';
-import { GroundItem, Loc, Npc, Player } from '../api/entities/index.js';
-import { Bank, withdrawOp } from '../api/hud/Bank.js';
-import { ChatDialog } from '../api/hud/ChatDialog.js';
-import { Equipment } from '../api/hud/Equipment.js';
-import { InvItem, Inventory } from '../api/hud/Inventory.js';
-import { Quests } from '../api/hud/Quests.js';
-import { Shop } from '../api/hud/Shop.js';
-import { Skills } from '../api/hud/Skills.js';
-import { Trade } from '../api/hud/Trade.js';
-import { GroundItems } from '../api/entities/GroundItems.js';
-import { Locs } from '../api/entities/Locs.js';
-import { Npcs } from '../api/entities/Npcs.js';
-import { Players } from '../api/entities/Players.js';
-import EntityQuery from '../api/entities/Query.js';
-import { bus, type EventMap } from '../events/EventBus.js';
+} from '../data/woodcuttingLocations.js';
+import { GroundItem } from '../api/model/GroundItem.js';
+import { Loc } from '../api/model/Loc.js';
+import { Npc } from '../api/model/Npc.js';
+import { Player } from '../api/model/Player.js';
+import { Bank, withdrawOp } from '../api/bank/Bank.js';
+import { ChatDialog } from '../api/dialogue/ChatDialog.js';
+import { Equipment } from '../api/equipment/Equipment.js';
+import { InvItem, Inventory } from '../api/inventory/Inventory.js';
+import { Quests } from '../api/questlog/Quests.js';
+import { Shop } from '../api/shop/Shop.js';
+import { Skills } from '../api/skills/Skills.js';
+import { Trade } from '../api/trade/Trade.js';
+import { GroundItems } from '../api/grounditems/GroundItems.js';
+import { Locs } from '../api/locs/Locs.js';
+import { Npcs } from '../api/npcs/Npcs.js';
+import { Players } from '../api/players/Players.js';
+import EntityQuery from '../api/query/Query.js';
+import { bus, type EventMap } from '../api/events/EventBus.js';
 import { DirectNavigator } from '../nav/DirectNavigator.js';
 import { EssenceSession } from '../nav/essenceSession.js';
+// Harness-only hooks, absent from packages/rs2b0t-api/index.d.ts and consumed
+// solely by tools/merlin-mordred-353-live.ts. The disable is line-scoped, so a
+// new quest import here still errors.
+// eslint-disable-next-line no-restricted-imports
 import {
     liveFortressStep,
     liveMordredBriefed,
     liveResetMordredBrief
 } from '../quests/defs/merlinscrystal.js';
 import { defineBot, registerScript } from './defineBot.js';
-import { Loadouts } from '../api/items/loadoutStore.js';
+import { Loadouts } from '../api/loadout/loadoutStore.js';
 
-export const API_VERSION = 1;
+const API_VERSION = 1;
 
 export function installAbi(): void {
     const abi = Object.freeze({

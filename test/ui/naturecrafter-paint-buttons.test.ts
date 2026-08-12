@@ -1,6 +1,6 @@
 import { beforeEach, expect, test } from 'bun:test';
-import { Paint } from '#/bot/api/hud/Paint.js';
-import { paintState } from '#/bot/api/hud/paintLogic.js';
+import { Paint } from '#/bot/api/paint/Paint.js';
+import { paintState } from '#/bot/api/paint/paintLogic.js';
 
 // stub 2d context — the paint only measures text and fills rects
 function stubCtx(): CanvasRenderingContext2D {

@@ -1,4 +1,4 @@
-import Tile from '../api/core/Tile.js';
+import Tile from '../geometry/Tile.js';
 
 export const FLAX_FIELD = new Tile(2741, 3444, 0);
 export const FLAX_GATE = new Tile(2736, 3443, 0);

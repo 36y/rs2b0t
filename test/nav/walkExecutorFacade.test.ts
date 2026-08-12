@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { WalkExecutor } from '#/bot/nav/WalkExecutor.js';
-import { Traversal } from '#/bot/nav/Traversal.js';
+import { Traversal } from '#/bot/api/walking/Traversal.js';
 
 /**
  * Guard against nav exec-split regressions: Traversal.walkResilient and scripts

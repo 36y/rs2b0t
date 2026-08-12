@@ -4,7 +4,7 @@ import { BotHost } from './runtime/BotHost.js';
 import { ClueExecutor, TRACE_STORAGE_KEY } from './clues/ClueExecutor.js';
 import { readTraceRing } from './clues/ClueTrace.js';
 import { BotDiag } from './runtime/diag/BotDiag.js';
-import { ActionRouter } from './input/ActionRouter.js';
+import { Input } from './api/input/Input.js';
 import { Navigator } from './nav/Navigator.js';
 import { installAbi } from './runtime/abi.js';
 import { AutoRelogin } from './runtime/AutoRelogin.js';
@@ -21,7 +21,7 @@ import { RandomEventGuardian } from './runtime/RandomEventGuardian.js';
 import BotPanel from './ui/BotPanel.js';
 import Overlay from './ui/Overlay.js';
 import { installPaintInput } from './ui/PaintInput.js';
-import { paintState } from './api/hud/paintLogic.js';
+import { paintState } from './api/paint/paintLogic.js';
 import { BUILD_INFO, formatBuildInfo } from '../config/buildInfo.js';
 import './scripts/index.js';
 
@@ -87,7 +87,7 @@ if (typeof document !== 'undefined' && document.getElementById('canvas')) {
     (globalThis as Record<string, unknown>).rs2b0t = {
         client, host: BotHost, runner: ScriptRunner, registry: ScriptRegistry,
         reader, actions, navigator: Navigator,
-        router: ActionRouter, scheduler: Scheduler,
+        input: Input, scheduler: Scheduler,
         renderGate: RenderGate,
         build: BUILD_INFO,
         diag: () => BotDiag.drain(),

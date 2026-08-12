@@ -1,12 +1,12 @@
 import type { WorldTile } from '../../../adapter/ClientAdapter.js';
-import { Execution } from '../../../api/core/Execution.js';
-import { Game } from '../../../api/core/Game.js';
-import Tile from '../../../api/core/Tile.js';
-import { Traversal } from '../../../nav/Traversal.js';
-import { ChatDialog } from '../../../api/hud/ChatDialog.js';
-import { Inventory } from '../../../api/hud/Inventory.js';
-import { Locs } from '../../../api/entities/Locs.js';
-import { Npcs } from '../../../api/entities/Npcs.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import { Game } from '../../../api/game/Game.js';
+import Tile from '../../../geometry/Tile.js';
+import { Traversal } from '../../../api/walking/Traversal.js';
+import { ChatDialog } from '../../../api/dialogue/ChatDialog.js';
+import { Inventory } from '../../../api/inventory/Inventory.js';
+import { Locs } from '../../../api/locs/Locs.js';
+import { Npcs } from '../../../api/npcs/Npcs.js';
 import { locNear, settleScene } from '../../exec/prompts.js';
 import { KS_ID, KS_TILE, VYVIN_APPROACHES } from './areas.js';
 

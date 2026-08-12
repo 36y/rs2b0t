@@ -1,10 +1,10 @@
 import type { WorldTile } from '../adapter/ClientAdapter.js';
-import { Execution } from '../api/core/Execution.js';
-import { Game } from '../api/core/Game.js';
+import { Execution } from '../api/execution/Execution.js';
+import { Game } from '../api/game/Game.js';
 import { Reachability } from './geometry/Reachability.js';
-import type Tile from '../api/core/Tile.js';
-import { Traversal } from './Traversal.js';
-import { Locs } from '../api/entities/Locs.js';
+import type Tile from '../geometry/Tile.js';
+import { Traversal } from '../api/walking/Traversal.js';
+import { Locs } from '../api/locs/Locs.js';
 
 /** How far to search for a shut door after a walk segment stalls. */
 const ESCAPE_RADIUS = 14;

@@ -1,5 +1,5 @@
-import { Game } from '../api/core/Game.js';
-import { RandomEvents } from '../api/randomevents/RandomEvents.js';
+import { Game } from '../api/game/Game.js';
+import { RandomEvents } from './randomevents/RandomEvents.js';
 import { BotHost } from './BotHost.js';
 import { Scheduler } from './Scheduler.js';
 import { ScriptRunner } from './ScriptRunner.js';

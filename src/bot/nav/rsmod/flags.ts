@@ -62,13 +62,6 @@ export const CollisionFlag = {
     NULL: 0x7fffffff
 } as const;
 
-export const BlockAccessFlag = {
-    BLOCK_NORTH: 0x1,
-    BLOCK_EAST: 0x2,
-    BLOCK_SOUTH: 0x4,
-    BLOCK_WEST: 0x8
-} as const;
-
 export const DirectionFlag = {
     North: 0x1,
     East: 0x2,
@@ -130,7 +123,6 @@ export const LocShape = {
 
 export type CollisionType = (typeof CollisionType)[keyof typeof CollisionType];
 export type CollisionFlag = (typeof CollisionFlag)[keyof typeof CollisionFlag];
-export type BlockAccessFlag = (typeof BlockAccessFlag)[keyof typeof BlockAccessFlag];
 export type LocAngle = (typeof LocAngle)[keyof typeof LocAngle];
 export type LocLayer = (typeof LocLayer)[keyof typeof LocLayer];
 export type LocShape = (typeof LocShape)[keyof typeof LocShape];

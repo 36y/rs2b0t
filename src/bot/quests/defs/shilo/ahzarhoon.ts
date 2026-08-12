@@ -1,8 +1,8 @@
 import { actions, reader } from '../../../adapter/ClientAdapter.js';
-import { Execution } from '../../../api/core/Execution.js';
-import { Game } from '../../../api/core/Game.js';
-import { Traversal } from '../../../nav/Traversal.js';
-import { Inventory } from '../../../api/hud/Inventory.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import { Game } from '../../../api/game/Game.js';
+import { Traversal } from '../../../api/walking/Traversal.js';
+import { Inventory } from '../../../api/inventory/Inventory.js';
 import { SV_ITEM, SV_LOC, SV_TILE } from './areas.js';
 import { driveChoice, driveUntil, heldId, here, locNear, promptLoc, settleScene, useOnLoc } from './scene.js';
 
@@ -27,7 +27,7 @@ function fissure(): ReturnType<typeof locNear> {
  * visits. Looking at the mound re-creates whichever fissure the stage has earned,
  * and every fissure step goes through here first.
  */
-export async function ensureFissure(log: (m: string) => void): Promise<boolean> {
+async function ensureFissure(log: (m: string) => void): Promise<boolean> {
     if (fissure()) {
         return true;
     }

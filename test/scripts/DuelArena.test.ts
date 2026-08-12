@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
 import { reader } from '#/bot/adapter/ClientAdapter.js';
-import { Execution } from '#/bot/api/core/Execution.js';
-import { Game } from '#/bot/api/core/Game.js';
-import { ChatDialog } from '#/bot/api/hud/ChatDialog.js';
-import { Duel } from '#/bot/api/hud/Duel.js';
-import { Skills } from '#/bot/api/hud/Skills.js';
-import { paintState } from '#/bot/api/hud/paintLogic.js';
+import { Execution } from '#/bot/api/execution/Execution.js';
+import { Game } from '#/bot/api/game/Game.js';
+import { ChatDialog } from '#/bot/api/dialogue/ChatDialog.js';
+import { Duel } from '#/bot/scripts/DuelInterface.js';
+import { Skills } from '#/bot/api/skills/Skills.js';
+import { paintState } from '#/bot/api/paint/paintLogic.js';
 import { ScriptRunner } from '#/bot/runtime/ScriptRunner.js';
 import { SettingsBag } from '#/bot/runtime/Settings.js';
 import DuelArena, { DUEL_ARENA_SETTINGS } from '#/bot/scripts/DuelArena.js';

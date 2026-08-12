@@ -1,7 +1,7 @@
 import { afterEach, expect, test } from 'bun:test';
 import { reader } from '#/bot/adapter/ClientAdapter.js';
-import { LoopingBot } from '#/bot/api/core/Bot.js';
-import { Execution } from '#/bot/api/core/Execution.js';
+import { LoopingBot } from '#/bot/api/bot/Bot.js';
+import { Execution } from '#/bot/api/execution/Execution.js';
 import { Scheduler } from '#/bot/runtime/Scheduler.js';
 import { loopReadyOrDetached, ScriptRunner, stopReasonOf } from '#/bot/runtime/ScriptRunner.js';
 import type { ScriptMeta } from '#/bot/runtime/ScriptRegistry.js';
@@ -90,7 +90,7 @@ test('a script can restart after stopping itself during onStart', async () => {
     // Tail, not the whole log: ScriptRunner is a singleton, so whether a line
     // about an earlier run is carried in depends on what ran before this file.
     expect(ScriptRunner.ctx?.log.map(line => line.msg).slice(-3)).toEqual([
-        'Self-stopping test bot started (input: direct)',
+        'Self-stopping test bot started',
         'stopping — test: self-stopping bot',
         'stopped — test: self-stopping bot'
     ]);

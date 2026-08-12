@@ -212,6 +212,6 @@ export type Rs2b0t = {
             sideTabInterface(tab: number): number;
             varp(id: number): number;
         };
-        router: { driver: { heldOp(id: number, slot: number, comId: number, op: number): boolean | Promise<boolean> } };
+        input: { heldOp(id: number, slot: number, comId: number, op: number): boolean | Promise<boolean> };
     };
 };

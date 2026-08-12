@@ -3,8 +3,8 @@
  * After Open with no movement, mesbox/chat phrases → session blacklist + repath.
  */
 
-import { ChatDialog } from '../../api/hud/ChatDialog.js';
-import { Execution } from '../../api/core/Execution.js';
+import { ChatDialog } from '../../api/dialogue/ChatDialog.js';
+import { Execution } from '../../api/execution/Execution.js';
 
 /** Phrases that mean "this door will never open for you right now". */
 const QUEST_LOCK_PATTERNS: RegExp[] = [

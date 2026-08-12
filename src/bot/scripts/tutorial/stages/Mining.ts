@@ -1,10 +1,10 @@
-import type { Task } from '../../../api/core/Bot.js';
-import { Execution } from '../../../api/core/Execution.js';
-import { Game } from '../../../api/core/Game.js';
-import { ChatDialog } from '../../../api/hud/ChatDialog.js';
-import { Inventory } from '../../../api/hud/Inventory.js';
-import { Locs, type Loc } from '../../../api/entities/Locs.js';
-import { Npcs } from '../../../api/entities/Npcs.js';
+import type { Task } from '../../../api/bot/Bot.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import { Game } from '../../../api/game/Game.js';
+import { ChatDialog } from '../../../api/dialogue/ChatDialog.js';
+import { Inventory } from '../../../api/inventory/Inventory.js';
+import { Locs, type Loc } from '../../../api/locs/Locs.js';
+import { Npcs } from '../../../api/npcs/Npcs.js';
 import type TutorialBot from '../../TutorialBot.js';
 import { StageTask } from '../StageTask.js';
 import { MINE_Z, walkToward } from './helpers.js';

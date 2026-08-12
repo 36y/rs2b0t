@@ -9,7 +9,7 @@ import {
     waterfallDungeonEntryReadiness,
     waterfallArea
 } from '#/bot/quests/defs/waterfall.js';
-import Tile from '#/bot/api/core/Tile.js';
+import Tile from '#/bot/geometry/Tile.js';
 import type { QuestSnapshot, QuestStep } from '#/bot/quests/engine/types.js';
 
 interface ItemSpec {

@@ -6,12 +6,12 @@ export interface Profile {
     tab?: string;
 }
 
-export interface TabState {
+interface TabState {
     tabs: string[];
     activeTab: string;
 }
 
-export type VaultStatus = 'empty' | 'locked' | 'plaintext-legacy' | 'unlocked';
+type VaultStatus = 'empty' | 'locked' | 'plaintext-legacy' | 'unlocked';
 
 const KEY = 'rs2b0t:multibox:profiles';
 const LEGACY_KEY = 'rs2b0t:multibox:accounts';

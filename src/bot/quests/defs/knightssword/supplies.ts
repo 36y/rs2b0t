@@ -1,9 +1,9 @@
-import { Execution } from '../../../api/core/Execution.js';
-import { ChatDialog } from '../../../api/hud/ChatDialog.js';
-import { Inventory } from '../../../api/hud/Inventory.js';
-import { Skills } from '../../../api/hud/Skills.js';
-import { Locs } from '../../../api/entities/Locs.js';
-import { Traversal } from '../../../nav/Traversal.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import { ChatDialog } from '../../../api/dialogue/ChatDialog.js';
+import { Inventory } from '../../../api/inventory/Inventory.js';
+import { Skills } from '../../../api/skills/Skills.js';
+import { Locs } from '../../../api/locs/Locs.js';
+import { Traversal } from '../../../api/walking/Traversal.js';
 import { DORIC_PICKAXES } from '../doric.js';
 import type { QuestSnapshot, QuestStep } from '../../engine/types.js';
 import { isUnderground } from '../../exec/primitives.js';
@@ -274,5 +274,3 @@ export function ironBarsAt(snap: QuestSnapshot, miningLevel: number): QuestStep 
 }
 
 export const pickaxe = (snap: QuestSnapshot): QuestStep | null => pickaxeAt(snap, Skills.level('mining'));
-
-export const ironBars = (snap: QuestSnapshot): QuestStep => ironBarsAt(snap, Skills.level('mining'));

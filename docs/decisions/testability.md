@@ -32,7 +32,7 @@ This caused every one of the suite's long-standing failures. Two distinct shapes
   Fix: **mutate the singleton instead of replacing the module**, scoped to the file:
 
   ```ts
-  import * as RealInventory from '#/bot/api/hud/Inventory.js';
+  import * as RealInventory from '#/bot/api/inventory/Inventory.js';
   const realFns = { ...RealInventory.Inventory };
   const stub = { items: () => […] };
   beforeEach(() => Object.assign(RealInventory.Inventory, stub));

@@ -1,7 +1,7 @@
 // docs/reference/quest-engine.md#provisioning
 import type { QuestItem } from '../types.js';
 
-export interface ProvisionPlan {
+interface ProvisionPlan {
     withdraw: { name: string; qty: number }[];
     gather: { name: string; need: number }[];
     blocked: string[];

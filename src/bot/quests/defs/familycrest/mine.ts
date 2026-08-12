@@ -1,13 +1,13 @@
-import { Execution } from '../../../api/core/Execution.js';
-import { Game } from '../../../api/core/Game.js';
-import { Reach } from '../../../nav/Reach.js';
-import { Sustain } from '../../../api/core/Sustain.js';
-import Tile from '../../../api/core/Tile.js';
-import { Traversal } from '../../../nav/Traversal.js';
-import { ChatDialog } from '../../../api/hud/ChatDialog.js';
-import { Inventory } from '../../../api/hud/Inventory.js';
-import { Locs } from '../../../api/entities/Locs.js';
-import { GameMessages } from '../../../events/gameMessages.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import { Game } from '../../../api/game/Game.js';
+import { Reach } from '../../../api/walking/Reach.js';
+import { Sustain } from '../../../api/sustain/Sustain.js';
+import Tile from '../../../geometry/Tile.js';
+import { Traversal } from '../../../api/walking/Traversal.js';
+import { ChatDialog } from '../../../api/dialogue/ChatDialog.js';
+import { Inventory } from '../../../api/inventory/Inventory.js';
+import { Locs } from '../../../api/locs/Locs.js';
+import { GameMessages } from '../../../api/chatbox/gameMessages.js';
 import { heldId, settleScene } from '../../exec/prompts.js';
 import { FC_ID, FC_ITEM, FC_LOC, inPerfectGoldZone } from './areas.js';
 
@@ -22,7 +22,7 @@ const LEVER_LOC = {
     northRoom: { down: 2425, up: 2426 }
 } as const;
 
-export type MineRegion = 'main' | 'south' | 'northRoom' | 'gold' | 'outside';
+type MineRegion = 'main' | 'south' | 'northRoom' | 'gold' | 'outside';
 
 /**
  * The four components the lever doors cut the mine into, from a flood over the
@@ -212,7 +212,7 @@ async function crossDoor(
  * stranded in are ones it can only have entered with the lever state that opens
  * the way back.
  */
-export async function reachPerfectGold(log: (m: string) => void): Promise<boolean> {
+async function reachPerfectGold(log: (m: string) => void): Promise<boolean> {
     for (let pass = 0; pass < 3; pass++) {
         // Ogres line the lever route and hellhounds guard the rocks; a custom
         // step this long has to pump the eat hook itself.

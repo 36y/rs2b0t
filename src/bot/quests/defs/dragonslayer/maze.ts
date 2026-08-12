@@ -1,11 +1,11 @@
-import { Execution } from '../../../api/core/Execution.js';
-import { Game } from '../../../api/core/Game.js';
-import { Inventory } from '../../../api/hud/Inventory.js';
-import { GroundItems } from '../../../api/entities/GroundItems.js';
-import { Locs, type Loc } from '../../../api/entities/Locs.js';
-import { Npcs } from '../../../api/entities/Npcs.js';
-import { Traversal } from '../../../nav/Traversal.js';
-import Tile from '../../../api/core/Tile.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import { Game } from '../../../api/game/Game.js';
+import { Inventory } from '../../../api/inventory/Inventory.js';
+import { GroundItems } from '../../../api/grounditems/GroundItems.js';
+import { Locs, type Loc } from '../../../api/locs/Locs.js';
+import { Npcs } from '../../../api/npcs/Npcs.js';
+import { Traversal } from '../../../api/walking/Traversal.js';
+import Tile from '../../../geometry/Tile.js';
 import { DS_ID } from './areas.js';
 
 /**
@@ -33,7 +33,7 @@ export const MAZE_NPC = {
     MELZAR: 753
 } as const;
 
-export type MazeLeg =
+type MazeLeg =
     | { kind: 'kill'; what: string; npcId: number; at: Tile; keyId: number }
     | { kind: 'door'; what: string; stand: Tile; door: Tile; keyId: number; land: Tile }
     | { kind: 'climb'; what: string; stand: Tile; ladder: Tile; op: string; land: Tile }

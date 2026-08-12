@@ -1,7 +1,7 @@
 import { AGILITY_SETTINGS } from './AgilityBot.js';
-import { FISHING_LOCATION_OPTIONS } from '../api/skilling/FishingLocations.js';
-import { FISHING_METHOD_OPTIONS } from '../api/skilling/FishingMethods.js';
-import { MINING_LOCATION_OPTION_LABELS, MINING_LOCATION_OPTIONS } from '../api/skilling/MiningLocations.js';
+import { FISHING_LOCATION_OPTIONS } from '../data/fishingLocations.js';
+import { FISHING_METHOD_OPTIONS } from '../data/fishingMethods.js';
+import { MINING_LOCATION_OPTION_LABELS, MINING_LOCATION_OPTIONS } from '../data/miningLocations.js';
 import {
     AFTER_COOK_OPTIONS,
     BURNT_POLICY_OPTIONS,
@@ -14,7 +14,7 @@ import {
     TICK_MANIP_UNSHIPPED_HELP,
     tickManipUiOptions
 } from './TickManipLogic.js';
-import { ROCK_OPTIONS } from '../api/skilling/MiningRocks.js';
+import { ROCK_OPTIONS } from '../data/miningRocks.js';
 import { MINER_FOOD_SETTINGS } from './MinerLogic.js';
 import EdgevilleMonkeyBars, { EDGEVILLE_MONKEYBARS_SETTINGS } from './EdgevilleMonkeyBars.js';
 import { ScriptRegistry } from '../runtime/ScriptRegistry.js';

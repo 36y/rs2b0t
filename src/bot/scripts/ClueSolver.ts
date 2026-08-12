@@ -1,25 +1,25 @@
 import { foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
-import { TaskBot } from '../api/core/Bot.js';
-import type { Task } from '../api/core/Bot.js';
-import { Execution } from '../api/core/Execution.js';
-import { Game } from '../api/core/Game.js';
-import { nearestBank } from '../api/banking/BankLocations.js';
-import { Sustain } from '../api/core/Sustain.js';
-import { Traversal } from '../nav/Traversal.js';
-import { Paint } from '../api/hud/Paint.js';
+import { TaskBot } from '../api/bot/Bot.js';
+import type { Task } from '../api/bot/Bot.js';
+import { Execution } from '../api/execution/Execution.js';
+import { Game } from '../api/game/Game.js';
+import { nearestBank } from '../api/bank/BankLocations.js';
+import { Sustain } from '../api/sustain/Sustain.js';
+import { Traversal } from '../api/walking/Traversal.js';
+import { Paint } from '../api/paint/Paint.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
-import { Bank } from '../api/hud/Bank.js';
-import { depositAllExcept } from '../api/banking/bankRules.js';
-import { Inventory } from '../api/hud/Inventory.js';
+import { Bank } from '../api/bank/Bank.js';
+import { depositAllExcept } from '../api/bank/bankRules.js';
+import { Inventory } from '../api/inventory/Inventory.js';
 import { SPADE_NAME, TRIO } from '../clues/data/toolAcquire.js';
-import { Skills } from '../api/hud/Skills.js';
+import { Skills } from '../api/skills/Skills.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
 import { ClueExecutor } from '../clues/ClueExecutor.js';
 import { paintClueProgress } from '../clues/cluePaint.js';
 import { SolveClue, heldClueLikeId } from '../clues/SolveClue.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import { scriptFood } from '../api/items/loadoutPlan.js';
-import { LOADOUT_SETTING } from '../api/items/loadoutSetting.js';
+import { scriptFood } from '../api/loadout/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../api/loadout/loadoutSetting.js';
 
 export const SETTINGS: SettingsSchema = {
     loadout: LOADOUT_SETTING,

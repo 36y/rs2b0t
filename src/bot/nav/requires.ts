@@ -7,7 +7,7 @@ const QUEST_RANK: Record<QuestProgress, number> = {
     complete: 2
 };
 
-export type RequiresFailure =
+type RequiresFailure =
     | { ok: true }
     | { ok: false; reason: string };
 

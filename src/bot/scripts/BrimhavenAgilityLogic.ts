@@ -12,8 +12,8 @@ export const DEFAULT_BANK_TICKETS = 1000;
 export const EAT_AT_HP = 5;
 export const TICKET_NAME = 'Agility arena ticket';
 export const ARENA_VARP = 309; // agilityarena_varbit
-export const PAID_BIT = 1;
-export const PILLAR_TAGGED_BIT = 0;
+const PAID_BIT = 1;
+const PILLAR_TAGGED_BIT = 0;
 
 /**
  * Rough surface Karamja / Brimhaven footprint (ship landing through arena entrance).
@@ -58,21 +58,19 @@ export const PILLARS: ReadonlyArray<{ x: number; z: number }> = [
 ];
 
 /** Server ticket enum is 0–23 only. */
-export const TICKET_PILLAR_COUNT = 24;
-export const LANDING_PLATFORM = 24;
-
-export interface ArenaPoint {
+const TICKET_PILLAR_COUNT = 24;
+interface ArenaPoint {
     x: number;
     z: number;
 }
 
-export interface ArenaAxis {
+interface ArenaAxis {
     dx: -1 | 0 | 1;
     dz: -1 | 0 | 1;
 }
 
 /** Furthest we search around an obstacle's ideal from-side stand tile. */
-export const OBSTACLE_APPROACH_RADIUS = 3;
+const OBSTACLE_APPROACH_RADIUS = 3;
 
 /** Cardinal direction of travel from one platform to an adjacent platform. */
 export function obstacleAxis(from: number, to: number): ArenaAxis | null {
@@ -169,7 +167,7 @@ export function edgeApproachCandidates(
     return candidates;
 }
 
-export type ObstacleKind =
+type ObstacleKind =
     | 'ledge'
     | 'pillar'
     | 'monkey'
@@ -185,7 +183,7 @@ export type ObstacleKind =
     | 'swing'
     | 'darts';
 
-export type EdgeMode = 'interact' | 'walk';
+type EdgeMode = 'interact' | 'walk';
 
 export interface ArenaEdge {
     a: number;
@@ -255,7 +253,7 @@ export const ARDY_BANK = { x: 2655, z: 3283, level: 0 };
 export const ARENA_ENTRANCE = { x: 2809, z: 3194, level: 0 };
 export const LADDER_DOWN_STAND = { x: 2809, z: 3194, level: 0 };
 
-export function bitSet(varp: number, bit: number): boolean {
+function bitSet(varp: number, bit: number): boolean {
     return ((varp >>> bit) & 1) === 1;
 }
 
@@ -294,7 +292,7 @@ export function shouldBank(tickets: number, foodCount: number, bankAtTickets: nu
 }
 
 /** Inventory fields used to distinguish a real stack gain from a removal. */
-export interface TicketInventoryChange {
+interface TicketInventoryChange {
     id: number;
     name: string | null;
     count: number;
@@ -397,7 +395,7 @@ export function inArenaPit(x: number, z: number, level: number): boolean {
  * - elsewhere: left the start pillar for a different platform (partial progress)
  * - pending: still mid-attempt (soft fails need multi-tick idle confirmation in the waiter)
  */
-export type ObstacleOutcome = 'arrived' | 'fallen' | 'elsewhere' | 'pending';
+type ObstacleOutcome = 'arrived' | 'fallen' | 'elsewhere' | 'pending';
 
 export function obstacleOutcome(
     platform: number,
@@ -428,7 +426,7 @@ export function canStartObstacle(_animating: boolean, inPit: boolean): boolean {
 }
 
 /** Manhattan tile distance between two arena platforms (for hop tie-breaks). */
-export function platformGeoDist(a: number, b: number): number {
+function platformGeoDist(a: number, b: number): number {
     const pa = PILLARS[a];
     const pb = PILLARS[b];
     if (!pa || !pb) {

@@ -1,4 +1,4 @@
-export type ProbeOutcome = 'probe-fresh' | 'probe-dead';
+type ProbeOutcome = 'probe-fresh' | 'probe-dead';
 export type LastOutcome = 'arrived' | 'closest' | 'budget' | 'failed' | 'interrupted' | ProbeOutcome | null;
 
 type LadderAction =
@@ -91,7 +91,7 @@ const DIRS: readonly { dx: number; dz: number }[] = [
     { dx: 0, dz: -1 }, { dx: -1, dz: -1 }, { dx: -1, dz: 0 }, { dx: -1, dz: 1 }
 ];
 
-export interface StepOffset { dx: number; dz: number }
+interface StepOffset { dx: number; dz: number }
 
 export function pickUnstickStep(canStep: (dx: number, dz: number) => boolean, startDir: number): StepOffset | null {
     for (let i = 0; i < DIRS.length; i++) {
@@ -103,7 +103,7 @@ export function pickUnstickStep(canStep: (dx: number, dz: number) => boolean, st
     return null;
 }
 
-export interface ProbeResult {
+interface ProbeResult {
     ok: boolean;
     terminal: { x: number; z: number; level: number } | null;
 }

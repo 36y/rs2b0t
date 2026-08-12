@@ -4,32 +4,15 @@
 
 import type { TransportInfo } from '../PathFinder.js';
 import type { WorldTile } from '../../adapter/ClientAdapter.js';
-import { Locs, type Loc } from '../../api/entities/Locs.js';
+import { Locs, type Loc } from '../../api/locs/Locs.js';
 import { chebyshev } from '../geometry/followMath.js';
-import {
-    locRefFromTransport,
-    locRefValid,
-    matchesLocRef,
-    type LocSceneSnap
-} from '../locRef.js';
+import { locRefFromTransport, matchesLocRef } from '../locRef.js';
 
 export function matchesTransportLoc(
     transport: TransportInfo,
     loc: { readonly id: number; tile(): { x: number; z: number } }
 ): boolean {
     return matchesLocRef(locRefFromTransport(transport), loc);
-}
-
-/** Live scene still has this transport placement (or open leaf for Open actions). */
-export function transportLocValid(transport: TransportInfo, level = 0): boolean {
-    const ref = locRefFromTransport(transport, level);
-    const scene: LocSceneSnap[] = Locs.query()
-        .results()
-        .map(l => {
-            const t = l.tile();
-            return { id: l.id, name: l.name, actions: l.actions(), x: t.x, z: t.z };
-        });
-    return locRefValid(ref, scene);
 }
 
 /** How far off a long hop may land. Short hops must be exact — see below. */

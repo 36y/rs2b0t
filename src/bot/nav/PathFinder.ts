@@ -78,7 +78,7 @@ export type PathOutcome =
     | { ok: false; reason: string; expanded: number };
 
 /** Options object for findPath (preferred over positional avoid/max). */
-export interface FindPathCallOptions {
+interface FindPathCallOptions {
     avoidDoors?: Set<string>;
     maxExpansions?: number;
     /** Serialized world snapshot — worker-safe. */

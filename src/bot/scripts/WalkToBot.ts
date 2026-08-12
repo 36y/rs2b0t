@@ -1,14 +1,14 @@
 import type { WorldTile } from '../adapter/ClientAdapter.js';
-import { TaskBot, type Task } from '../api/core/Bot.js';
-import { Execution } from '../api/core/Execution.js';
-import { Game } from '../api/core/Game.js';
-import Tile from '../api/core/Tile.js';
-import { Traversal } from '../nav/Traversal.js';
-import { Paint } from '../api/hud/Paint.js';
+import { TaskBot, type Task } from '../api/bot/Bot.js';
+import { Execution } from '../api/execution/Execution.js';
+import { Game } from '../api/game/Game.js';
+import Tile from '../geometry/Tile.js';
+import { Traversal } from '../api/walking/Traversal.js';
+import { Paint } from '../api/paint/Paint.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import { SettingsStore } from '../runtime/Settings.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import { WALK_OPTIONS, resolveDestination } from '../nav/WalkDestinations.js';
+import { WALK_OPTIONS, resolveDestination } from '../api/map/WalkDestinations.js';
 
 export const WALKTO_SETTINGS: SettingsSchema = {
     destination: { type: 'string', default: WALK_OPTIONS[0], options: WALK_OPTIONS, label: 'Destination' },

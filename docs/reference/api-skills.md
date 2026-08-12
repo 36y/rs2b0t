@@ -29,7 +29,7 @@ Prayer.set(name: string, on: boolean): Promise<boolean>
 Prayer.clear(): Promise<void>           // turn off everything that is draining
 ```
 
-[`nearestAltar`](../../src/bot/api/skilling/Altars.ts) finds somewhere to restore them.
+[`nearestAltar`](../../src/bot/api/altar/Altars.ts) finds somewhere to restore them.
 [Clue trails](../reference/clues-mechanics.md#prayer-between-trails) use both to fight hard-clue dig
 guardians under Protect from Magic.
 

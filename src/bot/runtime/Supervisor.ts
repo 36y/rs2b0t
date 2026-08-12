@@ -1,9 +1,9 @@
 import { reader, type WorldTile } from '../adapter/ClientAdapter.js';
-import type { AbstractBot } from '../api/core/Bot.js';
-import { Execution } from '../api/core/Execution.js';
-import { RandomEvents } from '../api/randomevents/RandomEvents.js';
-import { Traversal } from '../nav/Traversal.js';
-import { bus } from '../events/EventBus.js';
+import type { AbstractBot } from '../api/bot/Bot.js';
+import { Execution } from '../api/execution/Execution.js';
+import { RandomEvents } from './randomevents/RandomEvents.js';
+import { Traversal } from '../api/walking/Traversal.js';
+import { bus } from '../api/events/EventBus.js';
 import { WalkExecutor } from '../nav/WalkExecutor.js';
 import { ScriptAborted, type ScriptContext } from './ScriptContext.js';
 import { StallGuard } from './StallGuard.js';

@@ -11,7 +11,7 @@
 import type { QuestProgress, TransportRequires } from './types.js';
 
 /** Engine permanent varp + complete stage (setvar seed). */
-export interface QuestVarSeed {
+interface QuestVarSeed {
     /** Journal / quest-list display name. */
     journal: string;
     /** Content varp name for `setvar <varp> <stage>`. */
@@ -115,7 +115,7 @@ export const TRANSPORT_QUEST_SEEDS: readonly QuestVarSeed[] = [
 ] as const;
 
 /** Short names used in older catalog strings → quest-list display name. */
-export const TRANSPORT_QUEST_ALIASES: Readonly<Record<string, string>> = {
+const TRANSPORT_QUEST_ALIASES: Readonly<Record<string, string>> = {
     'rune mysteries': 'Rune Mysteries Quest',
     'rune mysteries quest': 'Rune Mysteries Quest',
     'the grand tree': 'The Grand Tree',

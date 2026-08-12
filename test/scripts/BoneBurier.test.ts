@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, expect, test } from 'bun:test';
 import { actions, reader, type InvItemSnapshot } from '#/bot/adapter/ClientAdapter.js';
-import { Banking } from '#/bot/api/banking/Banking.js';
-import { Execution } from '#/bot/api/core/Execution.js';
-import { Bank } from '#/bot/api/hud/Bank.js';
-import { Inventory, type InvItem } from '#/bot/api/hud/Inventory.js';
+import { Banking } from '#/bot/api/bank/Banking.js';
+import { Execution } from '#/bot/api/execution/Execution.js';
+import { Bank } from '#/bot/api/bank/Bank.js';
+import { Inventory, type InvItem } from '#/bot/api/inventory/Inventory.js';
 import { ScriptRunner } from '#/bot/runtime/ScriptRunner.js';
 import { SettingsBag } from '#/bot/runtime/Settings.js';
 import BoneBurier from '#/bot/scripts/BoneBurier.js';

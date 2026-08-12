@@ -3,9 +3,9 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import { actions, reader, type InvItemSnapshot } from '#/bot/adapter/ClientAdapter.js';
-import { Execution } from '#/bot/api/core/Execution.js';
-import { Bank } from '#/bot/api/hud/Bank.js';
-import { ActionRouter } from '#/bot/input/ActionRouter.js';
+import { Execution } from '#/bot/api/execution/Execution.js';
+import { Bank } from '#/bot/api/bank/Bank.js';
+import { Input } from '#/bot/api/input/Input.js';
 import { closeBankAndConfirmCount } from '#/bot/scripts/ThievingBotLogic.js';
 
 const LOBSTER = 379;
@@ -23,7 +23,7 @@ const originals = {
     bankClose: Bank.close,
     delayTicks: Execution.delayTicks,
     delayUntil: Execution.delayUntil,
-    invButton: ActionRouter.driver.invButton
+    invButton: Input.invButton
 };
 
 afterEach(() => {
@@ -39,7 +39,7 @@ afterEach(() => {
     (Bank as any).close = originals.bankClose;
     (Execution as any).delayTicks = originals.delayTicks;
     (Execution as any).delayUntil = originals.delayUntil;
-    (ActionRouter.driver as any).invButton = originals.invButton;
+    (Input as any).invButton = originals.invButton;
 });
 
 function item(id: number, name: string, count: number, slot: number, bank = false): InvItemSnapshot {
@@ -81,7 +81,7 @@ async function run(
     (reader as any).countDialogOpen = () => true;
     (Execution as any).delayTicks = async () => options.hydrate?.(side);
     (Execution as any).delayUntil = async (condition: () => boolean) => condition();
-    (ActionRouter.driver as any).invButton = () => options.click ?? true;
+    (Input as any).invButton = () => options.click ?? true;
     (actions as any).answerCountDialog = (requested: number) => {
         if (options.answer === false) {
             return false;

@@ -1,9 +1,9 @@
-import { Execution } from '../../../api/core/Execution.js';
-import { Game } from '../../../api/core/Game.js';
-import { Inventory } from '../../../api/hud/Inventory.js';
-import { GroundItems } from '../../../api/entities/GroundItems.js';
-import { Locs, type Loc } from '../../../api/entities/Locs.js';
-import { Traversal } from '../../../nav/Traversal.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import { Game } from '../../../api/game/Game.js';
+import { Inventory } from '../../../api/inventory/Inventory.js';
+import { GroundItems } from '../../../api/grounditems/GroundItems.js';
+import { Locs, type Loc } from '../../../api/locs/Locs.js';
+import { Traversal } from '../../../api/walking/Traversal.js';
 import { talkChoosingBy, talkStrict, type LineRule } from '../../exec/primitives.js';
 import { hasFlag, type QuestProgress } from '../../engine/types.js';
 import { WT_CAVES, WT_ITEM, WT_LOC, WT_NIGHTSHADE, WT_NPC, watchtowerArea } from './areas.js';
@@ -11,7 +11,7 @@ import { crossEastGate, leaveEastGate } from './gutanoth.js';
 import { settleScene } from './scene.js';
 
 /** Cave index to the one word that skavid understands. */
-export const SKAVID_REPLIES: Readonly<Record<number, string>> = {
+const SKAVID_REPLIES: Readonly<Record<number, string>> = {
     1: 'Nod.',
     2: 'Ig.',
     3: 'Ar.',
@@ -25,7 +25,7 @@ const WORD_FLAG: Readonly<Record<number, string>> = {
     4: 'learned-cur'
 };
 
-export const MAD_SKAVID_RULES: readonly LineRule[] = [
+const MAD_SKAVID_RULES: readonly LineRule[] = [
     { whenLine: 'ar cur', choose: 'Gor.' },
     { whenLine: 'bidith ig', choose: 'Cur.' },
     { whenLine: 'cur tanath', choose: 'Bidith.' },
@@ -53,7 +53,7 @@ function locNear(id: number, op: string, within = 20): Loc | null {
     return Locs.query().where(loc => loc.id === id).action(op).within(within).nearest();
 }
 
-export async function enterCave(index: number, log: (m: string) => void): Promise<boolean> {
+async function enterCave(index: number, log: (m: string) => void): Promise<boolean> {
     const cave = WT_CAVES.find(entry => entry.index === index)!;
     const start = Game.tile();
     if (start && watchtowerArea(start) === 'skavidCaves') {

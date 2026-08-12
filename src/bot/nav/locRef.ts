@@ -14,7 +14,7 @@
 import type { TransportInfo } from './PathFinder.js';
 
 /** Where scenery lives in the world (map placement). */
-export interface LocPlacement {
+interface LocPlacement {
     level: number;
     x: number;
     z: number;
@@ -109,7 +109,7 @@ export function matchesLocRef(
  * - openLeaf: Open-action barrier already shows Close (treat as not shut)
  * - missing: nothing at placement — edge may be stale after map change
  */
-export type LocRefProbe =
+type LocRefProbe =
     | { status: 'matching' }
     | { status: 'openLeaf' }
     | { status: 'missing' };

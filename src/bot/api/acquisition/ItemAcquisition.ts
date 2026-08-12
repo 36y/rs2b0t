@@ -1,10 +1,10 @@
 import type { WorldTile } from '../../adapter/ClientAdapter.js';
-import type { AbstractBot, Task } from '../core/Bot.js';
-import { Execution } from '../core/Execution.js';
-import { Traversal } from '../../nav/Traversal.js';
-import { Inventory } from '../hud/Inventory.js';
-import { Shop } from '../hud/Shop.js';
-import { GroundItems } from '../entities/GroundItems.js';
+import type { AbstractBot, Task } from '../bot/Bot.js';
+import { Execution } from '../execution/Execution.js';
+import { Traversal } from '../walking/Traversal.js';
+import { Inventory } from '../inventory/Inventory.js';
+import { Shop } from '../shop/Shop.js';
+import { GroundItems } from '../grounditems/GroundItems.js';
 
 type ItemSource = { kind: 'shop'; npc: string; near: WorldTile } | { kind: 'ground'; at: WorldTile } | { kind: 'gather' } | { kind: 'make' };
 

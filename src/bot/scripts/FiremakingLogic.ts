@@ -1,5 +1,5 @@
 import type { WorldTile } from '../adapter/ClientAdapter.js';
-import Tile from '../api/core/Tile.js';
+import Tile from '../geometry/Tile.js';
 
 export { TINDERBOX } from '../api/acquisition/Tools.js';
 export const CANT_LIGHT = /can't light a fire here/i;
@@ -8,11 +8,6 @@ export const CANT_LIGHT = /can't light a fire here/i;
 export const FIRE_START_TICKS = 14;
 /** How long (game ticks) to wait for FM XP after a light attempt has started. */
 export const FIRE_LIGHT_TICKS = 150;
-
-/** @deprecated Prefer {@link FIRE_START_TICKS}. */
-export const FIRE_START_MS = FIRE_START_TICKS * 600;
-/** @deprecated Prefer {@link FIRE_LIGHT_TICKS}. */
-export const FIRE_LIGHT_MS = FIRE_LIGHT_TICKS * 600;
 
 export interface FirePlot {
     bank: Tile;
@@ -40,10 +35,7 @@ export const LOG_LEVELS: Record<string, number> = {
     'Magic logs': 75
 };
 
-export const LOG_TYPE_OPTIONS = Object.keys(LOG_LEVELS);
-
 export const BURN_MODE_OPTIONS = ['Off', 'Chop then burn'] as const;
-export type BurnModeLabel = (typeof BURN_MODE_OPTIONS)[number];
 export type BurnMode = 'off' | 'chop-then-burn';
 
 export function parseBurnMode(label: string): BurnMode {
@@ -101,7 +93,7 @@ export function nearestFireSpot(from: WorldTile): { name: string; plot: FirePlot
  * Chop-then-burn lights near where the script started until the area fills,
  * then repaths within this box (and can expand — see expandLocalFirePlot).
  */
-export const LOCAL_FIRE_HALF = 8;
+const LOCAL_FIRE_HALF = 8;
 
 export function localFirePlot(origin: WorldTile, half = LOCAL_FIRE_HALF): FirePlot {
     const h = Math.max(2, Math.floor(half));
@@ -141,7 +133,7 @@ export type BurnDir = { dx: number; dz: number };
 export const BURN_WEST: BurnDir = { dx: -1, dz: 0 };
 
 /** West first (real lanes), then other cardinals for light-wherever fallbacks. */
-export const BURN_DIRS: readonly BurnDir[] = [
+const BURN_DIRS: readonly BurnDir[] = [
     BURN_WEST,
     { dx: 1, dz: 0 },
     { dx: 0, dz: -1 },
@@ -149,7 +141,7 @@ export const BURN_DIRS: readonly BurnDir[] = [
 ];
 
 /** Pack holds at most 27 logs once a tinderbox (and usually an axe) is reserved. */
-export const MAX_BURN_LANE = 27;
+const MAX_BURN_LANE = 27;
 
 /** How many consecutive lights we want from one lane start (1..27). */
 export function burnLaneWant(logCount: number): number {
@@ -276,11 +268,6 @@ export function findBurnLane(
 /** 1 tick between fire lights on a lane (tick-driven burn loop). */
 export function fireReactionTicks(): number {
     return 1;
-}
-
-/** @deprecated Prefer {@link fireReactionTicks}. */
-export function fireReactionMs(): number {
-    return fireReactionTicks() * 600;
 }
 
 export function shouldBurnFullLoad(mode: BurnMode, inventoryFull: boolean, logCount: number, hasTinderbox: boolean): boolean {

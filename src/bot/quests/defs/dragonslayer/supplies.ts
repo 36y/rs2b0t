@@ -1,15 +1,15 @@
-import { Execution } from '../../../api/core/Execution.js';
-import { Game } from '../../../api/core/Game.js';
-import { Bank } from '../../../api/hud/Bank.js';
-import { ChatDialog } from '../../../api/hud/ChatDialog.js';
-import { Inventory } from '../../../api/hud/Inventory.js';
-import { Modals } from '../../../api/hud/Modals.js';
-import { Shop } from '../../../api/hud/Shop.js';
-import { Skills } from '../../../api/hud/Skills.js';
-import { GroundItems } from '../../../api/entities/GroundItems.js';
-import { Locs } from '../../../api/entities/Locs.js';
-import { Traversal } from '../../../nav/Traversal.js';
-import Tile from '../../../api/core/Tile.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import { Game } from '../../../api/game/Game.js';
+import { Bank } from '../../../api/bank/Bank.js';
+import { ChatDialog } from '../../../api/dialogue/ChatDialog.js';
+import { Inventory } from '../../../api/inventory/Inventory.js';
+import { Modals } from '../../../api/widgets/Modals.js';
+import { Shop } from '../../../api/shop/Shop.js';
+import { Skills } from '../../../api/skills/Skills.js';
+import { GroundItems } from '../../../api/grounditems/GroundItems.js';
+import { Locs } from '../../../api/locs/Locs.js';
+import { Traversal } from '../../../api/walking/Traversal.js';
+import Tile from '../../../geometry/Tile.js';
 import { talkThrough } from '../../exec/primitives.js';
 import { openBankLeg } from '../../exec/steps.js';
 import { QuestFood } from '../../food.js';
@@ -38,7 +38,7 @@ export const SUPPLY = {
     NURMOF: { npc: 'Nurmof', anchor: new Tile(2998, 9844, 0) }
 } as const;
 
-export const SUPPLY_LOC = {
+const SUPPLY_LOC = {
     FOUNTAIN: new Tile(2949, 3381, 0),
     /**
      * Clay comes from the Varrock mine — it is on the shopping sweep, beside

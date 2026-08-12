@@ -1,10 +1,10 @@
 import { actions, reader } from '../../adapter/ClientAdapter.js';
-import { Execution } from '../../api/core/Execution.js';
-import { Game } from '../../api/core/Game.js';
-import Tile from '../../api/core/Tile.js';
-import { Traversal } from '../../nav/Traversal.js';
-import { Inventory } from '../../api/hud/Inventory.js';
-import { Quests } from '../../api/hud/Quests.js';
+import { Execution } from '../../api/execution/Execution.js';
+import { Game } from '../../api/game/Game.js';
+import Tile from '../../geometry/Tile.js';
+import { Traversal } from '../../api/walking/Traversal.js';
+import { Inventory } from '../../api/inventory/Inventory.js';
+import { Quests } from '../../api/questlog/Quests.js';
 import { QUESTS } from '../data/quests.js';
 import type { QuestModule, QuestProgress, QuestSnapshot, QuestStep } from '../engine/types.js';
 import { talkStrict } from '../exec/primitives.js';
@@ -17,7 +17,7 @@ export const TRUFITUS = new Tile(2809, 3086, 0);
 const ARDOUGNE_BANK = new Tile(2616, 3332, 0);
 
 /** Trufitus wants each herb picked fresh and cleaned, so both ids matter. */
-export interface JungleHerb {
+interface JungleHerb {
     key: string;
     /** Display name after Identify — what Trufitus accepts. */
     name: string;
@@ -187,7 +187,7 @@ export async function enterPothole(log: (m: string) => void): Promise<boolean> {
     return ok;
 }
 
-export async function leavePothole(log: (m: string) => void): Promise<boolean> {
+async function leavePothole(log: (m: string) => void): Promise<boolean> {
     if (!inCaves(Game.tile())) {
         return true;
     }
@@ -206,7 +206,7 @@ export async function leavePothole(log: (m: string) => void): Promise<boolean> {
     return ok;
 }
 
-export function pickHerb(herb: JungleHerb): (log: (m: string) => void) => Promise<boolean> {
+function pickHerb(herb: JungleHerb): (log: (m: string) => void) => Promise<boolean> {
     return async log => {
         // Only the unid is evidence of a fresh pick. A clean herb carried over from
         // an earlier run does not advance the stage, and Trufitus refuses it.
@@ -231,7 +231,7 @@ export function pickHerb(herb: JungleHerb): (log: (m: string) => void) => Promis
     };
 }
 
-export function identifyHerb(herb: JungleHerb): (log: (m: string) => void) => Promise<boolean> {
+function identifyHerb(herb: JungleHerb): (log: (m: string) => void) => Promise<boolean> {
     return async log => {
         if (heldId(herb.id) > 0) {
             return true;

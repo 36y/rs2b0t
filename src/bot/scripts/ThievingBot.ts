@@ -1,26 +1,26 @@
 import { foodHealAmount, shouldEatToUseFood, MIN_EAT_HP } from '../api/combat/food.js';
-import { createReturnToAnchorTask, resolveRunAnchor, tileWithinLeash } from '../api/skilling/Anchor.js';
-import { TaskBot, type Task } from '../api/core/Bot.js';
-import { Execution } from '../api/core/Execution.js';
-import { Game } from '../api/core/Game.js';
+import { createReturnToAnchorTask, resolveRunAnchor, tileWithinLeash } from '../api/tasks/Anchor.js';
+import { TaskBot, type Task } from '../api/bot/Bot.js';
+import { Execution } from '../api/execution/Execution.js';
+import { Game } from '../api/game/Game.js';
 import { Reachability } from '../nav/geometry/Reachability.js';
-import Tile from '../api/core/Tile.js';
-import { ChatDialog } from '../api/hud/ChatDialog.js';
-import { Bank } from '../api/hud/Bank.js';
-import { Inventory } from '../api/hud/Inventory.js';
-import { Paint } from '../api/hud/Paint.js';
+import Tile from '../geometry/Tile.js';
+import { ChatDialog } from '../api/dialogue/ChatDialog.js';
+import { Bank } from '../api/bank/Bank.js';
+import { Inventory } from '../api/inventory/Inventory.js';
+import { Paint } from '../api/paint/Paint.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import { SettingsStore } from '../runtime/Settings.js';
-import { Skills } from '../api/hud/Skills.js';
+import { Skills } from '../api/skills/Skills.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
-import { GroundItems } from '../api/entities/GroundItems.js';
-import { Npcs, type Npc } from '../api/entities/Npcs.js';
-import { Traversal } from '../nav/Traversal.js';
-import { nearestBank } from '../api/banking/BankLocations.js';
+import { GroundItems } from '../api/grounditems/GroundItems.js';
+import { Npcs, type Npc } from '../api/npcs/Npcs.js';
+import { Traversal } from '../api/walking/Traversal.js';
+import { nearestBank } from '../api/bank/BankLocations.js';
 import { walkOpening } from '../nav/walkOpening.js';
-import { PICKPOCKET_TARGET_NAMES } from '../api/skilling/PickpocketTargets.js';
+import { PICKPOCKET_TARGET_NAMES } from '../data/pickpocketTargets.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import { fmtDuration } from '../api/hud/paintLogic.js';
+import { fmtDuration } from '../api/paint/paintLogic.js';
 import { chooseTarget } from './ArdyThieverLogic.js';
 import {
     STUN_COMBAT_TICKS,
@@ -32,8 +32,8 @@ import {
     THIEVER_BANKING_OPTIONS,
     withdrawTo
 } from './ThievingBotLogic.js';
-import { scriptFood } from '../api/items/loadoutPlan.js';
-import { LOADOUT_SETTING } from '../api/items/loadoutSetting.js';
+import { scriptFood } from '../api/loadout/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../api/loadout/loadoutSetting.js';
 
 export const SETTINGS: SettingsSchema = {
     target: { type: 'string', default: 'Man', options: PICKPOCKET_TARGET_NAMES, label: 'Pickpocket target', help: 'pick by exact in-game name (level in parens): Man/Woman 1, Farmer 10, Rogue 32, Guard 40, Knight of Ardougne 55, Paladin 70, Hero 80' },

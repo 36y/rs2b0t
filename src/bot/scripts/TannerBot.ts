@@ -1,18 +1,18 @@
 import { reader, actions, type WorldTile } from '../adapter/ClientAdapter.js';
-import { LoopingBot } from '../api/core/Bot.js';
-import { Execution } from '../api/core/Execution.js';
-import { Game } from '../api/core/Game.js';
-import Tile from '../api/core/Tile.js';
-import { Traversal } from '../nav/Traversal.js';
-import { Bank } from '../api/hud/Bank.js';
-import { Inventory } from '../api/hud/Inventory.js';
-import { Paint } from '../api/hud/Paint.js';
-import { Shop } from '../api/hud/Shop.js';
-import { Npcs } from '../api/entities/Npcs.js';
-import { ActionRouter } from '../input/ActionRouter.js';
+import { LoopingBot } from '../api/bot/Bot.js';
+import { Execution } from '../api/execution/Execution.js';
+import { Game } from '../api/game/Game.js';
+import Tile from '../geometry/Tile.js';
+import { Traversal } from '../api/walking/Traversal.js';
+import { Bank } from '../api/bank/Bank.js';
+import { Inventory } from '../api/inventory/Inventory.js';
+import { Paint } from '../api/paint/Paint.js';
+import { Shop } from '../api/shop/Shop.js';
+import { Npcs } from '../api/npcs/Npcs.js';
+import { Input } from '../api/input/Input.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import { fmtDuration } from '../api/hud/paintLogic.js';
+import { fmtDuration } from '../api/paint/paintLogic.js';
 
 const TANNER_NAME = 'Tanner';
 const TANNER_STAND = new Tile(3277, 3191, 0);
@@ -37,7 +37,7 @@ interface TanMode {
 
 // every dragonhide shares the display name "Dragonhide", so this bot keys off
 // object ids throughout and only uses names for logging
-export const TAN_MODES: Record<string, TanMode> = {
+const TAN_MODES: Record<string, TanMode> = {
     'Soft leather': { hideId: 1739, hideLabel: 'Cow hide', productId: 1741, productLabel: 'Leather', tanAllComId: 8686 },
     'Hard leather': { hideId: 1739, hideLabel: 'Cow hide', productId: 1743, productLabel: 'Hard leather', tanAllComId: 8690 },
     'Green dragonhide': { hideId: 1753, hideLabel: 'Green dragonhide', productId: 1745, productLabel: 'Green d-leather', tanAllComId: 8695 },
@@ -88,7 +88,7 @@ async function withdrawXById(id: number, count: number): Promise<boolean> {
         return false;
     }
     const before = Inventory.used();
-    ActionRouter.driver.invButton(item.id, item.slot, item.comId, op);
+    Input.invButton(item.id, item.slot, item.comId, op);
     if (!(await Execution.delayUntil(() => reader.countDialogOpen(), 3000))) {
         return false;
     }

@@ -6,7 +6,7 @@ import type { TransportEdgeData } from './PathFinder.js';
 import { activationForEdge, isStateDeferredReason } from './stateAwareRequires.js';
 import type { TransportRequires } from './types.js';
 
-export type EdgeWithRequires = TransportEdgeData & { requires?: TransportRequires };
+type EdgeWithRequires = TransportEdgeData & { requires?: TransportRequires };
 
 /**
  * Map pipeline rows → routable edges with optional requires.

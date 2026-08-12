@@ -1,4 +1,4 @@
-import type { ShopRecord } from '#/bot/api/shops/types.js';
+import type { ShopRecord } from '#/bot/api/shop/types.js';
 
 export interface ParsedInv {
     inv: string;

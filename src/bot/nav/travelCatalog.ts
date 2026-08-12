@@ -33,7 +33,7 @@ export const GLIDER_PAD = {
 
 /** set_sail landings (monk_of_entrana.rs2). */
 export const ENTRANA_LAND = parseLcCoord('1_44_52_18_3');
-export const PORT_SARIM_FROM_ENTRANA = parseLcCoord('1_47_50_40_31');
+const PORT_SARIM_FROM_ENTRANA = parseLcCoord('1_47_50_40_31');
 
 /** Cart p_teleport targets (vigroy.rs2 / hajedy.rs2). */
 export const CART_BRIMHAVEN = parseLcCoord('0_43_50_24_14');
@@ -462,4 +462,3 @@ export const TRAVEL_FAMILIES = [
     'elkoy_maze'
 ] as const;
 
-export type TravelFamilyId = (typeof TRAVEL_FAMILIES)[number];

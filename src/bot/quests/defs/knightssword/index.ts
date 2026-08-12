@@ -1,4 +1,4 @@
-import { Skills } from '../../../api/hud/Skills.js';
+import { Skills } from '../../../api/skills/Skills.js';
 import { QUESTS } from '../../data/quests.js';
 import type { QuestModule, QuestSnapshot, QuestStep } from '../../engine/types.js';
 import { QuestFood } from '../../food.js';

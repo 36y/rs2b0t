@@ -1,7 +1,7 @@
 import { foodForms } from './food.js';
-import { SPELL_DB } from './data/spelldb.js';
+import { SPELL_DB } from '../../data/spelldb.js';
 
-export interface KeepParams {
+interface KeepParams {
     food: string;
     style: 'melee' | 'mage' | 'range';
     spell?: string;

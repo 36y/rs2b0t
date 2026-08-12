@@ -1,7 +1,7 @@
 import { reader } from '../../adapter/ClientAdapter.js';
 import { BotHost } from '../../runtime/BotHost.js';
-import { Execution } from '../core/Execution.js';
-import { Inventory } from '../hud/Inventory.js';
+import { Execution } from '../execution/Execution.js';
+import { Inventory } from '../inventory/Inventory.js';
 import { AttackClock } from './eatTiming.js';
 
 const BURY_CONFIRM_TICKS = 3;
@@ -15,7 +15,7 @@ const clock = new AttackClock();
  * Anything that costs a tick — eating, burying — should skip that one tick and
  * spend the cooldown instead, or it stalls an attack.
  */
-export function swingStartedThisTick(): boolean {
+function swingStartedThisTick(): boolean {
     clock.observe(reader.selfAnim(), BotHost.tickCount);
     return clock.attackedThisTick(BotHost.tickCount);
 }

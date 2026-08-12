@@ -1,5 +1,5 @@
-import { Inventory } from '../../../api/hud/Inventory.js';
-import { Quests } from '../../../api/hud/Quests.js';
+import { Inventory } from '../../../api/inventory/Inventory.js';
+import { Quests } from '../../../api/questlog/Quests.js';
 import { SV_ITEM, SV_LOC, SV_TILE } from './areas.js';
 import { SHILO_QUEST } from './journal.js';
 import { driveUntil, heldId, here, promptLoc, settleScene, useOnLoc } from './scene.js';
@@ -8,7 +8,7 @@ const YES_CRAWL = ['Yes Please, I can think of nothing nicer!'];
 const YES_NOTES = ["Yes, I'll make some notes."];
 
 /** Crawling in needs the tattered scroll read; the pack routes over the log bridge. */
-export async function enterBerviriusTomb(log: (m: string) => void): Promise<boolean> {
+async function enterBerviriusTomb(log: (m: string) => void): Promise<boolean> {
     if (here() === 'berviriusTomb') {
         return true;
     }

@@ -7,7 +7,7 @@
 
 const DEFAULT_THRESHOLD_MS = 100;
 
-export interface InputLatencyReading {
+interface InputLatencyReading {
     maxMs: number;
     count: number;
 }

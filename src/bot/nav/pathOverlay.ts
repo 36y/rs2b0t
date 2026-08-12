@@ -11,7 +11,7 @@
  */
 
 import { reader } from '../adapter/ClientAdapter.js';
-import { Locs } from '../api/entities/Locs.js';
+import { Locs } from '../api/locs/Locs.js';
 import { SettingsStore } from '../runtime/Settings.js';
 import { matchesTransportLoc } from './exec/transportLoc.js';
 import { PathPublish, type PublishedPathTile } from './pathPublish.js';
@@ -22,7 +22,7 @@ import {
     type NavPathPaintTheme
 } from './pathPaintTheme.js';
 import { remainingPathFromPlayer } from './geometry/pathExpand.js';
-import { Game } from '../api/core/Game.js';
+import { Game } from '../api/game/Game.js';
 
 /** areaGame surface blitted at (4,4) — see Client.overlayPos. */
 export const GAME_VIEW_CLIP = { x: 4, y: 4, w: 512, h: 334 } as const;
@@ -140,14 +140,14 @@ export function buildPathQuads(
     return out;
 }
 
-export function quadCenter(corners: TileQuad['corners']): { x: number; y: number } {
+function quadCenter(corners: TileQuad['corners']): { x: number; y: number } {
     return {
         x: (corners[0].x + corners[1].x + corners[2].x + corners[3].x) / 4,
         y: (corners[0].y + corners[1].y + corners[2].y + corners[3].y) / 4
     };
 }
 
-export function drawHopLabel(
+function drawHopLabel(
     ctx: CanvasRenderingContext2D,
     label: string,
     cx: number,
@@ -356,7 +356,7 @@ export function liveTransportLoc(t: PublishedPathTile): {
 }
 
 /** Draw hulls for transport locs on the published path (object highlighter). */
-export function paintNavLocHulls(ctx: CanvasRenderingContext2D): void {
+function paintNavLocHulls(ctx: CanvasRenderingContext2D): void {
     if (!isNavPathPaintEnabled()) {
         return;
     }

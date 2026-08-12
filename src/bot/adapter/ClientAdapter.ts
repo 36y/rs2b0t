@@ -143,7 +143,7 @@ export interface ChatLine {
     text: string;
 }
 
-export interface StatSnapshot {
+interface StatSnapshot {
     name: string;
     effective: number;
     base: number;
@@ -201,7 +201,7 @@ export interface InvItemSnapshot {
     comId: number;
 }
 
-export interface SelectButtonLabel {
+interface SelectButtonLabel {
     mode: number;
     label: string;
 }

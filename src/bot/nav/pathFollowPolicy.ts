@@ -34,7 +34,7 @@ export const PATH_CORRIDOR = 3;
  */
 export const DEFAULT_TRANSPORT_APPROACH_CHEBYSHEV = 4;
 
-export interface PathFollowConfig {
+interface PathFollowConfig {
     /** Server ticks without a tile change → repath (default 5). */
     stallTicks: number;
     /** Chebyshev off the published path → repath (default 10). */

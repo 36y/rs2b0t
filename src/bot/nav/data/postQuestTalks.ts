@@ -36,7 +36,7 @@ export interface PostQuestTalk {
     label: string;
 }
 
-export const POST_QUEST_TALKS: readonly PostQuestTalk[] = [
+const POST_QUEST_TALKS: readonly PostQuestTalk[] = [
     {
         // area_mausoleum/drezel.rs2 → @drezel_access_holy_barrier sets stage 61.
         // Drezel only answers within 20 tiles of the barrier, which the mausoleum

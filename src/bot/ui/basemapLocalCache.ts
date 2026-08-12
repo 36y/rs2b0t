@@ -15,7 +15,7 @@ const DB_VERSION = 1;
 const STORE = 'basemap';
 const ROW_KEY = 'current';
 
-export type BasemapLocalRecord = {
+type BasemapLocalRecord = {
     /** Hex of the 9×u32 jag checksums from `/crc` (login CRC table). */
     crcKey: string;
     prefsKey: string;
@@ -91,7 +91,7 @@ export async function readBasemapLocalCache(): Promise<BasemapLocalRecord | null
     }
 }
 
-export async function writeBasemapLocalCache(rec: BasemapLocalRecord): Promise<void> {
+async function writeBasemapLocalCache(rec: BasemapLocalRecord): Promise<void> {
     const db = await openDb();
     await new Promise<void>((resolve, reject) => {
         const tx = db.transaction(STORE, 'readwrite');
@@ -121,7 +121,7 @@ export async function clearBasemapLocalCache(): Promise<void> {
     }
 }
 
-export async function imageSourceToPngBlob(
+async function imageSourceToPngBlob(
     image: CanvasImageSource,
     width: number,
     height: number

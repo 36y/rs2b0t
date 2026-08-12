@@ -1,18 +1,18 @@
 import { actions, reader } from '../../adapter/ClientAdapter.js';
-import { EventSignal } from '../../api/randomevents/EventSignal.js';
-import { Execution } from '../../api/core/Execution.js';
-import { Game } from '../../api/core/Game.js';
+import { EventSignal } from '../../api/execution/EventSignal.js';
+import { Execution } from '../../api/execution/Execution.js';
+import { Game } from '../../api/game/Game.js';
 import { Reachability } from '../../nav/geometry/Reachability.js';
-import Tile from '../../api/core/Tile.js';
-import { Traversal } from '../../nav/Traversal.js';
-import { ChatDialog } from '../../api/hud/ChatDialog.js';
-import { Equipment } from '../../api/hud/Equipment.js';
-import { Inventory } from '../../api/hud/Inventory.js';
-import { Quests } from '../../api/hud/Quests.js';
-import { Skills } from '../../api/hud/Skills.js';
-import { GroundItems } from '../../api/entities/GroundItems.js';
-import { Locs } from '../../api/entities/Locs.js';
-import { ROCK_TYPES } from '../../api/skilling/MiningRocks.js';
+import Tile from '../../geometry/Tile.js';
+import { Traversal } from '../../api/walking/Traversal.js';
+import { ChatDialog } from '../../api/dialogue/ChatDialog.js';
+import { Equipment } from '../../api/equipment/Equipment.js';
+import { Inventory } from '../../api/inventory/Inventory.js';
+import { Quests } from '../../api/questlog/Quests.js';
+import { Skills } from '../../api/skills/Skills.js';
+import { GroundItems } from '../../api/grounditems/GroundItems.js';
+import { Locs } from '../../api/locs/Locs.js';
+import { ROCK_TYPES } from '../../data/miningRocks.js';
 import { PICKAXES } from '../../api/acquisition/Tools.js';
 import { QUESTS } from '../data/quests.js';
 import type { QuestModule, QuestSnapshot, QuestStep } from '../engine/types.js';
@@ -99,7 +99,7 @@ export function parseDoricJournal(lines: readonly string[] | string): number | u
     return undefined;
 }
 
-export async function readDoricStage(): Promise<number | undefined> {
+async function readDoricStage(): Promise<number | undefined> {
     const status = Quests.status("Doric's Quest");
     if (status === 'complete') return DORIC_STAGE.COMPLETE;
     if (status === 'notStarted') return DORIC_STAGE.NOT_STARTED;

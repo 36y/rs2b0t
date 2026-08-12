@@ -1,4 +1,4 @@
-import Tile from '../api/core/Tile.js';
+import Tile from '../geometry/Tile.js';
 import { WORLDMAP_KEY_NAMES } from '../../mapview/worldmapKeyNames.js';
 import { boxKey } from './box.js';
 
@@ -526,7 +526,7 @@ function storageKey(name: string, key: string): string {
     return boxKey(`set:${name}:${key}`);
 }
 
-export type SettingChangeListener = (name: string, key: string, value: string) => void;
+type SettingChangeListener = (name: string, key: string, value: string) => void;
 
 class SettingsStoreImpl {
     private urlParams: URLSearchParams | null = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;

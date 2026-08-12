@@ -8,14 +8,14 @@
 // wedged: the timer fires on schedule, the resolve waits for the main thread. So the
 // overshoot past the requested delay *is* the starvation, with no new worker.
 
-export interface FreezeEvent {
+interface FreezeEvent {
     /** Wall clock when the stall was detected. */
     at: number;
     /** How far past the requested delay the resolve arrived. */
     stallMs: number;
 }
 
-export interface FreezeWatchOptions {
+interface FreezeWatchOptions {
     /** How often to probe. Shorter tightens the floor on measurable stalls. */
     probeMs?: number;
     /** Overshoot at or above this is recorded as a freeze. */

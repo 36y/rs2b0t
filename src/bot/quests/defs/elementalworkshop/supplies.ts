@@ -1,9 +1,9 @@
 import type { QuestSnapshot, QuestStep } from '../../engine/types.js';
-import { Skills } from '../../../api/hud/Skills.js';
+import { Skills } from '../../../api/skills/Skills.js';
 import { EW_ITEM, PICKAXES, SEERS_BANK, type EwItem } from './areas.js';
 
 export const COAL_NEED = 4;
-export const THREAD_NEED = 1;
+const THREAD_NEED = 1;
 /** Food withdrawn before entering so Sustain can work inside the workshop. */
 export const FOOD_WITHDRAW = 8;
 
@@ -409,7 +409,7 @@ export function surfaceLoadout(snap: QuestSnapshot, needBellowsFix: boolean, nee
     return null;
 }
 
-export function workshopKeepIds(snap: QuestSnapshot): number[] {
+function workshopKeepIds(snap: QuestSnapshot): number[] {
     const ids = [
         EW_ITEM.BATTERED_BOOK.id,
         EW_ITEM.BATTERED_KEY.id,

@@ -1,17 +1,17 @@
 import { actions, reader } from '../../adapter/ClientAdapter.js';
-import { Execution } from '../../api/core/Execution.js';
-import { Game } from '../../api/core/Game.js';
-import { ChatDialog } from '../../api/hud/ChatDialog.js';
-import { Equipment } from '../../api/hud/Equipment.js';
-import { Inventory, type InvItem } from '../../api/hud/Inventory.js';
-import { Quests } from '../../api/hud/Quests.js';
-import { Skills } from '../../api/hud/Skills.js';
-import { Locs, type Loc } from '../../api/entities/Locs.js';
-import { Npcs } from '../../api/entities/Npcs.js';
-import { Sustain } from '../../api/core/Sustain.js';
-import { Traversal } from '../../nav/Traversal.js';
-import Tile from '../../api/core/Tile.js';
-import { GameMessages } from '../../events/gameMessages.js';
+import { Execution } from '../../api/execution/Execution.js';
+import { Game } from '../../api/game/Game.js';
+import { ChatDialog } from '../../api/dialogue/ChatDialog.js';
+import { Equipment } from '../../api/equipment/Equipment.js';
+import { Inventory, type InvItem } from '../../api/inventory/Inventory.js';
+import { Quests } from '../../api/questlog/Quests.js';
+import { Skills } from '../../api/skills/Skills.js';
+import { Locs, type Loc } from '../../api/locs/Locs.js';
+import { Npcs } from '../../api/npcs/Npcs.js';
+import { Sustain } from '../../api/sustain/Sustain.js';
+import { Traversal } from '../../api/walking/Traversal.js';
+import Tile from '../../geometry/Tile.js';
+import { GameMessages } from '../../api/chatbox/gameMessages.js';
 import { QUESTS } from '../data/quests.js';
 import type { QuestModule, QuestSnapshot, QuestStep } from '../engine/types.js';
 import { talkThrough, walkWithHops, type LadderHop, type NpcStop } from '../exec/primitives.js';
@@ -108,7 +108,7 @@ const ALMERA: NpcStop = {
     prefer: ['How can I help?']
 };
 
-export const WATERFALL_HOPS: LadderHop[] = [
+const WATERFALL_HOPS: LadderHop[] = [
     { stand: new Tile(2533, 3156, 0), locName: 'Ladder', op: 'Climb-down', arrive: new Tile(2533, 9556, 0) },
     { stand: new Tile(2533, 9556, 0), locName: 'Ladder', op: 'Climb-up', arrive: new Tile(2533, 3156, 0) }
 ];
@@ -141,7 +141,7 @@ const PILLAR_STAND = new Tile(2563, 9911, 0);
 const STATUE_STAND = new Tile(2565, 9915, 0);
 const RAISED_ROOM_STAND = new Tile(2603, 9906, 0);
 
-export type WaterfallArea =
+type WaterfallArea =
     | 'mainland'
     | 'hudonMound'
     | 'fallsTreeBank'
@@ -167,7 +167,7 @@ export function waterfallArea(tile: QuestSnapshot['tile']): WaterfallArea {
     return 'mainland';
 }
 
-export type WaterfallDungeonEntryReadiness = 'waitForEnergy' | 'heal' | 'enableRun' | 'ready';
+type WaterfallDungeonEntryReadiness = 'waitForEnergy' | 'heal' | 'enableRun' | 'ready';
 
 export function waterfallDungeonEntryReadiness(
     energy: number,

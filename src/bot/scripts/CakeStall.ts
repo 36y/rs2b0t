@@ -1,9 +1,9 @@
-import { Execution } from '../api/core/Execution.js';
-import { Game } from '../api/core/Game.js';
-import { Inventory } from '../api/hud/Inventory.js';
-import { Traversal } from '../nav/Traversal.js';
-import { Locs } from '../api/entities/Locs.js';
-import { bus } from '../events/EventBus.js';
+import { Execution } from '../api/execution/Execution.js';
+import { Game } from '../api/game/Game.js';
+import { Inventory } from '../api/inventory/Inventory.js';
+import { Traversal } from '../api/walking/Traversal.js';
+import { Locs } from '../api/locs/Locs.js';
+import { bus } from '../api/events/EventBus.js';
 import { countMatching } from './ArdyFighterLogic.js';
 import {
     CAKE_ITEMS, LOCKOUT_TICKS, STALL_NAME, STALL_OP, STALL_TILE, STAND, STAND_ALT,
@@ -19,9 +19,9 @@ const RESTOCK_WAIT_MS = 8_000;
 const ATTEMPT_RE = /you attempt to steal/i;
 const LOCKOUT_RE = /can't steal from the market stall during combat/i;
 
-export type StealCakesResult = 'stocked' | 'combat' | 'aborted' | 'no-progress';
+type StealCakesResult = 'stocked' | 'combat' | 'aborted' | 'no-progress';
 
-export interface StealCakesOptions {
+interface StealCakesOptions {
     fillTo: number;
     abort: () => boolean;
     shouldEat?: () => boolean;

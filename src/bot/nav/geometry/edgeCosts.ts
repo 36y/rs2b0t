@@ -102,7 +102,7 @@ export const SPELL_TELEPORT_COST = ticksToCost(5);
 export const JEWELLERY_TELEPORT_COST = ticksToCost(4);
 
 /** Wilderness / Ardougne lever (~3 ticks). */
-export const LEVER_TELEPORT_COST = ticksToCost(3);
+const LEVER_TELEPORT_COST = ticksToCost(3);
 
 /**
  * Open bank, withdraw a short path-scoped list, close (~12 ticks).

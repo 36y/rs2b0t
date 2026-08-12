@@ -1,11 +1,11 @@
-import { Execution } from '../../../api/core/Execution.js';
-import { Game } from '../../../api/core/Game.js';
-import { Inventory } from '../../../api/hud/Inventory.js';
-import { ChatDialog } from '../../../api/hud/ChatDialog.js';
-import { Locs, type Loc } from '../../../api/entities/Locs.js';
-import { Npcs } from '../../../api/entities/Npcs.js';
-import { Reach } from '../../../nav/Reach.js';
-import { Traversal } from '../../../nav/Traversal.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import { Game } from '../../../api/game/Game.js';
+import { Inventory } from '../../../api/inventory/Inventory.js';
+import { ChatDialog } from '../../../api/dialogue/ChatDialog.js';
+import { Locs, type Loc } from '../../../api/locs/Locs.js';
+import { Npcs } from '../../../api/npcs/Npcs.js';
+import { Reach } from '../../../api/walking/Reach.js';
+import { Traversal } from '../../../api/walking/Traversal.js';
 import { driveDialog, talkStrict, talkThrough } from '../../exec/primitives.js';
 import { Navigator } from '../../../nav/Navigator.js';
 import { WT_CAVES, WT_ITEM, WT_LOC, WT_NPC, WT_TILE, watchtowerArea } from './areas.js';
@@ -169,7 +169,7 @@ export async function leaveLowerCity(log: (m: string) => void): Promise<boolean>
     return true;
 }
 
-export async function jumpChasm(log: (m: string) => void): Promise<boolean> {
+async function jumpChasm(log: (m: string) => void): Promise<boolean> {
     if (watchtowerArea(Game.tile()) === 'cityGuard') {
         return true;
     }
@@ -265,7 +265,7 @@ export async function answerRiddle(log: (m: string) => void): Promise<boolean> {
  * The region beyond overlaps the battlement side geographically, so membership is
  * decided by asking the pathfinder rather than by a bounding box.
  */
-export async function pastEastGate(): Promise<boolean> {
+async function pastEastGate(): Promise<boolean> {
     const here = Game.tile();
     if (!here) {
         return false;

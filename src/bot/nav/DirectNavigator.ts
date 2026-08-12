@@ -1,8 +1,8 @@
 import type { WorldTile } from '../adapter/ClientAdapter.js';
 import { reader } from '../adapter/ClientAdapter.js';
-import { Execution } from '../api/core/Execution.js';
+import { Execution } from '../api/execution/Execution.js';
 import { Reachability } from './geometry/Reachability.js';
-import { ActionRouter } from '../input/ActionRouter.js';
+import { Input } from '../api/input/Input.js';
 import { isArrived } from './geometry/arrival.js';
 
 export const DirectNavigator = {
@@ -22,7 +22,7 @@ export const DirectNavigator = {
             return false;
         }
 
-        return ActionRouter.driver.walk(local.lx, local.lz);
+        return Input.walk(local.lx, local.lz);
     },
 
     async walkTo(dest: WorldTile, radius: number = 2, timeoutMs: number = 45000): Promise<boolean> {

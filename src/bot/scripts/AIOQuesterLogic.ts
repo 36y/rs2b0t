@@ -5,7 +5,7 @@ export interface ResolvedSustainPolicy {
     foods: readonly string[];
 }
 
-export interface SustainInventoryItem {
+interface SustainInventoryItem {
     name: string | null | undefined;
     actions(): readonly string[];
 }

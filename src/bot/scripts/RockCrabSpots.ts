@@ -1,4 +1,4 @@
-import Tile from '../api/core/Tile.js';
+import Tile from '../geometry/Tile.js';
 
 export const ROCKS_SPAWNS: readonly Tile[] = [
     new Tile(2694, 3724, 0),

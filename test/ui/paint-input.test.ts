@@ -1,6 +1,6 @@
 import { beforeEach, expect, test } from 'bun:test';
 import { installPaintInput } from '#/bot/ui/PaintInput.js';
-import { paintState } from '#/bot/api/hud/paintLogic.js';
+import { paintState } from '#/bot/api/paint/paintLogic.js';
 
 let canvas: HTMLElement;
 let clientSaw: string[];

@@ -34,7 +34,6 @@ export const FLETCHABLE_LOG_NAMES = [
     'Magic logs'
 ] as const;
 
-export type FletchableLogName = (typeof FLETCHABLE_LOG_NAMES)[number];
 
 /**
  * Soft product hint for Make-1 when the menu offers shafts (normal Logs only).
@@ -52,15 +51,13 @@ export const FISH_TICK_MANIP_OPTIONS = [
     'Tannerfishing'
 ] as const;
 
-export type FishTickManipLabel = (typeof FISH_TICK_MANIP_OPTIONS)[number];
-export type FishTickManip = 'off' | '4t-fly' | 'knife-delay' | 'tannerfish';
+type FishTickManip = 'off' | '4t-fly' | 'knife-delay' | 'tannerfish';
 
 // ── Miner ───────────────────────────────────────────────────────────────────
 
 export const MINE_TICK_MANIP_OPTIONS = ['Off', 'Iron cadence (pick-aware)'] as const;
 
-export type MineTickManipLabel = (typeof MINE_TICK_MANIP_OPTIONS)[number];
-export type MineTickManip = 'off' | 'iron-cadence';
+type MineTickManip = 'off' | 'iron-cadence';
 
 // ── Woodcutter ──────────────────────────────────────────────────────────────
 
@@ -72,15 +69,14 @@ export const WC_TICK_MANIP_OPTIONS = [
     '3t willows shortbow rapid'
 ] as const;
 
-export type WcTickManipLabel = (typeof WC_TICK_MANIP_OPTIONS)[number];
-export type WcTickManip = 'off' | 'knife-delay' | '2t-oaks' | '3t-farmer' | '3t-shortbow';
+type WcTickManip = 'off' | 'knife-delay' | '2t-oaks' | '3t-farmer' | '3t-shortbow';
 
-export type TickManipMethod = FishTickManip | MineTickManip | WcTickManip;
+type TickManipMethod = FishTickManip | MineTickManip | WcTickManip;
 
 /** Combat policy derived from the active method. */
-export type TickManipCombatPolicy = 'flee' | 'retaliate-may-die';
+type TickManipCombatPolicy = 'flee' | 'retaliate-may-die';
 
-export type TickManipSkill = 'fish' | 'mine' | 'wc';
+type TickManipSkill = 'fish' | 'mine' | 'wc';
 
 export interface TickManipProfile {
     skill: TickManipSkill;
@@ -216,7 +212,7 @@ export function fishTickManipProfile(method: FishTickManip, label = methodLabel(
     }
 }
 
-export function mineTickManipProfile(method: MineTickManip, label = methodLabel('mine', method)): TickManipProfile {
+function mineTickManipProfile(method: MineTickManip, label = methodLabel('mine', method)): TickManipProfile {
     switch (method) {
         case 'iron-cadence':
             return {
@@ -376,7 +372,7 @@ export function nextGatherClickTick(rollTick: number, cycleTicks: number, lateSl
  *
  * Callers often stamp armTick ≈ last gather roll when the bot reacts same-tick.
  */
-export type KnifeDelayPhase = 'delay-action' | 'reclick' | 'wait';
+type KnifeDelayPhase = 'delay-action' | 'reclick' | 'wait';
 
 export function knifeDelayPhase(nowTick: number, armTick: number): KnifeDelayPhase {
     const now = Math.floor(nowTick);
@@ -398,7 +394,7 @@ export function knifeDelayPhase(nowTick: number, armTick: number): KnifeDelayPha
  * Farmer willows 6-tick cycle (issue): t1 click tree, t5 cut/process log, t6 drop/ground.
  * Phase index is (nowTick - cycleStart) mod 6, where 0 = tick 1 of the cycle.
  */
-export type FarmerWillowPhase = 'click-tree' | 'wait' | 'cut-log' | 'drop-log';
+type FarmerWillowPhase = 'click-tree' | 'wait' | 'cut-log' | 'drop-log';
 
 export function farmerWillowPhase(nowTick: number, cycleStartTick: number): FarmerWillowPhase {
     const phase = ((Math.floor(nowTick) - Math.floor(cycleStartTick)) % 6 + 6) % 6;

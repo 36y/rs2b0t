@@ -1,10 +1,10 @@
-import { withdrawOp } from '../api/banking/bankOps.js';
+import { withdrawOp } from '../api/bank/bankOps.js';
 
 export const ESS_ITEM = 'Rune essence';
 
 export const BEST_AVAILABLE = 'Best available';
 
-export interface PickTier {
+interface PickTier {
     tier: string;
     item: string;
     level: number;
@@ -39,7 +39,7 @@ export function needsPickaxeCheck(lastCheckedItem: string | null, selection: str
     return lastCheckedItem !== (desiredPickaxe(selection, miningLevel)?.item ?? null);
 }
 
-export type PickResolution =
+type PickResolution =
     | { kind: 'held'; item: string }
     | { kind: 'withdraw'; item: string }
     | { kind: 'stop'; reason: string };

@@ -1,4 +1,4 @@
-import Tile from '../../../api/core/Tile.js';
+import Tile from '../../../geometry/Tile.js';
 
 /** Every coordinate here was read out of the engine's own map spawns. */
 export const DS_NPC = {
@@ -115,6 +115,3 @@ export const SHIP_REPAIR = { planks: 3, nailsPerPlank: 4 } as const;
 /** Wormbrain sells his piece; he is behind bars and cannot be reached in melee. */
 export const WORMBRAIN_PRICE = 10_000;
 export const SHIP_PRICE = 2000;
-
-/** The Champions' Guild door will not open below this. */
-export const REQUIRED_QUEST_POINTS = 32;

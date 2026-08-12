@@ -1,4 +1,4 @@
-import Tile from '../api/core/Tile.js';
+import Tile from '../geometry/Tile.js';
 
 export const TRADE_CAP = 25; // max essence offered per trade; the store-visit target
 export const BUY_ONLY_STOCK = 30; // shop stock above which the runner only buys (drain mode)
@@ -41,7 +41,7 @@ export const RUNES: Record<string, RuneType> = {
 export const RUNE_OPTIONS = Object.keys(RUNES);
 export const DEFAULT_RUNE = 'Nature runes';
 
-export type StoreStep = { op: 'buy' | 'sell'; n: number } | { op: 'done' };
+type StoreStep = { op: 'buy' | 'sell'; n: number } | { op: 'done' };
 
 export function coinTargetFor(setting: number): number {
     return Math.max(MIN_COIN_TARGET, Math.floor(setting) || 0);

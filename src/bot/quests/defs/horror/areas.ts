@@ -1,4 +1,4 @@
-import Tile from '../../../api/core/Tile.js';
+import Tile from '../../../geometry/Tile.js';
 import type { NpcStop } from '../../exec/primitives.js';
 
 export const HD_QUEST = 'Horror from the Deep';

@@ -1,20 +1,20 @@
-import { TaskBot, type Task } from '../api/core/Bot.js';
-import { Execution } from '../api/core/Execution.js';
-import { Game } from '../api/core/Game.js';
-import Tile from '../api/core/Tile.js';
-import { Inventory } from '../api/hud/Inventory.js';
-import { Bank } from '../api/hud/Bank.js';
-import { Skills } from '../api/hud/Skills.js';
-import { Paint } from '../api/hud/Paint.js';
-import { Traversal } from '../nav/Traversal.js';
-import { Locs, type Loc } from '../api/entities/Locs.js';
+import { TaskBot, type Task } from '../api/bot/Bot.js';
+import { Execution } from '../api/execution/Execution.js';
+import { Game } from '../api/game/Game.js';
+import Tile from '../geometry/Tile.js';
+import { Inventory } from '../api/inventory/Inventory.js';
+import { Bank } from '../api/bank/Bank.js';
+import { Skills } from '../api/skills/Skills.js';
+import { Paint } from '../api/paint/Paint.js';
+import { Traversal } from '../api/walking/Traversal.js';
+import { Locs, type Loc } from '../api/locs/Locs.js';
 import { actions, reader } from '../adapter/ClientAdapter.js';
-import { depositAllExcept } from '../api/banking/Banking.js';
+import { depositAllExcept } from '../api/bank/Banking.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import { foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
-import { scriptFood } from '../api/items/loadoutPlan.js';
-import { LOADOUT_SETTING } from '../api/items/loadoutSetting.js';
+import { scriptFood } from '../api/loadout/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../api/loadout/loadoutSetting.js';
 
 const MONKEYBARS_APPROACH = new Tile(3121, 9964, 0);
 const MIN_AGILITY = 15; // required to swing across the monkey bars

@@ -1,11 +1,11 @@
-import { Execution } from '../../api/core/Execution.js';
+import { Execution } from '../../api/execution/Execution.js';
 import { Reachability } from '../../nav/geometry/Reachability.js';
-import type Tile from '../../api/core/Tile.js';
-import { Traversal } from '../../nav/Traversal.js';
-import { ChatDialog } from '../../api/hud/ChatDialog.js';
-import { Inventory } from '../../api/hud/Inventory.js';
-import { Locs } from '../../api/entities/Locs.js';
-import { Npcs } from '../../api/entities/Npcs.js';
+import type Tile from '../../geometry/Tile.js';
+import { Traversal } from '../../api/walking/Traversal.js';
+import { ChatDialog } from '../../api/dialogue/ChatDialog.js';
+import { Inventory } from '../../api/inventory/Inventory.js';
+import { Locs } from '../../api/locs/Locs.js';
+import { Npcs } from '../../api/npcs/Npcs.js';
 import type { QuestSnapshot, QuestStep } from '../engine/types.js';
 
 export const UNSHEARED_SHEEP_ID = 43;
@@ -17,7 +17,7 @@ export interface WoolSites {
     spinLabel: string;
 }
 
-export async function shearOne(pen: Tile, log: (m: string) => void): Promise<boolean> {
+async function shearOne(pen: Tile, log: (m: string) => void): Promise<boolean> {
     const before = Inventory.count('Wool');
     const sheep = Npcs.query()
         .name('Sheep')
@@ -37,7 +37,7 @@ export async function shearOne(pen: Tile, log: (m: string) => void): Promise<boo
 }
 
 /** @see docs/decisions/level-change-lag.md — a wheel on an upper floor reads empty for a tick. */
-export async function spinAllWool(wheelStand: Tile, log: (m: string) => void): Promise<boolean> {
+async function spinAllWool(wheelStand: Tile, log: (m: string) => void): Promise<boolean> {
     const ballsBefore = Inventory.count('Ball of wool');
     if (!ChatDialog.isMakeMenu()) {
         const wheel = Locs.query().name('Spinning wheel').action('Spin').within(8).nearest();

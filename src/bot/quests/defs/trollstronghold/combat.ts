@@ -1,12 +1,12 @@
-import { EventSignal } from '../../../api/randomevents/EventSignal.js';
-import { Execution } from '../../../api/core/Execution.js';
-import { Game } from '../../../api/core/Game.js';
-import { Prayer } from '../../../api/hud/Prayer.js';
-import { Sustain } from '../../../api/core/Sustain.js';
-import { ChatDialog } from '../../../api/hud/ChatDialog.js';
-import { Inventory } from '../../../api/hud/Inventory.js';
-import { Skills } from '../../../api/hud/Skills.js';
-import { Npcs, type Npc } from '../../../api/entities/Npcs.js';
+import { EventSignal } from '../../../api/execution/EventSignal.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import { Game } from '../../../api/game/Game.js';
+import { Prayer } from '../../../api/prayer/Prayer.js';
+import { Sustain } from '../../../api/sustain/Sustain.js';
+import { ChatDialog } from '../../../api/dialogue/ChatDialog.js';
+import { Inventory } from '../../../api/inventory/Inventory.js';
+import { Skills } from '../../../api/skills/Skills.js';
+import { Npcs, type Npc } from '../../../api/npcs/Npcs.js';
 import { pickPreferred } from '../../exec/primitives.js';
 import { PRAYER_SIP_AT } from './areas.js';
 
@@ -46,20 +46,6 @@ class Protection {
             await Prayer.set(PROTECT[this.kind].name, false);
         }
     }
-}
-
-/**
- * Hold a protection prayer outside a fight — the thrower trolls that line the
- * mountain between the cave exit and the stronghold door are pure ranged, and a
- * walk past them with no prayer up is the most expensive stretch of the quest.
- * Returns whether it went up, so the caller knows what to drop afterwards.
- */
-export async function holdProtect(kind: ProtectKind): Promise<boolean> {
-    return new Protection(kind).hold();
-}
-
-export async function dropProtect(kind: ProtectKind): Promise<void> {
-    await new Protection(kind).clear();
 }
 
 /**

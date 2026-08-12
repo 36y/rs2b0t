@@ -1,4 +1,4 @@
-import type { AbstractBot } from '../api/core/Bot.js';
+import type { AbstractBot } from '../api/bot/Bot.js';
 import type { SettingsSchema } from './Settings.js';
 
 export interface ScriptMeta {

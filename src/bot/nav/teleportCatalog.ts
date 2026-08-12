@@ -9,10 +9,10 @@ import { teleportEdgeCost } from './geometry/edgeCosts.js';
 import type { NavPoint, TransportEdge, TransportRequires } from './types.js';
 import { GLORY_MAX_WILDERNESS, SPELL_MAX_WILDERNESS, wildernessLevelAt } from './wilderness.js';
 
-export type TeleportFamily = 'spell' | 'jewellery' | 'lever';
+type TeleportFamily = 'spell' | 'jewellery' | 'lever';
 
 /** Origin-side restrictions evaluated at the player's current tile (#339). */
-export interface TeleportOriginRequires {
+interface TeleportOriginRequires {
     /**
      * Maximum wilderness level where this tele may be cast/rubbed.
      * Player wildy **strictly greater** than this → not planned.

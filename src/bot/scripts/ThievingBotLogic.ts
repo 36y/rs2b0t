@@ -1,8 +1,8 @@
-import { Bank } from '../api/hud/Bank.js';
-import { Execution } from '../api/core/Execution.js';
-import { Inventory } from '../api/hud/Inventory.js';
+import { Bank } from '../api/bank/Bank.js';
+import { Execution } from '../api/execution/Execution.js';
+import { Inventory } from '../api/inventory/Inventory.js';
 
-export interface NamedStack {
+interface NamedStack {
     name: string | null;
     count: number;
 }
@@ -15,7 +15,7 @@ export const THIEVER_BANKING_OPTIONS = ['None', 'Auto'];
  */
 export const STUN_COMBAT_TICKS = 9;
 
-export type WithdrawChunk =
+type WithdrawChunk =
     | { kind: 'x'; count: number }
     | { kind: 'op'; op: 'Withdraw-10' | 'Withdraw-5' | 'Withdraw-1' };
 

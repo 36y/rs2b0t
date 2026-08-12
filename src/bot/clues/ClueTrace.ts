@@ -1,4 +1,4 @@
-export interface TraceLine {
+interface TraceLine {
     t: number;
     pos: string;
     m: string;

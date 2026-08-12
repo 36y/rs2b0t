@@ -56,9 +56,9 @@ until that UID has been idle for 15 seconds. Every attempt refreshes that server
 TTL, so the cooldown runs from the latest permit, not the first.
 
 ```ts
-export const LOGIN_BATCH_SIZE = 4;
-export const LOGIN_ATTEMPT_SPACING_MS = 1000;
-export const LOGIN_BATCH_COOLDOWN_MS = 16000;
+const LOGIN_BATCH_SIZE = 4;
+const LOGIN_ATTEMPT_SPACING_MS = 1000;
+const LOGIN_BATCH_COOLDOWN_MS = 16000;
 ```
 
 A denied but due request keeps its FIFO place across polls, giving the canvas a live

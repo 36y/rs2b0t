@@ -5,7 +5,7 @@
 import { wildernessLevelAt, type WildTile } from '../nav/wilderness.js';
 import { combatBreaksGather } from './TickManipLogic.js';
 
-export type GatheringCombatMode =
+type GatheringCombatMode =
     | 'standard'
     | 'wilderness-miner-npc'
     | 'wilderness-miner-player';

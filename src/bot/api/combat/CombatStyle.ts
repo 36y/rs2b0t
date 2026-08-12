@@ -30,7 +30,7 @@ export interface CombatModeLabel {
     label: string;
 }
 
-export interface CombatStyleBackend {
+interface CombatStyleBackend {
     offeredModes(): readonly CombatModeLabel[] | null;
     currentMode(): number;
     selectMode(mode: number): boolean;
@@ -49,7 +49,7 @@ export function tryParseCombatStyle(name: string): MeleeCombatStyle | null {
     return COMBAT_STYLE[name.trim().toLowerCase()] ?? null;
 }
 
-export type CombatKind = 'melee' | 'mage' | 'range';
+type CombatKind = 'melee' | 'mage' | 'range';
 
 /**
  * Resolve combatStyle + meleeStyle after the melee|mage|range split.

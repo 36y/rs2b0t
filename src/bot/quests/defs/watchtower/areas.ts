@@ -1,4 +1,4 @@
-import Tile from '../../../api/core/Tile.js';
+import Tile from '../../../geometry/Tile.js';
 import type { QuestSnapshot } from '../../engine/types.js';
 
 export interface WatchtowerItem {
@@ -142,7 +142,7 @@ export const WT_TILE = {
     ]
 } as const;
 
-export interface SkavidCave {
+interface SkavidCave {
     index: number;
     /** A walkable tile the mouth can actually be clicked from. The mouth loc itself
      *  is a 4x2 blocker, and for cave 1 the only reachable side is the south. */

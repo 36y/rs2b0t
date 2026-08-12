@@ -4,7 +4,7 @@
 
 ### Gathering location seed coords
 
-Fisher / Miner / Woodcutter camps live in `src/bot/api/*Locations.ts` (public
+Fisher / Miner / Woodcutter camps live in `src/bot/data/*Locations.ts` (public
 `@rs2b0t/api` catalogs). Most
 entries ship with `verified: false` seed tiles from the gathering CSV. After a
 local engine is up:

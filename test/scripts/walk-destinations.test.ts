@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { WALK_DESTINATIONS, WALK_OPTIONS, resolveDestination } from '#/bot/nav/WalkDestinations.js';
+import { WALK_DESTINATIONS, WALK_OPTIONS, resolveDestination } from '#/bot/api/map/WalkDestinations.js';
 
 test('has all 12 named destinations with unique names', () => {
     expect(WALK_DESTINATIONS.length).toBe(12);

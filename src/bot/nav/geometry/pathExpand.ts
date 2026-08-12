@@ -11,7 +11,7 @@
 
 import { canStepLocal, type FlagsAt, type LocalPoint } from './localReach.js';
 
-export interface ExpandTile {
+interface ExpandTile {
     x: number;
     z: number;
     level: number;

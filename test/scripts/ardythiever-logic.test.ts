@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { ARDOUGNE_PICKPOCKET_TARGETS } from '#/bot/api/skilling/PickpocketTargets.js';
+import { ARDOUGNE_PICKPOCKET_TARGETS } from '#/bot/data/pickpocketTargets.js';
 import { HOSTILE_NAMES, chooseTarget, isHostileAttacker, requiredThieving, targetSpot } from '#/bot/scripts/ArdyThieverLogic.js';
 
 const SPAWNS: Record<string, [number, number][]> = {

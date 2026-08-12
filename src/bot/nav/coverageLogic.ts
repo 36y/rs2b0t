@@ -5,7 +5,7 @@ export interface ReachChecker {
     connected(from: NavPoint, anchor: NavPoint): boolean;
 }
 
-export type TargetKind = 'ok' | 'unwalkable' | 'island';
+type TargetKind = 'ok' | 'unwalkable' | 'island';
 
 export function classifyTarget(rc: ReachChecker, target: NavPoint, anchor: NavPoint): TargetKind {
     if (!rc.walkable(target.x, target.z, target.level)) {

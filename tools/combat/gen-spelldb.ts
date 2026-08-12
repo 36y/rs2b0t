@@ -3,7 +3,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 const CONTENT = process.env.CONTENT_DIR ?? join(homedir(), 'code', 'rs2b2t-content');
-const OUT = 'src/bot/api/combat/data/spelldb.ts';
+const OUT = 'src/bot/data/spelldb.ts';
 
 const SSB_ORDER = [
     'wind_strike', 'water_strike', 'earth_strike', 'fire_strike',

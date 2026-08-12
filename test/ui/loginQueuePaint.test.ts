@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { LOGIN_QUEUE_PAINT_RECT, paintLoginQueue } from '#/bot/ui/LoginQueuePaint.js';
-import { resolveDock, type Rect } from '#/bot/api/hud/paintLogic.js';
+import { resolveDock, type Rect } from '#/bot/api/paint/paintLogic.js';
 
 function overlaps(a: Rect, b: Rect): boolean {
     return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;

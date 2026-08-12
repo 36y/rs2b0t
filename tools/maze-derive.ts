@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
-import { buildMaze, parseJm2Locs, solveRoute, MAZE_SHRINE, MAZE_SPAWNS, edgeKey, WALL_ID, DOOR_DIRS } from '../src/bot/api/randomevents/maze/mazeGraph.js';
+import { buildMaze, parseJm2Locs, solveRoute, MAZE_SHRINE, MAZE_SPAWNS, edgeKey, WALL_ID, DOOR_DIRS } from '../src/bot/runtime/randomevents/maze/mazeGraph.js';
 
 function parseArgs(): { map: string; out: string } {
     const args = process.argv.slice(2);

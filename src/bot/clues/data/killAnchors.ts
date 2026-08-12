@@ -1,4 +1,4 @@
-import Tile from '#/bot/api/core/Tile.js';
+import Tile from '#/bot/geometry/Tile.js';
 
 export const KILL_ANCHORS: Record<number, Tile> = {
     2831: new Tile(3039, 3700, 0), // riddle001 — Black Heather, deep in the Wilderness

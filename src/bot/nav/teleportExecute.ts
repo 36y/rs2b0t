@@ -3,10 +3,10 @@
  */
 
 import { reader } from '../adapter/ClientAdapter.js';
-import { Execution } from '../api/core/Execution.js';
-import { Game } from '../api/core/Game.js';
-import { ChatDialog } from '../api/hud/ChatDialog.js';
-import { Inventory } from '../api/hud/Inventory.js';
+import { Execution } from '../api/execution/Execution.js';
+import { Game } from '../api/game/Game.js';
+import { ChatDialog } from '../api/dialogue/ChatDialog.js';
+import { Inventory } from '../api/inventory/Inventory.js';
 import type { TransportInfo } from './PathFinder.js';
 import { pickChoice } from './data/specialCrossings.js';
 import {

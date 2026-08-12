@@ -33,7 +33,7 @@ export function isLevelRefusal(text: string): boolean {
     return CANNOT_IDENTIFY.test(text);
 }
 
-export interface GateState {
+interface GateState {
     herbloreLevel: number;
     /** Journal stage from `readJungleProgress`; undefined when the journal would not read. */
     stage: number | undefined;
@@ -94,9 +94,9 @@ export function rankBanksByDetour<T extends { tile: Point }>(here: Point, dest: 
     return [...banks].sort((a, b) => detourCost(here, a.tile, dest) - detourCost(here, b.tile, dest));
 }
 
-export type CycleAction = 'continue' | 'identify' | 'drop' | 'search';
+type CycleAction = 'continue' | 'identify' | 'drop' | 'search';
 
-export interface CycleState {
+interface CycleState {
     /** A search's `~objbox` is suspended on `p_pausebutton` until this is cleared. */
     continuePending: boolean;
     unids: number;

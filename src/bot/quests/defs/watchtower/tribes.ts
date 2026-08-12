@@ -1,10 +1,10 @@
-import { Execution } from '../../../api/core/Execution.js';
-import { Game } from '../../../api/core/Game.js';
-import { Inventory } from '../../../api/hud/Inventory.js';
-import { GroundItems } from '../../../api/entities/GroundItems.js';
-import { Locs, type Loc } from '../../../api/entities/Locs.js';
-import { Reach } from '../../../nav/Reach.js';
-import { Traversal } from '../../../nav/Traversal.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import { Game } from '../../../api/game/Game.js';
+import { Inventory } from '../../../api/inventory/Inventory.js';
+import { GroundItems } from '../../../api/grounditems/GroundItems.js';
+import { Locs, type Loc } from '../../../api/locs/Locs.js';
+import { Reach } from '../../../api/walking/Reach.js';
+import { Traversal } from '../../../api/walking/Traversal.js';
 import { talkStrict, talkThrough } from '../../exec/primitives.js';
 import { WT_ITEM, WT_LOC, WT_NPC, WT_TILE, watchtowerArea } from './areas.js';
 import { settleScene } from './scene.js';
@@ -27,7 +27,7 @@ export async function talkToOg(log: (m: string) => void): Promise<boolean> {
     return talkStrict(WT_NPC.OG, ['I seek entrance to the city of ogres.', 'I have your gold.', 'I have lost the key!'], log);
 }
 
-export async function enterTobanCamp(log: (m: string) => void): Promise<boolean> {
+async function enterTobanCamp(log: (m: string) => void): Promise<boolean> {
     if (watchtowerArea(Game.tile()) === 'tobanCamp') {
         return true;
     }
@@ -103,7 +103,7 @@ export async function talkToToban(log: (m: string) => void): Promise<boolean> {
     );
 }
 
-export async function swingToGrewIsland(log: (m: string) => void): Promise<boolean> {
+async function swingToGrewIsland(log: (m: string) => void): Promise<boolean> {
     if (watchtowerArea(Game.tile()) === 'grewIsland') {
         return true;
     }

@@ -1,4 +1,4 @@
-import Tile from '../api/core/Tile.js';
+import Tile from '../geometry/Tile.js';
 import type { WorldTile } from '../adapter/ClientAdapter.js';
 import { shouldEatToUseFood } from '../api/combat/food.js';
 
@@ -35,7 +35,7 @@ export function pickSpot(rand: number, spots: WorldTile[] = PIT_SPOTS): WorldTil
     return spots[Math.floor(clamped * spots.length)];
 }
 
-export interface TripNeeds {
+interface TripNeeds {
     key: boolean;
     food: number;
 }
@@ -48,7 +48,7 @@ export function tripNeeds(carryingKey: boolean, foodInPack: number, foodPerTrip:
     return { key: !carryingKey, food: Math.max(0, foodPerTrip - foodInPack) };
 }
 
-export interface BankDecision {
+interface BankDecision {
     freeSlots: number;
     foodInPack: number;
     lootSlotsTarget: number;

@@ -1,13 +1,13 @@
 import { actions, reader } from '../../adapter/ClientAdapter.js';
-import { Execution } from '../../api/core/Execution.js';
-import { Game } from '../../api/core/Game.js';
-import Tile from '../../api/core/Tile.js';
-import { Inventory } from '../../api/hud/Inventory.js';
-import { Quests } from '../../api/hud/Quests.js';
-import { Skills } from '../../api/hud/Skills.js';
-import { Locs } from '../../api/entities/Locs.js';
-import { Npcs } from '../../api/entities/Npcs.js';
-import { Traversal } from '../../nav/Traversal.js';
+import { Execution } from '../../api/execution/Execution.js';
+import { Game } from '../../api/game/Game.js';
+import Tile from '../../geometry/Tile.js';
+import { Inventory } from '../../api/inventory/Inventory.js';
+import { Quests } from '../../api/questlog/Quests.js';
+import { Skills } from '../../api/skills/Skills.js';
+import { Locs } from '../../api/locs/Locs.js';
+import { Npcs } from '../../api/npcs/Npcs.js';
+import { Traversal } from '../../api/walking/Traversal.js';
 import { QUESTS } from '../data/quests.js';
 import type { QuestModule, QuestSnapshot, QuestStep } from '../engine/types.js';
 import { talkThrough, type NpcStop } from '../exec/primitives.js';
@@ -116,7 +116,7 @@ const BANK_FOODS = [
     ITEM.KEBAB
 ] as const;
 
-export type VampireSlayerArea = 'morganUpper' | 'crypt' | 'mainland' | 'unknown';
+type VampireSlayerArea = 'morganUpper' | 'crypt' | 'mainland' | 'unknown';
 
 export function vampireSlayerArea(tile: QuestSnapshot['tile']): VampireSlayerArea {
     if (!tile) return 'unknown';

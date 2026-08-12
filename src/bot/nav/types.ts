@@ -28,25 +28,25 @@ export type TransportKind =
 
 export type QuestProgress = 'not_started' | 'started' | 'complete' | 'unknown';
 
-export interface SkillRequirement {
+interface SkillRequirement {
     name: string;
     level: number;
 }
 
-export interface ItemRequirement {
+interface ItemRequirement {
     name: string;
     count: number;
     /** If true, planning assumes the item is spent on the hop (toll coins, etc.). */
     consumed?: boolean;
 }
 
-export interface QuestRequirement {
+interface QuestRequirement {
     quest: string;
     /** Minimum status required for the edge to be usable. */
     minStatus: 'started' | 'complete';
 }
 
-/** Planner-side gates. Dialog / NPC side-trips live in CrossingRecipe, not here. */
+/** Planner-side gates. Dialog / NPC side-trips live in specialCrossings, not here. */
 export interface TransportRequires {
     members?: boolean;
     skills?: SkillRequirement[];
@@ -91,7 +91,7 @@ export interface TransportRequires {
     essenceEntrySetsReturn?: string;
 }
 
-export interface TransportLoc {
+interface TransportLoc {
     name: string;
     action: string;
     /** Map placement / closed-state loc id. */
@@ -102,14 +102,14 @@ export interface TransportLoc {
     locZ: number;
 }
 
-export interface TransportLanding {
+interface TransportLanding {
     toLevel?: number;
     toTile?: NavPoint;
     /** Multi-exit portals (e.g. essence mine). */
     acceptAnyLanding?: boolean;
 }
 
-export interface TransportDebug {
+interface TransportDebug {
     name?: string;
     options?: string[];
     /** e.g. derived-door | derived-stair | pack-ladder | curated */
@@ -137,7 +137,7 @@ export interface TransportEdge {
     disabledReason?: string;
     /**
      * Stable teleport id for policy allowlists (`varrock`, `lumbridge`, …).
-     * Aligns with `Game.teleport` / `api/movement/Teleport.ts` keys when kind is teleport.
+     * Aligns with `Game.teleport` / `api/map/Teleport.ts` keys when kind is teleport.
      */
     teleportId?: string;
 }
@@ -197,14 +197,6 @@ export interface PathPolicy {
     useShortcuts?: boolean;
 }
 
-export interface FindPathOptions {
-    state?: WorldState;
-    policy?: PathPolicy;
-    avoidDoors?: readonly { x: number; z: number }[];
-    maxExpansions?: number;
-    timeoutMs?: number;
-}
-
 export interface PathHop {
     kind: TransportKind | 'walk';
     cost: number;
@@ -213,19 +205,6 @@ export interface PathHop {
     locId?: number;
     locName?: string;
     action?: string;
-}
-
-/** Execution-only extras that must not affect A* topology. */
-export interface CrossingRecipe {
-    /** Matches TransportEdge.id or a loc stand key. */
-    match: { edgeId?: string; locX?: number; locZ?: number; level?: number };
-    dialogue?: { choose: string[] };
-    unlockQuest?: {
-        quest: string;
-        freeSlots?: number;
-        // Concrete NPC / walk target stays in specialCrossings until recipes migrate.
-    };
-    label?: string;
 }
 
 /** Default edge costs (tile-equivalent time). Canonical source: `edgeCosts.ts`. */

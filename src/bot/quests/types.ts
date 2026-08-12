@@ -1,9 +1,9 @@
-export interface SkillReq {
+interface SkillReq {
     skill: string;
     level: number;
 }
 
-export interface QuestRequirements {
+interface QuestRequirements {
     minQuestPoints?: number;
     skills?: SkillReq[];
     quests?: string[];
@@ -33,7 +33,7 @@ export interface BankInventorySnapshot {
     counts: Map<string, number>;
 }
 
-export type QuestStatusV = 'DONE' | 'READY' | 'BLOCKED';
+type QuestStatusV = 'DONE' | 'READY' | 'BLOCKED';
 
 export interface QuestEligibility {
     id: string;

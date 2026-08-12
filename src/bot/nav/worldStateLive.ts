@@ -6,9 +6,9 @@
 import { Client } from '#/client/Client.js';
 
 import { reader } from '../adapter/ClientAdapter.js';
-import { Equipment } from '../api/hud/Equipment.js';
-import { Inventory } from '../api/hud/Inventory.js';
-import { Quests, type QuestStatus } from '../api/hud/Quests.js';
+import { Equipment } from '../api/equipment/Equipment.js';
+import { Inventory } from '../api/inventory/Inventory.js';
+import { Quests, type QuestStatus } from '../api/questlog/Quests.js';
 import { namesHaveEntranaRestrictedGear } from './exec/specialCrossing.js';
 import type { EssenceReturnId } from './essenceExit.js';
 import { EssenceSession } from './essenceSession.js';
@@ -30,7 +30,7 @@ import { wildernessLevelAt } from './wilderness.js';
  * Content default on portal when null is Sedridor — live bots that entered via
  * a wizard will have session set.
  */
-export function snapshotEssenceExitReturn(): EssenceReturnId | undefined {
+function snapshotEssenceExitReturn(): EssenceReturnId | undefined {
     return EssenceSession.getReturnId();
 }
 

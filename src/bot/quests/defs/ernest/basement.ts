@@ -1,17 +1,17 @@
-import { Execution } from '../../../api/core/Execution.js';
-import { Game } from '../../../api/core/Game.js';
-import { Reach } from '../../../nav/Reach.js';
-import { Sustain } from '../../../api/core/Sustain.js';
-import Tile from '../../../api/core/Tile.js';
-import { Traversal } from '../../../nav/Traversal.js';
-import { Inventory } from '../../../api/hud/Inventory.js';
-import { GroundItems } from '../../../api/entities/GroundItems.js';
-import { Locs } from '../../../api/entities/Locs.js';
-import { GameMessages } from '../../../events/gameMessages.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import { Game } from '../../../api/game/Game.js';
+import { Reach } from '../../../api/walking/Reach.js';
+import { Sustain } from '../../../api/sustain/Sustain.js';
+import Tile from '../../../geometry/Tile.js';
+import { Traversal } from '../../../api/walking/Traversal.js';
+import { Inventory } from '../../../api/inventory/Inventory.js';
+import { GroundItems } from '../../../api/grounditems/GroundItems.js';
+import { Locs } from '../../../api/locs/Locs.js';
+import { GameMessages } from '../../../api/chatbox/gameMessages.js';
 import { settleScene } from '../../exec/prompts.js';
 import { EC_ID, EC_NAME, EC_TILE } from './areas.js';
 
-export type BasementRegion = 'entry' | 'r1r4' | 'r2' | 'r5' | 'r3' | 'r6' | 'r9' | 'outside';
+type BasementRegion = 'entry' | 'r1r4' | 'r2' | 'r5' | 'r3' | 'r6' | 'r9' | 'outside';
 
 /**
  * The seven components the nine puzzle doors cut the basement into, from a flood
@@ -68,7 +68,7 @@ export const DOOR_OPEN: Record<string, (bits: number) => boolean> = {
     '5to8': b => (!(b & C) && !!(b & D)) || (!(b & A) && !(b & B) && !!(b & C) && !!(b & D) && !(b & E) && !!(b & F))
 };
 
-export type LeverName = 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
+type LeverName = 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
 
 /** Wall decorations; the player operates them from their own tile. */
 const LEVER_TILE: Record<LeverName, Tile> = {
@@ -93,7 +93,7 @@ const DOOR_SIDE: Record<string, { near: Tile; far: Tile }> = {
     '5to8': { near: new Tile(3102, 9758, 0), far: new Tile(3102, 9757, 0) }
 };
 
-export type ChainMove =
+type ChainMove =
     | { kind: 'pull'; lever: LeverName; to: 'up' | 'down' }
     | { kind: 'door'; door: string; stand: Tile; arrive: Tile };
 
@@ -291,7 +291,7 @@ async function leaveBasement(log: (m: string) => void): Promise<boolean> {
  * after one, so a single miss blacklists the edge and strands the bot in a pocket
  * with no other way out. Reach retries, which is the whole difference.
  */
-export async function leaveAlcove(log: (m: string) => void): Promise<boolean> {
+async function leaveAlcove(log: (m: string) => void): Promise<boolean> {
     if (!inAlcove(here())) {
         return true;
     }

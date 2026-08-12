@@ -5,14 +5,13 @@ export const RANGED_WEAPONS = [...BOWS, ...DARTS];
 /** @deprecated use RANGED_WEAPONS */
 export const ROCK_CRAB_RANGED_WEAPONS = RANGED_WEAPONS;
 
-export interface RangeLoadout {
+interface RangeLoadout {
     weapon: string;
     projectile: string;
     thrown: boolean;
 }
 
 /** @deprecated use RangeLoadout */
-export type RockCrabRangeLoadout = RangeLoadout;
 
 /**
  * When `weapon` is a dart, it is both the wielded weapon and the projectile stack.

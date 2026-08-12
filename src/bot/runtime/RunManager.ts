@@ -1,5 +1,5 @@
 import { actions, reader } from '../adapter/ClientAdapter.js';
-import { Game } from '../api/core/Game.js';
+import { Game } from '../api/game/Game.js';
 import { BotHost } from './BotHost.js';
 import { SettingsStore } from './Settings.js';
 

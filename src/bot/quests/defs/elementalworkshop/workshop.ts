@@ -1,15 +1,16 @@
 import { actions, reader } from '../../../adapter/ClientAdapter.js';
-import { Execution } from '../../../api/core/Execution.js';
-import { Game } from '../../../api/core/Game.js';
-import Tile from '../../../api/core/Tile.js';
-import { Equipment } from '../../../api/hud/Equipment.js';
-import { Inventory } from '../../../api/hud/Inventory.js';
-import { GroundItems } from '../../../api/entities/GroundItems.js';
-import type { GroundItem, Npc } from '../../../api/entities/index.js';
-import { Locs, type Loc } from '../../../api/entities/Locs.js';
-import { Npcs } from '../../../api/entities/Npcs.js';
-import { Traversal } from '../../../nav/Traversal.js';
-import { GameMessages } from '../../../events/gameMessages.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import { Game } from '../../../api/game/Game.js';
+import Tile from '../../../geometry/Tile.js';
+import { Equipment } from '../../../api/equipment/Equipment.js';
+import { Inventory } from '../../../api/inventory/Inventory.js';
+import { GroundItems } from '../../../api/grounditems/GroundItems.js';
+import type { GroundItem } from '../../../api/model/GroundItem.js';
+import type { Npc } from '../../../api/model/Npc.js';
+import { Locs, type Loc } from '../../../api/locs/Locs.js';
+import { Npcs } from '../../../api/npcs/Npcs.js';
+import { Traversal } from '../../../api/walking/Traversal.js';
+import { GameMessages } from '../../../api/chatbox/gameMessages.js';
 import { heldId, settleScene, useOnLoc } from '../../exec/prompts.js';
 import {
     BELLOWS_STAND,

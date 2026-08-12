@@ -1,4 +1,4 @@
-import type { PaintFrame } from '#/bot/api/hud/Paint.js';
+import type { PaintFrame } from '#/bot/api/paint/Paint.js';
 import { ClueExecutor, tilesTo } from '#/bot/clues/ClueExecutor.js';
 
 const MUTED = '#8a919a';

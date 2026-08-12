@@ -1,4 +1,4 @@
-import { SLOTS, type ItemRecord, type Slot } from '#/bot/api/items/types.js';
+import { SLOTS, type ItemRecord, type Slot } from '#/bot/api/loadout/types.js';
 
 export interface ParsedItem {
     name: string;

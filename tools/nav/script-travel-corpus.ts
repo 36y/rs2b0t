@@ -27,10 +27,10 @@ import path from 'node:path';
 
 import { gunzipSync } from 'fflate';
 
-import { FISHING_LOCATIONS } from '#/bot/api/skilling/FishingLocations.js';
-import { MINING_LOCATIONS } from '#/bot/api/skilling/MiningLocations.js';
-import { WOODCUTTING_LOCATIONS } from '#/bot/api/skilling/WoodcuttingLocations.js';
-import { FISH_CAMP_COOK_PLANS, COOKING_RANGE_LOCS } from '#/bot/api/skilling/CookingRanges.js';
+import { FISHING_LOCATIONS } from '#/bot/data/fishingLocations.js';
+import { MINING_LOCATIONS } from '#/bot/data/miningLocations.js';
+import { WOODCUTTING_LOCATIONS } from '#/bot/data/woodcuttingLocations.js';
+import { FISH_CAMP_COOK_PLANS, COOKING_RANGE_LOCS } from '#/bot/data/cookingRanges.js';
 import { FIRE_SPOTS } from '#/bot/scripts/FiremakingLogic.js';
 import { CLUE_DB } from '#/bot/clues/data/cluedb.js';
 import { NAV_TARGETS } from '#/bot/nav/data/navTargets.js';

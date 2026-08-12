@@ -1,21 +1,21 @@
 import { actions, reader } from '../../adapter/ClientAdapter.js';
-import { EventSignal } from '../../api/randomevents/EventSignal.js';
-import { Execution } from '../../api/core/Execution.js';
-import { Game } from '../../api/core/Game.js';
+import { EventSignal } from '../../api/execution/EventSignal.js';
+import { Execution } from '../../api/execution/Execution.js';
+import { Game } from '../../api/game/Game.js';
 import { foodForms } from '../../api/combat/food.js';
-import Tile from '../../api/core/Tile.js';
-import { ChatDialog } from '../../api/hud/ChatDialog.js';
-import { Equipment } from '../../api/hud/Equipment.js';
-import { Inventory } from '../../api/hud/Inventory.js';
-import { Quests } from '../../api/hud/Quests.js';
-import { Skills } from '../../api/hud/Skills.js';
-import { GroundItems } from '../../api/entities/GroundItems.js';
-import { Locs } from '../../api/entities/Locs.js';
-import { Npcs } from '../../api/entities/Npcs.js';
+import Tile from '../../geometry/Tile.js';
+import { ChatDialog } from '../../api/dialogue/ChatDialog.js';
+import { Equipment } from '../../api/equipment/Equipment.js';
+import { Inventory } from '../../api/inventory/Inventory.js';
+import { Quests } from '../../api/questlog/Quests.js';
+import { Skills } from '../../api/skills/Skills.js';
+import { GroundItems } from '../../api/grounditems/GroundItems.js';
+import { Locs } from '../../api/locs/Locs.js';
+import { Npcs } from '../../api/npcs/Npcs.js';
 import { Reachability } from '../../nav/geometry/Reachability.js';
-import { Sustain } from '../../api/core/Sustain.js';
-import { Traversal } from '../../nav/Traversal.js';
-import { GameMessages } from '../../events/gameMessages.js';
+import { Sustain } from '../../api/sustain/Sustain.js';
+import { Traversal } from '../../api/walking/Traversal.js';
+import { GameMessages } from '../../api/chatbox/gameMessages.js';
 import { QUESTS } from '../data/quests.js';
 import type { QuestModule, QuestSnapshot, QuestStep } from '../engine/types.js';
 import { earnQuestCoinsStep } from '../exec/fundCoins.js';
@@ -108,7 +108,7 @@ async function readTouristTrapStage(): Promise<number | undefined> {
     return stage;
 }
 
-export type TouristTrapArea =
+type TouristTrapArea =
     | 'surfaceJail'
     | 'undergroundJail'
     | 'campUpper'

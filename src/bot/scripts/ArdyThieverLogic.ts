@@ -1,7 +1,7 @@
-import Tile from '../api/core/Tile.js';
-import { PICKPOCKET_TARGETS } from '../api/skilling/PickpocketTargets.js';
+import Tile from '../geometry/Tile.js';
+import { PICKPOCKET_TARGETS } from '../data/pickpocketTargets.js';
 
-export interface TargetSpot {
+interface TargetSpot {
     anchor: Tile;
     leash: number;
 }
@@ -23,7 +23,7 @@ export function requiredThieving(target: string): number {
 
 export const HOSTILE_NAMES: readonly string[] = ['Guard', 'Knight of Ardougne', 'Paladin', 'Hero'];
 
-export interface AttackerCandidate {
+interface AttackerCandidate {
     name: string | null;
     inCombat: boolean;
     distance: number;

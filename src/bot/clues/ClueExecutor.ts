@@ -1,17 +1,19 @@
 // docs/decisions/clue-host-yielding.md
 import { actions, reader } from '#/bot/adapter/ClientAdapter.js';
-import { Execution } from '#/bot/api/core/Execution.js';
-import { EventSignal } from '#/bot/api/randomevents/EventSignal.js';
-import { Sustain } from '#/bot/api/core/Sustain.js';
-import { Traversal } from '#/bot/nav/Traversal.js';
-import { Game } from '#/bot/api/core/Game.js';
-import { ChatDialog } from '#/bot/api/hud/ChatDialog.js';
-import { Inventory } from '#/bot/api/hud/Inventory.js';
-import { GroundItems } from '#/bot/api/entities/GroundItems.js';
-import { Locs } from '#/bot/api/entities/Locs.js';
-import { Npcs } from '#/bot/api/entities/Npcs.js';
-import type { GroundItem, Loc, Npc } from '#/bot/api/entities/index.js';
-import { GameMessages } from '#/bot/events/gameMessages.js';
+import { Execution } from '#/bot/api/execution/Execution.js';
+import { EventSignal } from '#/bot/api/execution/EventSignal.js';
+import { Sustain } from '#/bot/api/sustain/Sustain.js';
+import { Traversal } from '#/bot/api/walking/Traversal.js';
+import { Game } from '#/bot/api/game/Game.js';
+import { ChatDialog } from '#/bot/api/dialogue/ChatDialog.js';
+import { Inventory } from '#/bot/api/inventory/Inventory.js';
+import { GroundItems } from '#/bot/api/grounditems/GroundItems.js';
+import { Locs } from '#/bot/api/locs/Locs.js';
+import { Npcs } from '#/bot/api/npcs/Npcs.js';
+import type { GroundItem } from '#/bot/api/model/GroundItem.js';
+import type { Loc } from '#/bot/api/model/Loc.js';
+import type { Npc } from '#/bot/api/model/Npc.js';
+import { GameMessages } from '#/bot/api/chatbox/gameMessages.js';
 import { identifyStep } from '#/bot/clues/ClueLogic.js';
 import { ClueTrace, pushTraceRing } from '#/bot/clues/ClueTrace.js';
 import { CASKET_IDS, CLUE_DB } from '#/bot/clues/data/cluedb.js';
@@ -26,7 +28,7 @@ import { casketRewardSlots } from '#/bot/clues/packPlan.js';
 import type { ClueRow, ClueStep } from '#/bot/clues/types.js';
 import type { NavPoint } from '#/bot/nav/PathFinder.js';
 import { talkThrough } from '#/bot/quests/exec/primitives.js';
-import { Reach } from '#/bot/nav/Reach.js';
+import { Reach } from '#/bot/api/walking/Reach.js';
 import { WalkExecutor } from '#/bot/nav/WalkExecutor.js';
 
 const COORD_ITEMS = ['Sextant', 'Watch', 'Chart'];
@@ -64,7 +66,7 @@ import { TALK_ANCHORS } from '#/bot/clues/data/talkAnchors.js';
 
 export const TRACE_STORAGE_KEY = 'rs2b0t:cluetrace';
 
-export interface ClueProgress {
+interface ClueProgress {
     clueId: number;
     name: string;
     step: string;

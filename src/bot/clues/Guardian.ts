@@ -1,12 +1,12 @@
 // docs/reference/clues-mechanics.md#dig-guardians
-import { Execution } from '#/bot/api/core/Execution.js';
-import { Game } from '#/bot/api/core/Game.js';
-import { PROTECT_FROM_MAGIC, Prayer } from '#/bot/api/hud/Prayer.js';
-import { Sustain } from '#/bot/api/core/Sustain.js';
-import { Traversal } from '#/bot/nav/Traversal.js';
-import { Npcs } from '#/bot/api/entities/Npcs.js';
-import { GameMessages } from '#/bot/events/gameMessages.js';
-import type { Npc } from '#/bot/api/entities/index.js';
+import { Execution } from '#/bot/api/execution/Execution.js';
+import { Game } from '#/bot/api/game/Game.js';
+import { PROTECT_FROM_MAGIC, Prayer } from '#/bot/api/prayer/Prayer.js';
+import { Sustain } from '#/bot/api/sustain/Sustain.js';
+import { Traversal } from '#/bot/api/walking/Traversal.js';
+import { Npcs } from '#/bot/api/npcs/Npcs.js';
+import { GameMessages } from '#/bot/api/chatbox/gameMessages.js';
+import type { Npc } from '#/bot/api/model/Npc.js';
 
 // npc_add drops the wizard on a line-of-sight tile beside the dig, and the
 // engine deletes it once we are more than 17 tiles away.
@@ -24,12 +24,12 @@ const NOT_YOURS = /not after you/i;
 // indistinguishable from killing it unless the death itself is read.
 const DIED = /oh dear.*you are dead/i;
 
-export interface GuardianOutcome {
+interface GuardianOutcome {
     fought: boolean;
     killed: boolean;
 }
 
-export interface SustainWaitDeps {
+interface SustainWaitDeps {
     now: () => number;
     pump: () => Promise<void>;
     tick: () => Promise<void>;

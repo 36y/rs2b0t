@@ -1,8 +1,8 @@
-import { Skills } from '../../../api/hud/Skills.js';
-import { Traversal } from '../../../nav/Traversal.js';
+import { Skills } from '../../../api/skills/Skills.js';
+import { Traversal } from '../../../api/walking/Traversal.js';
 import type { QuestSnapshot, QuestStep } from '../../engine/types.js';
 import { ANTIPOISON_IDS, DUEL_RING_IDS, FC_BANK, FC_ID, FC_ITEM, FC_SHOP, PICKAXES } from './areas.js';
-import type Tile from '../../../api/core/Tile.js';
+import type Tile from '../../../geometry/Tile.js';
 
 export interface FcItem {
     id: number;
@@ -26,7 +26,7 @@ export const FC_OFFICIAL_SKILLS = {
  * Only max stats have been through a headed run so far. Lower this once a
  * realistic profile clears — see docs/QUESTS.md polish goal.
  */
-export const FC_PROVEN_COMBAT_FLOOR = {
+const FC_PROVEN_COMBAT_FLOOR = {
     attack: 99,
     strength: 99,
     defence: 99,
@@ -38,7 +38,7 @@ export const FC_FOODS = ['Shark', 'Lobster', 'Trout', 'Herring'] as const;
 export const FOOD_WITHDRAW = 10;
 
 /** One cast of each blast, times a generous allowance for splashes on def 173. */
-export const RUNE_BUY = {
+const RUNE_BUY = {
     air: 600,
     water: 200,
     earth: 200,
@@ -187,9 +187,9 @@ export const TELEPORT_KIT: readonly { item: FcItem; qty: number }[] = [
 const AUBURY_STOCKS: ReadonlySet<number> = new Set([FC_ID.AIR_RUNE, FC_ID.FIRE_RUNE, FC_ID.WATER_RUNE]);
 
 /** Global `navTeleports`; the nav layer consults the same setting per walk. */
-export const navTeleportsOn = (): boolean => Traversal.teleportsEnabled();
+const navTeleportsOn = (): boolean => Traversal.teleportsEnabled();
 
-export function heldDuelRing(snap: QuestSnapshot): number {
+function heldDuelRing(snap: QuestSnapshot): number {
     return DUEL_RING_IDS.reduce((sum, id) => sum + held(snap, id), 0);
 }
 
@@ -252,7 +252,7 @@ export function teleportKitPlan(snap: QuestSnapshot, bank?: Tile): QuestStep | n
     return null;
 }
 
-export function bestBankFood(snap: QuestSnapshot): string | null {
+function bestBankFood(snap: QuestSnapshot): string | null {
     return FC_FOODS.find(f => bankedName(snap, f) > 0) ?? null;
 }
 
@@ -304,7 +304,7 @@ export function deposit(keep: string[], bank?: Tile): QuestStep {
 }
 
 /** Coin float carried for tolls, ship fares and shop trips. */
-export const COIN_CARRY = 100_000;
+const COIN_CARRY = 100_000;
 
 export function coinTopUp(snap: QuestSnapshot, want = COIN_CARRY, bank?: Tile): QuestStep | null {
     const have = heldName(snap, FC_ITEM.COINS);

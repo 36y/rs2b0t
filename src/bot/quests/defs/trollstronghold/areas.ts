@@ -1,4 +1,4 @@
-import Tile from '../../../api/core/Tile.js';
+import Tile from '../../../geometry/Tile.js';
 import type { QuestSnapshot } from '../../engine/types.js';
 import type { NpcStop } from '../../exec/primitives.js';
 

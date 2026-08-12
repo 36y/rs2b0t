@@ -1,10 +1,10 @@
 // docs/reference/quest-engine.md#quest-state
 import { actions, reader } from '../../../adapter/ClientAdapter.js';
-import { Execution } from '../../../api/core/Execution.js';
-import { Quests } from '../../../api/hud/Quests.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import { Quests } from '../../../api/questlog/Quests.js';
 import type { QuestProgress } from '../../engine/types.js';
 
-export const PRINCE_QUEST = 'Prince Ali Rescue';
+const PRINCE_QUEST = 'Prince Ali Rescue';
 
 export const PRINCE_STAGE = {
     NOT_STARTED: 0,

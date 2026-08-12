@@ -4,7 +4,7 @@
  */
 import { el } from './dom.js';
 
-export type ConfirmDialogOptions = {
+type ConfirmDialogOptions = {
     title: string;
     body: string;
     /** Checkbox label; omit for no checkbox. */
@@ -14,7 +14,7 @@ export type ConfirmDialogOptions = {
     zIndex?: number;
 };
 
-export type ConfirmDialogResult = {
+type ConfirmDialogResult = {
     confirmed: boolean;
     dontAskAgain: boolean;
 };

@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
-import { Execution } from '#/bot/api/core/Execution.js';
-import { Game } from '#/bot/api/core/Game.js';
-import { ChatDialog } from '#/bot/api/hud/ChatDialog.js';
-import { Skills } from '#/bot/api/hud/Skills.js';
-import { Locs } from '#/bot/api/entities/Locs.js';
-import Tile from '#/bot/api/core/Tile.js';
-import { Traversal } from '#/bot/nav/Traversal.js';
+import { Execution } from '#/bot/api/execution/Execution.js';
+import { Game } from '#/bot/api/game/Game.js';
+import { ChatDialog } from '#/bot/api/dialogue/ChatDialog.js';
+import { Skills } from '#/bot/api/skills/Skills.js';
+import { Locs } from '#/bot/api/locs/Locs.js';
+import Tile from '#/bot/geometry/Tile.js';
+import { Traversal } from '#/bot/api/walking/Traversal.js';
 import { SettingsBag } from '#/bot/runtime/Settings.js';
 import AgilityBot, { atGnomeCourse, GNOME_COURSE_RADIUS, GNOME_COURSE_START } from '#/bot/scripts/AgilityBot.js';
 

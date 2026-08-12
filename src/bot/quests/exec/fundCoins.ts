@@ -4,16 +4,16 @@
  * Verified anchors match Waterfall / Goblin Diplomacy funding legs — Al Kharid Man
  * stands next to the kebab shop; Varrock Man is used only to afford the 10 gp toll.
  */
-import { Execution } from '../../api/core/Execution.js';
-import { EventSignal } from '../../api/randomevents/EventSignal.js';
-import { Game } from '../../api/core/Game.js';
-import Tile from '../../api/core/Tile.js';
-import { ChatDialog } from '../../api/hud/ChatDialog.js';
-import { Inventory } from '../../api/hud/Inventory.js';
-import { Skills } from '../../api/hud/Skills.js';
-import { Npcs } from '../../api/entities/Npcs.js';
-import { Sustain } from '../../api/core/Sustain.js';
-import { Traversal } from '../../nav/Traversal.js';
+import { Execution } from '../../api/execution/Execution.js';
+import { EventSignal } from '../../api/execution/EventSignal.js';
+import { Game } from '../../api/game/Game.js';
+import Tile from '../../geometry/Tile.js';
+import { ChatDialog } from '../../api/dialogue/ChatDialog.js';
+import { Inventory } from '../../api/inventory/Inventory.js';
+import { Skills } from '../../api/skills/Skills.js';
+import { Npcs } from '../../api/npcs/Npcs.js';
+import { Sustain } from '../../api/sustain/Sustain.js';
+import { Traversal } from '../../api/walking/Traversal.js';
 import type { QuestStep } from '../engine/types.js';
 
 export const VARROCK_FUNDING_MAN = new Tile(3240, 3405, 0);
@@ -110,7 +110,7 @@ async function pickpocketFundingMan(anchor: Tile, log: (m: string) => void): Pro
 }
 
 /** Buy one Kebab from the Al Kharid seller (exact "Yes please." dialogue). */
-export async function buyKebab(log: (m: string) => void): Promise<boolean> {
+async function buyKebab(log: (m: string) => void): Promise<boolean> {
     if (EventSignal.pending()) return false;
     if (!(await Traversal.walkResilient(KEBAB_SELLER, { radius: 2, attempts: 3, timeoutMs: 60_000, log }))) {
         return false;

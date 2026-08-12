@@ -1,11 +1,11 @@
-import { LoopingBot } from '../api/core/Bot.js';
-import { Execution } from '../api/core/Execution.js';
-import { Game } from '../api/core/Game.js';
-import { ChatDialog } from '../api/hud/ChatDialog.js';
-import { Inventory } from '../api/hud/Inventory.js';
-import { Paint } from '../api/hud/Paint.js';
-import { Skills } from '../api/hud/Skills.js';
-import { fmtDuration } from '../api/hud/paintLogic.js';
+import { LoopingBot } from '../api/bot/Bot.js';
+import { Execution } from '../api/execution/Execution.js';
+import { Game } from '../api/game/Game.js';
+import { ChatDialog } from '../api/dialogue/ChatDialog.js';
+import { Inventory } from '../api/inventory/Inventory.js';
+import { Paint } from '../api/paint/Paint.js';
+import { Skills } from '../api/skills/Skills.js';
+import { fmtDuration } from '../api/paint/paintLogic.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import {

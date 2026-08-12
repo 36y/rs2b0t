@@ -1,18 +1,18 @@
-import { TaskBot, type Task } from '../api/core/Bot.js';
-import { Execution } from '../api/core/Execution.js';
-import { Game } from '../api/core/Game.js';
-import Tile from '../api/core/Tile.js';
-import { Traversal } from '../nav/Traversal.js';
+import { TaskBot, type Task } from '../api/bot/Bot.js';
+import { Execution } from '../api/execution/Execution.js';
+import { Game } from '../api/game/Game.js';
+import Tile from '../geometry/Tile.js';
+import { Traversal } from '../api/walking/Traversal.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
-import { Bank } from '../api/hud/Bank.js';
-import { Equipment } from '../api/hud/Equipment.js';
-import { Inventory } from '../api/hud/Inventory.js';
-import { Paint } from '../api/hud/Paint.js';
-import { Skills } from '../api/hud/Skills.js';
-import { Shop } from '../api/hud/Shop.js';
-import { fmtDuration } from '../api/hud/paintLogic.js';
+import { Bank } from '../api/bank/Bank.js';
+import { Equipment } from '../api/equipment/Equipment.js';
+import { Inventory } from '../api/inventory/Inventory.js';
+import { Paint } from '../api/paint/Paint.js';
+import { Skills } from '../api/skills/Skills.js';
+import { Shop } from '../api/shop/Shop.js';
+import { fmtDuration } from '../api/paint/paintLogic.js';
 import { foodCount as foodCountIn, foodForms } from '../api/combat/food.js';
-import { GroundItems } from '../api/entities/GroundItems.js';
+import { GroundItems } from '../api/grounditems/GroundItems.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import {
@@ -30,8 +30,8 @@ import {
     shopCoinsToWithdraw,
     type SecondaryDef
 } from './HerbloreSecondariesLogic.js';
-import { scriptFood } from '../api/items/loadoutPlan.js';
-import { LOADOUT_SETTING } from '../api/items/loadoutSetting.js';
+import { scriptFood } from '../api/loadout/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../api/loadout/loadoutSetting.js';
 
 export const HERBLORE_SECONDARIES_SETTINGS: SettingsSchema = {
     secondary: {

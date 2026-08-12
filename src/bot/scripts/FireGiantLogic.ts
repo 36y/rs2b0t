@@ -1,13 +1,11 @@
-import Tile from '../api/core/Tile.js';
+import Tile from '../geometry/Tile.js';
 
 export const RAFT_STAND = new Tile(2510, 3493, 0);
-export const RAFT_LANDING = new Tile(2512, 3481, 0);
 export const ROCK_TILE = new Tile(2512, 3468, 0);
 export const POST_ROCK = new Tile(2513, 3468, 0);
 export const TREE_STAND = new Tile(2512, 3466, 0);
 export const LEDGE = new Tile(2511, 3463, 0);
 export const LEDGE_DOOR = new Tile(2511, 3464, 0);
-export const DUNGEON_ENTRY = new Tile(2575, 9861, 0);
 export const WASHED_OUT = new Tile(2527, 3413, 0);
 
 // Two-tier: 9892 sees two west giants so it kills faster, but a 2x2 footprint fits
@@ -22,7 +20,7 @@ export const DEFAULT_MELEE_TILE = new Tile(2575, 9893, 0);
 // range, which steps off the safespot — so a target is only engaged once it is
 // already close enough to hit from where you stand. Bow figure is the short-bow
 // one, which is safe for long bows too; melee just needs adjacency.
-export const ATTACK_RANGE: Record<string, number> = { melee: 1, range: 7, mage: 10 };
+const ATTACK_RANGE: Record<string, number> = { melee: 1, range: 7, mage: 10 };
 
 export function attackRangeFor(style: string): number {
     return ATTACK_RANGE[style] ?? 1;
@@ -31,7 +29,7 @@ export function attackRangeFor(style: string): number {
 // Distance is the wrong ordering in the west room. The giants wander up to 3 tiles,
 // so the westmost one often reads as nearest while a wall blocks line of sight — the
 // bot picks it, cannot hit it, and dances. Engage east-to-west, nearest breaking ties.
-export interface TargetLike {
+interface TargetLike {
     x: number;
     distance: number;
 }
@@ -52,7 +50,7 @@ export function eastFirst(a: TargetLike, b: TargetLike): number {
  * Our own target is always exempt, because its faceEntity flickers the same way and
  * dropping it on that would churn targets every few ticks.
  */
-export interface Engagement {
+interface Engagement {
     isOurs: boolean;
     inCombat: boolean;
     targetsMe: boolean;
@@ -79,8 +77,8 @@ export function lootWaitMs(distance: number): number {
 }
 
 export type Room = 'west' | 'east';
-export const WEST_ROOM = { minX: 2556, maxX: 2571, minZ: 9880, maxZ: 9902 };
-export const EAST_ROOM = { minX: 2572, maxX: 2586, minZ: 9880, maxZ: 9902 };
+const WEST_ROOM = { minX: 2556, maxX: 2571, minZ: 9880, maxZ: 9902 };
+const EAST_ROOM = { minX: 2572, maxX: 2586, minZ: 9880, maxZ: 9902 };
 
 function inBox(t: PointLike, b: { minX: number; maxX: number; minZ: number; maxZ: number }): boolean {
     return t.x >= b.minX && t.x <= b.maxX && t.z >= b.minZ && t.z <= b.maxZ;
@@ -115,8 +113,6 @@ export const EXIT_DOOR = new Tile(2575, 9861, 0);
 export const EXIT_DOOR_LOC = 'Door';
 export const BARREL_LOC = 'Barrel';
 export const BARREL_OP = 'Get in';
-export const BARREL_TILE = new Tile(2512, 3463, 0);
-
 export const RAFT_LOC = 'Log raft';
 export const RAFT_OP = 'Board';
 export const ROCK_LOC = 'Rock';
@@ -136,7 +132,7 @@ export const ROPE_THROW_STAND = new Tile(2512, 3477, 0);
 
 export const DUNGEON_MIN_Z = 9000;
 
-export interface PointLike {
+interface PointLike {
     x: number;
     z: number;
     level: number;
@@ -207,4 +203,3 @@ export const ESCAPE_TELES: Record<string, EscapeTele> = {
 export const BARREL_EXIT = 'Barrel (free)';
 export const EXIT_OPTIONS = [BARREL_EXIT, ...Object.keys(ESCAPE_TELES)];
 export const BARREL_BANK = new Tile(2616, 3332, 0); // Ardougne West, 118 tiles from the wash-up
-export const ESCAPE_TELE_OPTIONS = Object.keys(ESCAPE_TELES);

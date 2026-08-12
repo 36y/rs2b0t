@@ -1,5 +1,5 @@
-import type { Task } from '../core/Bot.js';
-import { ChatDialog } from '../hud/ChatDialog.js';
+import type { Task } from '../bot/Bot.js';
+import { ChatDialog } from '../dialogue/ChatDialog.js';
 
 export class ContinueDialog implements Task {
     constructor(private readonly onContinue?: () => void) {}

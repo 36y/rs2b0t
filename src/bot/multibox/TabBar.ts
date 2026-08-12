@@ -2,7 +2,7 @@ import { MAIN_TAB } from './MultiBoxController.js';
 
 const TAB_MIME = 'application/x-mbx-tab';
 
-export interface TabBarCallbacks {
+interface TabBarCallbacks {
     onSelect(name: string): void;
     // return false to reject the name; the input stays open and is flagged
     onAdd(name: string): boolean;

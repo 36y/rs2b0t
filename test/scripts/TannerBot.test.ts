@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import { reader } from '#/bot/adapter/ClientAdapter.js';
-import { Bank } from '#/bot/api/hud/Bank.js';
-import { Inventory } from '#/bot/api/hud/Inventory.js';
+import { Bank } from '#/bot/api/bank/Bank.js';
+import { Inventory } from '#/bot/api/inventory/Inventory.js';
 import { ScriptRunner } from '#/bot/runtime/ScriptRunner.js';
 import TannerBot from '#/bot/scripts/TannerBot.js';
 

@@ -1,14 +1,14 @@
-import { TaskBot, type Task } from '../api/core/Bot.js';
-import { Execution } from '../api/core/Execution.js';
-import { Game } from '../api/core/Game.js';
-import Tile from '../api/core/Tile.js';
-import { ChatDialog } from '../api/hud/ChatDialog.js';
-import { Inventory } from '../api/hud/Inventory.js';
-import { Bank } from '../api/hud/Bank.js';
-import { Skills } from '../api/hud/Skills.js';
-import { Paint } from '../api/hud/Paint.js';
+import { TaskBot, type Task } from '../api/bot/Bot.js';
+import { Execution } from '../api/execution/Execution.js';
+import { Game } from '../api/game/Game.js';
+import Tile from '../geometry/Tile.js';
+import { ChatDialog } from '../api/dialogue/ChatDialog.js';
+import { Inventory } from '../api/inventory/Inventory.js';
+import { Bank } from '../api/bank/Bank.js';
+import { Skills } from '../api/skills/Skills.js';
+import { Paint } from '../api/paint/Paint.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
-import { Locs } from '../api/entities/Locs.js';
+import { Locs } from '../api/locs/Locs.js';
 import { walkOpening } from '../nav/walkOpening.js';
 import { actions, reader } from '../adapter/ClientAdapter.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
@@ -22,7 +22,7 @@ import {
     countPrimary,
     type Recipe
 } from './SmelterBotLogic.js';
-import { fmtDuration } from '../api/hud/paintLogic.js';
+import { fmtDuration } from '../api/paint/paintLogic.js';
 
 const DEFAULT_BANK_STAND = new Tile(3269, 3167, 0);
 const DEFAULT_FURNACE_STAND = new Tile(3275, 3185, 0);

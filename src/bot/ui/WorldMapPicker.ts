@@ -18,8 +18,8 @@
  */
 import { gunzipSync } from 'fflate';
 import { PathFinder } from '../nav/PathFinder.js';
-import { WALK_DESTINATIONS } from '../nav/WalkDestinations.js';
-import { Game } from '../api/core/Game.js';
+import { WALK_DESTINATIONS } from '../api/map/WalkDestinations.js';
+import { Game } from '../api/game/Game.js';
 import { BotHost } from '../runtime/BotHost.js';
 import {
     BASEMAP_MANIFEST_NAME,
@@ -58,7 +58,7 @@ import {
 } from '../runtime/Settings.js';
 import ParamsModal from './ParamsModal.js';
 
-export type PickedTile = { x: number; z: number; level: number };
+type PickedTile = { x: number; z: number; level: number };
 
 /** Mainland-ish default centre (Varrock). */
 const DEFAULT_CENTRE = { x: 3213, z: 3424 };
@@ -269,7 +269,7 @@ function paintYouAreHere(
  *
  * Manual Rebuild always regenerates and overwrites the local entry.
  */
-export async function loadBasemap(): Promise<LoadedBasemap | null> {
+async function loadBasemap(): Promise<LoadedBasemap | null> {
     if (!basemapPromise) {
         basemapPromise = (async () => {
             const crcKey = await fetchClientCrcKey();
@@ -336,13 +336,8 @@ export async function loadBasemap(): Promise<LoadedBasemap | null> {
     return basemapPromise;
 }
 
-/** Reset in-memory basemap promise (tests). Does not clear IndexedDB. */
-export function resetBasemapCache(): void {
-    basemapPromise = null;
-}
-
 /** Install basemap for this page session (after manual rebuild). */
-export function installBasemapOverride(next: LoadedBasemap): void {
+function installBasemapOverride(next: LoadedBasemap): void {
     basemapPromise = Promise.resolve({ ...next, hint: undefined });
 }
 

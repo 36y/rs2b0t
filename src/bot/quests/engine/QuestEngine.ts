@@ -1,16 +1,16 @@
 // docs/reference/quest-engine.md#quest-state
 import { reader } from '../../adapter/ClientAdapter.js';
-import { type Task } from '../../api/core/Bot.js';
-import { EventSignal } from '../../api/randomevents/EventSignal.js';
-import { Execution } from '../../api/core/Execution.js';
-import { Game } from '../../api/core/Game.js';
-import Tile from '../../api/core/Tile.js';
-import { Bank } from '../../api/hud/Bank.js';
-import { ChatDialog } from '../../api/hud/ChatDialog.js';
-import { Equipment } from '../../api/hud/Equipment.js';
-import { Inventory } from '../../api/hud/Inventory.js';
-import { Modals } from '../../api/hud/Modals.js';
-import { Quests } from '../../api/hud/Quests.js';
+import { type Task } from '../../api/bot/Bot.js';
+import { EventSignal } from '../../api/execution/EventSignal.js';
+import { Execution } from '../../api/execution/Execution.js';
+import { Game } from '../../api/game/Game.js';
+import Tile from '../../geometry/Tile.js';
+import { Bank } from '../../api/bank/Bank.js';
+import { ChatDialog } from '../../api/dialogue/ChatDialog.js';
+import { Equipment } from '../../api/equipment/Equipment.js';
+import { Inventory } from '../../api/inventory/Inventory.js';
+import { Modals } from '../../api/widgets/Modals.js';
+import { Quests } from '../../api/questlog/Quests.js';
 import { ScriptRunner } from '../../runtime/ScriptRunner.js';
 import { evaluate } from '../EligibilityEvaluator.js';
 import { QUEST_DEFS, defById } from '../defs/index.js';
@@ -21,7 +21,7 @@ import { nextQuest, queueRows, type QueueRow } from './queue.js';
 import type { QuestModule, QuestProgress, QuestSnapshot, QuestStep } from './types.js';
 import { NO_PROGRESS_PARK, NO_PROGRESS_WARN, ProgressWatchdog, progressSignature } from './watchdog.js';
 import { FAIL_WARN, StepTracker, formatDuration, formatTile, invDelta } from './trace.js';
-import { GameMessages } from '../../events/gameMessages.js';
+import { GameMessages } from '../../api/chatbox/gameMessages.js';
 import type AIOQuester from '../../scripts/AIOQuester.js';
 
 const PARK_GIVE_UP = 3;
@@ -35,7 +35,7 @@ export const COIN_FLOAT = 1000;
 
 export const PROVISION_BANK = new Tile(3093, 3243, 0);
 
-import { Skills } from '../../api/hud/Skills.js';
+import { Skills } from '../../api/skills/Skills.js';
 
 /** `'nearest'` means "let the step work it out from where the bot is standing". */
 function bankFor(module: QuestModule): Tile | undefined {

@@ -1,10 +1,10 @@
 import { actions, reader } from '../../adapter/ClientAdapter.js';
-import { Execution } from '../../api/core/Execution.js';
-import { Inventory } from '../../api/hud/Inventory.js';
-import { Quests } from '../../api/hud/Quests.js';
-import { GroundItems } from '../../api/entities/GroundItems.js';
-import { Traversal } from '../../nav/Traversal.js';
-import Tile from '../../api/core/Tile.js';
+import { Execution } from '../../api/execution/Execution.js';
+import { Inventory } from '../../api/inventory/Inventory.js';
+import { Quests } from '../../api/questlog/Quests.js';
+import { GroundItems } from '../../api/grounditems/GroundItems.js';
+import { Traversal } from '../../api/walking/Traversal.js';
+import Tile from '../../geometry/Tile.js';
 import { QUESTS } from '../data/quests.js';
 import type { QuestModule, QuestSnapshot, QuestStep } from '../engine/types.js';
 import { gotoNpc, talkStrict, type NpcStop } from '../exec/primitives.js';
@@ -96,7 +96,7 @@ export function parseRomeoJulietJournal(lines: readonly string[] | string): numb
     return undefined;
 }
 
-export async function readRomeoJulietStage(): Promise<number | undefined> {
+async function readRomeoJulietStage(): Promise<number | undefined> {
     const status = Quests.status('Romeo & Juliet');
     if (status === 'complete') return ROMEO_JULIET_STAGE.COMPLETE;
     if (status === 'notStarted') return ROMEO_JULIET_STAGE.NOT_STARTED;

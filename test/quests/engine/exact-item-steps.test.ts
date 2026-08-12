@@ -2,9 +2,9 @@
    to test quest step routing without a live client. */
 import { afterEach, expect, test } from 'bun:test';
 
-import Tile from '#/bot/api/core/Tile.js';
-import { Banking } from '#/bot/api/banking/Banking.js';
-import { Bank } from '#/bot/api/hud/Bank.js';
+import Tile from '#/bot/geometry/Tile.js';
+import { Banking } from '#/bot/api/bank/Banking.js';
+import { Bank } from '#/bot/api/bank/Bank.js';
 import { executeStep } from '#/bot/quests/exec/steps.js';
 
 const originals = {

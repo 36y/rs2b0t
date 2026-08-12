@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import Tile from '#/bot/api/core/Tile.js';
+import Tile from '#/bot/geometry/Tile.js';
 import {
     COURSE_OBSTACLES,
     COURSE_X_RADIUS,

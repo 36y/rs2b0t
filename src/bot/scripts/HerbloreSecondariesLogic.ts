@@ -13,7 +13,7 @@ export const FOOD_DEFAULT_COUNT = 10;
 export const SHOP_COIN_CAP = 5000;
 export const SHIELD_NAME = 'Dragonfire shield'; // content display name for antidragonbreathshield
 
-export type SecondaryId =
+type SecondaryId =
     | 'red_spiders_eggs'
     | 'snape_grass'
     | 'eye_of_newt'
@@ -21,9 +21,9 @@ export type SecondaryId =
     | 'white_berries'
     | 'toads_legs';
 
-export type SecondaryMode = 'loot' | 'buy' | 'buy_grind' | 'loot_process';
+type SecondaryMode = 'loot' | 'buy' | 'buy_grind' | 'loot_process';
 
-export interface TileRef {
+interface TileRef {
     x: number;
     z: number;
     level: number;

@@ -1,13 +1,13 @@
-import { Execution } from '../../../api/core/Execution.js';
-import Tile from '../../../api/core/Tile.js';
-import { Traversal } from '../../../nav/Traversal.js';
-import { Equipment } from '../../../api/hud/Equipment.js';
-import { Inventory } from '../../../api/hud/Inventory.js';
-import { Skills } from '../../../api/hud/Skills.js';
-import { Locs } from '../../../api/entities/Locs.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import Tile from '../../../geometry/Tile.js';
+import { Traversal } from '../../../api/walking/Traversal.js';
+import { Equipment } from '../../../api/equipment/Equipment.js';
+import { Inventory } from '../../../api/inventory/Inventory.js';
+import { Skills } from '../../../api/skills/Skills.js';
+import { Locs } from '../../../api/locs/Locs.js';
 import { QuestFood } from '../../food.js';
 import { QuestLoadout } from '../../gear.js';
-import { weaponOf } from '../../../api/items/loadoutPlan.js';
+import { weaponOf } from '../../../api/loadout/loadoutPlan.js';
 import type { QuestSnapshot, QuestStep } from '../../engine/types.js';
 import { useOnLoc } from '../../exec/prompts.js';
 import { smithNails } from '../dragonslayer/supplies.js';
@@ -438,13 +438,7 @@ async function wieldMelee(name: string, log: (m: string) => void): Promise<boole
     return false;
 }
 
-/** Reset between runs so a fixed loadout is not written off for the whole session. */
-export function resetMeleeWeapon(): void {
-    meleeGaveUp = false;
-    wieldTries = 0;
-}
-
-export function meleeWeapon(snap: QuestSnapshot): QuestStep | null {
+function meleeWeapon(snap: QuestSnapshot): QuestStep | null {
     const name = meleeWeaponName();
     if (!name || meleeGaveUp) {
         return null;

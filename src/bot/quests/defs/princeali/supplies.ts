@@ -1,6 +1,6 @@
 // docs/reference/quest-engine.md#provisioning
-import type Tile from '../../../api/core/Tile.js';
-import { Inventory, type InvItem } from '../../../api/hud/Inventory.js';
+import type Tile from '../../../geometry/Tile.js';
+import { Inventory, type InvItem } from '../../../api/inventory/Inventory.js';
 import type { QuestSnapshot, QuestStep } from '../../engine/types.js';
 import { PA_ITEM, type PrinceItem } from './areas.js';
 

@@ -3,7 +3,7 @@
  * Shared with pathPublish for overlay + recovery.
  */
 
-export interface RouteStateSnapshot {
+interface RouteStateSnapshot {
     pathIdx: number;
     bestPathIdx: number;
     lastProgressAt: number;

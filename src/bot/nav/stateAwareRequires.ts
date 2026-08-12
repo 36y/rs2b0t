@@ -10,7 +10,7 @@
 
 import type { TransportRequires } from './types.js';
 
-export interface StateAwareActivation {
+interface StateAwareActivation {
     /** Match TransportEdgeData.debugName when present. */
     debugName?: string;
     locName?: string;

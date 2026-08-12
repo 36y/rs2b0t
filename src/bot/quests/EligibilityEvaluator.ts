@@ -1,4 +1,4 @@
-import type { QuestStatus } from '#/bot/api/hud/Quests.js';
+import type { QuestStatus } from '#/bot/api/questlog/Quests.js';
 
 import { checkItems } from './ItemChecker.js';
 import { checkRequirements } from './RequirementChecker.js';

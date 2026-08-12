@@ -13,17 +13,17 @@ import {
 
 /** Default dark blue — readable on basemap. */
 export const MAP_PICKER_DOT_DEFAULT = '#0a3d7a';
-export const MAP_PICKER_DOT_ALPHA_DEFAULT = 0.85;
+const MAP_PICKER_DOT_ALPHA_DEFAULT = 0.85;
 
 export const MAP_PICKER_BASEMAP_KEY = 'showBasemap';
-export const MAP_PICKER_COLOR_KEY = 'dotColor';
-export const MAP_PICKER_ALPHA_KEY = 'dotAlpha';
+const MAP_PICKER_COLOR_KEY = 'dotColor';
+const MAP_PICKER_ALPHA_KEY = 'dotAlpha';
 export const MAP_PICKER_KEY_TYPES_KEY = 'keyIconTypes';
-export const MAP_PICKER_LABELS_KEY = 'showPlaceLabels';
-export const MAP_PICKER_MULTI_KEY = 'showMultiTint';
-export const MAP_PICKER_FREE_KEY = 'showFreeTint';
+const MAP_PICKER_LABELS_KEY = 'showPlaceLabels';
+const MAP_PICKER_MULTI_KEY = 'showMultiTint';
+const MAP_PICKER_FREE_KEY = 'showFreeTint';
 
-export type MapPickerDotTheme = {
+type MapPickerDotTheme = {
     /** Classic worldmap terrain mode (vs collision-dot mode). */
     showBasemap: boolean;
     /**
@@ -55,7 +55,7 @@ export function setMapPickerShowBasemap(show: boolean): void {
 }
 
 /** Key type names enabled in settings (classic Key legend names). */
-export function getMapPickerKeyIconTypes(): string[] {
+function getMapPickerKeyIconTypes(): string[] {
     const list = mapPickerBag().list(MAP_PICKER_KEY_TYPES_KEY, []);
     // Drop unknown names (schema options are the source of truth).
     const allowed = new Set(WORLDMAP_KEY_NAMES.map(n => n.toLowerCase()));

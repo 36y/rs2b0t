@@ -66,7 +66,7 @@ export function findForwardRecoveryIndex(
  * just replans the same route and burns the repath budget until the walk reports
  * failure, which `walkResilient` then escalates to **unreachable**.
  */
-export type StallPhase = 'recover' | 'combat' | 'escalate';
+type StallPhase = 'recover' | 'combat' | 'escalate';
 
 export function stallPhase(opts: { stallRetries: number; recoverIdx: number; inCombat: boolean }): StallPhase {
     if (opts.stallRetries === 0 && opts.recoverIdx !== -1) {

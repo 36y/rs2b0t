@@ -1,18 +1,18 @@
 import type { WorldTile } from '../adapter/ClientAdapter.js';
 import { reader } from '../adapter/ClientAdapter.js';
-import { EventSignal } from '../api/randomevents/EventSignal.js';
-import { CANT_REACH, GameMessages } from '../events/gameMessages.js';
-import { Execution } from '../api/core/Execution.js';
-import { Sustain } from '../api/core/Sustain.js';
-import { Locs } from '../api/entities/Locs.js';
-import { Inventory } from '../api/hud/Inventory.js';
-import { Bank } from '../api/hud/Bank.js';
-import { Banking } from '../api/banking/Banking.js';
-import { nearestBank } from '../api/banking/BankLocations.js';
+import { EventSignal } from '../api/execution/EventSignal.js';
+import { CANT_REACH, GameMessages } from '../api/chatbox/gameMessages.js';
+import { Execution } from '../api/execution/Execution.js';
+import { Sustain } from '../api/sustain/Sustain.js';
+import { Locs } from '../api/locs/Locs.js';
+import { Inventory } from '../api/inventory/Inventory.js';
+import { Bank } from '../api/bank/Bank.js';
+import { Banking } from '../api/bank/Banking.js';
+import { nearestBank } from '../api/bank/BankLocations.js';
 import { SPECIAL_CROSSINGS, specialCrossingForTransport, meetsRequirement, meetsSkill, pickChoice } from './data/specialCrossings.js';
-import { Skills } from '../api/hud/Skills.js';
+import { Skills } from '../api/skills/Skills.js';
 import { Reachability } from './geometry/Reachability.js';
-import { ActionRouter } from '../input/ActionRouter.js';
+import { Input } from '../api/input/Input.js';
 import { Navigator, type PathResult } from './Navigator.js';
 import { DirectNavigator } from './DirectNavigator.js';
 import type { TransportInfo, Waypoint } from './PathFinder.js';
@@ -65,9 +65,9 @@ import {
 } from './exec/transportLoc.js';
 import { chatShowsQuestLock, dismissQuestLockDialogue } from './exec/questLock.js';
 import { postQuestTalkFor, type PostQuestTalk } from './data/postQuestTalks.js';
-import { Quests } from '../api/hud/Quests.js';
-import { ChatDialog } from '../api/hud/ChatDialog.js';
-import { Npcs } from '../api/entities/Npcs.js';
+import { Quests } from '../api/questlog/Quests.js';
+import { ChatDialog } from '../api/dialogue/ChatDialog.js';
+import { Npcs } from '../api/npcs/Npcs.js';
 
 // Re-export for existing tests
 export {
@@ -1051,7 +1051,7 @@ class WalkExecutorImpl {
                             `stall recovery (${idleTicks} ticks idle, stall=${follow.stallTicks}) → path idx ${recover} (${tiles[recover]!.x},${tiles[recover]!.z})`
                         );
                         const mark = GameMessages.mark();
-                        if (ActionRouter.driver.walk(local.lx, local.lz)) {
+                        if (Input.walk(local.lx, local.lz)) {
                             walkClickMark = mark;
                             walkClickAt = { x: me.x, z: me.z, level: me.level };
                             this.publishClientWalkSegment(me, tiles[recover]!);
@@ -1157,7 +1157,7 @@ class WalkExecutorImpl {
                         return false;
                     }
                     const mark = GameMessages.mark();
-                    const ok = ActionRouter.driver.walk(local.lx, local.lz);
+                    const ok = Input.walk(local.lx, local.lz);
                     if (ok) {
                         walkClickMark = mark;
                         walkClickAt = { x: me.x, z: me.z, level: me.level };

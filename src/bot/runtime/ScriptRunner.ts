@@ -1,11 +1,10 @@
 import { reader } from '../adapter/ClientAdapter.js';
-import { resolveLoopCadence, type AbstractBot, type LoopCadence } from '../api/core/Bot.js';
-import { Execution } from '../api/core/Execution.js';
-import { RandomEvents } from '../api/randomevents/RandomEvents.js';
-import { Sustain } from '../api/core/Sustain.js';
-import type { PaintFrame } from '../api/hud/Paint.js';
-import { paintState } from '../api/hud/paintLogic.js';
-import { ActionRouter } from '../input/ActionRouter.js';
+import { resolveLoopCadence, type AbstractBot, type LoopCadence } from '../api/bot/Bot.js';
+import { Execution } from '../api/execution/Execution.js';
+import { RandomEvents } from './randomevents/RandomEvents.js';
+import { Sustain } from '../api/sustain/Sustain.js';
+import type { PaintFrame } from '../api/paint/Paint.js';
+import { paintState } from '../api/paint/paintLogic.js';
 import { BotHost } from './BotHost.js';
 import { RecoveryHints } from './RecoveryHints.js';
 import { Scheduler } from './Scheduler.js';
@@ -101,7 +100,7 @@ export function stopReasonOf(reason: string): string {
 }
 
 /** One-line summary of how a finished run ended, for the next run's log. */
-export function endEpitaph(ctx: ScriptContext): string {
+function endEpitaph(ctx: ScriptContext): string {
     if (ctx.state === 'crashed') {
         return `crashed: ${ctx.crashError?.message ?? 'unknown error'}`;
     }
@@ -176,7 +175,6 @@ class ScriptRunnerImpl {
         this.startupComplete = false;
         Scheduler.active = ctx;
 
-        ActionRouter.beginRun((level, msg) => ctx.addLog(level, msg));
 
         // A restart (StallGuard) throws away the old context along with its log —
         // the only place the reason the previous run ended was recorded, which is
@@ -184,7 +182,7 @@ class ScriptRunnerImpl {
         if (previous) {
             ctx.addLog('info', `previous run of '${previous.name}' ${previous.epitaph}`);
         }
-        ctx.addLog('info', `${meta.name} started (input: ${ActionRouter.driver.mode})`);
+        ctx.addLog('info', `${meta.name} started`);
         this.fireChange();
 
         this.holdSince = 0;
@@ -404,7 +402,6 @@ class ScriptRunnerImpl {
 
         paintState.reset();
 
-        ActionRouter.endRun();
 
         this.bot?.disposeSubscriptions();
 

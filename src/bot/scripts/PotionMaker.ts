@@ -1,15 +1,15 @@
-import { TaskBot, type Task } from '../api/core/Bot.js';
-import { Execution } from '../api/core/Execution.js';
-import { Game } from '../api/core/Game.js';
-import { Inventory, type InvItem } from '../api/hud/Inventory.js';
-import { Bank } from '../api/hud/Bank.js';
-import { Skills } from '../api/hud/Skills.js';
-import { Paint } from '../api/hud/Paint.js';
-import { Traversal } from '../nav/Traversal.js';
+import { TaskBot, type Task } from '../api/bot/Bot.js';
+import { Execution } from '../api/execution/Execution.js';
+import { Game } from '../api/game/Game.js';
+import { Inventory, type InvItem } from '../api/inventory/Inventory.js';
+import { Bank } from '../api/bank/Bank.js';
+import { Skills } from '../api/skills/Skills.js';
+import { Paint } from '../api/paint/Paint.js';
+import { Traversal } from '../api/walking/Traversal.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import { nearestBank } from '../api/banking/BankLocations.js';
-import { fmtDuration } from '../api/hud/paintLogic.js';
+import { nearestBank } from '../api/bank/BankLocations.js';
+import { fmtDuration } from '../api/paint/paintLogic.js';
 import {
     BATCH,
     CUSTOM,

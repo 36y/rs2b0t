@@ -1,4 +1,4 @@
-import type { Task } from '../../api/core/Bot.js';
+import type { Task } from '../../api/bot/Bot.js';
 import type TutorialBot from '../TutorialBot.js';
 
 export abstract class StageTask implements Task {

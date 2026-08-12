@@ -1,13 +1,13 @@
-import { Execution } from '../../../api/core/Execution.js';
-import { Game } from '../../../api/core/Game.js';
-import { Sustain } from '../../../api/core/Sustain.js';
-import Tile from '../../../api/core/Tile.js';
-import { Traversal } from '../../../nav/Traversal.js';
-import { Inventory } from '../../../api/hud/Inventory.js';
-import { GroundItems } from '../../../api/entities/GroundItems.js';
-import { Npcs } from '../../../api/entities/Npcs.js';
-import type { Npc } from '../../../api/entities/index.js';
-import { GameMessages } from '../../../events/gameMessages.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import { Game } from '../../../api/game/Game.js';
+import { Sustain } from '../../../api/sustain/Sustain.js';
+import Tile from '../../../geometry/Tile.js';
+import { Traversal } from '../../../api/walking/Traversal.js';
+import { Inventory } from '../../../api/inventory/Inventory.js';
+import { GroundItems } from '../../../api/grounditems/GroundItems.js';
+import { Npcs } from '../../../api/npcs/Npcs.js';
+import type { Npc } from '../../../api/model/Npc.js';
+import { GameMessages } from '../../../api/chatbox/gameMessages.js';
 import { heldId, settleScene } from '../../exec/prompts.js';
 import { ANTIPOISON_IDS, FC_ID, FC_ITEM, FC_NPC, inChronozonLair } from './areas.js';
 
@@ -134,7 +134,7 @@ function chronozon(): Npc | null {
  * on the way to arming all four bits — so "not in the scene" almost always means
  * "not back yet", not "we are in the wrong place".
  */
-export async function walkToChronozon(log: (m: string) => void): Promise<boolean> {
+async function walkToChronozon(log: (m: string) => void): Promise<boolean> {
     if (inChronozonLair(Game.tile()) && chronozon()) {
         return true;
     }

@@ -63,7 +63,7 @@ Tags: `mining` / `fishing` / `wc` / `mule` / `local` / `acquire` / `path` / `end
 - **Mine prefer-local:** matching rocks within 12 of the player win over far camp
   membership hits; post-deplete tiles are not soft-cooled (iron respawn ~6t).
 - **Mule mode** (Miner/Fisher/Woodcutter): `muleMode` Off / Gatherer / Mule /
-  **Cooker** / **Supplier** + `mulePartner`. Shared policy: `api/mule/PartnerTrade`.
+  **Cooker** / **Supplier** + `mulePartner`. Shared policy: `api/trade/PartnerTrade`.
   Disabled under location None.
   - **Gatherer** — full haul → meet trade (no bank).
   - **Mule** — accept → bank (demo for ore/logs; see processor sketch below).

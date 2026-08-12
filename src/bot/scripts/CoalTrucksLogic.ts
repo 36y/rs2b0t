@@ -1,4 +1,4 @@
-import Tile from '../api/core/Tile.js';
+import Tile from '../geometry/Tile.js';
 
 export const COAL = 'Coal';
 export const TRUCK_LOC = 'Coal Truck';
@@ -40,7 +40,7 @@ export const MINE_STALL_MS = 20_000;
 export type Phase = 'fill' | 'run' | 'drain';
 
 /** Two-stage because the swing has not begun yet on the tick we start waiting. */
-export type MineStage = 'start' | 'sustain';
+type MineStage = 'start' | 'sustain';
 
 export interface MineView {
     gained: boolean;

@@ -1,8 +1,8 @@
 // docs/reference/clues-mechanics.md#puzzle-boxes
 import { actions, reader } from '#/bot/adapter/ClientAdapter.js';
-import { Execution } from '#/bot/api/core/Execution.js';
-import { ActionRouter } from '#/bot/input/ActionRouter.js';
-import { Inventory } from '#/bot/api/hud/Inventory.js';
+import { Execution } from '#/bot/api/execution/Execution.js';
+import { Input } from '#/bot/api/input/Input.js';
+import { Inventory } from '#/bot/api/inventory/Inventory.js';
 import { PUZZLE_SIZE, applyPuzzleMove, isPuzzleSolved, readPuzzleBoard, solvePuzzle, type PuzzleBoard } from '#/bot/clues/puzzleLogic.js';
 import { PUZZLE_PIECE_SLOT } from '#/bot/clues/data/puzzlePieces.js';
 
@@ -37,7 +37,7 @@ function clickPiece(slot: number): boolean {
         return false;
     }
     const labelled = piece.ops.findIndex(o => o?.toLowerCase() === MOVE_OP.toLowerCase());
-    return ActionRouter.driver.heldOp(piece.id, slot, comId, labelled === -1 ? MOVE_OP_INDEX : labelled + 1);
+    return Input.heldOp(piece.id, slot, comId, labelled === -1 ? MOVE_OP_INDEX : labelled + 1);
 }
 
 export const PuzzleBox = {

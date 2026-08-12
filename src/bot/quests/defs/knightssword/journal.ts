@@ -1,6 +1,6 @@
 import { actions, reader } from '../../../adapter/ClientAdapter.js';
-import { Execution } from '../../../api/core/Execution.js';
-import { Quests } from '../../../api/hud/Quests.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import { Quests } from '../../../api/questlog/Quests.js';
 import type { QuestProgress } from '../../engine/types.js';
 import { KS_QUEST, KS_STAGE } from './areas.js';
 

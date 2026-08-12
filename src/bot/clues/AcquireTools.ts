@@ -1,13 +1,13 @@
 // docs/reference/clues-mechanics.md#tool-acquisition
-import { Execution } from '#/bot/api/core/Execution.js';
-import { EventSignal } from '#/bot/api/randomevents/EventSignal.js';
-import { Game } from '#/bot/api/core/Game.js';
-import { Traversal } from '#/bot/nav/Traversal.js';
-import { Inventory } from '#/bot/api/hud/Inventory.js';
-import { GroundItems } from '#/bot/api/entities/GroundItems.js';
+import { Execution } from '#/bot/api/execution/Execution.js';
+import { EventSignal } from '#/bot/api/execution/EventSignal.js';
+import { Game } from '#/bot/api/game/Game.js';
+import { Traversal } from '#/bot/api/walking/Traversal.js';
+import { Inventory } from '#/bot/api/inventory/Inventory.js';
+import { GroundItems } from '#/bot/api/grounditems/GroundItems.js';
 import { gotoNpc, talkThrough, type NpcStop } from '#/bot/quests/exec/primitives.js';
 import { CLUE_DB } from '#/bot/clues/data/cluedb.js';
-import { Shop } from '#/bot/api/hud/Shop.js';
+import { Shop } from '#/bot/api/shop/Shop.js';
 import { COINS } from '#/bot/api/acquisition/ToolAcquire.js';
 import {
     KOJO, KOJO_EXIT, MURPHY, PROFESSOR, SPADE_NAME, SPADE_SPAWNS, TRIO,

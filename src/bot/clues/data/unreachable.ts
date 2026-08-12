@@ -60,7 +60,3 @@ export const PACK_UNREACHABLE: Record<number, string> = {
     // Fixed by overriding the approach tile in derive-ladders.py, not by making
     // snap() smarter — a general rule moved ladders that were already correct.
 };
-
-export function packUnreachable(id: number): string | null {
-    return PACK_UNREACHABLE[id] ?? null;
-}

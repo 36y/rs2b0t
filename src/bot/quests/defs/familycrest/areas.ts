@@ -1,4 +1,4 @@
-import Tile from '../../../api/core/Tile.js';
+import Tile from '../../../geometry/Tile.js';
 
 export const FC_QUEST = 'Family Crest';
 
@@ -159,7 +159,7 @@ export const FC_BANK = {
  * tile, not the rock's, so mining a boundary rock from outside the box yields
  * ordinary gold ore and the quest silently stalls.
  */
-export const PERFECT_GOLD_ZONE = { minX: 2736, maxX: 2740, minZ: 9684, maxZ: 9693 } as const;
+const PERFECT_GOLD_ZONE = { minX: 2736, maxX: 2740, minZ: 9684, maxZ: 9693 } as const;
 
 export function inPerfectGoldZone(tile: { x: number; z: number; level: number } | null | undefined): boolean {
     if (!tile || tile.level !== 0) {
@@ -167,14 +167,6 @@ export function inPerfectGoldZone(tile: { x: number; z: number; level: number } 
     }
     return tile.x >= PERFECT_GOLD_ZONE.minX && tile.x <= PERFECT_GOLD_ZONE.maxX
         && tile.z >= PERFECT_GOLD_ZONE.minZ && tile.z <= PERFECT_GOLD_ZONE.maxZ;
-}
-
-/** Underground mapsquare 42_151 — the whole mine, both sides of every door. */
-export function inGoldMine(tile: { x: number; z: number; level: number } | null | undefined): boolean {
-    if (!tile || tile.level !== 0) {
-        return false;
-    }
-    return tile.x >= 2688 && tile.x <= 2751 && tile.z >= 9664 && tile.z <= 9727;
 }
 
 /** Chronozon's half of the Edgeville dungeon, past the poison-spider gates. */

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import Tile from '#/bot/api/core/Tile.js';
+import Tile from '#/bot/geometry/Tile.js';
 import { UNSHEARED_SHEEP_ID, gatherWool, type WoolSites } from '#/bot/quests/exec/wool.js';
 import type { QuestSnapshot } from '#/bot/quests/engine/types.js';
 

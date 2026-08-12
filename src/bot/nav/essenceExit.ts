@@ -12,9 +12,6 @@ import type { NavPoint } from './types.js';
 
 const parse = parseLcCoord;
 
-/** Client/server varp index for exit_essence_mine_coord (varp.pack). */
-export const EXIT_ESSENCE_MINE_VARP = 64;
-
 /** Surface return stands (runecraft.constant) — same as ESSENCE_RETURN in travelCatalog. */
 export const ESSENCE_EXIT_RETURNS = {
     aubury: parse('0_50_53_53_9'),
@@ -27,7 +24,7 @@ export const ESSENCE_EXIT_RETURNS = {
 export type EssenceReturnId = keyof typeof ESSENCE_EXIT_RETURNS;
 
 /** Stable order for PathFinder path-state packing (0 = unknown / fail-open). */
-export const ESSENCE_RETURN_IDS: readonly EssenceReturnId[] = [
+const ESSENCE_RETURN_IDS: readonly EssenceReturnId[] = [
     'aubury',
     'sedridor',
     'distentor',
@@ -101,10 +98,6 @@ export function essenceReturnIdFromTile(tile: NavPoint): EssenceReturnId | null 
         }
     }
     return best;
-}
-
-export function essenceReturnTile(id: EssenceReturnId): NavPoint {
-    return ESSENCE_EXIT_RETURNS[id];
 }
 
 /**

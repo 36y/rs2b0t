@@ -16,7 +16,7 @@ interface Slot {
     tab: string;
 }
 
-export type RailDirection = -1 | 1;
+type RailDirection = -1 | 1;
 
 export class MultiBoxController {
     focusedId: number | null = null;

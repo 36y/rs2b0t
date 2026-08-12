@@ -1,21 +1,21 @@
-import { LoopingBot } from '../api/core/Bot.js';
-import { Execution } from '../api/core/Execution.js';
-import { EventSignal } from '../api/randomevents/EventSignal.js';
-import { Game } from '../api/core/Game.js';
-import type Tile from '../api/core/Tile.js';
-import { Traversal } from '../nav/Traversal.js';
-import { depositAllExcept } from '../api/banking/Banking.js';
-import { Bank } from '../api/hud/Bank.js';
-import { ChatDialog } from '../api/hud/ChatDialog.js';
-import { Equipment } from '../api/hud/Equipment.js';
-import { Inventory } from '../api/hud/Inventory.js';
-import { Paint } from '../api/hud/Paint.js';
-import { Skills } from '../api/hud/Skills.js';
-import { fmtDuration } from '../api/hud/paintLogic.js';
-import { Locs, type Loc } from '../api/entities/Locs.js';
-import { GameMessages } from '../events/gameMessages.js';
+import { LoopingBot } from '../api/bot/Bot.js';
+import { Execution } from '../api/execution/Execution.js';
+import { EventSignal } from '../api/execution/EventSignal.js';
+import { Game } from '../api/game/Game.js';
+import type Tile from '../geometry/Tile.js';
+import { Traversal } from '../api/walking/Traversal.js';
+import { depositAllExcept } from '../api/bank/Banking.js';
+import { Bank } from '../api/bank/Bank.js';
+import { ChatDialog } from '../api/dialogue/ChatDialog.js';
+import { Equipment } from '../api/equipment/Equipment.js';
+import { Inventory } from '../api/inventory/Inventory.js';
+import { Paint } from '../api/paint/Paint.js';
+import { Skills } from '../api/skills/Skills.js';
+import { fmtDuration } from '../api/paint/paintLogic.js';
+import { Locs, type Loc } from '../api/locs/Locs.js';
+import { GameMessages } from '../api/chatbox/gameMessages.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
-import { GAS_ROCK_IDS } from '../api/skilling/MiningRocks.js';
+import { GAS_ROCK_IDS } from '../data/miningRocks.js';
 import { bestPickaxe } from '../api/acquisition/Tools.js';
 import {
     COAL,

@@ -1,11 +1,11 @@
-import Tile from '../core/Tile.js';
-import type { FishingGearPiece, FishingMethod } from '../skilling/FishingMethods.js';
-import { BROKEN_PICKAXE } from '../skilling/MiningRocks.js';
+import Tile from '../../geometry/Tile.js';
+import type { FishingGearPiece, FishingMethod } from '../../data/fishingMethods.js';
+import { BROKEN_PICKAXE } from '../../data/miningRocks.js';
 import { AXES, HAMMER, PICKAXES, type ToolReq, type ToolTier } from './Tools.js';
-import { Execution } from '../core/Execution.js';
-import { Game } from '../core/Game.js';
-import { Traversal } from '../../nav/Traversal.js';
-import { Locs } from '../entities/Locs.js';
+import { Execution } from '../execution/Execution.js';
+import { Game } from '../game/Game.js';
+import { Traversal } from '../walking/Traversal.js';
+import { Locs } from '../locs/Locs.js';
 
 export { BROKEN_PICKAXE, HAMMER };
 
@@ -652,7 +652,7 @@ export function shopableMissingFishingGear(
  * Whether Nurmof (or another underground vendor) needs an explicit surface hop
  * before the stand walk. Pure geography — used by {@link walkToToolVendor}.
  */
-export function needsToolVendorSurfaceHop(
+function needsToolVendorSurfaceHop(
     vendor: ToolVendor,
     here: { x: number; z: number; level: number } | null
 ): boolean {

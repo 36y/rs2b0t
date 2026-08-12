@@ -112,7 +112,7 @@ export function hasExactMeleeStyles(
         (!requireDefence || exactTrainingMode('defence', defence) !== null);
 }
 
-export interface FightAttemptSnapshot {
+interface FightAttemptSnapshot {
     selfTile: WorldTile | null;
     opponentTile: WorldTile | null;
     fightStarted: boolean;
@@ -205,7 +205,7 @@ export function duelInviter(line: ChatLine): string | null {
     return name.length > 0 ? name : null;
 }
 
-export type ChallengeResult = 'sent' | 'busy' | 'interface' | 'failed';
+type ChallengeResult = 'sent' | 'busy' | 'interface' | 'failed';
 
 /** Wall-clock 5s cadence; a rejected busy target is immediately retryable. */
 export class ChallengeCadence {

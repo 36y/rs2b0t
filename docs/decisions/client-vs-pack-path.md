@@ -10,7 +10,7 @@ from two different pathfinders over two different collision sources.
 | Pack A\* | `PathFinder` / `NavWorker` | A\* over the world collision pack plus the door/transport graph | `out/collision.lcnav.gz`, baked at deploy |
 | Client walk | `Client.tryMove` | BFS on the scene `CollisionMap` (104×104), cardinal and diagonal with wall flags | live scene flags from map build and locs |
 
-Walk clicks go through `ActionRouter.driver.walk` → `actions.walkTo` →
+Walk clicks go through `Input.walk` → `actions.walkTo` →
 `raw.tryMove(..., tryNearest=true, type=0)`. That is the only path the server accepts
 for gameclick movement.
 

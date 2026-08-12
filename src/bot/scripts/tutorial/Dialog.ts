@@ -1,6 +1,6 @@
-import type { Task } from '../../api/core/Bot.js';
-import { Execution } from '../../api/core/Execution.js';
-import { ChatDialog } from '../../api/hud/ChatDialog.js';
+import type { Task } from '../../api/bot/Bot.js';
+import { Execution } from '../../api/execution/Execution.js';
+import { ChatDialog } from '../../api/dialogue/ChatDialog.js';
 
 const DECLINE_SKIP = ['no, thank you'];
 

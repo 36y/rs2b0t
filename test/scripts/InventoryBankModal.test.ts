@@ -3,16 +3,16 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import { reader, type InvItemSnapshot } from '#/bot/adapter/ClientAdapter.js';
-import { Inventory } from '#/bot/api/hud/Inventory.js';
-import { ActionRouter } from '#/bot/input/ActionRouter.js';
+import { Inventory } from '#/bot/api/inventory/Inventory.js';
+import { Input } from '#/bot/api/input/Input.js';
 
 const originals = {
     bankComId: reader.bankComId,
     bankSideItems: reader.bankSideItems,
     inventory: reader.inventory,
     inventorySize: reader.inventorySize,
-    heldOp: ActionRouter.driver.heldOp,
-    invButton: ActionRouter.driver.invButton
+    heldOp: Input.heldOp,
+    invButton: Input.invButton
 };
 
 afterEach(() => {
@@ -20,8 +20,8 @@ afterEach(() => {
     (reader as any).bankSideItems = originals.bankSideItems;
     (reader as any).inventory = originals.inventory;
     (reader as any).inventorySize = originals.inventorySize;
-    (ActionRouter.driver as any).heldOp = originals.heldOp;
-    (ActionRouter.driver as any).invButton = originals.invButton;
+    (Input as any).heldOp = originals.heldOp;
+    (Input as any).invButton = originals.invButton;
 });
 
 function lobster(slot: number, count = 1, id = 379): InvItemSnapshot {
@@ -59,11 +59,11 @@ describe('Inventory while the bank modal is open', () => {
         const calls: string[] = [];
         (reader as any).bankComId = () => 5382;
         (reader as any).bankSideItems = () => [lobster(4)];
-        (ActionRouter.driver as any).heldOp = () => {
+        (Input as any).heldOp = () => {
             calls.push('held');
             return true;
         };
-        (ActionRouter.driver as any).invButton = () => {
+        (Input as any).invButton = () => {
             calls.push('button');
             return true;
         };
@@ -81,11 +81,11 @@ describe('Inventory while the bank modal is open', () => {
         (reader as any).bankComId = () => -1;
         (reader as any).inventory = () => [{ ...lobster(0), comId: 3214, ops: ['Eat', null, null, null, 'Drop'] }];
         (reader as any).inventorySize = () => 28;
-        (ActionRouter.driver as any).heldOp = () => {
+        (Input as any).heldOp = () => {
             calls.push('held');
             return true;
         };
-        (ActionRouter.driver as any).invButton = () => {
+        (Input as any).invButton = () => {
             calls.push('button');
             return true;
         };

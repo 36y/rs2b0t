@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import Tile from '#/bot/api/core/Tile.js';
+import Tile from '#/bot/geometry/Tile.js';
 import {
     boothFields,
     locationOptions,
@@ -7,7 +7,7 @@ import {
     resolveGatheringLocation,
     sameMapSquare,
     type GatheringLocation
-} from '#/bot/api/skilling/GatheringLocations.js';
+} from '#/bot/data/gatheringLocations.js';
 
 const TABLE: GatheringLocation[] = [
     {

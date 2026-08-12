@@ -24,7 +24,7 @@ export const NAV_PATH_PAINT_RESERVED = {
     collision: '#0080FF'
 } as const;
 
-export interface Rgb {
+interface Rgb {
     r: number;
     g: number;
     b: number;

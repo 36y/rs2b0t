@@ -1,5 +1,5 @@
-import { Execution } from '../../../api/core/Execution.js';
-import { Locs } from '../../../api/entities/Locs.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import { Locs } from '../../../api/locs/Locs.js';
 
 /**
  * Wait for scenery to exist again after a level change or teleport. A blank Locs

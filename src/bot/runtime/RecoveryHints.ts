@@ -1,4 +1,4 @@
-import type Tile from '../api/core/Tile.js';
+import type Tile from '../geometry/Tile.js';
 
 export const RecoveryHints = {
     pendingRecovery: false,

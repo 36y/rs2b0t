@@ -1,4 +1,4 @@
-export interface ChallengeAnswer {
+interface ChallengeAnswer {
     clue: string;
     id: number;
     answer: number;

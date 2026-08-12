@@ -46,13 +46,13 @@ export function matchProduct(options: readonly string[], product: string): strin
     return null;
 }
 
-export interface AttachPlan {
+interface AttachPlan {
     inputs: [string, string];
     product: string;
     level: number;
 }
 
-export const ATTACH_PRODUCTS: Record<string, AttachPlan> = {
+const ATTACH_PRODUCTS: Record<string, AttachPlan> = {
     'headless arrows': { inputs: ['Feather', 'Arrow shaft'], product: 'Headless arrow', level: 1 },
     'bronze arrows': { inputs: ['Bronze arrowtips', 'Headless arrow'], product: 'Bronze arrow', level: 1 },
     'iron arrows': { inputs: ['Iron arrowtips', 'Headless arrow'], product: 'Iron arrow', level: 15 },

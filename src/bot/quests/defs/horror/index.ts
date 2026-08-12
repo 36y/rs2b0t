@@ -1,6 +1,6 @@
-import { Execution } from '../../../api/core/Execution.js';
-import { Traversal } from '../../../nav/Traversal.js';
-import { Inventory } from '../../../api/hud/Inventory.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import { Traversal } from '../../../api/walking/Traversal.js';
+import { Inventory } from '../../../api/inventory/Inventory.js';
 import { QUESTS } from '../../data/quests.js';
 import { hasFlag, type QuestModule, type QuestSnapshot, type QuestStep } from '../../engine/types.js';
 import { talkThrough } from '../../exec/primitives.js';

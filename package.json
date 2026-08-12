@@ -17,6 +17,7 @@
         "b0t": "sh tools/b0t.sh",
         "test": "bun test",
         "lint": "eslint .",
+        "audit:exports": "bun tools/audit-exports.ts",
         "typecheck": "tsc --noEmit",
         "format": "prettier --write",
         "smoke": "bun tools/e2e-smoke.ts",

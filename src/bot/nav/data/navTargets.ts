@@ -1,6 +1,6 @@
 import type { NavPoint } from '../PathFinder.js';
 
-export interface NavTarget {
+interface NavTarget {
     bot: string;
     label: string;
     tile: NavPoint;

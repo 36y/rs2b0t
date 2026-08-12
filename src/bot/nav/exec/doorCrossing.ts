@@ -4,12 +4,12 @@
 
 import type { WorldTile } from '../../adapter/ClientAdapter.js';
 import { reader } from '../../adapter/ClientAdapter.js';
-import { Execution } from '../../api/core/Execution.js';
-import { Inventory } from '../../api/hud/Inventory.js';
-import { Locs, type Loc } from '../../api/entities/Locs.js';
+import { Execution } from '../../api/execution/Execution.js';
+import { Inventory } from '../../api/inventory/Inventory.js';
+import { Locs, type Loc } from '../../api/locs/Locs.js';
 import { Reachability } from '../geometry/Reachability.js';
-import { CANT_REACH, GameMessages } from '../../events/gameMessages.js';
-import { ActionRouter } from '../../input/ActionRouter.js';
+import { CANT_REACH, GameMessages } from '../../api/chatbox/gameMessages.js';
+import { Input } from '../../api/input/Input.js';
 import { DirectNavigator } from '../DirectNavigator.js';
 import {
     chooseCrossClick,
@@ -246,7 +246,7 @@ export function noteFailedDoor(
  * Path-scoped stall recovery: only open doors that belong on the published route.
  * Street-front house doors sit *next* to the path corridor — proximity must not win.
  */
-export interface PathDoorHint {
+interface PathDoorHint {
     tiles: readonly { x: number; z: number; level: number }[];
     pathIdx: number;
     /**
@@ -608,7 +608,7 @@ export async function crossMultiTileDoor(
             DirectNavigator.walk(step);
             await Execution.delayUntil(() => isOnFarSide(reader.worldTile(), approach, step), 3000);
         } else if (choice === 'landing-click') {
-            ActionRouter.driver.walk(landingLocal!.lx, landingLocal!.lz);
+            Input.walk(landingLocal!.lx, landingLocal!.lz);
             await Execution.delayTicks(2);
         } else {
             log(`leaf blocks landing — scene-stepping through '${transport.locName}'`);

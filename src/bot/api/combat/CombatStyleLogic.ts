@@ -1,4 +1,4 @@
-import { SPELL_DB, STAFF_RUNES, type SpellRow } from '#/bot/api/combat/data/spelldb.js';
+import { SPELL_DB, STAFF_RUNES, type SpellRow } from '#/bot/data/spelldb.js';
 
 const STAFF_SPELLS_COM0 = 1830;
 export const AUTO_CHOOSE_COM = 353;

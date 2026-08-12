@@ -1,4 +1,4 @@
-import Tile from '../../../api/core/Tile.js';
+import Tile from '../../../geometry/Tile.js';
 import type { QuestSnapshot } from '../../engine/types.js';
 
 export interface EwItem {
@@ -56,12 +56,12 @@ export const TROUGH_STAND = new Tile(2720, 9876, 0);
 export const WORKBENCH_STAND = new Tile(2716, 9888, 0);
 export const CRATE_HUB = new Tile(2718, 9892, 0);
 
-export const WORKSHOP_Z_MIN = 9850;
-export const WORKSHOP_Z_MAX = 9950;
-export const WORKSHOP_X_MIN = 2690;
-export const WORKSHOP_X_MAX = 2760;
+const WORKSHOP_Z_MIN = 9850;
+const WORKSHOP_Z_MAX = 9950;
+const WORKSHOP_X_MIN = 2690;
+const WORKSHOP_X_MAX = 2760;
 
-export type EwArea = 'workshop' | 'seers' | 'elsewhere' | 'unknown';
+type EwArea = 'workshop' | 'seers' | 'elsewhere' | 'unknown';
 
 export function ewArea(tile: QuestSnapshot['tile']): EwArea {
     if (!tile) {

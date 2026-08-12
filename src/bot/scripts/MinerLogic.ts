@@ -53,7 +53,7 @@ export function shouldEatMinerFood(opts: { hp: number; maxHp: number; heal: numb
     return opts.hp + opts.heal <= opts.maxHp;
 }
 
-export type MinerFoodWithdrawalPlan = { ok: true; withdraw: number } | { ok: false; withdraw: 0; reason: 'bank-stock' | 'pack-space'; missing: number };
+type MinerFoodWithdrawalPlan = { ok: true; withdraw: number } | { ok: false; withdraw: 0; reason: 'bank-stock' | 'pack-space'; missing: number };
 
 /** Plan an exact top-up without silently accepting a short bank or a cramped pack. */
 export function planMinerFoodWithdrawal(opts: { target: number; held: number; banked: number; freeSlots: number }): MinerFoodWithdrawalPlan {

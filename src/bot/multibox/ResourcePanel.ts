@@ -21,7 +21,7 @@ type MetricState = { status: 'available'; text: string; title?: string } | { sta
 
 type ResourceFetch = (input: string, init: RequestInit) => Promise<Response>;
 
-export interface ResourcePanelOptions {
+interface ResourcePanelOptions {
     fetch?: ResourceFetch;
     getTrafficSnapshot?: () => TrafficSnapshot;
     endpoint?: string;

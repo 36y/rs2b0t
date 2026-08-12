@@ -1,18 +1,18 @@
-import * as RealInventory from '#/bot/api/hud/Inventory.js';
+import * as RealInventory from '#/bot/api/inventory/Inventory.js';
 import { afterAll, beforeEach, describe, expect, test } from 'bun:test';
 
 import { actions, reader } from '#/bot/adapter/ClientAdapter.js';
-import { Execution } from '#/bot/api/core/Execution.js';
-import { Game } from '#/bot/api/core/Game.js';
-import { Traversal } from '#/bot/nav/Traversal.js';
-import { ChatDialog } from '#/bot/api/hud/ChatDialog.js';
-import { GroundItems } from '#/bot/api/entities/GroundItems.js';
-import { Locs } from '#/bot/api/entities/Locs.js';
-import { Npcs } from '#/bot/api/entities/Npcs.js';
-import Tile from '#/bot/api/core/Tile.js';
+import { Execution } from '#/bot/api/execution/Execution.js';
+import { Game } from '#/bot/api/game/Game.js';
+import { Traversal } from '#/bot/api/walking/Traversal.js';
+import { ChatDialog } from '#/bot/api/dialogue/ChatDialog.js';
+import { GroundItems } from '#/bot/api/grounditems/GroundItems.js';
+import { Locs } from '#/bot/api/locs/Locs.js';
+import { Npcs } from '#/bot/api/npcs/Npcs.js';
+import Tile from '#/bot/geometry/Tile.js';
 import { CLUE_DB } from '#/bot/clues/data/cluedb.js';
 import { KILL_ANCHORS } from '#/bot/clues/data/killAnchors.js';
-import { GameMessages } from '#/bot/events/gameMessages.js';
+import { GameMessages } from '#/bot/api/chatbox/gameMessages.js';
 import { stubProps } from '../lib/stubSingletons.js';
 
 // riddle001: kill Black Heather at the Bandit Camp for the chest key.

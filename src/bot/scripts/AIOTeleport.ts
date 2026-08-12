@@ -1,12 +1,12 @@
-import { LoopingBot } from '../api/core/Bot.js';
-import { Execution } from '../api/core/Execution.js';
-import { Game } from '../api/core/Game.js';
-import Tile from '../api/core/Tile.js';
-import { Inventory } from '../api/hud/Inventory.js';
-import { Bank } from '../api/hud/Bank.js';
-import { Equipment } from '../api/hud/Equipment.js';
-import { Skills } from '../api/hud/Skills.js';
-import { Traversal } from '../nav/Traversal.js';
+import { LoopingBot } from '../api/bot/Bot.js';
+import { Execution } from '../api/execution/Execution.js';
+import { Game } from '../api/game/Game.js';
+import Tile from '../geometry/Tile.js';
+import { Inventory } from '../api/inventory/Inventory.js';
+import { Bank } from '../api/bank/Bank.js';
+import { Equipment } from '../api/equipment/Equipment.js';
+import { Skills } from '../api/skills/Skills.js';
+import { Traversal } from '../api/walking/Traversal.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 
 // ============================================

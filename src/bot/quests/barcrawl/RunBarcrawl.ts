@@ -1,13 +1,13 @@
 import { reader } from '../../adapter/ClientAdapter.js';
-import { Execution } from '../../api/core/Execution.js';
-import { Game } from '../../api/core/Game.js';
-import { Reach } from '../../nav/Reach.js';
-import { Traversal } from '../../nav/Traversal.js';
-import { ChatDialog } from '../../api/hud/ChatDialog.js';
-import { Inventory } from '../../api/hud/Inventory.js';
-import { Modals } from '../../api/hud/Modals.js';
-import { Npcs, type Npc } from '../../api/entities/Npcs.js';
-import { GameMessages } from '../../events/gameMessages.js';
+import { Execution } from '../../api/execution/Execution.js';
+import { Game } from '../../api/game/Game.js';
+import { Reach } from '../../api/walking/Reach.js';
+import { Traversal } from '../../api/walking/Traversal.js';
+import { ChatDialog } from '../../api/dialogue/ChatDialog.js';
+import { Inventory } from '../../api/inventory/Inventory.js';
+import { Modals } from '../../api/widgets/Modals.js';
+import { Npcs, type Npc } from '../../api/npcs/Npcs.js';
+import { GameMessages } from '../../api/chatbox/gameMessages.js';
 import { driveUntil } from '../exec/prompts.js';
 import {
     BARBARIAN_GUARD_ID,
@@ -127,7 +127,7 @@ const GIVE_UP = 3;
  * Drive the whole crawl. Returns once the card is fully signed; the guard still
  * has to be told, which {@link handInBarcrawl} does.
  */
-export async function runBarcrawl(log: (m: string) => void, onProgress?: Progress): Promise<boolean> {
+async function runBarcrawl(log: (m: string) => void, onProgress?: Progress): Promise<boolean> {
     let missed = 0;
     for (let pass = 0; pass < BARS.length * 2; pass++) {
         const progress = await readCard(m => log(`  ${m}`));
@@ -186,7 +186,7 @@ async function talkToGuard(log: (m: string) => void): Promise<boolean> {
  * Give the signed card to the gate guard. `outpost_guard_progress` consumes it
  * and sets `%barcrawl` to complete, which is what actually opens the gate.
  */
-export async function handInBarcrawl(log: (m: string) => void): Promise<boolean> {
+async function handInBarcrawl(log: (m: string) => void): Promise<boolean> {
     if (!(await talkToGuard(log))) {
         return false;
     }
@@ -194,7 +194,7 @@ export async function handInBarcrawl(log: (m: string) => void): Promise<boolean>
     return Inventory.count(BARCRAWL_CARD) === 0;
 }
 
-export type GuardVerdict = 'complete' | 'issued' | 'retry';
+type GuardVerdict = 'complete' | 'issued' | 'retry';
 
 /**
  * Ask the gate guard where the crawl stands, which is the only oracle there is:
@@ -210,7 +210,7 @@ export type GuardVerdict = 'complete' | 'issued' | 'retry';
  * "already done" sends the bot at a gate that will not open, for good. Only
  * "'Ello friend." means finished.
  */
-export async function askGuard(log: (m: string) => void): Promise<GuardVerdict> {
+async function askGuard(log: (m: string) => void): Promise<GuardVerdict> {
     if (!(await talkToGuard(log))) {
         log('the outpost guard never opened a dialogue');
         return 'retry';

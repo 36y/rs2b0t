@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import { reader, type PlayerSnapshot } from '#/bot/adapter/ClientAdapter.js';
-import { Game, PLAYER_FACE_BASE } from '#/bot/api/core/Game.js';
-import { MINING_LOCATIONS } from '#/bot/api/skilling/MiningLocations.js';
-import { Player } from '#/bot/api/entities/index.js';
+import { Game, PLAYER_FACE_BASE } from '#/bot/api/game/Game.js';
+import { MINING_LOCATIONS } from '#/bot/data/miningLocations.js';
+import { Player } from '#/bot/api/model/Player.js';
 import type GatheringBot from '#/bot/scripts/GatheringBot.js';
 import {
     gatheringCombatPolicy,

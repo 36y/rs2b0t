@@ -1,9 +1,9 @@
-import { Execution } from '../../../api/core/Execution.js';
-import type Tile from '../../../api/core/Tile.js';
-import { Traversal } from '../../../nav/Traversal.js';
-import { Bank } from '../../../api/hud/Bank.js';
-import { GroundItems } from '../../../api/entities/GroundItems.js';
-import { Npcs } from '../../../api/entities/Npcs.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import type Tile from '../../../geometry/Tile.js';
+import { Traversal } from '../../../api/walking/Traversal.js';
+import { Bank } from '../../../api/bank/Bank.js';
+import { GroundItems } from '../../../api/grounditems/GroundItems.js';
+import { Npcs } from '../../../api/npcs/Npcs.js';
 import { driveUntil, settleScene } from '../../exec/prompts.js';
 import { gatherWool, type WoolSites } from '../../exec/wool.js';
 import type { QuestSnapshot, QuestStep } from '../../engine/types.js';
@@ -144,7 +144,7 @@ export function makePaste(snap: QuestSnapshot): QuestStep | null {
  * Item-on-NPC is an opnpcu, so this walks and then uses. It must not open a
  * conversation first, which is all `Reach.npcDialog` does.
  */
-export async function useHeldOnNpc(
+async function useHeldOnNpc(
     itemId: number,
     npcName: string,
     near: Tile,

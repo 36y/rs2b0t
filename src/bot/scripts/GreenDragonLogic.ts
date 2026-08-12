@@ -1,4 +1,4 @@
-import { matchesCommonBankLoot } from '../api/banking/bankRules.js';
+import { matchesCommonBankLoot } from '../api/bank/bankRules.js';
 import { CASKET_IDS, CLUE_DB } from '../clues/data/cluedb.js';
 
 /** First wilderness row north of the Edgeville ditch. */
@@ -28,7 +28,7 @@ export function isClueLike(id: number): boolean {
     return CLUE_DB[id] !== undefined || CASKET_IDS[id] !== undefined;
 }
 
-export interface LootFilter {
+interface LootFilter {
     lootSet: ReadonlySet<string>;
     bankCommon: boolean;
     solveClues: boolean;
@@ -82,7 +82,7 @@ export function gearToKeep(gear: readonly string[], worn: (name: string) => bool
 /** Chebyshev radius around the bank stand that counts as "the flee finished". */
 export const AT_BANK_RADIUS = 8;
 
-export interface EscapeState {
+interface EscapeState {
     threat: boolean;
     hpFraction: number;
     panicHp: number;

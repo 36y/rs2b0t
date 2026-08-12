@@ -6,7 +6,7 @@ import { ensureEdgeId } from './edgeId.js';
 import { DEFAULT_EDGE_COST, type NavPoint, type TransportEdge, type TransportKind } from './types.js';
 
 /** Minimal shapes matching PathFinder's v1 JSON (avoid importing PathFinder here). */
-export interface V1DoorEdge {
+interface V1DoorEdge {
     x: number;
     z: number;
     level: number;
@@ -15,7 +15,7 @@ export interface V1DoorEdge {
     dir: 'N' | 'E' | 'S' | 'W';
 }
 
-export interface V1TransportEdge {
+interface V1TransportEdge {
     from: NavPoint;
     to: NavPoint;
     locName: string;

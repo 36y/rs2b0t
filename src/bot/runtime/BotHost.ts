@@ -1,8 +1,8 @@
 import { ServerProt } from '#/io/ServerProt.js';
 
 import { attach as adapterAttach, invalidateLocSnapshots, reader, setPacketListener } from '../adapter/ClientAdapter.js';
-import { GameMessages } from '../events/gameMessages.js';
-import { noteProducerPacket, pumpProducers } from '../events/producers.js';
+import { GameMessages } from '../api/chatbox/gameMessages.js';
+import { noteProducerPacket, pumpProducers } from './producers.js';
 
 type FrameListener = () => void;
 

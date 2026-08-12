@@ -1,11 +1,11 @@
-import { TaskBot, type Task } from '../api/core/Bot.js';
-import { Execution } from '../api/core/Execution.js';
-import { Game } from '../api/core/Game.js';
-import Tile from '../api/core/Tile.js';
+import { TaskBot, type Task } from '../api/bot/Bot.js';
+import { Execution } from '../api/execution/Execution.js';
+import { Game } from '../api/game/Game.js';
+import Tile from '../geometry/Tile.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
 import { DeathRecovery } from '../api/tasks/DeathRecovery.js';
 import { PeriodicBank } from '../api/tasks/PeriodicBank.js';
-import { PERIODIC_BANK_SETTINGS, depositAllExcept, parseBankStrategy, type BankDestination } from '../api/banking/Banking.js';
+import { PERIODIC_BANK_SETTINGS, depositAllExcept, parseBankStrategy, type BankDestination } from '../api/bank/Banking.js';
 import {
     COMBAT_STYLE_OPTIONS,
     RANGE_STYLE_OPTIONS,
@@ -14,24 +14,24 @@ import {
     parseRangeStyle,
     type MeleeCombatStyle
 } from '../api/combat/CombatStyle.js';
-import { Autocast } from '../api/combat/Autocast.js';
+import { Autocast } from '../api/magic/Autocast.js';
 import { castsAvailable, runeWithdrawList } from '../api/combat/CombatStyleLogic.js';
-import { SPELL_DB } from '../api/combat/data/spelldb.js';
-import { ChatDialog } from '../api/hud/ChatDialog.js';
-import { GroundItems } from '../api/entities/GroundItems.js';
-import { Npcs, type Npc } from '../api/entities/Npcs.js';
-import { Inventory } from '../api/hud/Inventory.js';
-import { Equipment } from '../api/hud/Equipment.js';
-import { Bank } from '../api/hud/Bank.js';
-import { Skills } from '../api/hud/Skills.js';
-import { Paint } from '../api/hud/Paint.js';
+import { SPELL_DB } from '../data/spelldb.js';
+import { ChatDialog } from '../api/dialogue/ChatDialog.js';
+import { GroundItems } from '../api/grounditems/GroundItems.js';
+import { Npcs, type Npc } from '../api/npcs/Npcs.js';
+import { Inventory } from '../api/inventory/Inventory.js';
+import { Equipment } from '../api/equipment/Equipment.js';
+import { Bank } from '../api/bank/Bank.js';
+import { Skills } from '../api/skills/Skills.js';
+import { Paint } from '../api/paint/Paint.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
-import { Traversal } from '../nav/Traversal.js';
-import { CANT_REACH, GameMessages } from '../events/gameMessages.js';
+import { Traversal } from '../api/walking/Traversal.js';
+import { CANT_REACH, GameMessages } from '../api/chatbox/gameMessages.js';
 import { RecoveryHints } from '../runtime/RecoveryHints.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import { fmtDuration } from '../api/hud/paintLogic.js';
-import { Reach } from '../nav/Reach.js';
+import { fmtDuration } from '../api/paint/paintLogic.js';
+import { Reach } from '../api/walking/Reach.js';
 
 const COMBAT_SKILLS = ['attack', 'strength', 'defence', 'hitpoints', 'ranged', 'magic'];
 
@@ -114,7 +114,7 @@ export const SETTINGS: SettingsSchema = {
     ...PERIODIC_BANK_SETTINGS
 };
 
-export type FightKind = 'melee' | 'mage' | 'range';
+type FightKind = 'melee' | 'mage' | 'range';
 
 export default class ChickenKiller extends TaskBot {
     override loopDelay = 600;

@@ -7,7 +7,7 @@ import {
     classifyMuleState, 
     type RuneRoute 
 } from '#/bot/scripts/MuleCrafterLogic.js';
-import { type TradeItem } from '#/bot/api/hud/Trade.js';
+import { type TradeItem } from '#/bot/api/trade/Trade.js';
 
 describe('MuleCrafterLogic', () => {
     describe('RUNES', () => {

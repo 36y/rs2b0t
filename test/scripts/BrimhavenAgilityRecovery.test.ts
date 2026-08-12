@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
 import { reader } from '#/bot/adapter/ClientAdapter.js';
-import { Execution } from '#/bot/api/core/Execution.js';
-import { Game } from '#/bot/api/core/Game.js';
-import { ChatDialog } from '#/bot/api/hud/ChatDialog.js';
-import { Inventory } from '#/bot/api/hud/Inventory.js';
-import { Skills } from '#/bot/api/hud/Skills.js';
-import Tile from '#/bot/api/core/Tile.js';
-import { Traversal } from '#/bot/nav/Traversal.js';
+import { Execution } from '#/bot/api/execution/Execution.js';
+import { Game } from '#/bot/api/game/Game.js';
+import { ChatDialog } from '#/bot/api/dialogue/ChatDialog.js';
+import { Inventory } from '#/bot/api/inventory/Inventory.js';
+import { Skills } from '#/bot/api/skills/Skills.js';
+import Tile from '#/bot/geometry/Tile.js';
+import { Traversal } from '#/bot/api/walking/Traversal.js';
 import { SettingsBag } from '#/bot/runtime/Settings.js';
 import BrimhavenAgility from '#/bot/scripts/BrimhavenAgility.js';
 import {

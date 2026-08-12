@@ -1,15 +1,12 @@
 
 
 export const COOK_MODE_OPTIONS = ['Off', 'Cook then bank', 'Bank raw then cook'] as const;
-export type CookModeLabel = (typeof COOK_MODE_OPTIONS)[number];
 export type CookMode = 'off' | 'cook-then-bank' | 'bank-raw-then-cook';
 
 export const BURNT_POLICY_OPTIONS = ['Drop', 'Bank'] as const;
-export type BurntPolicyLabel = (typeof BURNT_POLICY_OPTIONS)[number];
 export type BurntPolicy = 'drop' | 'bank';
 
 export const AFTER_COOK_OPTIONS = ['Stop', 'Continue'] as const;
-export type AfterCookLabel = (typeof AFTER_COOK_OPTIONS)[number];
 export type AfterCookCycle = 'stop' | 'continue';
 
 export const COOK_FISH_OPTIONS = [
@@ -167,7 +164,7 @@ export function shouldKeepDrainingCookBatch(inCookBatch: boolean, bankRawRemaini
     return inCookBatch && bankRawRemaining > 0;
 }
 
-export type CookBatchLoadOutcome = 'drain-more' | 'stop' | 'fish-again';
+type CookBatchLoadOutcome = 'drain-more' | 'stop' | 'fish-again';
 
 export function cookBatchAfterLoad(
     bankRawRemaining: number,
@@ -184,19 +181,9 @@ export function cookPaceTicks(_rand: () => number = Math.random): number {
     return 1;
 }
 
-/** 1–2 ticks between bank UI steps (aligned with api/banking/Banking bankPaceTicks). */
+/** 1–2 ticks between bank UI steps (aligned with api/bank/Banking bankPaceTicks). */
 export function bankPaceTicks(rand: () => number = Math.random): number {
     return rand() < 0.35 ? 2 : 1;
-}
-
-/** @deprecated Prefer {@link cookPaceTicks}; action loops run on game ticks. */
-export function cookHumanDelayMs(rand: () => number = Math.random): number {
-    return cookPaceTicks(rand) * 600;
-}
-
-/** @deprecated Prefer {@link bankPaceTicks}; action loops run on game ticks. */
-export function bankHumanDelayMs(rand: () => number = Math.random): number {
-    return bankPaceTicks(rand) * 600;
 }
 
 export function cookedNameFromRaw(rawName: string): string {

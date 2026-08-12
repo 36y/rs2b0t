@@ -23,7 +23,7 @@ import { parseHtmlColor, NAV_PATH_PAINT_DEFAULTS } from './pathPaintTheme.js';
 import { PathPublish } from './pathPublish.js';
 import { remainingPathFromPlayer } from './geometry/pathExpand.js';
 import { SettingsStore } from '../runtime/Settings.js';
-import { Game } from '../api/core/Game.js';
+import { Game } from '../api/game/Game.js';
 
 function rgbInt(c: { r: number; g: number; b: number }): number {
     return ((c.r & 0xff) << 16) | ((c.g & 0xff) << 8) | (c.b & 0xff);

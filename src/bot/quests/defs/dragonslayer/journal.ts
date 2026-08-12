@@ -1,6 +1,6 @@
 import { actions, reader } from '../../../adapter/ClientAdapter.js';
-import { Execution } from '../../../api/core/Execution.js';
-import { Quests } from '../../../api/hud/Quests.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import { Quests } from '../../../api/questlog/Quests.js';
 import type { QuestProgress } from '../../engine/types.js';
 
 /** Mirrors quest_dragon.constant; the engine skips 4-6. */
@@ -15,7 +15,7 @@ export const DRAGON_STAGE = {
     COMPLETE: 10
 } as const;
 
-export const DRAGON_QUEST = 'Dragon Slayer';
+const DRAGON_QUEST = 'Dragon Slayer';
 
 function normalize(lines: readonly string[] | string): string {
     return (typeof lines === 'string' ? lines : lines.join(' '))

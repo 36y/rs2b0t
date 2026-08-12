@@ -106,7 +106,7 @@ its own definition rather than against anything the client rendered.
 
 Guardians are fought under Protect from Magic, so the pre-trail bank stop tops
 prayer up: if it is below full, the solver walks to the nearest altar from
-[`Altars.ts`](../../src/bot/api/skilling/Altars.ts) and prays. Low prayer never blocks a trail —
+[`Altars.ts`](../../src/bot/api/altar/Altars.ts) and prays. Low prayer never blocks a trail —
 the fight runs without the protection prayer.
 
 ## Teleports

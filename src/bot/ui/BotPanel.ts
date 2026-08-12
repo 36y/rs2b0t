@@ -1,7 +1,6 @@
 import { BUILD_INFO } from '../../config/buildInfo.js';
 import { reader } from '../adapter/ClientAdapter.js';
 import type { BotHostImpl } from '../runtime/BotHost.js';
-import { ActionRouter } from '../input/ActionRouter.js';
 import { AutoRelogin } from '../runtime/AutoRelogin.js';
 import { boxId, boxKey, wallLinkHref } from '../runtime/box.js';
 import { Credentials } from '../runtime/Credentials.js';
@@ -17,7 +16,7 @@ import { el } from './dom.js';
 const SELECTED_SCRIPT_KEY = boxKey('selectedScript');
 const rendererEnabledKey = (): string => boxKey('rendererEnabled');
 
-export interface RendererControl {
+interface RendererControl {
     enabled(): boolean;
     setEnabled(enabled: boolean): void;
 }
@@ -394,8 +393,7 @@ export default class BotPanel {
         } else {
             const name = ScriptRunner.meta?.name ?? '?';
             const extra = state === 'crashed' && ctx.crashError ? ` — ${ctx.crashError.message}` : ` — ${ctx.loopCount} loops`;
-            const mode = state === 'running' || state === 'paused' ? ` [${ActionRouter.driver.mode}]` : '';
-            const text = `${name}: ${state}${extra}${mode}`;
+            const text = `${name}: ${state}${extra}`;
             this.scriptStatus.textContent = ctx.activeEvent ? `⚡ ${ctx.activeEvent}` : text;
         }
         this.scriptStatus.className = `rs2b0t-value rs2b0t-state-${state}`;

@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { QUEST_ROCK_TYPES, ROCK_OPTIONS } from '#/bot/api/skilling/MiningRocks.js';
+import { QUEST_ROCK_TYPES, ROCK_OPTIONS } from '#/bot/data/miningRocks.js';
 import { loadQuestRecords } from '#/bot/quests/data/index.js';
 
 test('records have unique ids', () => {

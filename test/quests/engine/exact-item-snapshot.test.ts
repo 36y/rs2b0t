@@ -2,11 +2,11 @@
    assembly are exercised without constructing a live bot host. */
 import { afterEach, expect, test } from 'bun:test';
 
-import { Game } from '#/bot/api/core/Game.js';
-import { Bank } from '#/bot/api/hud/Bank.js';
-import { Equipment } from '#/bot/api/hud/Equipment.js';
-import { Inventory } from '#/bot/api/hud/Inventory.js';
-import { Quests } from '#/bot/api/hud/Quests.js';
+import { Game } from '#/bot/api/game/Game.js';
+import { Bank } from '#/bot/api/bank/Bank.js';
+import { Equipment } from '#/bot/api/equipment/Equipment.js';
+import { Inventory } from '#/bot/api/inventory/Inventory.js';
+import { Quests } from '#/bot/api/questlog/Quests.js';
 import { QuestEngine } from '#/bot/quests/engine/QuestEngine.js';
 import type { QuestModule, QuestSnapshot } from '#/bot/quests/engine/types.js';
 

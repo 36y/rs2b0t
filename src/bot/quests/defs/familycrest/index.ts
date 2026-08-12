@@ -1,10 +1,10 @@
-import { Execution } from '../../../api/core/Execution.js';
-import { Reach } from '../../../nav/Reach.js';
-import { Traversal } from '../../../nav/Traversal.js';
-import { ChatDialog } from '../../../api/hud/ChatDialog.js';
-import { Inventory } from '../../../api/hud/Inventory.js';
-import { Npcs } from '../../../api/entities/Npcs.js';
-import type Tile from '../../../api/core/Tile.js';
+import { Execution } from '../../../api/execution/Execution.js';
+import { Reach } from '../../../api/walking/Reach.js';
+import { Traversal } from '../../../api/walking/Traversal.js';
+import { ChatDialog } from '../../../api/dialogue/ChatDialog.js';
+import { Inventory } from '../../../api/inventory/Inventory.js';
+import { Npcs } from '../../../api/npcs/Npcs.js';
+import type Tile from '../../../geometry/Tile.js';
 import { QUESTS } from '../../data/quests.js';
 import type { QuestModule, QuestSnapshot, QuestStep } from '../../engine/types.js';
 import { driveChoice, settleScene } from '../../exec/prompts.js';

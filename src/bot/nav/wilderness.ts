@@ -17,9 +17,9 @@ export interface WildTile {
 }
 
 /** Surface wilderness south edge (z). */
-export const WILDERNESS_SOUTH_Z = 3520;
+const WILDERNESS_SOUTH_Z = 3520;
 /** Edgeville dungeon / underground wildy south edge (z). */
-export const WILDERNESS_UNDERGROUND_SOUTH_Z = 9920;
+const WILDERNESS_UNDERGROUND_SOUTH_Z = 9920;
 
 const WILD_X_MIN = 2944;
 const WILD_X_MAX = 3391;
