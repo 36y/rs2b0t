@@ -1,4 +1,4 @@
-// docs/MULTIBOX.md#diagnostics
+// docs/decisions/multibox-telemetry-honesty.md
 //
 // The wall half of diagnostics. Degradation is only visible against its own past,
 // so samples are retained on two tiers: a fine tier for the minutes around an

@@ -1,4 +1,4 @@
-// docs/CLUES.md#teleports
+// docs/reference/clues-mechanics.md#teleports
 import { ALL_TELEPORT_DESTINATIONS } from '#/bot/nav/teleportCatalog.js';
 import { meetsRequires } from '#/bot/nav/requires.js';
 import type { TeleportDestination } from '#/bot/nav/teleportCatalog.js';

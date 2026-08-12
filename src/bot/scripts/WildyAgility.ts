@@ -47,6 +47,8 @@ import {
     southOfRidge,
     type RidgeOutcome
 } from './WildyAgilityLogic.js';
+import { scriptFood } from '../items/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../items/loadoutSetting.js';
 
 // Lowered because the default wait is 24 ticks and obstacle clears can take ~20.
 const LAP_RETRY_LIMIT = 2;
@@ -54,12 +56,7 @@ const RIDGE_TIMEOUT_MS = 10_000;
 const BANK_TILE: WorldTile = EDGEVILLE_BANK;
 
 export const WILDY_AGILITY_SETTINGS: SettingsSchema = {
-    food: {
-        type: 'string',
-        default: 'Lobster',
-        label: 'Food (name contains)',
-        help: 'carried food eaten while running. Running out mid-course is expected — keep lapping until death; death recovery banks and re-withdraws this food only (nothing else is restocked)'
-    },
+    loadout: LOADOUT_SETTING,
 
     foodWithdraw: {
         type: 'number',
@@ -258,7 +255,7 @@ export default class WildyAgility extends TaskBot {
     override async onStart(): Promise<void> {
         await Execution.delayUntil(() => Game.ingame() && Game.tile() !== null, 0);
 
-        FOOD = this.settings.str('food', 'Lobster').toLowerCase();
+        FOOD = scriptFood(this.settings, 'Lobster').toLowerCase();
 
         FOOD_WITHDRAW = this.settings.num('foodWithdraw', 20);
         MIN_FOOD = this.settings.num('minFood', 1);

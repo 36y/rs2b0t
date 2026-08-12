@@ -52,6 +52,8 @@ import { paintClueProgress } from '../clues/cluePaint.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
 import { Reach } from '../api/Reach.js';
 import { RANDOM_EVENT_CASKET_ID } from '../api/Banking.js';
+import { scriptFood } from '../items/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../items/loadoutSetting.js';
 
 const BOOTH = { name: 'Bank booth', op: 'Use-quickly' };
 const KIT = ['spade', 'sextant', 'watch', 'chart'];
@@ -82,12 +84,7 @@ export const SETTINGS: SettingsSchema = {
     ammo: { type: 'string', default: 'Bronze arrow', label: 'Ammo (withdrawn from bank)', group: 'Combat', showIf: SHOW_RANGE },
     ammoWithdraw: { type: 'number', default: 500, min: 1, max: 5000, label: 'Ammo per bank trip', group: 'Combat', showIf: SHOW_RANGE },
     ammoRestockBelow: { type: 'number', default: 25, min: 0, max: 100, label: 'Bank for ammo below %', group: 'Combat', showIf: SHOW_MAGE_RANGE, help: 'when not banking for food, go bank once magic casts / ranged ammo drop below this percentage of a full trip' },
-    food: {
-        type: 'string',
-        default: 'Trout',
-        label: 'Food (withdrawn from bank)',
-        help: 'eaten when a full heal fits (no overheal waste), or at ≤5 HP so you do not die with food left'
-    },
+    loadout: LOADOUT_SETTING,
     foodWithdraw: { type: 'number', default: 10, min: 0, max: 27, label: 'Food to carry' },
     panicHp: { type: 'number', default: 25, min: 0, max: 100, label: 'Panic below HP% (no food)' },
     loot: { type: 'string[]', default: DEFAULT_LOOT, label: 'Loot item names (contains)', help: 'defaults to gem-table items + clue scrolls, nothing else' },
@@ -201,7 +198,7 @@ export default class AutoFighter extends TaskBot {
         const spotMode = this.settings.str('spot', START_POSITION);
         ANCHOR = resolveKillingSpot(spotMode, Tile.from(Game.tile()!), this.settings.tile('coordinates', DEFAULT_CUSTOM_SPOT));
         LEASH = this.settings.num('leashRadius', 8);
-        FOOD = this.settings.str('food', 'Trout');
+        FOOD = scriptFood(this.settings, 'Trout');
         FOOD_WITHDRAW = this.settings.num('foodWithdraw', 10);
         PANIC_AT = this.settings.num('panicHp', 25) / 100;
         LOOT = this.settings.list('loot', DEFAULT_LOOT).map(s => s.trim().toLowerCase());

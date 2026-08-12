@@ -32,6 +32,9 @@ export function transportLocValid(transport: TransportInfo, level = 0): boolean 
     return locRefValid(ref, scene);
 }
 
+/** How far off a long hop may land. Short hops must be exact — see below. */
+const LANDING_TOLERANCE = 3;
+
 export function matchesTransportLanding(
     transport: TransportInfo,
     expectedLevel: number,
@@ -41,8 +44,16 @@ export function matchesTransportLanding(
     if (!current) {
         return false;
     }
-    if (transport.toTile && current.level === expectedLevel && chebyshev(current, transport.toTile) <= 3) {
-        return true;
+    if (transport.toTile && current.level === expectedLevel && chebyshev(current, transport.toTile) <= LANDING_TOLERANCE) {
+        if (before === null || current.level !== before.level) {
+            return true;
+        }
+        // Tolerance must not exceed the crossing's own span, or the near side
+        // and every frame of the animation read as crossed.
+        const span = chebyshev(before, transport.toTile);
+        return span <= LANDING_TOLERANCE
+            ? chebyshev(current, transport.toTile) === 0
+            : chebyshev(current, transport.toTile) < chebyshev(current, before);
     }
     return (
         transport.acceptAnyLanding === true

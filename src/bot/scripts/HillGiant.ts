@@ -15,7 +15,7 @@ import { Skills } from '../api/hud/Skills.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
 import { COMBAT_STYLE_OPTIONS, describeCombatStyle, parseCombatStyle, type MeleeCombatStyle } from '../api/CombatStyle.js';
 import { DROP_DB } from '../api/combat/data/dropdb.js';
-import { FOOD_OPTIONS, foodForms, foodCount as foodCountIn, foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
+import { foodForms, foodCount as foodCountIn, foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
 import { matchesCommonBankLoot } from '../api/Banking.js';
 import { GroundItems } from '../api/queries/GroundItems.js';
 import { Locs } from '../api/queries/Locs.js';
@@ -24,6 +24,8 @@ import { matchesEntityName } from '../api/queries/Query.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import { BIG_BONES, BRASS_KEY, LIMPWURT, PIT_SPOTS, bonesAction, isHillGiantKill, keepOnDeposit, pickSpot, shouldBank, shouldEatForSpace, tripNeeds } from './HillGiantLogic.js';
+import { scriptFood } from '../items/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../items/loadoutSetting.js';
 
 const TARGET = 'Giant';
 
@@ -44,7 +46,7 @@ const DEFAULT_LOOT = [LIMPWURT, BIG_BONES];
 export const HILL_GIANT_SETTINGS: SettingsSchema = {
     meleeStyle: { type: 'string', default: 'strength', options: COMBAT_STYLE_OPTIONS, label: 'Melee style', help: 'which melee stat to train; re-applied each login since com_mode is not saved' },
     weapon: { type: 'string', default: '', label: 'Weapon to wield', help: 'kept wielded, withdrawn from the bank when missing and re-worn after a death. Leave blank to fight with whatever you are already wearing.' },
-    food: { type: 'string', default: 'Trout', options: FOOD_OPTIONS, label: 'Food', group: 'Food & healing' },
+    loadout: { ...LOADOUT_SETTING, group: 'Food & healing' },
     foodWithdraw: { type: 'number', default: 12, min: 1, max: 27, label: 'Food per trip', group: 'Food & healing' },
 
     loot: { type: 'string[]', default: DEFAULT_LOOT, options: DROPS, label: 'Loot to pick up', group: 'Banking & loot', help: 'limpwurt roots and big bones by default; everything picked up is banked' },
@@ -83,7 +85,7 @@ export default class HillGiant extends TaskBot {
 
         this.meleeStyle = parseCombatStyle(this.settings.str('meleeStyle', 'strength'));
         this.weapon = this.settings.str('weapon', '').trim();
-        this.foodName = this.settings.str('food', 'Trout');
+        this.foodName = scriptFood(this.settings, 'Trout');
         this.foodPerTrip = this.settings.num('foodWithdraw', 12);
 
         this.bankCommon = this.settings.bool('bankCommonJunk', true);

@@ -1,4 +1,4 @@
-// docs/QUESTS.md#provisioning
+// docs/reference/quest-engine.md#provisioning
 import type Tile from '../../../api/Tile.js';
 import { Inventory, type InvItem } from '../../../api/hud/Inventory.js';
 import type { QuestSnapshot, QuestStep } from '../../engine/types.js';

@@ -4,7 +4,7 @@ import { Execution } from '../Execution.js';
 /**
  * Coarse quest-list colour only — not mid-stage.
  * `unknown` means the tab is not loaded yet; it is not `notStarted`.
- * @see docs/QUESTS.md#quest-state
+ * @see docs/reference/quest-engine.md#quest-state
  */
 export type QuestStatus = 'notStarted' | 'inProgress' | 'complete' | 'unknown';
 
@@ -17,8 +17,8 @@ const COLOUR_COMPLETE = 0x00f800;
  * almost every quest (`scope=perm` without `transmit`). What the client has:
  * list colour (3-way), total QP, inventory, and journal text only after this
  * API opens the log modal.
- * @see docs/QUESTS.md#what-the-client-can-see
- * @see docs/API.md#quests
+ * @see docs/reference/quest-engine.md#what-the-client-can-see
+ * @see docs/reference/api-quests.md
  */
 export const Quests = {
     /** Every quest-list row: display name + colour-derived status. */

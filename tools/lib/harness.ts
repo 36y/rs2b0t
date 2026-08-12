@@ -1,4 +1,4 @@
-// docs/TESTING.md#live-harnesses
+// docs/how-to/write-a-harness.md
 import { chromium } from 'playwright-core';
 import type { Browser, Page } from 'playwright-core';
 

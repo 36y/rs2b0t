@@ -2,46 +2,39 @@
 
 # rs2b0t script template
 
-A starting point for a bot that lives in **its own repository**, compiled against
+Starting point for a bot in its own repository, compiled against
 [`@rs2b0t/api`](../../packages/rs2b0t-api/) and loaded into the client by URL. No fork
 of rs2b0t is needed.
 
-Copy this directory somewhere, rename it, and edit `src/ExampleBot.ts`.
-
 ## Build
 
-```sh
-bun install
-bun run build      # -> dist/bot.js
-bun run watch      # rebuild on change
-```
-
-The `@rs2b0t/api` dependency is a `file:` link to `packages/rs2b0t-api/` in this
-repo. If you copy the template outside the repo, repoint it at a published version or
-a path that resolves.
+1. Copy this directory somewhere and rename it.
+2. Edit `src/ExampleBot.ts`.
+3. `bun install`
+4. `bun run build` → `dist/bot.js`. `bun run watch` rebuilds on change.
 
 ## Load it
 
-Serve `dist/bot.js` over HTTP, then use **Load URL** in the client's script panel.
+1. Serve `dist/bot.js` over HTTP.
+2. Use **Load URL** in the client's script panel.
+
 The bundle's default export must be a `defineBot({...})` call — that is what the
 registry looks for.
 
-`@rs2b0t/api` is a thin shim over the ABI the client installs at
-`globalThis.__rs2b0t`. It throws if the bundle is loaded anywhere other than inside
-the bot client, or if the client's ABI version does not match the one the shim was
-built for.
+## Facts
 
-## What the example does
+| | |
+|---|---|
+| `@rs2b0t/api` dependency | `file:` link to `packages/rs2b0t-api/`; repoint it if you copy the template outside this repo |
+| What the shim wraps | the ABI the client installs at `globalThis.__rs2b0t` |
+| When it throws | loaded outside the bot client, or the client's ABI version does not match the shim's |
+| Example bot | `BoneBurier` — picks up bones near its start tile and buries them |
 
-`BoneBurier` picks up bones near where it starts and buries them. It is small on
-purpose, but it demonstrates the parts most bots need:
-
-- extending `LoopingBot` and implementing `loop()`;
-- waiting for the world with `Execution.delayUntil(() => Game.ingame(), 0)`;
-- querying the world — `GroundItems.query().name('Bones').within(10).nearest()`;
-- **verifying an action landed** by watching game state, rather than assuming a click
-  worked;
-- subscribing to events (`skill.xp`, `inventory.changed`) in `onStart`.
+The example demonstrates extending `LoopingBot`, waiting for the world with
+`Execution.delayUntil(() => Game.ingame(), 0)`, querying with
+`GroundItems.query().name('Bones').within(10).nearest()`, verifying an action landed by
+watching game state rather than assuming a click worked, and subscribing to `skill.xp`
+and `inventory.changed` in `onStart`.
 
 ## See also
 

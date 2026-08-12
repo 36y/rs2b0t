@@ -16,7 +16,7 @@
  *   KIT      — needs an item or skill carried, not a quest.
  *   DEFECT   — not a gate at all; the pack or a generator is wrong.
  *
- * @see docs/CLUES.md#clues-the-pack-cannot-reach
+ * @see docs/reference/clues-gates.md#clues-the-pack-cannot-reach
  */
 export const PACK_UNREACHABLE: Record<number, string> = {
     // ---- NO QUEST -----------------------------------------------------------

@@ -12,7 +12,7 @@ import {
     trollstronghold
 } from '#/bot/quests/defs/trollstronghold/index.js';
 import { QuestFood } from '#/bot/quests/food.js';
-import { QuestGear } from '#/bot/quests/gear.js';
+import { QuestLoadout } from '#/bot/quests/gear.js';
 import type { QuestSnapshot, QuestStep } from '#/bot/quests/engine/types.js';
 
 const BURTHORPE: WorldTile = { x: 2896, z: 3528, level: 0 };
@@ -81,7 +81,7 @@ function customName(step: QuestStep): string | null {
 
 beforeEach(() => {
     QuestFood.name = 'Lobster';
-    QuestGear.meleeWeapon = WEAPON;
+    QuestLoadout.current = { name: 'quest', worn: { righthand: WEAPON }, carry: [{ item: 'Lobster', qty: 16 }] };
 });
 
 describe('Troll Stronghold journal stage parsing', () => {
@@ -207,6 +207,14 @@ describe('Troll Stronghold loadout', () => {
         expect(step.kind === 'withdraw' && step.items[0]?.name).toBe(ITEM.CLIMBING_BOOTS);
     });
 
+    test('wears the gear it just withdrew before walking off to Tenzing', () => {
+        const step = decide(snap({
+            stage: TROLL_STAGE.STARTED,
+            inv: [WEAPON, ...COINS, ...FOOD]
+        }));
+        expect(customName(step)).toBe(`wear ${WEAPON}`);
+    });
+
     test('buys boots from Tenzing when the bank has none', () => {
         const step = decide(snap({ stage: TROLL_STAGE.STARTED, inv: COINS }));
         expect(customName(step)).toContain('Tenzing');
@@ -225,7 +233,7 @@ describe('Troll Stronghold loadout', () => {
         expect(customName(step)).toBe(`wear ${ITEM.CLIMBING_BOOTS}`);
     });
 
-    test('withdraws the configured melee weapon when nothing is wielded', () => {
+    test('withdraws the loadout weapon when nothing is wielded', () => {
         const step = decide(snap({
             stage: TROLL_STAGE.STARTED,
             inv: COINS,
@@ -235,14 +243,126 @@ describe('Troll Stronghold loadout', () => {
         expect(step.kind === 'withdraw' && step.items[0]?.name).toBe(WEAPON);
     });
 
-    test('falls back to the best melee weapon the bank actually holds', () => {
+    test('with no loadout it scavenges the best the bank holds', () => {
+        QuestLoadout.current = null;
         const step = decide(snap({
             stage: TROLL_STAGE.STARTED,
             inv: COINS,
             worn: [ITEM.CLIMBING_BOOTS],
-            bank: ['Mithril longsword', 'Adamant longsword']
+            bank: ['Lobster', 'Rune scimitar', 'Mithril scimitar', 'Rune chainbody']
         }));
-        expect(step.kind === 'withdraw' && step.items[0]?.name).toBe('Adamant longsword');
+        const names = step.kind === 'withdraw' ? step.items.map(i => i.name) : [];
+        expect(names).toContain('Rune scimitar');
+        expect(names).toContain('Rune chainbody');
+        expect(names).not.toContain('Mithril scimitar');
+    });
+
+    test('with no loadout and an empty bank it says so instead of parking silently', () => {
+        QuestLoadout.current = null;
+        const step = decide(snap({
+            stage: TROLL_STAGE.STARTED,
+            inv: [...COINS, ...FOOD],
+            worn: [ITEM.CLIMBING_BOOTS],
+            bank: Array(40).fill('Lobster') as string[]
+        }));
+        expect(step.kind === 'wait' && step.reason).toContain('no melee weapon');
+    });
+
+    test('withdraws every piece of loadout gear it is not already wearing', () => {
+        QuestLoadout.current = {
+            name: 'quest',
+            worn: { righthand: WEAPON, torso: 'Rune chainbody' },
+            carry: [{ item: 'Lobster', qty: 16 }]
+        };
+        const step = decide(snap({
+            stage: TROLL_STAGE.STARTED,
+            inv: COINS,
+            worn: [ITEM.CLIMBING_BOOTS],
+            bank: [WEAPON, 'Rune chainbody', ...Array(40).fill('Lobster')] as string[]
+        }));
+        expect(step.kind === 'withdraw' && step.items.map(i => i.name).sort())
+            .toEqual(['Lobster', 'Rune chainbody', WEAPON]);
+    });
+
+    test('wears the whole kit in a single step', () => {
+        QuestLoadout.current = {
+            name: 'quest',
+            worn: { righthand: WEAPON, torso: 'Rune chainbody', legs: 'Rune platelegs' },
+            carry: []
+        };
+        const step = decide(snap({
+            stage: TROLL_STAGE.STARTED,
+            inv: [...COINS, ...FOOD, WEAPON, 'Rune chainbody', 'Rune platelegs'],
+            worn: [ITEM.CLIMBING_BOOTS],
+            bank: []
+        }));
+        const name = customName(step);
+        expect(name).toContain(WEAPON);
+        expect(name).toContain('Rune chainbody');
+        expect(name).toContain('Rune platelegs');
+    });
+
+    test('boot money rides the same bank visit as the gear', () => {
+        QuestLoadout.current = { name: 'quest', worn: { righthand: WEAPON }, carry: [] };
+        const step = decide(snap({
+            stage: TROLL_STAGE.STARTED,
+            inv: [],
+            worn: [],
+            bank: [WEAPON, ...COINS, ...Array(40).fill('Lobster')] as string[]
+        }));
+        const names = step.kind === 'withdraw' ? step.items.map(i => i.name) : [];
+        expect(names).toContain(ITEM.COINS);
+        expect(names).toContain(WEAPON);
+    });
+
+    test('withdraws two prayer potions when the bank has them', () => {
+        const step = decide(snap({
+            stage: TROLL_STAGE.STARTED,
+            inv: COINS,
+            worn: [ITEM.CLIMBING_BOOTS, WEAPON],
+            bank: [...Array(40).fill('Lobster'), ...Array(5).fill('Prayer potion(4)')] as string[]
+        }));
+        expect(step.kind === 'withdraw'
+            && step.items.find(i => i.name === 'Prayer potion(4)')?.qty).toBe(2);
+    });
+
+    test('prefers the strongest dose the bank holds', () => {
+        const step = decide(snap({
+            stage: TROLL_STAGE.STARTED,
+            inv: COINS,
+            worn: [ITEM.CLIMBING_BOOTS, WEAPON],
+            bank: [...Array(40).fill('Lobster'), 'Prayer potion(2)', 'Prayer potion(3)'] as string[]
+        }));
+        expect(step.kind === 'withdraw'
+            && step.items.find(i => i.name?.startsWith('Prayer potion'))?.name).toBe('Prayer potion(3)');
+    });
+
+    test('tops up from a weaker dose when the strong one runs short', () => {
+        const step = decide(snap({
+            stage: TROLL_STAGE.STARTED,
+            inv: COINS,
+            worn: [ITEM.CLIMBING_BOOTS, WEAPON],
+            bank: [...Array(40).fill('Lobster'), 'Prayer potion(4)', 'Prayer potion(3)'] as string[]
+        }));
+        const potions = step.kind === 'withdraw'
+            ? step.items.filter(i => i.name.startsWith('Prayer potion'))
+            : [];
+        expect(potions.reduce((n, i) => n + i.qty, 0)).toBe(2);
+    });
+
+    test('carries on without potions when the bank has none', () => {
+        const step = decide(ready({ stage: TROLL_STAGE.STARTED, tile: ARENA }));
+        expect(customName(step)).toContain('Dad');
+    });
+
+    test('does not bank the potions it is carrying', () => {
+        const step = decide(ready({
+            stage: TROLL_STAGE.STARTED,
+            inv: [...FOOD, ...COINS, 'Prayer potion(4)', 'Prayer potion(4)'],
+            tile: ARENA
+        }));
+        expect(step.kind).not.toBe('deposit');
+        expect(customName(step)).toContain('Dad');
     });
 
     test('withdraws food up to the target', () => {

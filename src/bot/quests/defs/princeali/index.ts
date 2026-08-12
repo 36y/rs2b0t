@@ -1,4 +1,4 @@
-// docs/QUESTS.md#quest-state
+// docs/reference/quest-engine.md#quest-state
 import { QUESTS } from '../../data/quests.js';
 import { gotoNpc, talkStrict } from '../../exec/primitives.js';
 import type { QuestModule, QuestSnapshot, QuestStep } from '../../engine/types.js';

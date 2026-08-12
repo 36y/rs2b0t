@@ -5,7 +5,7 @@ import type Tile from './Tile.js';
 
 /**
  * Base class for every bot.
- * @see docs/API.md#bot-base-classes
+ * @see docs/reference/api-bots.md
  */
 /**
  * How the runner schedules the next `loop()` after one finishes.
@@ -98,7 +98,7 @@ export abstract class AbstractBot {
 
 /**
  * Implement `loop()`; it runs repeatedly with `loopDelay` between iterations.
- * @see docs/API.md#loopingbot
+ * @see docs/reference/api-bots.md#loopingbot
  */
 export abstract class LoopingBot extends AbstractBot {
     abstract loop(): number | void | Promise<number | void>;
@@ -106,7 +106,7 @@ export abstract class LoopingBot extends AbstractBot {
 
 /**
  * A guard and the action it guards.
- * @see docs/API.md#taskbot
+ * @see docs/reference/api-bots.md#taskbot
  */
 export interface Task {
     validate(): boolean | Promise<boolean>;
@@ -116,7 +116,7 @@ export interface Task {
 /**
  * Runs the first task whose `validate()` passes, once per loop. Order is
  * priority.
- * @see docs/API.md#taskbot
+ * @see docs/reference/api-bots.md#taskbot
  */
 export abstract class TaskBot extends LoopingBot {
     private readonly tasks: Task[] = [];
@@ -148,7 +148,7 @@ export abstract class TaskBot extends LoopingBot {
 
 /**
  * A decision node in a behaviour tree.
- * @see docs/API.md#treebot
+ * @see docs/reference/api-bots.md#treebot
  */
 export abstract class BranchTask {
     abstract validate(): boolean;
@@ -158,7 +158,7 @@ export abstract class BranchTask {
 
 /**
  * An action node in a behaviour tree.
- * @see docs/API.md#treebot
+ * @see docs/reference/api-bots.md#treebot
  */
 export abstract class LeafTask {
     abstract execute(): void | Promise<void>;

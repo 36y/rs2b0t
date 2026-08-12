@@ -7,7 +7,7 @@ import { FC_QUEST, FC_STAGE } from './areas.js';
 /**
  * `@dbl@`-style colour tags become a space, so a needle must never span a tag
  * boundary that sits next to punctuation.
- * @see docs/QUESTS.md#quest-state
+ * @see docs/reference/quest-engine.md#quest-state
  */
 function normalize(lines: readonly string[] | string): string {
     return (typeof lines === 'string' ? lines : lines.join(' '))

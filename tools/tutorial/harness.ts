@@ -588,7 +588,7 @@ async function verifyBankCounts(
  *
  * Seed after level-up dialogs are drained (`~bankitem` needs p_finduid).
  *
- * @see docs/TESTING.md#seeding-inventory-vs-bank
+ * @see docs/reference/seeding-test-accounts.md
  */
 async function applyBankSeedCmds(
     page: Page,

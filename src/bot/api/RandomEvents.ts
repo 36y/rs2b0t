@@ -627,7 +627,7 @@ class RandomEventsImpl {
 /**
  * Detects and resolves random events. Events are matched by NPC id rather than
  * name, because names collide with ordinary monsters.
- * @see docs/API.md#events
+ * @see docs/reference/api-events.md
  */
 export const RandomEvents = new RandomEventsImpl();
 

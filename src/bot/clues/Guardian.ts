@@ -1,4 +1,4 @@
-// docs/CLUES.md#dig-guardians
+// docs/reference/clues-mechanics.md#dig-guardians
 import { Execution } from '#/bot/api/Execution.js';
 import { Game } from '#/bot/api/Game.js';
 import { PROTECT_FROM_MAGIC, Prayer } from '#/bot/api/Prayer.js';

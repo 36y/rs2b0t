@@ -40,7 +40,7 @@ export function parseTradePartnerHeader(header: string): string | null {
 /**
  * Player-to-player trading. Any movement or combat closes the modal, so a
  * trade needs a dedicated task to own the loop while it is open.
- * @see docs/API.md#item-acquisition
+ * @see docs/reference/api-items.md#item-acquisition
  */
 export const Trade = {
     onOfferScreen(): boolean {

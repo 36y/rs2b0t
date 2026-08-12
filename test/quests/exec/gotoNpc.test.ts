@@ -38,7 +38,7 @@ const npcChain = {
     nearest: () => null
 };
 
-// Mutate singletons — mock.module is permanent in Bun (docs/TESTING.md#unit-tests).
+// Mutate singletons — mock.module is permanent in Bun (docs/reference/test-suites.md).
 const restoreGame = stubProps(Game, { tile: () => current });
 const restoreExec = stubProps(Execution, {
     delayUntil: async (fn: () => boolean): Promise<boolean> => fn(),

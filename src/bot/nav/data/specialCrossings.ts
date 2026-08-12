@@ -1,4 +1,4 @@
-// docs/NAV.md#special-crossings
+// docs/reference/nav-doors.md#special-crossings
 export interface SpecialCrossing {
     x: number;
     z: number;

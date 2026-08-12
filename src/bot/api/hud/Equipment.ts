@@ -6,7 +6,7 @@ import { Inventory, InvItem } from './Inventory.js';
 
 /**
  * Worn equipment.
- * @see docs/API.md#inventory--equipment
+ * @see docs/reference/api-items.md
  */
 export const Equipment = {
     items(): InvItem[] {

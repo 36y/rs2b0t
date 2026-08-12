@@ -18,9 +18,11 @@ import { ClueExecutor } from '../clues/ClueExecutor.js';
 import { paintClueProgress } from '../clues/cluePaint.js';
 import { SolveClue, heldClueLikeId } from '../clues/SolveClue.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
+import { scriptFood } from '../items/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../items/loadoutSetting.js';
 
 export const SETTINGS: SettingsSchema = {
-    food: { type: 'string', default: '', label: 'Food item name', help: 'withdrawn during the pre-trail bank stop and kept out of the deposit; blank = run foodless (easy trails are low-risk)' },
+    loadout: LOADOUT_SETTING,
     foodWithdraw: { type: 'number', default: 8, min: 1, max: 27, label: 'Food to withdraw' },
 
     restorePrayer: { type: 'boolean', default: true, label: 'Top up prayer between trails', help: 'prays at the nearest altar after the bank stop; hard dig guardians are fought under Protect from Magic' },
@@ -38,7 +40,7 @@ export default class ClueSolver extends TaskBot {
     override async onStart(): Promise<void> {
         await Execution.delayUntil(() => Game.ingame() && Game.tile() !== null, 0);
 
-        const food = this.settings.str('food', '');
+        const food = scriptFood(this.settings, '');
         const foodPat = food.toLowerCase();
         this.solveClue = new SolveClue({
             log: m => this.log(m),
@@ -128,7 +130,7 @@ export default class ClueSolver extends TaskBot {
             return;
         }
         const keep = [
-            this.settings.str('food', ''),
+            scriptFood(this.settings, ''),
             this.settings.str('weapon', ''),
             SPADE_NAME,
             ...TRIO,

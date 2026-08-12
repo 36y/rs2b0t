@@ -1,4 +1,4 @@
-// docs/MULTIBOX.md#diagnostics
+// docs/decisions/multibox-telemetry-honesty.md
 //
 // Main-thread starvation, measured from outside the main thread.
 //

@@ -27,6 +27,8 @@ import { SolveClue } from '../clues/SolveClue.js';
 import { paintClueProgress } from '../clues/cluePaint.js';
 import { Sustain } from '../api/Sustain.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
+import { scriptFoods } from '../items/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../items/loadoutSetting.js';
 
 const DEFAULT_ANCHOR = new Tile(2661, 3306, 0);
 const DEFAULT_BANK_STAND = new Tile(2655, 3286, 0);
@@ -42,7 +44,7 @@ export const SETTINGS: SettingsSchema = {
     target: { type: 'string', default: 'Guard', label: 'NPC to fight (name)' },
     combatStyle: { type: 'string', default: 'strength', options: COMBAT_STYLE_OPTIONS, label: 'Combat style', help: 'which melee stat to train; re-applied each login since com_mode is not saved' },
     bankStand: { type: 'tile', default: DEFAULT_BANK_STAND, label: 'Bank stand tile (x,z)' },
-    food: { type: 'string[]', default: DEFAULT_FOOD.split(',').map(s => s.trim()), label: 'Food names (contains)' },
+    loadout: LOADOUT_SETTING,
 
     panicHp: { type: 'number', default: 25, min: 0, max: 100, label: 'Panic below HP% (no food)' },
     restUntilHp: { type: 'number', default: 60, min: 0, max: 100, label: 'Regen to HP% when bank empty' },
@@ -113,7 +115,7 @@ export default class ArdyFighter extends TaskBot {
         LEASH = this.settings.num('leashRadius', 12);
         TARGET = this.settings.str('target', 'Guard');
         BANK_STAND = this.settings.tile('bankStand', DEFAULT_BANK_STAND);
-        FOOD = this.settings.list('food', FOOD).map(s => s.toLowerCase());
+        FOOD = scriptFoods(this.settings, DEFAULT_FOOD.split(',').map(s => s.trim())).map(s => s.toLowerCase());
         LOOT = this.settings.list('loot', LOOT).map(s => s.toLowerCase());
 
         PANIC_AT = this.settings.num('panicHp', 25) / 100;

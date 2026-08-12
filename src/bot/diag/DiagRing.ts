@@ -1,4 +1,4 @@
-// docs/MULTIBOX.md#diagnostics
+// docs/decisions/multibox-telemetry-honesty.md
 //
 // Columnar, fixed-capacity sample storage. Object-per-sample costs ~10x the bytes
 // and adds GC pressure to the very main thread we are trying to measure, so every

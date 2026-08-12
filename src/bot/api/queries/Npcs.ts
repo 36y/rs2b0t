@@ -4,7 +4,7 @@ import EntityQuery from './Query.js';
 
 /**
  * NPC queries.
- * @see docs/API.md#entities--queries
+ * @see docs/reference/api-entities.md
  */
 export function talkOp(actions: string[]): string | null {
     return actions.find(a => /^talk/i.test(a)) ?? null;

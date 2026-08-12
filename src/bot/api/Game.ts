@@ -46,7 +46,7 @@ const meleeCombatStyles = new CombatStyleController({
 
 /**
  * Local player and world state.
- * @see docs/API.md#game
+ * @see docs/reference/api-game.md
  */
 export const Game = {
     ingame(): boolean {

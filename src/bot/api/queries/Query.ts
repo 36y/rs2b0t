@@ -31,7 +31,7 @@ export function matchesEntityName(actual: string | null, configured: string): bo
  * filters run on raw snapshots and only matching rows are wrapped into Loc/Npc
  * objects (hot gather loops used to allocate a Loc for every scenery tile).
  *
- * @see docs/API.md#entityquery
+ * @see docs/reference/api-entities.md#entityquery
  */
 export default class EntityQuery<E extends QueryableEntity> {
     private snapFilters: ((s: EntitySnapView) => boolean)[] = [];

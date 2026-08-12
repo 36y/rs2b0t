@@ -8,7 +8,11 @@ const schema: SettingsSchema = {
 };
 
 beforeEach(() => {
+    // ParamsModal writes real settings, and SettingsStore persists to both
+    // storages — leaving either behind changes what a later test file reads.
     document.body.replaceChildren();
+    sessionStorage.clear();
+    localStorage.clear();
 });
 
 test('open renders one row per parameter and closes', () => {

@@ -3,7 +3,7 @@ import Tile from './Tile.js';
 
 /**
  * A region of the map — rectangular or circular.
- * @see docs/API.md#world-primitives
+ * @see docs/reference/api-game.md#world-primitives
  */
 export abstract class Area {
     abstract contains(tile: WorldTile): boolean;

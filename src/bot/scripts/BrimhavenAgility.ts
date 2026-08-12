@@ -12,7 +12,7 @@ import { Inventory } from '../api/hud/Inventory.js';
 import { Paint } from '../api/hud/Paint.js';
 import { Skills } from '../api/hud/Skills.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
-import { foodCount as foodCountIn, FOOD_OPTIONS, foodForms } from '../api/combat/food.js';
+import { foodCount as foodCountIn, foodForms } from '../api/combat/food.js';
 import { Locs, type Loc } from '../api/queries/Locs.js';
 import { Npcs } from '../api/queries/Npcs.js';
 import { DirectNavigator } from '../nav/DirectNavigator.js';
@@ -54,15 +54,11 @@ import {
     wantRunForGoal,
     type ArenaEdge
 } from './BrimhavenAgilityLogic.js';
+import { scriptFood } from '../items/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../items/loadoutSetting.js';
 
 export const BRIMHAVEN_AGILITY_SETTINGS: SettingsSchema = {
-    food: {
-        type: 'string',
-        default: 'Lobster',
-        options: FOOD_OPTIONS,
-        label: 'Food',
-        help: 'withdrawn at Ardougne south bank; eaten below 5 HP (damage scales with current HP)'
-    },
+    loadout: LOADOUT_SETTING,
     foodWithdraw: {
         type: 'number',
         default: DEFAULT_FOOD_PER_TRIP,
@@ -100,7 +96,7 @@ export default class BrimhavenAgility extends TaskBot {
     override async onStart(): Promise<void> {
         await Execution.delayUntil(() => Game.ingame() && Game.tile() !== null, 0);
 
-        this.foodName = this.settings.str('food', 'Lobster');
+        this.foodName = scriptFood(this.settings, 'Lobster');
         this.foodPerTrip = this.settings.num('foodWithdraw', DEFAULT_FOOD_PER_TRIP);
         this.bankAtTickets = this.settings.num('bankAtTickets', DEFAULT_BANK_TICKETS);
         this.startedAt = Date.now();

@@ -4,7 +4,7 @@ import EntityQuery from './Query.js';
 
 /**
  * Ground-item queries.
- * @see docs/API.md#entities--queries
+ * @see docs/reference/api-entities.md
  */
 export const GroundItems = {
     query(): EntityQuery<GroundItem> {

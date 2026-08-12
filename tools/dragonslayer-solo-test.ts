@@ -1,4 +1,4 @@
-// docs/TESTING.md#live-harnesses
+// docs/how-to/write-a-harness.md
 //
 // Dragon Slayer, one quest at a time, against a local engine.
 //

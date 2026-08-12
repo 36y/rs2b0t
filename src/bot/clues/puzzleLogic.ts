@@ -1,4 +1,4 @@
-// docs/CLUES.md#puzzle-boxes
+// docs/reference/clues-mechanics.md#puzzle-boxes
 export const PUZZLE_WIDTH = 5;
 export const PUZZLE_SIZE = PUZZLE_WIDTH * PUZZLE_WIDTH;
 export const PUZZLE_BLANK_SLOT = PUZZLE_SIZE - 1;

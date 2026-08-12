@@ -11,7 +11,7 @@ import { Paint } from '../api/hud/Paint.js';
 import { Skills } from '../api/hud/Skills.js';
 import { Shop } from '../api/hud/Shop.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
-import { foodCount as foodCountIn, FOOD_OPTIONS, foodForms } from '../api/combat/food.js';
+import { foodCount as foodCountIn, foodForms } from '../api/combat/food.js';
 import { GroundItems } from '../api/queries/GroundItems.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
@@ -30,6 +30,8 @@ import {
     shopCoinsToWithdraw,
     type SecondaryDef
 } from './HerbloreSecondariesLogic.js';
+import { scriptFood } from '../items/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../items/loadoutSetting.js';
 
 export const HERBLORE_SECONDARIES_SETTINGS: SettingsSchema = {
     secondary: {
@@ -39,13 +41,7 @@ export const HERBLORE_SECONDARIES_SETTINGS: SettingsSchema = {
         label: 'Secondary',
         help: 'which herblore secondary to collect this session'
     },
-    food: {
-        type: 'string',
-        default: FOOD_DEFAULT,
-        options: FOOD_OPTIONS,
-        label: 'Food',
-        help: 'carried on dangerous routes; eaten when a full heal fits, or to free a slot when full'
-    },
+    loadout: LOADOUT_SETTING,
     foodWithdraw: {
         type: 'number',
         default: FOOD_DEFAULT_COUNT,
@@ -78,7 +74,7 @@ export default class HerbloreSecondaries extends TaskBot {
             return;
         }
         this.def = def;
-        this.foodName = this.settings.str('food', FOOD_DEFAULT);
+        this.foodName = scriptFood(this.settings, FOOD_DEFAULT);
         this.foodWant = this.settings.num('foodWithdraw', FOOD_DEFAULT_COUNT);
         this.startedAt = Date.now();
 

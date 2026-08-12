@@ -36,7 +36,7 @@ export async function shearOne(pen: Tile, log: (m: string) => void): Promise<boo
     return Execution.delayUntil(() => Inventory.count('Wool') > before, 6000);
 }
 
-/** @see docs/NAV.md#level-change-loc-lag — a wheel on an upper floor reads empty for a tick. */
+/** @see docs/decisions/level-change-lag.md — a wheel on an upper floor reads empty for a tick. */
 export async function spinAllWool(wheelStand: Tile, log: (m: string) => void): Promise<boolean> {
     const ballsBefore = Inventory.count('Ball of wool');
     if (!ChatDialog.isMakeMenu()) {

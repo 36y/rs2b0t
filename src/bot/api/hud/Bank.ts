@@ -37,7 +37,7 @@ async function bankBackpackReady(): Promise<boolean> {
  * The bank interface. `isOpen()` only means the component exists — the item
  * list fills a beat later, and the deposit side view lags the main modal by a
  * tick, so a count of zero is not proof of an empty bank.
- * @see docs/API.md#bank
+ * @see docs/reference/api-items.md#bank
  */
 export const Bank = {
     isOpen(): boolean {

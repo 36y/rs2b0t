@@ -10,7 +10,7 @@ const SHOP_PLAYER_COM = 3823;
 
 /**
  * A shop interface. Nothing here walks; be near the keeper first.
- * @see docs/API.md#item-acquisition
+ * @see docs/reference/api-items.md#item-acquisition
  */
 export const Shop = {
     isOpen(): boolean {

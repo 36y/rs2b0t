@@ -1,6 +1,6 @@
 /**
  * Per-pass upkeep — eating and other maintenance a long loop must keep doing.
- * @see docs/API.md#bot-base-classes
+ * @see docs/reference/api-bots.md
  */
 export const Sustain = {
     hook: null as (() => Promise<void>) | null,

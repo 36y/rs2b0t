@@ -53,6 +53,7 @@ interface Args {
     at: Tile | null;
     pack: boolean;
     paint: boolean;
+    lowPrayer: boolean;
     deploy: boolean;
 }
 
@@ -77,6 +78,7 @@ function parse(argv: string[]): Args {
         at: null,
         pack: false,
         paint: false,
+        lowPrayer: false,
         deploy: true
     };
     for (let i = 0; i < argv.length; i++) {
@@ -84,6 +86,7 @@ function parse(argv: string[]): Args {
         if (flag === '--no-deploy') { out.deploy = false; continue; }
         if (flag === '--pack') { out.pack = true; continue; }
         if (flag === '--paint') { out.paint = true; continue; }
+        if (flag === '--lowprayer') { out.lowPrayer = true; continue; }
         const value = argv[++i];
         if (value === undefined) { break; }
         if (flag === '--base') { out.base = value; }
@@ -137,10 +140,8 @@ const BANK_SEED: BankSeedItem[] = [
     { debugName: 'coins', displayName: 'Coins', qty: 2_000_000 },
     { debugName: 'lobster', displayName: 'Lobster', qty: 60 },
     { debugName: 'rune_scimitar', displayName: 'Rune scimitar', qty: 1 },
-    // Rune platebody also wants Dragon Slayer, so this pair proves the shed:
-    // the bot must refuse it and fall back to the adamant one.
-    { debugName: 'rune_platebody', displayName: 'Rune platebody', qty: 1 },
-    { debugName: 'adamant_platebody', displayName: 'Adamant platebody', qty: 1 },
+    { debugName: 'rune_chainbody', displayName: 'Rune chainbody', qty: 1 },
+    { debugName: '4doseprayerrestore', displayName: 'Prayer potion(4)', qty: 4 },
     { debugName: 'rune_platelegs', displayName: 'Rune platelegs', qty: 1 },
     { debugName: 'rune_full_helm', displayName: 'Rune full helm', qty: 1 },
     { debugName: 'rune_kiteshield', displayName: 'Rune kiteshield', qty: 1 }
@@ -267,6 +268,13 @@ try {
         console.log(`packed: ${PACK_SEED.join(', ')}`);
     }
 
+    if (args.lowPrayer) {
+        // Empties the prayer bar so the sip path is exercised rather than
+        // skipped — a 70-prayer character never dips under half in one fight.
+        await cheatQuiet(page, '~1pray');
+        console.log('prayer drained to 1 (--lowprayer)');
+    }
+
     const start = args.at ?? FALADOR_BANK;
     if (!(await teleTo(page, start, 10, 25_000))) {
         await clearChatDialogs(page, 'pre-tele dialog(s)');
@@ -291,8 +299,24 @@ try {
         console.log('nav path paint: on');
     }
 
+    // Gear is declared, never inferred — the quest wears whatever this says.
+    await page.evaluate(() => {
+        const g = globalThis as never as { __rs2b0t: { Loadouts: { save(l: unknown[]): void } } };
+        g.__rs2b0t.Loadouts.save([{
+            name: 'quest',
+            worn: {
+                righthand: 'Rune scimitar',
+                torso: 'Rune chainbody',
+                legs: 'Rune platelegs',
+                hat: 'Rune full helm',
+                lefthand: 'Rune kiteshield'
+            },
+            carry: [{ item: 'Lobster', qty: 16 }]
+        }]);
+    });
+    console.log('seeded the quest loadout');
+
     await page.evaluate(() => sessionStorage.setItem('rs2b0t:set:AIOQuester:quests', 'troll'));
-    await page.evaluate(f => sessionStorage.setItem('rs2b0t:set:AIOQuester:food', f), args.food);
     await startScript(page, 'AIOQuester');
     console.log(`started AIOQuester — watching for troll_quest >= ${args.until}`);
 
@@ -309,7 +333,11 @@ try {
             + ` troll=${stage} journal=${last.status} qp=${last.qp} runner=${last.runner}`
         );
         for (const l of last.logs) {
-            if (l.time > lastLogTime) { console.log(`      · [${l.level}] ${l.msg}`); }
+            // Relative stamps: the gaps are where the run actually spends time.
+            if (l.time > lastLogTime) {
+                const at = ((l.time - t0) / 1000).toFixed(1).padStart(6);
+                console.log(`      ·${at}s [${l.level}] ${l.msg}`);
+            }
         }
         if (last.logs.length > 0) { lastLogTime = Math.max(lastLogTime, ...last.logs.map(l => l.time)); }
 

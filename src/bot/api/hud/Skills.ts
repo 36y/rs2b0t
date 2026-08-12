@@ -2,7 +2,7 @@ import { reader } from '../../adapter/ClientAdapter.js';
 
 /**
  * Skill levels and experience.
- * @see docs/API.md#skills
+ * @see docs/reference/api-skills.md
  */
 export const Skills = {
     index(name: string): number {

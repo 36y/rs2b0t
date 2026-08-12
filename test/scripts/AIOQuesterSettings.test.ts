@@ -4,7 +4,10 @@ import { AIO_SETTINGS, QUEST_OPTION_LABELS } from '#/bot/scripts/AIOQuester.js';
 import { QUEST_DEFS } from '#/bot/quests/defs/index.js';
 import { SettingsStore } from '#/bot/runtime/Settings.js';
 
-afterEach(() => sessionStorage.clear());
+afterEach(() => {
+    sessionStorage.clear();
+    localStorage.clear();
+});
 
 test('AIO quest options keep stable IDs but display canonical quest names', () => {
     const ids = QUEST_DEFS.map(def => def.record.id);

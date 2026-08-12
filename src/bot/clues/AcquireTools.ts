@@ -1,4 +1,4 @@
-// docs/CLUES.md#tool-acquisition
+// docs/reference/clues-mechanics.md#tool-acquisition
 import { Execution } from '#/bot/api/Execution.js';
 import { EventSignal } from '#/bot/api/EventSignal.js';
 import { Game } from '#/bot/api/Game.js';

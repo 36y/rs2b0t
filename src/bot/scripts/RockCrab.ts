@@ -34,6 +34,8 @@ import { Traversal } from '../api/Traversal.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
 import { ROCK_CRAB_RANGED_WEAPONS, rangeSupplyEmpty, rockCrabRangeLoadout } from './RockCrabRangeLogic.js';
+import { scriptFood } from '../items/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../items/loadoutSetting.js';
 
 const DEFAULT_RESET = new Tile(2712, 3688, 0);
 const DEFAULT_BANK = new Tile(2725, 3491, 0);
@@ -44,12 +46,6 @@ const CENTRE_RADIUS = 2;
 const LOCAL_PLAYER_SLOT = 2047;
 
 const DEFAULT_LOOT = 'half of a key, casket, clue scroll, small oyster pearls, oyster pearls, uncut sapphire, uncut emerald, uncut ruby, uncut diamond';
-
-const FOOD_OPTIONS = [
-    'Lobster', 'Swordfish', 'Tuna', 'Salmon', 'Trout', 'Pike', 'Bass', 'Herring', 'Sardine', 'Anchovies', 'Shrimps',
-    'Cooked meat', 'Cooked chicken', 'Bread', 'Stew',
-    'Cake', 'Chocolate cake', 'Plain pizza', 'Meat pizza', 'Anchovy pizza', 'Pineapple pizza', 'Redberry pie', 'Meat pie', 'Apple pie'
-];
 
 const COMBAT_SKILLS = ['attack', 'strength', 'defence', 'hitpoints', 'ranged', 'magic'];
 
@@ -73,7 +69,7 @@ export const SETTINGS: SettingsSchema = {
     minStack: { type: 'number', default: 1, min: 1, max: 50, label: 'Ignore projectile stacks smaller than', group: 'Combat', showIf: SHOW_RANGE, help: 'every kill sweeps your arrows, bolts or darts off the ground; stacks below this size are not worth the walk' },
     collectRange: { type: 'number', default: 12, min: 2, max: 30, label: 'Projectile sweep range (tiles)', group: 'Combat', showIf: SHOW_RANGE },
 
-    food: { type: 'string', default: 'Lobster', options: FOOD_OPTIONS, label: 'Food', group: 'Food & healing' },
+    loadout: { ...LOADOUT_SETTING, group: 'Food & healing' },
 
     foodWithdraw: { type: 'number', default: 20, min: 1, max: 27, label: 'Food to withdraw per bank run', group: 'Food & healing' },
     fightHpGate: { type: 'number', default: 40, min: 0, max: 100, label: 'Retreat below HP%', group: 'Food & healing' },
@@ -165,7 +161,7 @@ export default class RockCrab extends TaskBot {
         FIGHT_HP_GATE = this.settings.num('fightHpGate', 40) / 100;
         REST_HP = this.settings.num('restUntilHp', 75) / 100;
 
-        FOOD_NAME = this.settings.str('food', 'Lobster');
+        FOOD_NAME = scriptFood(this.settings, 'Lobster');
         FOOD_WITHDRAW = this.settings.num('foodWithdraw', 20);
         LOOT_NAMES = this.settings.list('loot', LOOT_NAMES).map(s => s.toLowerCase());
         BANK_COMMON = this.settings.bool('bankCommonJunk', true);

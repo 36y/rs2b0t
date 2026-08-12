@@ -1,4 +1,4 @@
-// docs/TESTING.md#live-harnesses
+// docs/how-to/write-a-harness.md
 // Live RoguesPurse run against a local engine.
 //   bun tools/roguespurse-test.ts --base http://localhost:8888 --minutes 4
 //   bun tools/roguespurse-test.ts --at mainland --fare 100 --minutes 25 --speed 100

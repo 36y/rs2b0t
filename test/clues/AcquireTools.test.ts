@@ -20,7 +20,7 @@ let groundSpades: Tile[];
 let takes: number;
 let npcByName: Record<string, { x: number; z: number }>;
 
-// Mutate singletons — mock.module is permanent in Bun (docs/TESTING.md#unit-tests).
+// Mutate singletons — mock.module is permanent in Bun (docs/reference/test-suites.md).
 const restoreGame = stubProps(Game, {
     tile: () => playerTile,
     ingame: () => true,

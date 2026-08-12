@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'bun:test';
-import { FOOD_OPTIONS } from '#/bot/api/combat/food.js';
 import { SETTINGS } from '#/bot/scripts/ChaosDruidKiller.js';
 import {
     CHAOS_DRUID_FIELD,
@@ -30,8 +29,9 @@ const trip = (overrides: Partial<Parameters<typeof chaosDruidBankReason>[0]> = {
 });
 
 describe('ChaosDruid settings', () => {
-    test('offers the shared food list and a bounded selectable trip amount', () => {
-        expect(SETTINGS.food.options).toEqual(FOOD_OPTIONS);
+    test('takes its food from the loadout, with a bounded selectable trip amount', () => {
+        expect(SETTINGS.food).toBeUndefined();
+        expect(SETTINGS.loadout).toMatchObject({ optionsFrom: 'loadouts' });
         expect(SETTINGS.foodWithdraw).toMatchObject({ default: 12, min: 1, max: 27 });
     });
 

@@ -34,7 +34,7 @@ let attackedIds: number[];
 let takenIds: number[];
 let walks: { x: number; z: number; level: number; radius: number }[];
 
-// Mutate singletons — mock.module is permanent in Bun (docs/TESTING.md#unit-tests).
+// Mutate singletons — mock.module is permanent in Bun (docs/reference/test-suites.md).
 const restoreExec = stubProps(Execution, {
     delayUntil: async (condition: () => boolean): Promise<boolean> => condition(),
     delayTicks: async (): Promise<void> => {}

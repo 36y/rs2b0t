@@ -12,7 +12,7 @@
  * when it refuses, at most once per placement per run. A player already past the
  * conversation never pays for it.
  *
- * @see docs/NAV.md#special-crossings
+ * @see docs/reference/nav-doors.md#special-crossings
  */
 
 export interface PostQuestTalk {

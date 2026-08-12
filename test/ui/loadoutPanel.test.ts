@@ -104,6 +104,59 @@ describe('LoadoutPanel', () => {
         expect(potionRow.textContent).toBe('Prayer potion(4)');
     });
 
+    test('rename edits in place — Electron has no window.prompt', () => {
+        Loadouts.save([{ name: 'melee', worn: { righthand: 'Rune scimitar' }, carry: [] }]);
+        const panel = openPanel();
+        (panel.root.querySelector('[data-action=rename]') as HTMLButtonElement).click();
+        const field = panel.root.querySelector('[data-role=loadout-name]') as HTMLInputElement;
+        expect(field).not.toBeNull();
+        expect(field.value).toBe('melee');
+    });
+
+    test('committing a rename keeps the gear and drops the old name', () => {
+        Loadouts.save([{ name: 'melee', worn: { righthand: 'Rune scimitar' }, carry: [] }]);
+        const panel = openPanel();
+        (panel.root.querySelector('[data-action=rename]') as HTMLButtonElement).click();
+        const field = panel.root.querySelector('[data-role=loadout-name]') as HTMLInputElement;
+        field.value = 'main melee';
+        field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(Loadouts.names()).toEqual(['main melee']);
+        expect(Loadouts.byName('main melee')!.worn.righthand).toBe('Rune scimitar');
+    });
+
+    test('escape cancels a rename', () => {
+        Loadouts.save([{ name: 'melee', worn: {}, carry: [] }]);
+        const panel = openPanel();
+        (panel.root.querySelector('[data-action=rename]') as HTMLButtonElement).click();
+        const field = panel.root.querySelector('[data-role=loadout-name]') as HTMLInputElement;
+        field.value = 'nope';
+        field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        expect(Loadouts.names()).toEqual(['melee']);
+    });
+
+    test('an empty rename leaves the name alone', () => {
+        Loadouts.save([{ name: 'melee', worn: {}, carry: [] }]);
+        const panel = openPanel();
+        (panel.root.querySelector('[data-action=rename]') as HTMLButtonElement).click();
+        const field = panel.root.querySelector('[data-role=loadout-name]') as HTMLInputElement;
+        field.value = '   ';
+        field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(Loadouts.names()).toEqual(['melee']);
+    });
+
+    test('renaming onto a taken name is uniquified rather than merging', () => {
+        Loadouts.save([
+            { name: 'melee', worn: {}, carry: [] },
+            { name: 'range', worn: {}, carry: [] }
+        ]);
+        const panel = openPanel();
+        (panel.root.querySelector('[data-action=rename]') as HTMLButtonElement).click();
+        const field = panel.root.querySelector('[data-role=loadout-name]') as HTMLInputElement;
+        field.value = 'range';
+        field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(Loadouts.names().sort()).toEqual(['range', 'range 2']);
+    });
+
     test('duplicating gives the copy a free name', () => {
         Loadouts.save([{ name: 'melee', worn: { righthand: 'Rune scimitar' }, carry: [] }]);
         const panel = openPanel();

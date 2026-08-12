@@ -10,7 +10,7 @@ type ItemSource = { kind: 'shop'; npc: string; near: WorldTile } | { kind: 'grou
 
 /**
  * A quantity of an item, and where to get it.
- * @see docs/API.md#item-acquisition
+ * @see docs/reference/api-items.md#item-acquisition
  */
 export type ItemNeed = { name: string; count: number; source: ItemSource };
 
@@ -24,7 +24,7 @@ export function hasAll(needs: ItemNeed[]): boolean {
 
 /**
  * Acquires the first unmet need — a shop trip or a ground pickup.
- * @see docs/API.md#item-acquisition
+ * @see docs/reference/api-items.md#item-acquisition
  */
 export class AcquireTask implements Task {
     constructor(

@@ -8,7 +8,18 @@ import { reader } from '../adapter/ClientAdapter.js';
  * directory, and the client stores icons as an `Int32Array` of 0xRRGGBB with 0
  * meaning transparent.
  */
+/**
+ * Encoded icons by id — `toDataURL` is a ~1ms PNG encode and the picker
+ * re-renders up to 200 rows a click. Failures are not cached: a sprite the
+ * client has not streamed yet must be retried.
+ */
+const encoded = new Map<number, string>();
+
 export function itemIconDataUrl(id: number): string | null {
+    const hit = encoded.get(id);
+    if (hit !== undefined) {
+        return hit;
+    }
     const sprite = reader.itemIconPixels(id);
     if (!sprite || sprite.width <= 0 || sprite.height <= 0) {
         return null;
@@ -29,5 +40,7 @@ export function itemIconDataUrl(id: number): string | null {
         image.data[i * 4 + 3] = rgb === 0 ? 0 : 0xff;
     }
     ctx.putImageData(image, 0, 0);
-    return canvas.toDataURL('image/png');
+    const url = canvas.toDataURL('image/png');
+    encoded.set(id, url);
+    return url;
 }

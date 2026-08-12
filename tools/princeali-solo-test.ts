@@ -1,4 +1,4 @@
-// docs/TESTING.md#live-harnesses
+// docs/how-to/write-a-harness.md
 //
 // Prince Ali Rescue, one quest at a time.
 //

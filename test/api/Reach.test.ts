@@ -28,7 +28,7 @@ let onDoorOpen: (() => void) | null;
 
 const { GameMessages } = await import('#/bot/events/gameMessages.js');
 
-// Mutate singletons — mock.module is permanent in Bun (docs/TESTING.md#unit-tests).
+// Mutate singletons — mock.module is permanent in Bun (docs/reference/test-suites.md).
 const restoreReader = stubProps(reader, { worldTile: () => ({ x: 0, z: 0, level: 0 }) });
 const restoreExec = stubProps(Execution, {
     delayUntil: async (cond: () => boolean) => cond(),

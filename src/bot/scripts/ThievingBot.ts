@@ -32,11 +32,13 @@ import {
     THIEVER_BANKING_OPTIONS,
     withdrawTo
 } from './ThievingBotLogic.js';
+import { scriptFood } from '../items/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../items/loadoutSetting.js';
 
 export const SETTINGS: SettingsSchema = {
     target: { type: 'string', default: 'Man', options: PICKPOCKET_TARGET_NAMES, label: 'Pickpocket target', help: 'pick by exact in-game name (level in parens): Man/Woman 1, Farmer 10, Rogue 32, Guard 40, Knight of Ardougne 55, Paladin 70, Hero 80' },
     action: { type: 'string', default: 'Pickpocket', label: 'Action', help: 'right-click op, e.g. Pickpocket / Steal-from' },
-    food: { type: 'string', default: '', label: 'Food to eat (name contains)', help: 'eat this when HP drops from failed steals; Auto banking withdraws the first matching bank item' },
+    loadout: LOADOUT_SETTING,
 
     banking: { type: 'string', default: 'None', options: THIEVER_BANKING_OPTIONS, label: 'Food banking', help: 'Auto = bank non-food items, withdraw food, and return to the starting spot' },
     foodWithdraw: { type: 'number', default: 22, min: 1, max: 27, label: 'Food to carry', showIf: { key: 'banking', anyOf: ['Auto'] } },
@@ -84,7 +86,7 @@ export default class ThievingBot extends TaskBot {
 
         this.target = this.settings.str('target', 'Man');
         this.action = this.settings.str('action', 'Pickpocket');
-        this.food = this.settings.str('food', '').toLowerCase();
+        this.food = scriptFood(this.settings, '').toLowerCase();
 
         this.autoBank = autoFoodBanking(this.settings.str('banking', 'None'));
         this.foodWithdraw = this.settings.num('foodWithdraw', 22);

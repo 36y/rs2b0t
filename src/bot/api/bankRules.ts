@@ -8,7 +8,7 @@ import type { SettingsSchema } from '../runtime/Settings.js';
 
 /**
  * When a bot should break off and bank.
- * @see docs/API.md#bank
+ * @see docs/reference/api-items.md#bank
  */
 export type BankStrategy = 'off' | 'items' | 'time' | 'either';
 
@@ -54,7 +54,7 @@ export function parseBankStrategy(label: string): BankStrategy {
 
 /**
  * Shared banking parameters, mixed into a script's own settings schema.
- * @see docs/API.md#settings
+ * @see docs/reference/api-events.md#settings
  */
 export const PERIODIC_BANK_SETTINGS: SettingsSchema = {
     bankStrategy: { type: 'string', default: 'Off', options: BANK_STRATEGY_OPTIONS, label: 'Periodic bank', help: 'save accumulated loot so a death does not lose it all' },

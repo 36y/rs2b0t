@@ -8,7 +8,7 @@ const ARRIVAL_MAX_STEPS = 512;
 
 /**
  * Client-side reachability probes against the loaded scene.
- * @see docs/NAV.md#arrival
+ * @see docs/reference/nav-walker.md#arrival
  */
 export const Reachability = {
     canReach(dest: WorldTile, opts?: ReachOptions): boolean {

@@ -1,4 +1,4 @@
-// docs/ARCHITECTURE.md#the-abi-boundary
+// docs/decisions/architecture.md#the-abi-boundary
 import { BUILD_INFO } from '../../config/buildInfo.js';
 import { reader } from '../adapter/ClientAdapter.js';
 import { PathPublish } from '../nav/pathPublish.js';
@@ -204,6 +204,7 @@ import {
     liveResetMordredBrief
 } from '../quests/defs/merlinscrystal.js';
 import { defineBot, registerScript } from './defineBot.js';
+import { Loadouts } from '../items/loadoutStore.js';
 
 export const API_VERSION = 1;
 
@@ -266,6 +267,7 @@ export function installAbi(): void {
         nearestUsableBank,
         Shop,
         Skills,
+        Loadouts,
         ChatDialog,
         Quests,
         Trade,

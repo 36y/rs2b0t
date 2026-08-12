@@ -12,7 +12,7 @@ describe('resolvePathFollowConfig', () => {
         expect(c.stallTicks).toBe(DEFAULT_PATH_STALL_TICKS);
         expect(c.deviationChebyshev).toBe(DEFAULT_PATH_DEVIATION_CHEBYSHEV);
         expect(c.transportApproachChebyshev).toBe(DEFAULT_TRANSPORT_APPROACH_CHEBYSHEV);
-        expect(c.stallTicks).toBe(9);
+        expect(c.stallTicks).toBe(5);
         expect(c.deviationChebyshev).toBe(10);
     });
 

@@ -7,7 +7,7 @@
 import { SettingsStore } from '../runtime/Settings.js';
 
 /** Default server ticks with no tile change before stall repath. */
-export const DEFAULT_PATH_STALL_TICKS = 9;
+export const DEFAULT_PATH_STALL_TICKS = 5;
 
 /**
  * Default Chebyshev distance from the published path before deviation repath.
@@ -35,7 +35,7 @@ export const PATH_CORRIDOR = 3;
 export const DEFAULT_TRANSPORT_APPROACH_CHEBYSHEV = 4;
 
 export interface PathFollowConfig {
-    /** Server ticks without a tile change → repath (default 9). */
+    /** Server ticks without a tile change → repath (default 5). */
     stallTicks: number;
     /** Chebyshev off the published path → repath (default 10). */
     deviationChebyshev: number;

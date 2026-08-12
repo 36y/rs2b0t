@@ -1,4 +1,4 @@
-// docs/NAV.md#the-collision-pack
+// docs/reference/nav-pack.md
 import { gunzipSync } from 'fflate';
 
 import { PathFinder, type NavRequest, type NavResponse } from './PathFinder.js';

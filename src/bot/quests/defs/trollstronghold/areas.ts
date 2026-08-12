@@ -18,6 +18,18 @@ export const FOOD_TARGET = 16;
 /** Below this the loadout is spent and the module walks back down for more. */
 export const FOOD_FLOOR = 4;
 
+/** Best dose first. */
+export const PRAYER_POTIONS = [
+    'Prayer potion(4)',
+    'Prayer potion(3)',
+    'Prayer potion(2)',
+    'Prayer potion(1)'
+] as const;
+
+export const PRAYER_POTION_TARGET = 2;
+
+export const PRAYER_SIP_AT = 0.5;
+
 export const COMBAT_FOODS = [
     'Shark',
     'Swordfish',

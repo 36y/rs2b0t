@@ -21,7 +21,7 @@ let onClick: () => void;
 let pollHook: () => void;
 let walkFails: number;
 
-// Mutate singletons — mock.module is permanent in Bun (docs/TESTING.md#unit-tests).
+// Mutate singletons — mock.module is permanent in Bun (docs/reference/test-suites.md).
 const restoreExec = stubProps(Execution, {
     delayUntil: async (fn: () => boolean, _ms?: number): Promise<boolean> => {
         for (let i = 0; i < 60; i++) {

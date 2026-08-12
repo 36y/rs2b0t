@@ -1,4 +1,4 @@
-// docs/CLUES.md#puzzle-boxes
+// docs/reference/clues-mechanics.md#puzzle-boxes
 import { actions, reader } from '#/bot/adapter/ClientAdapter.js';
 import { Execution } from '#/bot/api/Execution.js';
 import { ActionRouter } from '#/bot/input/ActionRouter.js';

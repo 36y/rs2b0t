@@ -6,7 +6,7 @@
  * A clue belongs here only when the gate is a *quest or region* the bot has no
  * route through. A clue that merely walks somewhere awkward does not.
  *
- * @see docs/CLUES.md#gated-clues
+ * @see docs/reference/clues-gates.md#gated-clues
  */
 export const CLUE_GATES: Record<number, string> = {
     // Isafdar / the elf camp is sealed behind Underground Pass + Regicide, and

@@ -15,7 +15,7 @@ const COMBAT_STYLE: Record<string, MeleeCombatStyle> = {
 /**
  * Melee styles a script may train. Re-applied on every login, because the
  * combat-mode varp is not persisted.
- * @see docs/API.md#game
+ * @see docs/reference/api-game.md
  */
 export const COMBAT_STYLE_OPTIONS: MeleeCombatStyle[] = ['attack', 'strength', 'controlled', 'defence'];
 

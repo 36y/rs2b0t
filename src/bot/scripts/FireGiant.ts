@@ -18,7 +18,7 @@ import { castsAvailable, runeWithdrawList } from '../api/combat/CombatStyleLogic
 import { SPELL_DB } from '../api/combat/data/spelldb.js';
 import { DROP_DB } from '../api/combat/data/dropdb.js';
 import { BOWS, STAFFS } from '../api/combat/equipment.js';
-import { FOOD_OPTIONS, foodForms, foodCount as foodCountIn, foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
+import { foodForms, foodCount as foodCountIn, foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
 import { combatKeepNames } from '../api/combat/keepList.js';
 import { depositAllExcept, matchesCommonBankLoot } from '../api/Banking.js';
 import { GroundItems } from '../api/queries/GroundItems.js';
@@ -35,6 +35,8 @@ import {
     LEDGE_DOOR, LEDGE_LOC, LEDGE_OP, legFor, RAFT_LOC, RAFT_OP, RAFT_STAND,
     attackRangeFor, eastFirst, lootWaitMs, ROCK_LOC, sameRoom, takenByAnother, ROPE, ROPE_THROW_STAND, TREE_LOC, TREE_STAND, type EscapeTele
 } from './FireGiantLogic.js';
+import { scriptFood } from '../items/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../items/loadoutSetting.js';
 
 const TARGET = 'Fire giant';
 const FIELD_RADIUS = 10;
@@ -77,7 +79,7 @@ export const SETTINGS: SettingsSchema = {
     ammo: { type: 'string', default: 'Iron arrow', options: ['Bronze arrow', 'Iron arrow', 'Steel arrow', 'Mithril arrow', 'Adamant arrow', 'Rune arrow'], label: 'Ammo', group: 'Combat', showIf: SHOW_RANGE },
     ammoWithdraw: { type: 'number', default: 500, min: 1, max: 5000, label: 'Ammo per bank trip', group: 'Combat', showIf: SHOW_RANGE },
 
-    food: { type: 'string', default: 'Lobster', options: FOOD_OPTIONS, label: 'Food', group: 'Food & healing' },
+    loadout: { ...LOADOUT_SETTING, group: 'Food & healing' },
     foodWithdraw: { type: 'number', default: 20, min: 1, max: 27, label: 'Food to withdraw per bank run', group: 'Food & healing' },
 
     panicHp: { type: 'number', default: 25, min: 1, max: 98, label: 'Panic-to-bank below HP%', group: 'Food & healing', help: 'retreat to the bank when HP drops this low (out of food, or damage outpacing eating)' },
@@ -1167,7 +1169,7 @@ export default class FireGiant extends TaskBot {
         AMMO = this.settings.str('ammo', 'Iron arrow');
         WEAPON = STYLE === 'mage' ? this.settings.str('staff', 'Staff of air')
             : STYLE === 'range' ? this.settings.str('bow', 'Maple shortbow') : '';
-        FOOD_NAME = this.settings.str('food', 'Lobster');
+        FOOD_NAME = scriptFood(this.settings, 'Lobster');
 
         PANIC_HP = this.settings.num('panicHp', 25) / 100;
         RUNES_WITHDRAW = this.settings.num('runesWithdraw', 150);

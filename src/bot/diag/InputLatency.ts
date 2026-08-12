@@ -1,4 +1,4 @@
-// docs/MULTIBOX.md#diagnostics
+// docs/decisions/multibox-telemetry-honesty.md
 //
 // "A right-click takes 2 seconds" is the symptom that actually gets reported, so it
 // is measured directly rather than inferred from CPU. Firefox has no Long Tasks API

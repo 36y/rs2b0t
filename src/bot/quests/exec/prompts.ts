@@ -1,4 +1,4 @@
-// docs/QUESTS.md#exec-primitives
+// docs/reference/quest-primitives.md
 import { Execution } from '../../api/Execution.js';
 import { Reach } from '../../api/Reach.js';
 import type Tile from '../../api/Tile.js';
@@ -19,7 +19,7 @@ export function locNear(name: string, op: string, within = 12): Loc | null {
 /**
  * Every loc query is empty for about a tick after a level or region change, so a
  * blank scene is not evidence that a loc is absent.
- * @see docs/NAV.md#level-change-loc-lag
+ * @see docs/decisions/level-change-lag.md
  */
 export async function settleScene(): Promise<void> {
     await Execution.delayTicks(2);
@@ -29,7 +29,7 @@ export async function settleScene(): Promise<void> {
  * Like `driveDialog`, but abandons rather than guessing. Loc prompts routinely put
  * the refusal first — "I don't think so, it might animate and attack me!" — so
  * falling through to an unmatched option is worse than stopping.
- * @see docs/QUESTS.md#exec-primitives
+ * @see docs/reference/quest-primitives.md
  */
 export async function driveChoice(prefer: string[], log: (m: string) => void): Promise<boolean> {
     for (let i = 0; i < 60; i++) {
@@ -61,7 +61,7 @@ export async function driveChoice(prefer: string[], log: (m: string) => void): P
  * Keep answering prompts until the goal lands. A scripted chain leaves gaps where
  * nothing is open yet — `driveChoice` alone returns at the first of them and the
  * rest of the chain never runs.
- * @see docs/QUESTS.md#exec-primitives
+ * @see docs/reference/quest-primitives.md
  */
 export async function driveUntil(
     expect: () => boolean,
@@ -98,7 +98,7 @@ export interface LocPrompt {
 /**
  * Walk to a stand, act on a loc, then answer whatever prompt it raised — the shape
  * of nearly every world interaction in a jungle quest.
- * @see docs/QUESTS.md#exec-primitives
+ * @see docs/reference/quest-primitives.md
  */
 export async function promptLoc(step: LocPrompt, log: (m: string) => void): Promise<boolean> {
     if (step.expect()) {
@@ -121,7 +121,7 @@ export async function promptLoc(step: LocPrompt, log: (m: string) => void): Prom
 /**
  * Use a carried item on a loc, then answer whatever prompt it raised. Quest item
  * chains run through `oplocu`, which no op-based step can express.
- * @see docs/QUESTS.md#exec-primitives
+ * @see docs/reference/quest-primitives.md
  */
 export async function useOnLoc(
     itemId: number,

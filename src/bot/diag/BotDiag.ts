@@ -1,4 +1,4 @@
-// docs/MULTIBOX.md#diagnostics
+// docs/decisions/multibox-telemetry-honesty.md
 //
 // The per-frame half of diagnostics: one bot's main-thread cost and the queue
 // depths most likely to grow. The wall drains this on every sample tick, so each

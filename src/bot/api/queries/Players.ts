@@ -7,7 +7,7 @@ type PlayerSnapRow = PlayerSnapshot & { ops: readonly (string | null)[] };
 
 /**
  * Player queries.
- * @see docs/API.md#entities--queries
+ * @see docs/reference/api-entities.md
  */
 export const Players = {
     query(): EntityQuery<Player> {

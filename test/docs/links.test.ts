@@ -6,9 +6,6 @@ import { extractLinks, extractPointers, extractRepoPaths, headingAnchors, resolv
 // these two hold example pointers as test fixtures, not live references
 const FIXTURES = new Set(['test/tools/docLinks.test.ts', 'test/docs/links.test.ts']);
 
-const DOCS = ['README.md', 'desktop/README.md', 'templates/script-template/README.md', ...[...new Glob('docs/*.md').scanSync('.')]].filter(existsSync).sort();
-const SOURCES = [...new Glob('{src,tools,test,packages}/**/*.{ts,sh}').scanSync('.')].filter(f => !f.startsWith('src/3rdparty/') && !FIXTURES.has(f)).sort();
-
 // `git check-ignore` is the authority on what is a build artifact, so the rule
 // lives in .gitignore rather than in a second hand-maintained list here.
 const ignoreCache = new Map<string, boolean>();
@@ -21,6 +18,12 @@ function isGitIgnored(path: string): boolean {
     }
     return ignored;
 }
+
+// Untracked working notes can sit under docs/ on disk; the manual is what git tracks.
+const manualPages = (): string[] => [...new Glob('docs/**/*.md').scanSync('.')].filter(p => !isGitIgnored(p)).sort();
+
+const DOCS = ['README.md', 'desktop/README.md', 'templates/script-template/README.md', ...manualPages()].filter(existsSync).sort();
+const SOURCES = [...new Glob('{src,tools,test,packages}/**/*.{ts,sh}').scanSync('.')].filter(f => !f.startsWith('src/3rdparty/') && !FIXTURES.has(f)).sort();
 
 const anchorCache = new Map<string, string[]>();
 function anchorsOf(page: string): string[] {
@@ -97,7 +100,7 @@ describe('documentation links', () => {
                 queue.push(target);
             }
         }
-        const pages = [...new Glob('docs/*.md').scanSync('.')].sort();
+        const pages = manualPages();
         expect(pages.filter(page => !reachable.has(page))).toEqual([]);
     });
 

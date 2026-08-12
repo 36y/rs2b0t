@@ -1,4 +1,4 @@
-// docs/TESTING.md#live-harnesses
+// docs/how-to/write-a-harness.md
 import { fail, launchBrowser } from './lib/harness.js';
 import { cheat, cheatQuiet, mainlandAccount, relog, startScript } from './tutorial/harness.js';
 

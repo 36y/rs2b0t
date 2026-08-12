@@ -1,4 +1,4 @@
-// docs/MULTIBOX.md#diagnostics
+// docs/decisions/multibox-telemetry-honesty.md
 //
 // Wires the diagnostics pieces to the live wall. Kept out of main.ts so the wiring
 // stays readable and the sampler can be tested without a DOM.

@@ -1,4 +1,4 @@
-// docs/QUESTS.md#quest-state
+// docs/reference/quest-engine.md#quest-state
 import { reader } from '../../adapter/ClientAdapter.js';
 import { type Task } from '../../api/Bot.js';
 import { EventSignal } from '../../api/EventSignal.js';

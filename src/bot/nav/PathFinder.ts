@@ -1,4 +1,4 @@
-// docs/NAV.md#pathfinding
+// docs/reference/nav-pathfinding.md
 import type { PathHop, PathPolicy, TransportRequires, WorldState } from './types.js';
 import type { WorldStateData } from './worldStateData.js';
 import { worldStateFromData } from './worldStateData.js';

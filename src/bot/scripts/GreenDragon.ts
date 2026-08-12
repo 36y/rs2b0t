@@ -24,7 +24,7 @@ import { MELEE_WEAPONS, STAFFS } from '../api/combat/equipment.js';
 import { SA_MAX_ENERGY, Special } from '../api/combat/Special.js';
 import { AttackClock, URGENT_HP_FRACTION, shouldHoldEat } from '../api/combat/eatTiming.js';
 import { buryOneInFight } from '../api/combat/fightUpkeep.js';
-import { FOOD_OPTIONS, foodForms, isFoodItem, foodCount as foodCountIn, foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
+import { foodForms, isFoodItem, foodCount as foodCountIn, foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
 import { combatKeepNames } from '../api/combat/keepList.js';
 import { depositAllExcept } from '../api/Banking.js';
 import { GroundItems } from '../api/queries/GroundItems.js';
@@ -35,6 +35,8 @@ import { paintClueProgress } from '../clues/cluePaint.js';
 import { AT_BANK_RADIUS, RETURN_HOLD_MS, escapeNeeded, gearCandidates, gearToKeep, isGrindForeign, packForcesBank, slotFreeingAction, underPlayerAttack, wantsGroundItem, type SlotAction } from './GreenDragonLogic.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
+import { scriptFood } from '../items/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../items/loadoutSetting.js';
 
 const TARGET = 'Green dragon';
 const DEFAULT_ANCHOR = new Tile(3096, 3814, 0);
@@ -66,7 +68,7 @@ export const SETTINGS: SettingsSchema = {
     runesWithdraw: { type: 'number', default: 150, min: 1, max: 1000, label: 'Casts of runes per bank trip', group: 'Combat', showIf: SHOW_MAGE },
     shield: { type: 'string', default: 'Dragonfire shield', options: ['Dragonfire shield'], label: 'Anti-dragon shield', group: 'Combat', help: 'worn to absorb the dragonfire — required' },
 
-    food: { type: 'string', default: 'Lobster', options: FOOD_OPTIONS, label: 'Food', group: 'Food & healing' },
+    loadout: { ...LOADOUT_SETTING, group: 'Food & healing' },
     foodWithdraw: { type: 'number', default: 20, min: 1, max: 27, label: 'Food to withdraw per bank run', group: 'Food & healing' },
 
     panicHp: { type: 'number', default: 30, min: 1, max: 98, label: 'Escape below HP%', group: 'Food & healing', help: 'when out of food and this low, escape to the bank' },
@@ -832,7 +834,7 @@ export default class GreenDragon extends TaskBot {
         SHIELD = this.settings.str('shield', 'Dragonfire shield');
         USE_SPECIAL = this.settings.bool('useSpecial', true);
         this.xpAtStart = new Map(GRIND_SKILLS.map(sk => [sk, Skills.xp(sk)]));
-        FOOD_NAME = this.settings.str('food', 'Lobster');
+        FOOD_NAME = scriptFood(this.settings, 'Lobster');
 
         PANIC_HP = this.settings.num('panicHp', 30) / 100;
         RUNES_WITHDRAW = this.settings.num('runesWithdraw', 150);

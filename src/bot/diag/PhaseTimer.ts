@@ -1,4 +1,4 @@
-// docs/MULTIBOX.md#diagnostics
+// docs/decisions/multibox-telemetry-honesty.md
 //
 // Per-bot main-thread cost, bucketed by phase. Aggregate loop counts tell you the
 // wall is busy; only a bucket breakdown tells you which subsystem to optimise.

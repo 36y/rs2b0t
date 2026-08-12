@@ -27,8 +27,8 @@
  *     'mining:20,smithing:20,crafting:20,attack:50,strength:50,defence:40,hitpoints:50' \
  *     Lobster 'speed 300' '2725,3491'
  *
- * @see docs/TESTING.md#seeding-inventory-vs-bank
- * @see docs/QUESTS.md#official-reqs-vs-bot-proven-floors-polish-goal
+ * @see docs/reference/seeding-test-accounts.md
+ * @see docs/reference/quest-eligibility.md#official-reqs-vs-bot-proven-floors-polish-goal
  */
 import type { Page } from 'playwright-core';
 import { launchBrowser } from './lib/harness.js';

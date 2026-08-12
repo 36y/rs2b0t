@@ -133,7 +133,7 @@ export interface WalkOptions {
      */
     avoidZones?: readonly (string | import('./data/dangerZones.js').DangerZoneRect)[];
     /**
-     * Path stickiness (stall / deviation). Defaults: Global `navPathStallTicks` (9)
+     * Path stickiness (stall / deviation). Defaults: Global `navPathStallTicks` (5)
      * and `navPathDeviation` (10). Plan once at request; repath only on stall,
      * deviation past this Chebyshev, or {@link WalkExecutor.requestRepath}.
      */
@@ -1013,7 +1013,7 @@ class WalkExecutorImpl {
 
             // Unreachable walk-click: re-pick only. Do NOT run stall recovery early —
             // live smokes spammed "stall recovery (2 ticks idle)" when canReach failed
-            // on the mid-path click long before the 9-tick stickiness stall.
+            // on the mid-path click long before the stickiness stall.
             if (
                 clickIdx !== -1
                 && !moved
@@ -1029,7 +1029,7 @@ class WalkExecutorImpl {
                 PathPublish.setClientSegment(null);
             }
 
-            // Stall recovery / repath only after the stickiness idle budget (default 9).
+            // Stall recovery / repath only after the stickiness idle budget (default 5).
             if (idleTicks >= follow.stallTicks) {
                 const recoverLimit = nextCrossingIdx !== -1 ? nextCrossingIdx - 1 : tiles.length - 1;
                 const recover =
@@ -1319,7 +1319,7 @@ class WalkExecutorImpl {
             }
             if (crossed) {
                 if (transport.toLevel !== undefined) {
-                    // docs/NAV.md#level-change-loc-lag
+                    // docs/decisions/level-change-lag.md
                     await Execution.delayTicks(2);
                 }
                 log(`${transport.action} ${transport.locName} at (${transport.locX},${transport.locZ}) ok`);

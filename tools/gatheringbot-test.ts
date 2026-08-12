@@ -560,7 +560,7 @@ async function teleArrive(page: Page, spot: Tile, maxDist = 18): Promise<boolean
         for (let poll = 0; poll < 12; poll++) {
             const t = await page.evaluate(() => (globalThis as never as Abi).__rs2b0t.reader.worldTile());
             if (t && t.level === spot.level && chebyshev(t, spot) <= maxDist) {
-                // Zone rebuild lags the tile update (docs/NAV.md#level-change-loc-lag).
+                // Zone rebuild lags the tile update (docs/decisions/level-change-lag.md).
                 // Blank Locs/Npcs here is "not loaded yet", not "camp empty".
                 await page.waitForTimeout(600);
                 return true;

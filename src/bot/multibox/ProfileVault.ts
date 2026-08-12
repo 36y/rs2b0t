@@ -1,4 +1,4 @@
-// docs/MULTIBOX.md#profiles-and-the-vault
+// docs/reference/multibox.md#profiles-and-the-vault
 export interface Profile {
     username: string;
     password: string;

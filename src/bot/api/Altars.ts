@@ -13,7 +13,7 @@ export interface AltarLocation {
 /**
  * Altars that restore prayer points, picked from the Pray-at locs in the map
  * data for being close to a bank. Chaos altars are deliberately absent.
- * @see docs/CLUES.md#prayer-between-trails
+ * @see docs/reference/clues-mechanics.md#prayer-between-trails
  */
 export const ALTARS: AltarLocation[] = [
     { name: 'Varrock church', tile: new Tile(3253, 3486, 0), loc: 'Altar' },

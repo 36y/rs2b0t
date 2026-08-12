@@ -1,4 +1,4 @@
-// docs/TESTING.md#live-harnesses
+// docs/how-to/write-a-harness.md
 //
 // Settles one question and nothing else: does the Lumbridge castle spinning wheel at
 // 3209,3212,1 actually spin wool? sheepshearer avoids it on the strength of commit

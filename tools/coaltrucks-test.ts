@@ -1,4 +1,4 @@
-// docs/TESTING.md#live-harnesses
+// docs/how-to/write-a-harness.md
 // Live CoalTrucks run against a local engine.
 //   bun tools/coaltrucks-test.ts --phase cross --speed 300 --minutes 3   # proves the log balance level
 //   bun tools/coaltrucks-test.ts --phase fill  --speed 300 --minutes 8

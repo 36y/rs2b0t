@@ -19,7 +19,7 @@ import { castsAvailable, runeWithdrawList } from '../api/combat/CombatStyleLogic
 import { SPELL_DB } from '../api/combat/data/spelldb.js';
 import { DROP_DB } from '../api/combat/data/dropdb.js';
 import { STAFFS } from '../api/combat/equipment.js';
-import { FOOD_OPTIONS, foodForms, foodCount as foodCountIn, foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
+import { foodForms, foodCount as foodCountIn, foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
 import { combatKeepNames } from '../api/combat/keepList.js';
 import { depositAllExcept, matchesCommonBankLoot } from '../api/Banking.js';
 import { GroundItems } from '../api/queries/GroundItems.js';
@@ -29,6 +29,8 @@ import { DirectNavigator } from '../nav/DirectNavigator.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import { RANGED_WEAPONS, rangeLoadoutOf, rangeSupplyEmpty } from './RockCrabRangeLogic.js';
+import { scriptFood } from '../items/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../items/loadoutSetting.js';
 
 const TARGET = 'Moss giant';
 const DEFAULT_SAFESPOT = new Tile(2553, 3406, 0);
@@ -82,7 +84,7 @@ export const SETTINGS: SettingsSchema = {
         showIf: SHOW_RANGE
     },
 
-    food: { type: 'string', default: 'Lobster', options: FOOD_OPTIONS, label: 'Food', group: 'Food & healing' },
+    loadout: { ...LOADOUT_SETTING, group: 'Food & healing' },
     foodWithdraw: { type: 'number', default: 20, min: 1, max: 27, label: 'Food to withdraw per bank run', group: 'Food & healing' },
 
     panicHp: { type: 'number', default: 25, min: 1, max: 98, label: 'Panic-to-bank below HP%', group: 'Food & healing', help: 'retreat to the bank when HP drops this low (out of food, or damage outpacing eating)' },
@@ -668,7 +670,7 @@ export default class MossGiant extends TaskBot {
         AMMO = this.settings.str('ammo', 'Iron arrow');
         WEAPON = STYLE === 'mage' ? this.settings.str('staff', 'Staff of air')
             : STYLE === 'range' ? this.settings.str('bow', 'Maple shortbow') : '';
-        FOOD_NAME = this.settings.str('food', 'Lobster');
+        FOOD_NAME = scriptFood(this.settings, 'Lobster');
 
         PANIC_HP = this.settings.num('panicHp', 25) / 100;
         RUNES_WITHDRAW = this.settings.num('runesWithdraw', 150);

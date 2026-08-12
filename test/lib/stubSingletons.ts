@@ -2,7 +2,7 @@
  * Temporarily replace properties on a live singleton.
  *
  * Prefer this over `mock.module`: Bun's module mocks are **global and permanent**
- * for the process (docs/TESTING.md#unit-tests). Spreading the real module only
+ * for the process (docs/reference/test-suites.md). Spreading the real module only
  * fixes missing named exports — the stub still poisons every later file that
  * needs the real behaviour.
  *

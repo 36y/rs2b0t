@@ -71,7 +71,7 @@ export function renderScriptDocs(metas: ScriptMeta[]): string {
         }
     }
 
-    lines.push('## See also', '', '- [Manual index](README.md)', '- [Scripting API](API.md) — the surface these are written against', '- [Running locally](RUNNING.md#running-a-bot) — how to start one', '');
+    lines.push('## See also', '', '- [Manual index](README.md)', '- [Scripting API](API.md) — the surface these are written against', '- [Running locally](how-to/run-locally.md#run-a-bot) — how to start one', '');
     return lines.join('\n');
 }
 

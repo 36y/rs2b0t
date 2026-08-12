@@ -4,9 +4,11 @@ import { Game } from '../../../api/Game.js';
 import { Prayer } from '../../../api/Prayer.js';
 import { Sustain } from '../../../api/Sustain.js';
 import { ChatDialog } from '../../../api/hud/ChatDialog.js';
+import { Inventory } from '../../../api/hud/Inventory.js';
 import { Skills } from '../../../api/hud/Skills.js';
 import { Npcs, type Npc } from '../../../api/queries/Npcs.js';
 import { pickPreferred } from '../../exec/primitives.js';
+import { PRAYER_SIP_AT } from './areas.js';
 
 export const PROTECT = {
     melee: { name: 'protect from melee', level: 43 },
@@ -82,6 +84,10 @@ export async function protectedWalk(
     const host = Sustain.hook;
     let armed = false;
     Sustain.set(async () => {
+        // The crossing drains too, so the same rule applies out here.
+        if (guard.usable && needsSip(Prayer.points(), Prayer.max()) && (await sipPrayer(log))) {
+            return;
+        }
         if (threat()) {
             if (!armed && (await guard.hold())) {
                 armed = true;
@@ -100,6 +106,30 @@ export async function protectedWalk(
         Sustain.set(host);
         await guard.clear();
     }
+}
+
+export function needsSip(points: number, max: number): boolean {
+    return max > 0 && points < max * PRAYER_SIP_AT;
+}
+
+/** False when there is nothing to drink, so the caller can spend the tick elsewhere. */
+async function sipPrayer(log: (m: string) => void): Promise<boolean> {
+    const pot = Inventory.items().find(i => {
+        const name = (i.name ?? '').toLowerCase();
+        return name.startsWith('prayer potion') && i.actions().some(a => /^drink$/i.test(a));
+    });
+    if (!pot) {
+        return false;
+    }
+    const before = Prayer.points();
+    if (!(await pot.interact('Drink'))) {
+        return false;
+    }
+    const drank = await Execution.delayUntil(() => Prayer.points() > before, 3000);
+    if (drank) {
+        log(`sipped ${pot.name} — prayer ${before} → ${Prayer.points()}`);
+    }
+    return drank;
 }
 
 /** A tuna's worth of damage is enough to eat on; waiting spends the whole margin. */
@@ -172,6 +202,10 @@ export async function fight(plan: FightPlan, log: (m: string) => void): Promise<
 
             if (plan.dialogue && (ChatDialog.isOpen() || ChatDialog.canContinue())) {
                 await drainDialogue(plan.dialogue, plan.onDialogue, log);
+                continue;
+            }
+            // Sip first: prayer cannot be re-armed on an empty bar.
+            if (prayers.usable && needsSip(Prayer.points(), Prayer.max()) && (await sipPrayer(log))) {
                 continue;
             }
             if (prayers.usable && !prayers.up() && Prayer.points() > 0) {

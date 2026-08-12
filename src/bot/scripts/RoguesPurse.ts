@@ -135,7 +135,7 @@ export default class RoguesPurse extends LoopingBot {
             if (wall) {
                 await this.cycle(wall);
             } else {
-                // Blank scene is not evidence the wall is gone (docs/NAV.md#level-change-loc-lag).
+                // Blank scene is not evidence the wall is gone (docs/decisions/level-change-lag.md).
                 this.status = 'waiting for the scene';
                 await settleScene();
             }

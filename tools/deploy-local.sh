@@ -1,6 +1,6 @@
 #!/bin/sh
 # Build the stock client + bot client and deploy both into a local Engine's
-# public/ (see docs/RUNNING.md#deploying-the-client). Players: /rs2.cgi
+# public/ (see docs/how-to/run-locally.md#deploy-the-client). Players: /rs2.cgi
 # untouched; bot: /bot.html.
 set -e
 

@@ -1,5 +1,5 @@
 import { TaskBot, type Task } from '../api/Bot.js';
-import { FOOD_OPTIONS, foodCount as countFood, isFoodItem, foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
+import { foodCount as countFood, isFoodItem, foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
 import { Execution } from '../api/Execution.js';
 import { Game } from '../api/Game.js';
 import { Bank } from '../api/hud/Bank.js';
@@ -37,6 +37,8 @@ import {
     type DruidLocationName,
     type DruidSpot
 } from './ChaosDruidLogic.js';
+import { scriptFood } from '../items/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../items/loadoutSetting.js';
 
 export const SETTINGS: SettingsSchema = {
     location: {
@@ -47,13 +49,7 @@ export const SETTINGS: SettingsSchema = {
         help: 'Tower: picklock the door (46 Thieving). Yanille: Chaos druid warriors past the 40 Agility ledge — bring a slash weapon or knife for the entrance web',
         group: 'Location'
     },
-    food: {
-        type: 'string',
-        default: 'Lobster',
-        options: FOOD_OPTIONS,
-        label: 'Food',
-        group: 'Food & healing'
-    },
+    loadout: { ...LOADOUT_SETTING, group: 'Food & healing' },
     combatStyleIndex: {
         type: 'string',
         default: '1',
@@ -193,7 +189,7 @@ export default class ChaosDruidKiller extends TaskBot {
         }
         this.locationName = locationName;
         this.spot = DRUID_SPOTS[locationName];
-        this.foodName = this.settings.str('food', 'Lobster');
+        this.foodName = scriptFood(this.settings, 'Lobster');
         this.foodWithdraw = this.settings.num('foodWithdraw', 12);
         this.combatStyleIndex = Number(this.settings.str('combatStyleIndex', '1'));
 

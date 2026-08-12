@@ -19,19 +19,21 @@ pure Lost City or 2004scape projects and is not maintained for those targets.
 
 | Page | Covers |
 |---|---|
-| [Running locally](RUNNING.md) | prerequisites, getting an engine, deploying the client, tests, lint, smokes |
-| [Architecture](ARCHITECTURE.md) | the layers, the fences, the ABI boundary, how a call becomes a packet |
-| [Scripting API](API.md) | the complete `@rs2b0t/api` surface, with examples |
-| [World-walking](NAV.md) | the world walker: pack, doors, transports, teles, arrival |
-| [Map tile picker](MAP-PICKER.md) | Pick on Map: basemap bake, walkable overlay, in-picker settings, live rebuild |
-| [Quests](QUESTS.md) | the quest engine, quest modules, exec primitives, provisioning |
-| [Clue scrolls](CLUES.md) | the clue database, step kinds, tool acquisition, tracing |
-| [MultiBox](MULTIBOX.md) | the wall: slots, profiles, login coordination, telemetry |
+| [Running locally](RUNNING.md) | [the whole path from a cold clone](how-to/run-locally.md), and [ports](reference/ports.md) |
+| [Architecture](ARCHITECTURE.md) | the layers and the ABI boundary, then [design](decisions/architecture.md) and [fences](reference/import-fences.md) |
+| [Scripting API](API.md) | the surface, split by subsystem; start with [write a bot](how-to/write-a-bot.md) |
+| [World-walking](NAV.md) | [pack](reference/nav-pack.md), [pathfinding](reference/nav-pathfinding.md), [doors](reference/nav-doors.md), [teleports](reference/nav-teleports.md), [walker](reference/nav-walker.md) |
+| [Map tile picker](MAP-PICKER.md) | Pick on Map: display modes, then [reference](reference/map-picker.md) and [baking](how-to/bake-the-basemap.md) |
+| [Quests](QUESTS.md) | [engine](reference/quest-engine.md), [primitives](reference/quest-primitives.md), [eligibility](reference/quest-eligibility.md), [adding one](how-to/add-a-quest.md) |
+| [Clue scrolls](CLUES.md) | [database](reference/clues-database.md), [mechanics](reference/clues-mechanics.md), [host yielding](decisions/clue-host-yielding.md), [tracing a failure](how-to/trace-a-clue-failure.md) |
+| [MultiBox](MULTIBOX.md) | the wall, then [reference](reference/multibox.md), [telemetry honesty](decisions/multibox-telemetry-honesty.md) and [diagnosis](how-to/diagnose-multibox.md) |
 | [Bundled scripts](SCRIPTS.md) | catalog of the shipped bots and their settings (generated) |
-| [Testing](TESTING.md) | unit tests, the live-harness ABI, the end-to-end smoke |
-| [Dev and deploy](DEV.md) | build targets, the three run modes, the hosting pipeline |
-| [Multi-state locs](LOCS.md) | external note on loc identity and state; partly a proposal, not built |
-| [Code review backlog](REVIEW_BACKLOG.md) | deferred correctness, API, security, and maintainability follow-ups |
+| [Testing](TESTING.md) | [suites](reference/test-suites.md), [why it is testable](decisions/testability.md), [writing a harness](how-to/write-a-harness.md), [seeding](reference/seeding-test-accounts.md) |
+| [Dev and deploy](DEV.md) | the three run modes, then [live wall](how-to/run-the-live-wall.md), [build targets](reference/build-targets.md), [maintainer infra](how-to/maintainer-infra.md) |
+| [Loc identity](decisions/loc-identity-model.md) | why a loc is a placement, not an ID |
+| [Loc state in the client](reference/loc-identity.md) | what the client does with locs that change state, and the gaps |
+| [Nav operator tools](nav/README.md) | transport coverage, client-vs-pack path paint, live nav harnesses |
+| [Doc migration](MIGRATION.md) | in-progress rewrite of this manual to one-type-per-file; delete when the table is all ✅ |
 
 ---
 

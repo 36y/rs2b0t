@@ -8,6 +8,7 @@ import {
     consumableOptions,
     searchItems,
     shieldDisabled,
+    recordByName,
     slotOptions,
     SLOT_LAYOUT,
     SUPPLY_ROWS,
@@ -49,6 +50,7 @@ export class LoadoutPanel {
     private query = '';
     /** Supply row label → the item that row holds. See {@link supplyRow}. */
     private readonly supplyItem = new Map<string, string>();
+    private renaming = false;
     private iconTries = 0;
     private iconTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -196,20 +198,7 @@ export class LoadoutPanel {
         title.textContent = 'Loadouts';
         bar.appendChild(title);
 
-        const select = el('select', 'rs2b0t-select');
-        for (const l of list) {
-            const opt = document.createElement('option');
-            opt.value = l.name;
-            opt.textContent = l.name;
-            opt.selected = l.name === this.selected;
-            select.appendChild(opt);
-        }
-        select.addEventListener('change', () => {
-            this.selected = select.value;
-            this.picker = null;
-            this.render();
-        });
-        bar.appendChild(select);
+        bar.appendChild(this.renaming ? this.nameField() : this.namePicker(list));
 
         bar.appendChild(this.action('new', '+ new', () => {
             const created: Loadout = { name: uniqueName(Loadouts.all(), 'loadout'), worn: {}, carry: [] };
@@ -226,18 +215,10 @@ export class LoadoutPanel {
             this.commit({ ...target, worn: wornFromEquipment(Equipment.items()) });
         }));
         bar.appendChild(this.action('rename', 'rename', () => {
-            const from = this.current();
-            if (!from) {
-                return;
+            if (this.current()) {
+                this.renaming = true;
+                this.render();
             }
-            const typed = globalThis.prompt?.('Loadout name', from.name)?.trim();
-            if (!typed || typed.toLowerCase() === from.name.toLowerCase()) {
-                return;
-            }
-            const without = removeLoadout(Loadouts.all(), from.name);
-            Loadouts.save(upsertLoadout(without, { ...from, name: uniqueName(without, typed) }));
-            this.selected = typed;
-            this.render();
         }));
         bar.appendChild(this.action('duplicate', 'duplicate', () => {
             const from = this.current();
@@ -258,6 +239,65 @@ export class LoadoutPanel {
         }));
         bar.appendChild(this.action('close', '\u2715', () => this.close()));
         return bar;
+    }
+
+    private namePicker(list: readonly Loadout[]): HTMLElement {
+        const select = el('select', 'rs2b0t-select');
+        for (const l of list) {
+            const opt = document.createElement('option');
+            opt.value = l.name;
+            opt.textContent = l.name;
+            opt.selected = l.name === this.selected;
+            select.appendChild(opt);
+        }
+        select.addEventListener('change', () => {
+            this.selected = select.value;
+            this.picker = null;
+            this.render();
+        });
+        return select;
+    }
+
+    /** Renames edit in place; Electron has no `window.prompt`. */
+    private nameField(): HTMLElement {
+        const from = this.current();
+        const field = el('input', 'rs2b0t-input rs2b0t-loadout-name');
+        field.type = 'text';
+        field.dataset.role = 'loadout-name';
+        field.value = from?.name ?? '';
+        field.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                this.commitRename(field.value);
+            } else if (e.key === 'Escape') {
+                this.renaming = false;
+                this.render();
+            }
+        });
+        field.addEventListener('blur', () => {
+            if (this.renaming) {
+                this.commitRename(field.value);
+            }
+        });
+        setTimeout(() => {
+            field.focus();
+            field.select();
+        }, 0);
+        return field;
+    }
+
+    private commitRename(raw: string): void {
+        const from = this.current();
+        this.renaming = false;
+        const typed = raw.trim();
+        if (!from || typed.length === 0 || typed.toLowerCase() === from.name.toLowerCase()) {
+            this.render();
+            return;
+        }
+        const without = removeLoadout(Loadouts.all(), from.name);
+        const name = uniqueName(without, typed);
+        Loadouts.save(upsertLoadout(without, { ...from, name }));
+        this.selected = name;
+        this.render();
     }
 
     private action(name: string, label: string, onClick: () => void): HTMLButtonElement {
@@ -436,15 +476,8 @@ export class LoadoutPanel {
 const ICON_FILL_MS = 500;
 const ICON_FILL_TRIES = 12;
 
-/** Every wearable record, for resolving a stored name back to its id. */
-function slotOptionsAll(): ItemRecord[] {
-    return SLOT_LAYOUT.flat()
-        .filter((s): s is Slot => s !== null)
-        .flatMap(slot => slotOptions(slot));
-}
-
 function iconUrlFor(name: string): string | null {
-    const record = [...slotOptionsAll(), ...consumableOptions()].find(r => r.name === name);
+    const record = recordByName(name);
     return record ? itemIconDataUrl(record.id) : null;
 }
 

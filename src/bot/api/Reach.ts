@@ -161,7 +161,7 @@ async function reachThroughDoors(
  * The shared last-mile primitive: walk to a stand, act, and open the blocking
  * door when the server says it cannot reach. Use this rather than hand-rolling
  * another approach loop.
- * @see docs/NAV.md#the-reach-primitive
+ * @see docs/reference/nav-walker.md#the-reach-primitive
  */
 export const Reach = {
     async entityOp<T extends ReachEntity>(opts: ReachEntityOpts<T>): Promise<ReachStatus> {

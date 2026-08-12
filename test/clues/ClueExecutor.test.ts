@@ -53,7 +53,7 @@ const restoreChat = stubProps(ChatDialog, {
     options: () => [],
     chooseOption: async (): Promise<boolean> => false
 });
-// Mutate singletons — mock.module is permanent in Bun (docs/TESTING.md#unit-tests).
+// Mutate singletons — mock.module is permanent in Bun (docs/reference/test-suites.md).
 const realInventoryFns = { ...RealInventory.Inventory };
 const stubInventory = {
     items: () => inv.map(id => ({ id, count: 1 })),

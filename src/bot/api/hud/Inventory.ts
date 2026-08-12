@@ -15,7 +15,7 @@ export function backpackCapacity(): number {
 
 /**
  * One backpack slot.
- * @see docs/API.md#invitem
+ * @see docs/reference/api-items.md#invitem
  */
 export class InvItem {
     constructor(readonly snap: InvItemSnapshot, private readonly componentOps = false) {}
@@ -77,7 +77,7 @@ export class InvItem {
 
 /**
  * The backpack.
- * @see docs/API.md#inventory--equipment
+ * @see docs/reference/api-items.md
  */
 export const Inventory = {
     items(): InvItem[] {

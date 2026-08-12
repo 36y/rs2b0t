@@ -1,4 +1,4 @@
-// docs/ARCHITECTURE.md#layers
+// docs/decisions/architecture.md#layers
 import { MiniMenuAction } from '#/client/MiniMenuAction.js';
 import Skill from '#/client/Skill.js';
 import { ButtonType, ComponentType } from '#/config/IfType.js';

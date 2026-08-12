@@ -12,8 +12,15 @@ import {
 const SCHEMA: SettingsSchema = { bankCommonJunk: { type: 'boolean', default: true } };
 const K = (ns: string, key: string) => `rs2b0t:set:${ns}:${key}`;
 
-beforeEach(() => sessionStorage.clear());
-afterEach(() => sessionStorage.clear());
+// SettingsStore reads sessionStorage first and falls back to localStorage, so
+// clearing one storage is not a reset.
+const clearStorage = (): void => {
+    sessionStorage.clear();
+    localStorage.clear();
+};
+
+beforeEach(clearStorage);
+afterEach(clearStorage);
 
 describe('GLOBAL_SETTINGS', () => {
     test('exposes lampSkill (default strength, options incl. strength) and bankCommonJunk (bool, default true)', () => {

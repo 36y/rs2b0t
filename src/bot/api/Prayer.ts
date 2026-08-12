@@ -14,7 +14,7 @@ interface PrayerDef {
  * The prayer overlay's toggle buttons and the varps that mirror them. Buttons
  * are tab-bound, and the engine treats any tab root as visible, so a prayer can
  * be toggled without switching to the prayer tab.
- * @see docs/API.md#prayer
+ * @see docs/reference/api-skills.md#prayer
  */
 const PRAYERS: Record<string, PrayerDef> = {
     'thick skin': { com: 5609, varp: 83, level: 1 },
@@ -42,7 +42,7 @@ function def(name: string): PrayerDef | null {
 
 /**
  * Prayer points and the protection prayers.
- * @see docs/API.md#prayer
+ * @see docs/reference/api-skills.md#prayer
  */
 export const Prayer = {
     points(): number {

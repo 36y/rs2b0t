@@ -2,32 +2,24 @@
 
 # rs2b0t desktop client (Electron)
 
-Runs the bot client as a standalone desktop window instead of a browser tab.
-The point is one Electron setting — `webPreferences.backgroundThrottling: false`
-(plus the Chromium switches in `main.cjs` and a power-save blocker) — which
-disables the timer/`requestAnimationFrame` throttling a backgrounded browser
-tab imposes. In a hidden tab the game loop drops to ~1 fps and the bot starves,
-then replays everything at 2–5× on refocus; here the 50 fps loop keeps running
-minimized, hidden, or occluded. (Measured: **~51 fps while hidden**.)
+Runs the bot client as a standalone desktop window instead of a browser tab. A thin
+shell over the page served by your engine, so the client's same-origin WebSocket and
+asset fetches work unchanged. No client code changes.
 
-It's a thin shell — it loads the page **served by your engine** so the client's
-same-origin WebSocket and asset fetches work unchanged. No client code changes.
+Why: `webPreferences.backgroundThrottling: false`, the Chromium switches in `main.cjs`
+and a power-save blocker disable the throttling a backgrounded browser tab imposes. A
+hidden tab drops the game loop to ~1 fps and starves the bot, then replays at 2–5× on
+refocus. Measured here: ~51 fps while hidden.
 
 ## Run
 
-```sh
-# engine must be running and the client deployed (tools/deploy-local.sh)
-cd desktop
-bun install            # once (pulls Electron)
-bun run start          # opens the window against http://localhost:8888
+1. Start the engine and deploy the client (`tools/deploy-local.sh`).
+2. `cd desktop`
+3. `bun install` (once — pulls Electron)
+4. `bun run start` — opens against `http://localhost:8888`
 
-# point at another server:
-bun run start -- --server=https://your-host        # or LCB_SERVER=… bun run start
-```
-
-The window loads `<server>/bot.html`. Everything else — panel, scripts,
-settings, saved credentials, auto-login, cursor trail — is identical to the
-browser client, just not throttled.
+Point at another server with `bun run start -- --server=https://your-host`, or
+`LCB_SERVER=… bun run start`.
 
 ## Package a distributable
 
@@ -35,15 +27,15 @@ browser client, just not throttled.
 bun run package        # electron-builder --dir -> desktop/dist/
 ```
 
-## Notes
+## Facts
 
-- Still Chromium underneath, so rendering/behaviour match the browser client.
-- Multi-account: open multiple windows, each with its own Electron `session`
-  partition for isolated localStorage (per-account saved creds + settings).
-  (Not wired into `main.cjs` yet — single window for now.)
-- The bot is also hardened independent of the shell: the Scheduler shifts
-  pending `Execution` deadlines across any large frame gap (system sleep,
-  throttling that slips through), so waits never falsely expire.
+| | |
+|---|---|
+| Page loaded | `<server>/bot.html` |
+| Rendering | Chromium, so behaviour matches the browser client |
+| Panel, scripts, settings, saved credentials, auto-login, cursor trail | identical to the browser client |
+| Multi-account | not wired into `main.cjs`; single window for now |
+| Frame-gap hardening | the Scheduler shifts pending `Execution` deadlines across large frame gaps, so waits never falsely expire — independent of this shell |
 
 ## See also
 

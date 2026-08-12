@@ -1,4 +1,4 @@
-// docs/QUESTS.md#quest-state
+// docs/reference/quest-engine.md#quest-state
 import { actions, reader } from '../../../adapter/ClientAdapter.js';
 import { Execution } from '../../../api/Execution.js';
 import { Quests } from '../../../api/hud/Quests.js';

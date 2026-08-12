@@ -26,6 +26,18 @@ export const SUPPLY_ROWS: readonly SupplyRow[] = [
     { label: 'Super defence', hint: 'super defence' }
 ];
 
+/** Built once; a scan per rendered row is 200 a click. */
+const byName = new Map<string, ItemRecord>();
+
+export function recordByName(name: string): ItemRecord | null {
+    if (byName.size === 0) {
+        for (const record of ITEM_DB) {
+            byName.set(record.name.toLowerCase(), record);
+        }
+    }
+    return byName.get(name.trim().toLowerCase()) ?? null;
+}
+
 export function slotOptions(slot: Slot): ItemRecord[] {
     return ITEM_DB.filter(r => r.slot === slot);
 }
@@ -40,11 +52,7 @@ export function searchItems(list: readonly ItemRecord[], query: string): ItemRec
 }
 
 function isTwoHanded(name: string | undefined): boolean {
-    if (!name) {
-        return false;
-    }
-    const wanted = name.toLowerCase();
-    return ITEM_DB.some(r => r.name.toLowerCase() === wanted && r.twoHanded === true);
+    return name !== undefined && recordByName(name)?.twoHanded === true;
 }
 
 export function shieldDisabled(worn: Loadout['worn']): boolean {
@@ -61,11 +69,7 @@ export function shieldDisabled(worn: Loadout['worn']): boolean {
 export function wornFromEquipment(equipped: readonly { name: string | null }[]): Loadout['worn'] {
     const out: Loadout['worn'] = {};
     for (const item of equipped) {
-        if (!item.name) {
-            continue;
-        }
-        const wanted = item.name.toLowerCase();
-        const record = ITEM_DB.find(r => r.slot !== undefined && r.name.toLowerCase() === wanted);
+        const record = item.name ? recordByName(item.name) : null;
         if (record?.slot) {
             out[record.slot] = record.name;
         }
