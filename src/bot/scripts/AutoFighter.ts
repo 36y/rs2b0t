@@ -1,6 +1,6 @@
-import { TaskBot, type Task } from '../api/Bot.js';
-import { Execution } from '../api/Execution.js';
-import { Game } from '../api/Game.js';
+import { TaskBot, type Task } from '../api/core/Bot.js';
+import { Execution } from '../api/core/Execution.js';
+import { Game } from '../api/core/Game.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
 import { DeathRecovery } from '../api/tasks/DeathRecovery.js';
 import {
@@ -11,7 +11,7 @@ import {
     resolveSplitCombatSettings,
     tryParseCombatStyle,
     type MeleeCombatStyle
-} from '../api/CombatStyle.js';
+} from '../api/combat/CombatStyle.js';
 import { Autocast } from '../api/combat/Autocast.js';
 import { castsAvailable, runeWithdrawList } from '../api/combat/CombatStyleLogic.js';
 import { foodHealAmount } from '../api/combat/food.js';
@@ -23,15 +23,15 @@ import { Equipment } from '../api/hud/Equipment.js';
 import { Bank } from '../api/hud/Bank.js';
 import { Paint } from '../api/hud/Paint.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
-import { Traversal } from '../api/Traversal.js';
-import { EventSignal } from '../api/EventSignal.js';
-import { Sustain } from '../api/Sustain.js';
-import { nearestBank } from '../api/BankLocations.js';
-import { GroundItems } from '../api/queries/GroundItems.js';
-import { Npcs, type Npc } from '../api/queries/Npcs.js';
-import { matchesEntityName } from '../api/queries/Query.js';
+import { Traversal } from '../nav/Traversal.js';
+import { EventSignal } from '../api/randomevents/EventSignal.js';
+import { Sustain } from '../api/core/Sustain.js';
+import { nearestBank } from '../api/banking/BankLocations.js';
+import { GroundItems } from '../api/entities/GroundItems.js';
+import { Npcs, type Npc } from '../api/entities/Npcs.js';
+import { matchesEntityName } from '../api/entities/Query.js';
 import { SettingsStore, type SettingsSchema } from '../runtime/Settings.js';
-import Tile from '../api/Tile.js';
+import Tile from '../api/core/Tile.js';
 import { countMatching, matchesAny, shouldBank, shouldEat, shouldPanic } from './ArdyFighterLogic.js';
 import {
     autoBankEnabled,
@@ -50,10 +50,10 @@ import {
 import { SolveClue } from '../clues/SolveClue.js';
 import { paintClueProgress } from '../clues/cluePaint.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
-import { Reach } from '../api/Reach.js';
-import { RANDOM_EVENT_CASKET_ID } from '../api/Banking.js';
-import { scriptFood } from '../items/loadoutPlan.js';
-import { LOADOUT_SETTING } from '../items/loadoutSetting.js';
+import { Reach } from '../nav/Reach.js';
+import { RANDOM_EVENT_CASKET_ID } from '../api/banking/Banking.js';
+import { scriptFood } from '../api/items/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../api/items/loadoutSetting.js';
 
 const BOOTH = { name: 'Bank booth', op: 'Use-quickly' };
 const KIT = ['spade', 'sextant', 'watch', 'chart'];

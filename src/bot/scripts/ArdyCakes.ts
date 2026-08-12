@@ -1,7 +1,7 @@
-import { TaskBot, type Task } from '../api/Bot.js';
-import { Execution } from '../api/Execution.js';
-import { Game } from '../api/Game.js';
-import Tile from '../api/Tile.js';
+import { TaskBot, type Task } from '../api/core/Bot.js';
+import { Execution } from '../api/core/Execution.js';
+import { Game } from '../api/core/Game.js';
+import Tile from '../api/core/Tile.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
 import { DeathRecovery } from '../api/tasks/DeathRecovery.js';
 import { ChatDialog } from '../api/hud/ChatDialog.js';
@@ -10,10 +10,10 @@ import { Inventory } from '../api/hud/Inventory.js';
 import { Bank } from '../api/hud/Bank.js';
 import { Paint } from '../api/hud/Paint.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
-import { Traversal } from '../api/Traversal.js';
-import { walkOpening } from '../api/walkOpening.js';
-import { EventSignal } from '../api/EventSignal.js';
-import { Npcs, type Npc } from '../api/queries/Npcs.js';
+import { Traversal } from '../nav/Traversal.js';
+import { walkOpening } from '../nav/walkOpening.js';
+import { EventSignal } from '../api/randomevents/EventSignal.js';
+import { Npcs, type Npc } from '../api/entities/Npcs.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import { matchesAny, shouldEat } from './ArdyFighterLogic.js';
 import { foodHealAmount } from '../api/combat/food.js';
@@ -22,7 +22,7 @@ import { CAKE_ITEMS, FLEE_TILE, LOCKOUT_TICKS, STAND } from './CakeStallLogic.js
 import { carriedCakes, stealCakes } from './CakeStall.js';
 import { SolveClue } from '../clues/SolveClue.js';
 import { paintClueProgress } from '../clues/cluePaint.js';
-import { Sustain } from '../api/Sustain.js';
+import { Sustain } from '../api/core/Sustain.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
 
 const BANK_STAND = new Tile(2655, 3286, 0);

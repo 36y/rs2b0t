@@ -3,7 +3,7 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import { actions, reader, type InvItemSnapshot } from '#/bot/adapter/ClientAdapter.js';
-import { Execution } from '#/bot/api/Execution.js';
+import { Execution } from '#/bot/api/core/Execution.js';
 import { Bank } from '#/bot/api/hud/Bank.js';
 import { ActionRouter } from '#/bot/input/ActionRouter.js';
 import { closeBankAndConfirmCount } from '#/bot/scripts/ThievingBotLogic.js';

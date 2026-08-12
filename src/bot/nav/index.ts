@@ -10,7 +10,7 @@ export * from './fromV1.js';
 export * from './policy.js';
 export * from './teleportCatalog.js';
 export * from './wilderness.js';
-export * from './lcCoord.js';
+export * from './geometry/lcCoord.js';
 export * from './essenceExit.js';
 export * from './essenceSession.js';
 export * from './locRef.js';

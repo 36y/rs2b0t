@@ -1,4 +1,4 @@
-import Tile from '../../../api/Tile.js';
+import Tile from '../../../api/core/Tile.js';
 import type { NpcStop } from '../../exec/primitives.js';
 
 export const KS_QUEST = "The Knight's Sword";

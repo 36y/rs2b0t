@@ -1,5 +1,5 @@
 import type { ChatLine, WorldTile } from '../adapter/ClientAdapter.js';
-import type { CombatStyleResolution, MeleeCombatStyle } from '../api/CombatStyle.js';
+import type { CombatStyleResolution, MeleeCombatStyle } from '../api/combat/CombatStyle.js';
 
 export type DuelTrainingStyle = Extract<MeleeCombatStyle, 'attack' | 'strength' | 'defence'>;
 

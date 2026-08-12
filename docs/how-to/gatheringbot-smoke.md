@@ -72,7 +72,7 @@ Tags: `mining` / `fishing` / `wc` / `mule` / `local` / `acquire` / `path` / `end
   - Harness: `mine-mule-gatherer-meet`, `fish-mule-gatherer-meet`, `fish-cooker-solo`;
     pair iron e2e `gatheringbot-mule-pair-test.ts`; pair cook e2e
     `gatheringbot-cooker-pair-test.ts` (Gatherer raw → Cooker cook+bank).
-- **Cook surfaces:** `api/CookingRanges` catalogs map Ranges; fishing camps pin
+- **Cook surfaces:** `api/catalogs/CookingRanges` catalogs map Ranges; fishing camps pin
   Catherby / Seers fly / Barb Fire / Guild / Draynor fireplace when useful.
   Harness: `fish-cook-bank` (Catherby), `fish-cook-barb`, `fish-cook-seers`.
 

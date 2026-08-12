@@ -2,14 +2,14 @@ import * as RealInventory from '#/bot/api/hud/Inventory.js';
 import { expect, test, describe, beforeEach, afterAll } from 'bun:test';
 
 import { actions, reader } from '#/bot/adapter/ClientAdapter.js';
-import { Execution } from '#/bot/api/Execution.js';
-import { Game } from '#/bot/api/Game.js';
-import { Traversal } from '#/bot/api/Traversal.js';
+import { Execution } from '#/bot/api/core/Execution.js';
+import { Game } from '#/bot/api/core/Game.js';
+import { Traversal } from '#/bot/nav/Traversal.js';
 import { ChatDialog } from '#/bot/api/hud/ChatDialog.js';
-import { GroundItems } from '#/bot/api/queries/GroundItems.js';
-import { Locs } from '#/bot/api/queries/Locs.js';
-import { Npcs } from '#/bot/api/queries/Npcs.js';
-import Tile from '#/bot/api/Tile.js';
+import { GroundItems } from '#/bot/api/entities/GroundItems.js';
+import { Locs } from '#/bot/api/entities/Locs.js';
+import { Npcs } from '#/bot/api/entities/Npcs.js';
+import Tile from '#/bot/api/core/Tile.js';
 import { CLUE_DB } from '#/bot/clues/data/cluedb.js';
 import { stubProps } from '../lib/stubSingletons.js';
 

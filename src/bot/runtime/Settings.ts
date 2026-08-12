@@ -1,4 +1,4 @@
-import Tile from '../api/Tile.js';
+import Tile from '../api/core/Tile.js';
 import { WORLDMAP_KEY_NAMES } from '../../mapview/worldmapKeyNames.js';
 import { boxKey } from './box.js';
 

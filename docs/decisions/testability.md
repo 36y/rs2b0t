@@ -14,7 +14,7 @@ That, plus the [DOM fence](../reference/import-fences.md), is why subsystem modu
 be imported directly in a test without a browser.
 
 The deeper reason the logic is testable at all is that the pure parts are
-deliberately separated from the driving parts — [`followMath.ts`](../../src/bot/nav/followMath.ts)
+deliberately separated from the driving parts — [`followMath.ts`](../../src/bot/nav/geometry/followMath.ts)
 from `WalkExecutor`, a quest's [`decide()`](../reference/quest-engine.md#quest-state) from the engine
 that executes it. Those pure functions are the specification, and their tests are the
 place to encode a bug you have fixed.

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { actions, reader } from '#/bot/adapter/ClientAdapter.js';
-import { BotHost } from '#/bot/BotHost.js';
+import { BotHost } from '#/bot/runtime/BotHost.js';
 import { AutoRelogin } from '#/bot/runtime/AutoRelogin.js';
 import type {
     LoginCoordination,

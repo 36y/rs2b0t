@@ -1,13 +1,13 @@
-import { Execution } from '../../../api/Execution.js';
-import Tile from '../../../api/Tile.js';
-import { Traversal } from '../../../api/Traversal.js';
+import { Execution } from '../../../api/core/Execution.js';
+import Tile from '../../../api/core/Tile.js';
+import { Traversal } from '../../../nav/Traversal.js';
 import { Equipment } from '../../../api/hud/Equipment.js';
 import { Inventory } from '../../../api/hud/Inventory.js';
 import { Skills } from '../../../api/hud/Skills.js';
-import { Locs } from '../../../api/queries/Locs.js';
+import { Locs } from '../../../api/entities/Locs.js';
 import { QuestFood } from '../../food.js';
 import { QuestLoadout } from '../../gear.js';
-import { weaponOf } from '../../../items/loadoutPlan.js';
+import { weaponOf } from '../../../api/items/loadoutPlan.js';
 import type { QuestSnapshot, QuestStep } from '../../engine/types.js';
 import { useOnLoc } from '../../exec/prompts.js';
 import { smithNails } from '../dragonslayer/supplies.js';

@@ -1,6 +1,6 @@
 import { reader } from '../../adapter/ClientAdapter.js';
 import { ActionRouter } from '../../input/ActionRouter.js';
-import { Execution } from '../Execution.js';
+import { Execution } from '../core/Execution.js';
 import { Bank } from './Bank.js';
 import { Inventory, InvItem } from './Inventory.js';
 

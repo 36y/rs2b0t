@@ -1,5 +1,5 @@
 import { actions, reader } from '../../adapter/ClientAdapter.js';
-import { Execution } from '../Execution.js';
+import { Execution } from '../core/Execution.js';
 
 /** specwep.rs2: %sa_energy, 0–1000, +100 every 50 ticks. */
 export const SA_ENERGY_VARP = 300;

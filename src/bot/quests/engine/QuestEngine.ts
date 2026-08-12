@@ -1,10 +1,10 @@
 // docs/reference/quest-engine.md#quest-state
 import { reader } from '../../adapter/ClientAdapter.js';
-import { type Task } from '../../api/Bot.js';
-import { EventSignal } from '../../api/EventSignal.js';
-import { Execution } from '../../api/Execution.js';
-import { Game } from '../../api/Game.js';
-import Tile from '../../api/Tile.js';
+import { type Task } from '../../api/core/Bot.js';
+import { EventSignal } from '../../api/randomevents/EventSignal.js';
+import { Execution } from '../../api/core/Execution.js';
+import { Game } from '../../api/core/Game.js';
+import Tile from '../../api/core/Tile.js';
 import { Bank } from '../../api/hud/Bank.js';
 import { ChatDialog } from '../../api/hud/ChatDialog.js';
 import { Equipment } from '../../api/hud/Equipment.js';

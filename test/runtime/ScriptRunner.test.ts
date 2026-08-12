@@ -1,7 +1,7 @@
 import { afterEach, expect, test } from 'bun:test';
 import { reader } from '#/bot/adapter/ClientAdapter.js';
-import { LoopingBot } from '#/bot/api/Bot.js';
-import { Execution } from '#/bot/api/Execution.js';
+import { LoopingBot } from '#/bot/api/core/Bot.js';
+import { Execution } from '#/bot/api/core/Execution.js';
 import { Scheduler } from '#/bot/runtime/Scheduler.js';
 import { loopReadyOrDetached, ScriptRunner, stopReasonOf } from '#/bot/runtime/ScriptRunner.js';
 import type { ScriptMeta } from '#/bot/runtime/ScriptRegistry.js';

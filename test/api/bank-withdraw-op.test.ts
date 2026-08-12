@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { withdrawOp } from '#/bot/api/hud/bankOps.js';
+import { withdrawOp } from '#/bot/api/banking/bankOps.js';
 
 describe('withdrawOp', () => {
     const spaceOps = ['Withdraw 1', 'Withdraw 5', 'Withdraw 10', 'Withdraw All', null];

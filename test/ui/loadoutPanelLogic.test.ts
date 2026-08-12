@@ -9,7 +9,7 @@ import {
     wearItem,
     wornFromEquipment
 } from '#/bot/ui/loadoutPanelLogic.js';
-import { SLOTS } from '#/bot/items/types.js';
+import { SLOTS } from '#/bot/api/items/types.js';
 
 describe('slotOptions', () => {
     test('offers only items for that slot', () => {

@@ -6,8 +6,8 @@ import {
     expandWaypoints,
     localBfsPath,
     remainingPathFromPlayer
-} from '#/bot/nav/pathExpand.js';
-import type { FlagsAt } from '#/bot/nav/localReach.js';
+} from '#/bot/nav/geometry/pathExpand.js';
+import type { FlagsAt } from '#/bot/nav/geometry/localReach.js';
 
 /** Open 8×8 pad (all walkable). */
 function openFlags(): FlagsAt {

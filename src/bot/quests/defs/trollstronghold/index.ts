@@ -1,20 +1,20 @@
-import { Execution } from '../../../api/Execution.js';
-import { Game } from '../../../api/Game.js';
-import Tile from '../../../api/Tile.js';
+import { Execution } from '../../../api/core/Execution.js';
+import { Game } from '../../../api/core/Game.js';
+import Tile from '../../../api/core/Tile.js';
 import { Equipment } from '../../../api/hud/Equipment.js';
 import { Inventory } from '../../../api/hud/Inventory.js';
 import { Quests } from '../../../api/hud/Quests.js';
 import { Skills } from '../../../api/hud/Skills.js';
-import { GroundItems } from '../../../api/queries/GroundItems.js';
-import { Locs } from '../../../api/queries/Locs.js';
-import { Npcs } from '../../../api/queries/Npcs.js';
-import { Traversal } from '../../../api/Traversal.js';
+import { GroundItems } from '../../../api/entities/GroundItems.js';
+import { Locs } from '../../../api/entities/Locs.js';
+import { Npcs } from '../../../api/entities/Npcs.js';
+import { Traversal } from '../../../nav/Traversal.js';
 import { QUESTS } from '../../data/quests.js';
 import { hasFlag, type QuestModule, type QuestSnapshot, type QuestStep } from '../../engine/types.js';
 import { talkChoosingBy } from '../../exec/primitives.js';
 import { QuestFood } from '../../food.js';
 import { QuestLoadout } from '../../gear.js';
-import { gearOf, weaponOf } from '../../../items/loadoutPlan.js';
+import { gearOf, weaponOf } from '../../../api/items/loadoutPlan.js';
 import {
     BOOT_COST,
     COIN_FLOAT,

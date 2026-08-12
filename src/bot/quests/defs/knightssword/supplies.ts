@@ -1,9 +1,9 @@
-import { Execution } from '../../../api/Execution.js';
+import { Execution } from '../../../api/core/Execution.js';
 import { ChatDialog } from '../../../api/hud/ChatDialog.js';
 import { Inventory } from '../../../api/hud/Inventory.js';
 import { Skills } from '../../../api/hud/Skills.js';
-import { Locs } from '../../../api/queries/Locs.js';
-import { Traversal } from '../../../api/Traversal.js';
+import { Locs } from '../../../api/entities/Locs.js';
+import { Traversal } from '../../../nav/Traversal.js';
 import { DORIC_PICKAXES } from '../doric.js';
 import type { QuestSnapshot, QuestStep } from '../../engine/types.js';
 import { isUnderground } from '../../exec/primitives.js';

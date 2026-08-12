@@ -1,6 +1,6 @@
-import { TaskBot } from '../api/Bot.js';
-import { Execution } from '../api/Execution.js';
-import { Game } from '../api/Game.js';
+import { TaskBot } from '../api/core/Bot.js';
+import { Execution } from '../api/core/Execution.js';
+import { Game } from '../api/core/Game.js';
 import { AdvanceDialog } from './tutorial/Dialog.js';
 import { DesignAccept } from './tutorial/DesignAccept.js';
 import { bankChapelStages } from './tutorial/stages/BankChapel.js';

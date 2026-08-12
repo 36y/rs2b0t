@@ -1,5 +1,5 @@
 import { actions, reader } from '../adapter/ClientAdapter.js';
-import { BotHost } from '../BotHost.js';
+import { BotHost } from './BotHost.js';
 import { Credentials, type Creds } from './Credentials.js';
 import { LoginBackoff } from './LoginBackoff.js';
 import type {

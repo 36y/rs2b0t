@@ -1,6 +1,6 @@
 import { expect, test, describe } from 'bun:test';
 import { SHOP_PRESETS, presetByLabel, presetBuyableNames } from '#/bot/scripts/shopPresets.js';
-import { SHOP_DB } from '#/bot/shops/data/shopdb.js';
+import { SHOP_DB } from '#/bot/api/shops/data/shopdb.js';
 
 describe('shop presets', () => {
     test('labels are unique (they are the dropdown options)', () => {

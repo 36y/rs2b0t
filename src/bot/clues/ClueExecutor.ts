@@ -1,15 +1,15 @@
 // docs/decisions/clue-host-yielding.md
 import { actions, reader } from '#/bot/adapter/ClientAdapter.js';
-import { Execution } from '#/bot/api/Execution.js';
-import { EventSignal } from '#/bot/api/EventSignal.js';
-import { Sustain } from '#/bot/api/Sustain.js';
-import { Traversal } from '#/bot/api/Traversal.js';
-import { Game } from '#/bot/api/Game.js';
+import { Execution } from '#/bot/api/core/Execution.js';
+import { EventSignal } from '#/bot/api/randomevents/EventSignal.js';
+import { Sustain } from '#/bot/api/core/Sustain.js';
+import { Traversal } from '#/bot/nav/Traversal.js';
+import { Game } from '#/bot/api/core/Game.js';
 import { ChatDialog } from '#/bot/api/hud/ChatDialog.js';
 import { Inventory } from '#/bot/api/hud/Inventory.js';
-import { GroundItems } from '#/bot/api/queries/GroundItems.js';
-import { Locs } from '#/bot/api/queries/Locs.js';
-import { Npcs } from '#/bot/api/queries/Npcs.js';
+import { GroundItems } from '#/bot/api/entities/GroundItems.js';
+import { Locs } from '#/bot/api/entities/Locs.js';
+import { Npcs } from '#/bot/api/entities/Npcs.js';
 import type { GroundItem, Loc, Npc } from '#/bot/api/entities/index.js';
 import { GameMessages } from '#/bot/events/gameMessages.js';
 import { identifyStep } from '#/bot/clues/ClueLogic.js';
@@ -26,7 +26,7 @@ import { casketRewardSlots } from '#/bot/clues/packPlan.js';
 import type { ClueRow, ClueStep } from '#/bot/clues/types.js';
 import type { NavPoint } from '#/bot/nav/PathFinder.js';
 import { talkThrough } from '#/bot/quests/exec/primitives.js';
-import { Reach } from '#/bot/api/Reach.js';
+import { Reach } from '#/bot/nav/Reach.js';
 import { WalkExecutor } from '#/bot/nav/WalkExecutor.js';
 
 const COORD_ITEMS = ['Sextant', 'Watch', 'Chart'];

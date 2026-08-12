@@ -1,9 +1,9 @@
-import { Execution } from '../../api/Execution.js';
+import { Execution } from '../../api/core/Execution.js';
 import { Inventory } from '../../api/hud/Inventory.js';
-import { GroundItems } from '../../api/queries/GroundItems.js';
-import { Locs } from '../../api/queries/Locs.js';
-import { Npcs } from '../../api/queries/Npcs.js';
-import Tile from '../../api/Tile.js';
+import { GroundItems } from '../../api/entities/GroundItems.js';
+import { Locs } from '../../api/entities/Locs.js';
+import { Npcs } from '../../api/entities/Npcs.js';
+import Tile from '../../api/core/Tile.js';
 import { talkThrough, walkWithHops, type NpcStop } from '../exec/primitives.js';
 import type { QuestModule, QuestSnapshot, QuestStep } from '../engine/types.js';
 import { QUESTS } from '../data/quests.js';

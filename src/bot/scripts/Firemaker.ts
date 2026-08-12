@@ -1,11 +1,11 @@
 import { actions, reader, type WorldTile } from '../adapter/ClientAdapter.js';
-import { depositAllExcept } from '../api/Banking.js';
-import { LoopingBot } from '../api/Bot.js';
-import { EventSignal } from '../api/EventSignal.js';
-import { Execution } from '../api/Execution.js';
-import { Game } from '../api/Game.js';
-import { Reachability } from '../api/Reachability.js';
-import { Traversal } from '../api/Traversal.js';
+import { depositAllExcept } from '../api/banking/Banking.js';
+import { LoopingBot } from '../api/core/Bot.js';
+import { EventSignal } from '../api/randomevents/EventSignal.js';
+import { Execution } from '../api/core/Execution.js';
+import { Game } from '../api/core/Game.js';
+import { Reachability } from '../nav/geometry/Reachability.js';
+import { Traversal } from '../nav/Traversal.js';
 import { Bank } from '../api/hud/Bank.js';
 import { Inventory } from '../api/hud/Inventory.js';
 import { Paint } from '../api/hud/Paint.js';
@@ -30,7 +30,7 @@ import {
     tileKey,
     type FirePlot
 } from './FiremakingLogic.js';
-import { exactTool, hasAllTools, toolKeepNames, toolRestockPlan, type ToolReq } from '../api/Tools.js';
+import { exactTool, hasAllTools, toolKeepNames, toolRestockPlan, type ToolReq } from '../api/acquisition/Tools.js';
 
 export { FIRE_SPOTS, LOG_LEVELS } from './FiremakingLogic.js';
 

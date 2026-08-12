@@ -9,7 +9,7 @@ import {
     shouldApproachClosedBarrier,
     starvedTerminalIndex,
     type PathTileLike
-} from '#/bot/nav/followMath.js';
+} from '#/bot/nav/geometry/followMath.js';
 
 const t = (x: number, z: number, level = 0): PathTileLike => ({ x, z, level });
 

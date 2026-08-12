@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { BANK_LOCATIONS } from '#/bot/api/BankLocations.js';
-import Tile from '#/bot/api/Tile.js';
+import { BANK_LOCATIONS } from '#/bot/api/banking/BankLocations.js';
+import Tile from '#/bot/api/core/Tile.js';
 import {
     ARDOUGNE_EAST_BANK,
     COW_LOCATIONS,
@@ -11,7 +11,7 @@ import {
     resolveCowLocation,
     shouldBootstrapTollCoins,
     TOLL_COIN_TARGET
-} from '#/bot/api/CowKillerLocations.js';
+} from '#/bot/api/skilling/CowKillerLocations.js';
 
 describe('CowKiller locations', () => {
     test('maps the supported fields to verified cow-spawn centres', () => {

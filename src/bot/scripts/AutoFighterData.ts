@@ -1,4 +1,4 @@
-import Tile from '../api/Tile.js';
+import Tile from '../api/core/Tile.js';
 import { matchesAny } from './ArdyFighterLogic.js';
 
 export const START_POSITION = 'Start position';

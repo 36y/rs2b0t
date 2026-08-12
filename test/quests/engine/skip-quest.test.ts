@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { EventSignal } from '#/bot/api/EventSignal.js';
+import { EventSignal } from '#/bot/api/randomevents/EventSignal.js';
 import { nextQuest, queueRows } from '#/bot/quests/engine/queue.js';
 import type { QuestEligibility } from '#/bot/quests/types.js';
 

@@ -2,6 +2,7 @@
  * Build WorldStateData from live client APIs (main thread only — not for NavWorker).
  */
 
+// eslint-disable-next-line no-restricted-imports -- TODO: route through ClientAdapter
 import { Client } from '#/client/Client.js';
 
 import { reader } from '../adapter/ClientAdapter.js';

@@ -1,7 +1,7 @@
 import { actions, reader } from '../../../adapter/ClientAdapter.js';
-import { Execution } from '../../../api/Execution.js';
-import { Game } from '../../../api/Game.js';
-import { Traversal } from '../../../api/Traversal.js';
+import { Execution } from '../../../api/core/Execution.js';
+import { Game } from '../../../api/core/Game.js';
+import { Traversal } from '../../../nav/Traversal.js';
 import { Inventory } from '../../../api/hud/Inventory.js';
 import { SV_ITEM, SV_LOC, SV_TILE } from './areas.js';
 import { driveChoice, driveUntil, heldId, here, locNear, promptLoc, settleScene, useOnLoc } from './scene.js';

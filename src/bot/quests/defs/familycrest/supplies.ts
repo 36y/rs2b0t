@@ -1,8 +1,8 @@
 import { Skills } from '../../../api/hud/Skills.js';
-import { Traversal } from '../../../api/Traversal.js';
+import { Traversal } from '../../../nav/Traversal.js';
 import type { QuestSnapshot, QuestStep } from '../../engine/types.js';
 import { ANTIPOISON_IDS, DUEL_RING_IDS, FC_BANK, FC_ID, FC_ITEM, FC_SHOP, PICKAXES } from './areas.js';
-import type Tile from '../../../api/Tile.js';
+import type Tile from '../../../api/core/Tile.js';
 
 export interface FcItem {
     id: number;

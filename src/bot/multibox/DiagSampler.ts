@@ -5,9 +5,9 @@
 // incident, and a coarse tier long enough to answer "what did it look like an hour
 // ago" -- the question this whole subsystem exists to answer.
 
-import { DiagRing } from '../diag/DiagRing.js';
-import type { FrameSample } from '../diag/BotDiag.js';
-import type { FreezeWatch } from '../diag/FreezeWatch.js';
+import { DiagRing } from '../runtime/diag/DiagRing.js';
+import type { FrameSample } from '../runtime/diag/BotDiag.js';
+import type { FreezeWatch } from '../runtime/diag/FreezeWatch.js';
 
 export const HOT_INTERVAL_MS = 1000;
 export const HOT_CAPACITY = 600; // 10 minutes

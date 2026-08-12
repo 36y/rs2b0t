@@ -1,8 +1,8 @@
 import * as RealInventory from '#/bot/api/hud/Inventory.js';
 import { afterAll, beforeEach, describe, expect, test } from 'bun:test';
 
-import { Execution } from '#/bot/api/Execution.js';
-import { Sustain } from '#/bot/api/Sustain.js';
+import { Execution } from '#/bot/api/core/Execution.js';
+import { Sustain } from '#/bot/api/core/Sustain.js';
 import { Skills } from '#/bot/api/hud/Skills.js';
 import { ClueExecutor } from '#/bot/clues/ClueExecutor.js';
 import { SolveClue, type SolveClueHost } from '#/bot/clues/SolveClue.js';

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { depositAllExcept } from '#/bot/api/bankRules.js';
+import { depositAllExcept } from '#/bot/api/banking/bankRules.js';
 import {
     escapeNeeded,
     gearCandidates,

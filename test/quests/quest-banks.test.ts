@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
 import { QUEST_DEFS } from '#/bot/quests/defs/index.js';
-import { BANK_LOCATIONS } from '#/bot/api/BankLocations.js';
-import type Tile from '#/bot/api/Tile.js';
+import { BANK_LOCATIONS } from '#/bot/api/banking/BankLocations.js';
+import type Tile from '#/bot/api/core/Tile.js';
 
 const bankKeys = new Set(BANK_LOCATIONS.map(b => `${b.tile.x},${b.tile.z},${b.tile.level}`));
 

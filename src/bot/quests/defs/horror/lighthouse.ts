@@ -1,11 +1,11 @@
-import { Execution } from '../../../api/Execution.js';
-import { Game } from '../../../api/Game.js';
-import { Reach } from '../../../api/Reach.js';
-import type Tile from '../../../api/Tile.js';
-import { Traversal } from '../../../api/Traversal.js';
+import { Execution } from '../../../api/core/Execution.js';
+import { Game } from '../../../api/core/Game.js';
+import { Reach } from '../../../nav/Reach.js';
+import type Tile from '../../../api/core/Tile.js';
+import { Traversal } from '../../../nav/Traversal.js';
 import { ChatDialog } from '../../../api/hud/ChatDialog.js';
 import { Inventory } from '../../../api/hud/Inventory.js';
-import { Locs } from '../../../api/queries/Locs.js';
+import { Locs } from '../../../api/entities/Locs.js';
 import { settleScene } from '../../exec/prompts.js';
 import { HD_ID, HD_ITEM, HD_LOC, HD_TILE } from './areas.js';
 import { HD_FLAG } from './journal.js';

@@ -1,4 +1,4 @@
-import Tile from '../../../api/Tile.js';
+import Tile from '../../../api/core/Tile.js';
 import type { QuestSnapshot } from '../../engine/types.js';
 
 export interface EwItem {

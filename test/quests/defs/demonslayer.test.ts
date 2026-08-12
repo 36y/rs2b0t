@@ -1,11 +1,11 @@
 import { afterAll, beforeEach, describe, expect, test } from 'bun:test';
 
-import { Execution } from '#/bot/api/Execution.js';
-import { Game } from '#/bot/api/Game.js';
-import { Traversal } from '#/bot/api/Traversal.js';
+import { Execution } from '#/bot/api/core/Execution.js';
+import { Game } from '#/bot/api/core/Game.js';
+import { Traversal } from '#/bot/nav/Traversal.js';
 import * as RealInventory from '#/bot/api/hud/Inventory.js';
-import { GroundItems } from '#/bot/api/queries/GroundItems.js';
-import { Npcs } from '#/bot/api/queries/Npcs.js';
+import { GroundItems } from '#/bot/api/entities/GroundItems.js';
+import { Npcs } from '#/bot/api/entities/Npcs.js';
 import { stubProps } from '../../lib/stubSingletons.js';
 
 interface TestNpc {

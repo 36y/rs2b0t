@@ -1,4 +1,4 @@
-import Tile from '../api/Tile.js';
+import Tile from '../api/core/Tile.js';
 
 export const RAFT_STAND = new Tile(2510, 3493, 0);
 export const RAFT_LANDING = new Tile(2512, 3481, 0);

@@ -9,7 +9,7 @@
  *
  * Catches door/approach regressions (Seers Large door) without a full bank-home loop.
  *
- * Case list is mirrored from api/CookingRanges FISH_CAMP_COOK_PLANS (keep in sync).
+ * Case list is mirrored from api/catalogs/CookingRanges FISH_CAMP_COOK_PLANS (keep in sync).
  * Do not import from src/bot (client graphics init) — this tool runs under plain Bun.
  *
  * Usage:
@@ -59,7 +59,7 @@ type Case = {
 };
 
 /**
- * Keep aligned with src/bot/api/CookingRanges.ts FISH_CAMP_COOK_PLANS +
+ * Keep aligned with src/bot/api/catalogs/CookingRanges.ts FISH_CAMP_COOK_PLANS +
  * FishingLocations camp spots. Unit test listFishCampRangePathCases guards API side.
  */
 const CASES_ALL: Case[] = [

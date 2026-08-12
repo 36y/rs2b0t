@@ -1,11 +1,11 @@
-import { TaskBot, type Task } from '../api/Bot.js';
-import { Execution } from '../api/Execution.js';
-import { Game } from '../api/Game.js';
-import Tile from '../api/Tile.js';
+import { TaskBot, type Task } from '../api/core/Bot.js';
+import { Execution } from '../api/core/Execution.js';
+import { Game } from '../api/core/Game.js';
+import Tile from '../api/core/Tile.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
 import { DeathRecovery } from '../api/tasks/DeathRecovery.js';
 import { PeriodicBank } from '../api/tasks/PeriodicBank.js';
-import { PERIODIC_BANK_SETTINGS, depositAllExcept, parseBankStrategy, type BankDestination } from '../api/Banking.js';
+import { PERIODIC_BANK_SETTINGS, depositAllExcept, parseBankStrategy, type BankDestination } from '../api/banking/Banking.js';
 import {
     COMBAT_STYLE_OPTIONS,
     RANGE_STYLE_OPTIONS,
@@ -13,25 +13,25 @@ import {
     parseCombatStyle,
     parseRangeStyle,
     type MeleeCombatStyle
-} from '../api/CombatStyle.js';
+} from '../api/combat/CombatStyle.js';
 import { Autocast } from '../api/combat/Autocast.js';
 import { castsAvailable, runeWithdrawList } from '../api/combat/CombatStyleLogic.js';
 import { SPELL_DB } from '../api/combat/data/spelldb.js';
 import { ChatDialog } from '../api/hud/ChatDialog.js';
-import { GroundItems } from '../api/queries/GroundItems.js';
-import { Npcs, type Npc } from '../api/queries/Npcs.js';
+import { GroundItems } from '../api/entities/GroundItems.js';
+import { Npcs, type Npc } from '../api/entities/Npcs.js';
 import { Inventory } from '../api/hud/Inventory.js';
 import { Equipment } from '../api/hud/Equipment.js';
 import { Bank } from '../api/hud/Bank.js';
 import { Skills } from '../api/hud/Skills.js';
 import { Paint } from '../api/hud/Paint.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
-import { Traversal } from '../api/Traversal.js';
+import { Traversal } from '../nav/Traversal.js';
 import { CANT_REACH, GameMessages } from '../events/gameMessages.js';
 import { RecoveryHints } from '../runtime/RecoveryHints.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
-import { Reach } from '../api/Reach.js';
+import { Reach } from '../nav/Reach.js';
 
 const COMBAT_SKILLS = ['attack', 'strength', 'defence', 'hitpoints', 'ranged', 'magic'];
 

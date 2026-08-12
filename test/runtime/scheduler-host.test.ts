@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { Execution } from '#/bot/api/Execution.js';
-import { BotHost } from '#/bot/BotHost.js';
+import { Execution } from '#/bot/api/core/Execution.js';
+import { BotHost } from '#/bot/runtime/BotHost.js';
 import { Scheduler } from '#/bot/runtime/Scheduler.js';
 import { ScriptContext } from '#/bot/runtime/ScriptContext.js';
 

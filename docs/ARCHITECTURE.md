@@ -11,4 +11,4 @@ boundary between bot code and client internals.
 | Page | Covers |
 |---|---|
 | [Architecture](decisions/architecture.md) | the layers, interact() to packet, the ABI boundary, per-instance storage, frame-gap insurance |
-| [Import fences](reference/import-fences.md) | the two lint fences, their exemptions, and why the client one does not currently fire |
+| [Import fences](reference/import-fences.md) | the two lint fences, their exemptions, and the quarantined violations |

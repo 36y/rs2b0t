@@ -1,13 +1,13 @@
 import { describe, expect, test } from 'bun:test';
-import { BANK_LOCATIONS } from '#/bot/api/BankLocations.js';
-import Tile from '#/bot/api/Tile.js';
+import { BANK_LOCATIONS } from '#/bot/api/banking/BankLocations.js';
+import Tile from '#/bot/api/core/Tile.js';
 import {
     MINING_LOCATIONS,
     MINING_LOCATION_OPTION_LABELS,
     MINING_LOCATION_OPTIONS,
     miningLocationLabel,
     resolveMiningLocation
-} from '#/bot/api/MiningLocations.js';
+} from '#/bot/api/skilling/MiningLocations.js';
 
 const bankTiles = new Set(BANK_LOCATIONS.map(b => `${b.tile.x},${b.tile.z},${b.tile.level}`));
 

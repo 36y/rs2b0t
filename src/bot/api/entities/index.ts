@@ -1,7 +1,7 @@
 import type { GroundItemSnapshot, LocSnapshot, NpcSnapshot, PlayerSnapshot } from '../../adapter/ClientAdapter.js';
 import { reader } from '../../adapter/ClientAdapter.js';
 import { ActionRouter } from '../../input/ActionRouter.js';
-import Tile from '../Tile.js';
+import Tile from '../core/Tile.js';
 
 /**
  * Something with right-click actions that can be operated by name.

@@ -1,13 +1,13 @@
 
-import type { Task } from '../api/Bot.js';
-import { EventSignal } from '../api/EventSignal.js';
-import { Execution } from '../api/Execution.js';
-import { Game } from '../api/Game.js';
-import { Reachability } from '../api/Reachability.js';
-import { Traversal } from '../api/Traversal.js';
+import type { Task } from '../api/core/Bot.js';
+import { EventSignal } from '../api/randomevents/EventSignal.js';
+import { Execution } from '../api/core/Execution.js';
+import { Game } from '../api/core/Game.js';
+import { Reachability } from '../nav/geometry/Reachability.js';
+import { Traversal } from '../nav/Traversal.js';
 import { Inventory } from '../api/hud/Inventory.js';
 import { Skills } from '../api/hud/Skills.js';
-import { Npcs } from '../api/queries/Npcs.js';
+import { Npcs } from '../api/entities/Npcs.js';
 import { reader } from '../adapter/ClientAdapter.js';
 import { GameMessages } from '../events/gameMessages.js';
 import {

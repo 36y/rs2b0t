@@ -124,7 +124,7 @@ Horror from the Deep added six, and the first two are not quest facts at all:
   deposit belongs in the one-shot kit, drawn after them.
 - **A prerequisite with its own name belongs outside the quest that found it.** Alfred
   Grimhand's Barcrawl is what opens the Barbarian Outpost gate, and Horror needs it only
-  because Gunnjorn is behind that gate. It lives in [`src/bot/barcrawl/`](../../src/bot/barcrawl/)
+  because Gunnjorn is behind that gate. It lives in [`src/bot/quests/barcrawl/`](../../src/bot/quests/barcrawl/)
   — `BarcrawlLogic.ts` for the ten bars and the card parse, `RunBarcrawl.ts` for the
   driver — with a `Barcrawl` script that runs the tour on its own and a quest branch that
   calls the same `ensureBarcrawl`. The quest keeps only the coin `QuestStep`, because that

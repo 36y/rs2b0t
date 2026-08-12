@@ -7,7 +7,7 @@ import {
     isDisposableGatherJunk,
     matchesCommonBankLoot,
     PERIODIC_BANK_SETTINGS
-} from '#/bot/api/Banking.js';
+} from '#/bot/api/banking/Banking.js';
 
 describe('matchesCommonBankLoot', () => {
     test('matches each junk category (case-insensitive contains)', () => {

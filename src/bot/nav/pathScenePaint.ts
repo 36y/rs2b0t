@@ -6,7 +6,9 @@
  * Still drawn after model composite (true z-buffer would need World inject).
  */
 
+// eslint-disable-next-line no-restricted-imports -- TODO: route through ClientAdapter
 import type { Client } from '#/client/Client.js';
+// eslint-disable-next-line no-restricted-imports -- TODO: route through ClientAdapter
 import Pix2D from '#/graphics/Pix2D.js';
 
 import { reader } from '../adapter/ClientAdapter.js';
@@ -19,9 +21,9 @@ import {
 } from './pathOverlay.js';
 import { parseHtmlColor, NAV_PATH_PAINT_DEFAULTS } from './pathPaintTheme.js';
 import { PathPublish } from './pathPublish.js';
-import { remainingPathFromPlayer } from './pathExpand.js';
+import { remainingPathFromPlayer } from './geometry/pathExpand.js';
 import { SettingsStore } from '../runtime/Settings.js';
-import { Game } from '../api/Game.js';
+import { Game } from '../api/core/Game.js';
 
 function rgbInt(c: { r: number; g: number; b: number }): number {
     return ((c.r & 0xff) << 16) | ((c.g & 0xff) << 8) | (c.b & 0xff);

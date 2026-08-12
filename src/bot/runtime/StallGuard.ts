@@ -1,4 +1,4 @@
-import { BotHost } from '../BotHost.js';
+import { BotHost } from './BotHost.js';
 import { RecoveryHints } from './RecoveryHints.js';
 import { ScriptRunner } from './ScriptRunner.js';
 

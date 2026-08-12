@@ -1,7 +1,7 @@
 import { Equipment } from '../api/hud/Equipment.js';
-import { Loadouts } from '../items/loadoutStore.js';
-import { removeLoadout, uniqueName, upsertLoadout, type Loadout } from '../items/loadouts.js';
-import type { ItemRecord, Slot } from '../items/types.js';
+import { Loadouts } from '../api/items/loadoutStore.js';
+import { removeLoadout, uniqueName, upsertLoadout, type Loadout } from '../api/items/loadouts.js';
+import type { ItemRecord, Slot } from '../api/items/types.js';
 import { el } from './dom.js';
 import { itemIconDataUrl } from './itemIcon.js';
 import {

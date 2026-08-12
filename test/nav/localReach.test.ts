@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { CollisionFlag } from '#/dash3d/CollisionFlag.js';
-import { canReachLocal, canStepLocal, type FlagsAt } from '#/bot/nav/localReach.js';
+import { canReachLocal, canStepLocal, type FlagsAt } from '#/bot/nav/geometry/localReach.js';
 
 function grid(rows: string[]): FlagsAt {
     return (lx, lz) => {

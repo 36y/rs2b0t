@@ -1,10 +1,10 @@
 import { actions, reader } from '../../adapter/ClientAdapter.js';
-import { Execution } from '../../api/Execution.js';
+import { Execution } from '../../api/core/Execution.js';
 import { Inventory } from '../../api/hud/Inventory.js';
 import { Quests } from '../../api/hud/Quests.js';
-import { GroundItems } from '../../api/queries/GroundItems.js';
-import { Traversal } from '../../api/Traversal.js';
-import Tile from '../../api/Tile.js';
+import { GroundItems } from '../../api/entities/GroundItems.js';
+import { Traversal } from '../../nav/Traversal.js';
+import Tile from '../../api/core/Tile.js';
 import { QUESTS } from '../data/quests.js';
 import type { QuestModule, QuestSnapshot, QuestStep } from '../engine/types.js';
 import { gotoNpc, talkStrict, type NpcStop } from '../exec/primitives.js';

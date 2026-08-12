@@ -1,9 +1,9 @@
-import { Execution } from '../../api/Execution.js';
+import { Execution } from '../../api/core/Execution.js';
 import { GameMessages } from '../../events/gameMessages.js';
 import { Inventory } from '../../api/hud/Inventory.js';
-import { Locs } from '../../api/queries/Locs.js';
-import { Traversal } from '../../api/Traversal.js';
-import Tile from '../../api/Tile.js';
+import { Locs } from '../../api/entities/Locs.js';
+import { Traversal } from '../../nav/Traversal.js';
+import Tile from '../../api/core/Tile.js';
 import type { NpcStop } from '../exec/primitives.js';
 import type { QuestModule, QuestSnapshot, QuestStep } from '../engine/types.js';
 import { QUESTS } from '../data/quests.js';

@@ -1,8 +1,8 @@
 import { reader, type WorldTile } from '../adapter/ClientAdapter.js';
-import type { AbstractBot } from '../api/Bot.js';
-import { Execution } from '../api/Execution.js';
-import { RandomEvents } from '../api/RandomEvents.js';
-import { Traversal } from '../api/Traversal.js';
+import type { AbstractBot } from '../api/core/Bot.js';
+import { Execution } from '../api/core/Execution.js';
+import { RandomEvents } from '../api/randomevents/RandomEvents.js';
+import { Traversal } from '../nav/Traversal.js';
 import { bus } from '../events/EventBus.js';
 import { WalkExecutor } from '../nav/WalkExecutor.js';
 import { ScriptAborted, type ScriptContext } from './ScriptContext.js';

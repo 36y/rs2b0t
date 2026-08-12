@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { LoadoutPanel } from '#/bot/ui/LoadoutPanel.js';
-import { Loadouts } from '#/bot/items/loadoutStore.js';
+import { Loadouts } from '#/bot/api/items/loadoutStore.js';
 
 beforeEach(() => {
     Loadouts.save([]);

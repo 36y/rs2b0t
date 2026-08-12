@@ -1,4 +1,4 @@
-import type { Loadout } from '../items/loadouts.js';
+import type { Loadout } from '../api/items/loadouts.js';
 
 /** Modules have no settings bag, so AIOQuester resolves the selection and parks it here. */
 export const QuestLoadout = { current: null as Loadout | null };

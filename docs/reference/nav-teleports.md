@@ -56,7 +56,7 @@ off → force-off. Other scripts use Global / A* cost (default span 0).
 
 ### Costs (lowest wins)
 
-Path costs are **time in run-tile units** (`src/bot/nav/edgeCosts.ts`, idea **@lulwut**),
+Path costs are **time in run-tile units** (`src/bot/nav/geometry/edgeCosts.ts`, idea **@lulwut**),
 aligned with server movement:
 
 | Mode | Server | Cost of one map step |

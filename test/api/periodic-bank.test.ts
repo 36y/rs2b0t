@@ -2,9 +2,9 @@
    monkey-patched per test; typed shims would re-state the whole surface for no safety. */
 import { expect, test } from 'bun:test';
 import { PeriodicBank } from '#/bot/api/tasks/PeriodicBank.js';
-import { Banking } from '#/bot/api/Banking.js';
-import { Game } from '#/bot/api/Game.js';
-import { Execution } from '#/bot/api/Execution.js';
+import { Banking } from '#/bot/api/banking/Banking.js';
+import { Game } from '#/bot/api/core/Game.js';
+import { Execution } from '#/bot/api/core/Execution.js';
 
 function make(over: Partial<ConstructorParameters<typeof PeriodicBank>[0]> = {}) {
     return new PeriodicBank({

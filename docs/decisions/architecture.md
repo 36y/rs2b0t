@@ -14,7 +14,7 @@ would have produced.
 
 ```
 src/bot/scripts/     the bots themselves            ─┐
-src/bot/api/         Game, entities, hud, queries    │  bot code
+src/bot/api/         core, entities, hud, movement, …  │  bot code
 src/bot/nav|quests|  subsystems                      │
     clues|shops                                      │
 src/bot/runtime/     script lifecycle, ABI, settings ─┘

@@ -1,6 +1,6 @@
 import { reader } from '../../adapter/ClientAdapter.js';
-import { BotHost } from '../../BotHost.js';
-import { Execution } from '../Execution.js';
+import { BotHost } from '../../runtime/BotHost.js';
+import { Execution } from '../core/Execution.js';
 import { Inventory } from '../hud/Inventory.js';
 import { AttackClock } from './eatTiming.js';
 

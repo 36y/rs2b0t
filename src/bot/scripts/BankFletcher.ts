@@ -1,7 +1,7 @@
-import { TaskBot, type Task } from '../api/Bot.js';
-import { Execution } from '../api/Execution.js';
-import { Game } from '../api/Game.js';
-import Tile from '../api/Tile.js';
+import { TaskBot, type Task } from '../api/core/Bot.js';
+import { Execution } from '../api/core/Execution.js';
+import { Game } from '../api/core/Game.js';
+import Tile from '../api/core/Tile.js';
 import { ChatDialog } from '../api/hud/ChatDialog.js';
 import { Inventory, InvItem } from '../api/hud/Inventory.js';
 import { Bank, withdrawOp } from '../api/hud/Bank.js';

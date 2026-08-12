@@ -1,11 +1,11 @@
 // docs/reference/quest-primitives.md
-import { Execution } from '../../api/Execution.js';
-import { Reach } from '../../api/Reach.js';
-import type Tile from '../../api/Tile.js';
-import { Traversal } from '../../api/Traversal.js';
+import { Execution } from '../../api/core/Execution.js';
+import { Reach } from '../../nav/Reach.js';
+import type Tile from '../../api/core/Tile.js';
+import { Traversal } from '../../nav/Traversal.js';
 import { ChatDialog } from '../../api/hud/ChatDialog.js';
 import { Inventory } from '../../api/hud/Inventory.js';
-import { Locs, type Loc } from '../../api/queries/Locs.js';
+import { Locs, type Loc } from '../../api/entities/Locs.js';
 import { pickPreferred } from './primitives.js';
 
 export function heldId(id: number): number {

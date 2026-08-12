@@ -1,7 +1,7 @@
-import { TaskBot, type Task } from '../api/Bot.js';
+import { TaskBot, type Task } from '../api/core/Bot.js';
 import { foodCount as countFood, isFoodItem, foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
-import { Execution } from '../api/Execution.js';
-import { Game } from '../api/Game.js';
+import { Execution } from '../api/core/Execution.js';
+import { Game } from '../api/core/Game.js';
 import { Bank } from '../api/hud/Bank.js';
 import { ChatDialog } from '../api/hud/ChatDialog.js';
 import { Equipment } from '../api/hud/Equipment.js';
@@ -9,12 +9,12 @@ import { Inventory, type InvItem } from '../api/hud/Inventory.js';
 import { Paint } from '../api/hud/Paint.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
 import { Skills } from '../api/hud/Skills.js';
-import { GroundItems } from '../api/queries/GroundItems.js';
-import { Locs } from '../api/queries/Locs.js';
-import { Npcs, type Npc } from '../api/queries/Npcs.js';
+import { GroundItems } from '../api/entities/GroundItems.js';
+import { Locs } from '../api/entities/Locs.js';
+import { Npcs, type Npc } from '../api/entities/Npcs.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
-import Tile from '../api/Tile.js';
-import { Traversal } from '../api/Traversal.js';
+import Tile from '../api/core/Tile.js';
+import { Traversal } from '../nav/Traversal.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import { GameMessages } from '../events/gameMessages.js';
@@ -37,8 +37,8 @@ import {
     type DruidLocationName,
     type DruidSpot
 } from './ChaosDruidLogic.js';
-import { scriptFood } from '../items/loadoutPlan.js';
-import { LOADOUT_SETTING } from '../items/loadoutSetting.js';
+import { scriptFood } from '../api/items/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../api/items/loadoutSetting.js';
 
 export const SETTINGS: SettingsSchema = {
     location: {

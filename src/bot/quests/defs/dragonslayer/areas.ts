@@ -1,4 +1,4 @@
-import Tile from '../../../api/Tile.js';
+import Tile from '../../../api/core/Tile.js';
 
 /** Every coordinate here was read out of the engine's own map spawns. */
 export const DS_NPC = {

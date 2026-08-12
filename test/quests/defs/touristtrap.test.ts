@@ -14,7 +14,7 @@ import {
 import type { WorldTile } from '#/bot/adapter/ClientAdapter.js';
 import type { QuestSnapshot, QuestStep } from '#/bot/quests/engine/types.js';
 import { QuestFood } from '#/bot/quests/food.js';
-import { EventSignal } from '#/bot/api/EventSignal.js';
+import { EventSignal } from '#/bot/api/randomevents/EventSignal.js';
 import { GameMessages } from '#/bot/events/gameMessages.js';
 
 const tile = (x: number, z: number, level = 0): WorldTile => ({ x, z, level });

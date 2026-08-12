@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { BANK_LOCATIONS, approachOf, bankDistance, nearestBank, nearestBanks, nearestUsableBank } from '#/bot/api/BankLocations.js';
-import type { BankLocation } from '#/bot/api/BankLocations.js';
+import { BANK_LOCATIONS, approachOf, bankDistance, nearestBank, nearestBanks, nearestUsableBank } from '#/bot/api/banking/BankLocations.js';
+import type { BankLocation } from '#/bot/api/banking/BankLocations.js';
 
 test('bank names are unique', () => {
     const names = BANK_LOCATIONS.map(b => b.name);

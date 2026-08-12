@@ -1,5 +1,5 @@
 import { actions, reader } from '../../adapter/ClientAdapter.js';
-import { Execution } from '../Execution.js';
+import { Execution } from '../core/Execution.js';
 
 /**
  * Closing main modals.

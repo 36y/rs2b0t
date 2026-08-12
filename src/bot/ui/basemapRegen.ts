@@ -5,6 +5,7 @@
  * the Rebuild button path. Freezes the tab briefly while worldmap.jag decodes + paints.
  */
 import { sleep } from '#/util/JsUtil.js';
+// eslint-disable-next-line no-restricted-imports -- TODO: route through ClientAdapter
 import { canvas, canvas2d } from '#/graphics/Canvas.js';
 import {
     BASEMAP_SCHEMA,

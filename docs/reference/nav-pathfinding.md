@@ -73,7 +73,7 @@ pass it:
 3. watches for arrival, deviation, a shut barrier, or a stall;
 4. re-paths when the world disagrees with the plan.
 
-The pure geometry is split into [`followMath.ts`](../../src/bot/nav/followMath.ts) so it
+The pure geometry is split into [`followMath.ts`](../../src/bot/nav/geometry/followMath.ts) so it
 can be unit-tested without a client — [`test/nav/followMath.test.ts`](../../test/nav/followMath.test.ts)
 is the executable specification of the rules below.
 

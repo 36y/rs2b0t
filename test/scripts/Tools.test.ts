@@ -19,7 +19,7 @@ import {
     toolKitLabel,
     toolRestockPlan,
     toolsNeedingEquip
-} from '#/bot/api/Tools.js';
+} from '#/bot/api/acquisition/Tools.js';
 
 describe('Tools kit', () => {
     const bank = (names: string[]) => (name: string) => (names.includes(name) ? 1 : 0);

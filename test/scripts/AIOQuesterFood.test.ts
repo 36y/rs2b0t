@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { Execution } from '#/bot/api/Execution.js';
+import { Execution } from '#/bot/api/core/Execution.js';
 import { Inventory, type InvItem } from '#/bot/api/hud/Inventory.js';
 import { Skills } from '#/bot/api/hud/Skills.js';
 import AIOQuester from '#/bot/scripts/AIOQuester.js';

@@ -1,9 +1,9 @@
 import type { WorldTile } from '../adapter/ClientAdapter.js';
 import { reader } from '../adapter/ClientAdapter.js';
-import { Execution } from '../api/Execution.js';
-import { Reachability } from '../api/Reachability.js';
+import { Execution } from '../api/core/Execution.js';
+import { Reachability } from './geometry/Reachability.js';
 import { ActionRouter } from '../input/ActionRouter.js';
-import { isArrived } from './arrival.js';
+import { isArrived } from './geometry/arrival.js';
 
 export const DirectNavigator = {
     walk(dest: WorldTile): boolean | Promise<boolean> {

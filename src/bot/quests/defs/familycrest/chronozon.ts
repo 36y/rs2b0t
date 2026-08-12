@@ -1,11 +1,11 @@
-import { Execution } from '../../../api/Execution.js';
-import { Game } from '../../../api/Game.js';
-import { Sustain } from '../../../api/Sustain.js';
-import Tile from '../../../api/Tile.js';
-import { Traversal } from '../../../api/Traversal.js';
+import { Execution } from '../../../api/core/Execution.js';
+import { Game } from '../../../api/core/Game.js';
+import { Sustain } from '../../../api/core/Sustain.js';
+import Tile from '../../../api/core/Tile.js';
+import { Traversal } from '../../../nav/Traversal.js';
 import { Inventory } from '../../../api/hud/Inventory.js';
-import { GroundItems } from '../../../api/queries/GroundItems.js';
-import { Npcs } from '../../../api/queries/Npcs.js';
+import { GroundItems } from '../../../api/entities/GroundItems.js';
+import { Npcs } from '../../../api/entities/Npcs.js';
 import type { Npc } from '../../../api/entities/index.js';
 import { GameMessages } from '../../../events/gameMessages.js';
 import { heldId, settleScene } from '../../exec/prompts.js';

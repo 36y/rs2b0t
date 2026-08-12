@@ -1,9 +1,9 @@
 import type { WorldTile } from '../../adapter/ClientAdapter.js';
-import type { AbstractBot, Task } from '../Bot.js';
-import { Execution } from '../Execution.js';
-import { Game } from '../Game.js';
-import { AcquireTask, hasAll, type ItemNeed } from '../ItemAcquisition.js';
-import { Traversal } from '../Traversal.js';
+import type { AbstractBot, Task } from '../core/Bot.js';
+import { Execution } from '../core/Execution.js';
+import { Game } from '../core/Game.js';
+import { AcquireTask, hasAll, type ItemNeed } from '../acquisition/ItemAcquisition.js';
+import { Traversal } from '../../nav/Traversal.js';
 
 const DEATH_RE = /oh dear.*you are dead/i;
 

@@ -1,4 +1,4 @@
-import Tile from '#/bot/api/Tile.js';
+import Tile from '#/bot/api/core/Tile.js';
 import { CLUE_DB } from '#/bot/clues/data/cluedb.js';
 import type { NpcStop } from '#/bot/quests/exec/primitives.js';
 

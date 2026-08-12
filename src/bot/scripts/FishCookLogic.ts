@@ -184,7 +184,7 @@ export function cookPaceTicks(_rand: () => number = Math.random): number {
     return 1;
 }
 
-/** 1–2 ticks between bank UI steps (aligned with api/Banking bankPaceTicks). */
+/** 1–2 ticks between bank UI steps (aligned with api/banking/Banking bankPaceTicks). */
 export function bankPaceTicks(rand: () => number = Math.random): number {
     return rand() < 0.35 ? 2 : 1;
 }

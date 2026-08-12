@@ -1,10 +1,10 @@
 import { actions } from '../adapter/ClientAdapter.js';
-import { BANK_LOCATIONS, bankUnlocked, type BankLocation } from '../api/BankLocations.js';
-import { LoopingBot } from '../api/Bot.js';
-import { Execution } from '../api/Execution.js';
-import { Game } from '../api/Game.js';
-import type Tile from '../api/Tile.js';
-import { Traversal } from '../api/Traversal.js';
+import { BANK_LOCATIONS, bankUnlocked, type BankLocation } from '../api/banking/BankLocations.js';
+import { LoopingBot } from '../api/core/Bot.js';
+import { Execution } from '../api/core/Execution.js';
+import { Game } from '../api/core/Game.js';
+import type Tile from '../api/core/Tile.js';
+import { Traversal } from '../nav/Traversal.js';
 import { DeathRecovery } from '../api/tasks/DeathRecovery.js';
 import { Bank } from '../api/hud/Bank.js';
 import { ChatDialog } from '../api/hud/ChatDialog.js';
@@ -12,7 +12,7 @@ import { Inventory } from '../api/hud/Inventory.js';
 import { Paint } from '../api/hud/Paint.js';
 import { Skills } from '../api/hud/Skills.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
-import { Locs, type Loc } from '../api/queries/Locs.js';
+import { Locs, type Loc } from '../api/entities/Locs.js';
 import { WalkExecutor } from '../nav/WalkExecutor.js';
 import {
     JUNGLE_HERBS,

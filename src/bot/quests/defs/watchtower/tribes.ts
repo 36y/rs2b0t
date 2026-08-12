@@ -1,10 +1,10 @@
-import { Execution } from '../../../api/Execution.js';
-import { Game } from '../../../api/Game.js';
+import { Execution } from '../../../api/core/Execution.js';
+import { Game } from '../../../api/core/Game.js';
 import { Inventory } from '../../../api/hud/Inventory.js';
-import { GroundItems } from '../../../api/queries/GroundItems.js';
-import { Locs, type Loc } from '../../../api/queries/Locs.js';
-import { Reach } from '../../../api/Reach.js';
-import { Traversal } from '../../../api/Traversal.js';
+import { GroundItems } from '../../../api/entities/GroundItems.js';
+import { Locs, type Loc } from '../../../api/entities/Locs.js';
+import { Reach } from '../../../nav/Reach.js';
+import { Traversal } from '../../../nav/Traversal.js';
 import { talkStrict, talkThrough } from '../../exec/primitives.js';
 import { WT_ITEM, WT_LOC, WT_NPC, WT_TILE, watchtowerArea } from './areas.js';
 import { settleScene } from './scene.js';

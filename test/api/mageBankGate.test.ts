@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
-import { BANK_LOCATIONS, USE_MAGE_BANK, bankUnlocked, nearestBank } from '#/bot/api/BankLocations.js';
+import { BANK_LOCATIONS, USE_MAGE_BANK, bankUnlocked, nearestBank } from '#/bot/api/banking/BankLocations.js';
 import TRANSPORTS from '#/bot/nav/data/transports.json';
 
 const MAGE = BANK_LOCATIONS.find(b => b.name === 'Mage Arena')!;

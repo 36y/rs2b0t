@@ -1,4 +1,4 @@
-import { BotHost } from '../BotHost.js';
+import { BotHost } from '../runtime/BotHost.js';
 import { isNavPathPaintEnabled } from '../nav/pathOverlay.js';
 import { paintNavPath } from '../nav/pathOverlay.js';
 import { PathPublish } from '../nav/pathPublish.js';

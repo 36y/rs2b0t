@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { findForwardRecoveryIndex } from '#/bot/nav/routeRecovery.js';
-import type { PathTileLike } from '#/bot/nav/followMath.js';
+import type { PathTileLike } from '#/bot/nav/geometry/followMath.js';
 
 const t = (x: number, z: number, level = 0): PathTileLike => ({ x, z, level });
 

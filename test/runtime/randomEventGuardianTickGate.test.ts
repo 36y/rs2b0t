@@ -4,9 +4,9 @@ mock.module('#3rdparty/audio.js', () => ({ playWave: async (): Promise<void> => 
 mock.module('#3rdparty/tinymidipcm.js', () => ({ playMidi: (): void => {}, setMidiVolume: (): void => {}, stopMidi: (): void => {} }));
 
 const { RandomEventGuardian } = await import('#/bot/runtime/RandomEventGuardian.js');
-const { RandomEvents } = await import('#/bot/api/RandomEvents.js');
-const { Game } = await import('#/bot/api/Game.js');
-const { BotHost } = await import('#/bot/BotHost.js');
+const { RandomEvents } = await import('#/bot/api/randomevents/RandomEvents.js');
+const { Game } = await import('#/bot/api/core/Game.js');
+const { BotHost } = await import('#/bot/runtime/BotHost.js');
 
 /**
  * detectRaw() walks every NPC twice and every scene loc, so it must run once per

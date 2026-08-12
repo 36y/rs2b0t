@@ -20,9 +20,9 @@ import {
     shouldYieldGathering,
     spotWithinGatherRange
 } from '#/bot/scripts/GatheringBot.js';
-import { AXE_BAR_FOR } from '#/bot/api/ToolAcquire.js';
-import { DEFAULT_CAMP_RADIUS, resolveCampRadius, resolveChaseRadius } from '#/bot/api/GatheringLocations.js';
-import Tile from '#/bot/api/Tile.js';
+import { AXE_BAR_FOR } from '#/bot/api/acquisition/ToolAcquire.js';
+import { DEFAULT_CAMP_RADIUS, resolveCampRadius, resolveChaseRadius } from '#/bot/api/skilling/GatheringLocations.js';
+import Tile from '#/bot/api/core/Tile.js';
 
 describe('HOME_ARRIVE_RADIUS (soft home after bank/shop)', () => {
     test('is a camp disk, not a single pin tile', () => {

@@ -9,7 +9,7 @@ import {
     essenceReturnIdFromPacked,
     essenceReturnIdFromTile
 } from '#/bot/nav/essenceExit.js';
-import { packNavPoint } from '#/bot/nav/lcCoord.js';
+import { packNavPoint } from '#/bot/nav/geometry/lcCoord.js';
 import { emptyWorldStateData } from '#/bot/nav/worldStateData.js';
 import transports from '#/bot/nav/data/transports.json';
 

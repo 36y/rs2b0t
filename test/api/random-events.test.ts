@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { plantStrategy } from '#/bot/api/RandomEvents.js';
+import { plantStrategy } from '#/bot/api/randomevents/RandomEvents.js';
 
 test('growing/ready strange plant (Pick op) -> pick', () => {
     expect(plantStrategy(['Pick'])).toBe('pick');

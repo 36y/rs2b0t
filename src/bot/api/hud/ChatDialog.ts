@@ -1,6 +1,6 @@
 import { actions, reader } from '../../adapter/ClientAdapter.js';
 import { ActionRouter } from '../../input/ActionRouter.js';
-import { Execution } from '../Execution.js';
+import { Execution } from '../core/Execution.js';
 
 /**
  * Chat modals: dialogue pages, option lists, and make-x menus. Server-driven

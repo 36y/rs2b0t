@@ -1,5 +1,5 @@
 import type { WorldTile } from '../adapter/ClientAdapter.js';
-import Tile from '../api/Tile.js';
+import Tile from '../api/core/Tile.js';
 
 /** Course geometry — known-good wilderness agility course layout. */
 export const COURSE_OBSTACLES = ['obstacle pipe', 'ropeswing', 'stepping stone', 'log balance', 'rocks'] as const;

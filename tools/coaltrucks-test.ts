@@ -109,6 +109,7 @@ try {
     // truck, and both squat a coal slot on every future load until the bank clears them.
     // A spare bronze pickaxe checks the keep-list is the pickaxe *in use*, not any pickaxe.
     if (phase === 'drain' || phase === 'full') {
+        console.log('seeding junk (coins, bones, a spare pickaxe) to prove the deposit is bank-all-except, not an allow-list');
         for (const junk of ['give coins 500', 'give bones 3', 'give bronze_pickaxe']) {
             if (!(await cheatQuiet(page, junk))) {
                 fail(`could not seed junk (${junk})`);

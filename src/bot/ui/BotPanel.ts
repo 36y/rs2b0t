@@ -1,6 +1,6 @@
 import { BUILD_INFO } from '../../config/buildInfo.js';
 import { reader } from '../adapter/ClientAdapter.js';
-import type { BotHostImpl } from '../BotHost.js';
+import type { BotHostImpl } from '../runtime/BotHost.js';
 import { ActionRouter } from '../input/ActionRouter.js';
 import { AutoRelogin } from '../runtime/AutoRelogin.js';
 import { boxId, boxKey, wallLinkHref } from '../runtime/box.js';

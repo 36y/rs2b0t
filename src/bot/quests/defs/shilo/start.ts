@@ -1,8 +1,8 @@
-import { Execution } from '../../../api/Execution.js';
-import { Traversal } from '../../../api/Traversal.js';
+import { Execution } from '../../../api/core/Execution.js';
+import { Traversal } from '../../../nav/Traversal.js';
 import { ChatDialog } from '../../../api/hud/ChatDialog.js';
 import { Inventory } from '../../../api/hud/Inventory.js';
-import { Npcs } from '../../../api/queries/Npcs.js';
+import { Npcs } from '../../../api/entities/Npcs.js';
 import { talkStrict } from '../../exec/primitives.js';
 import { SV_ITEM, SV_NPC, SV_TILE } from './areas.js';
 import { driveChoice, heldId } from './scene.js';

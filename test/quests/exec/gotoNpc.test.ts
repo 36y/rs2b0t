@@ -1,11 +1,11 @@
 import { expect, test, describe, beforeEach, afterAll } from 'bun:test';
 
-import { Execution } from '#/bot/api/Execution.js';
-import { Game } from '#/bot/api/Game.js';
-import { Traversal } from '#/bot/api/Traversal.js';
-import { Locs } from '#/bot/api/queries/Locs.js';
-import { Npcs } from '#/bot/api/queries/Npcs.js';
-import Tile from '#/bot/api/Tile.js';
+import { Execution } from '#/bot/api/core/Execution.js';
+import { Game } from '#/bot/api/core/Game.js';
+import { Traversal } from '#/bot/nav/Traversal.js';
+import { Locs } from '#/bot/api/entities/Locs.js';
+import { Npcs } from '#/bot/api/entities/Npcs.js';
+import Tile from '#/bot/api/core/Tile.js';
 import { stubProps } from '../../lib/stubSingletons.js';
 
 interface WorldTileLike {

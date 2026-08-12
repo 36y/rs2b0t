@@ -1,12 +1,12 @@
-import { EventSignal } from '../../../api/EventSignal.js';
-import { Execution } from '../../../api/Execution.js';
-import { Game } from '../../../api/Game.js';
-import { Prayer } from '../../../api/Prayer.js';
-import { Sustain } from '../../../api/Sustain.js';
+import { EventSignal } from '../../../api/randomevents/EventSignal.js';
+import { Execution } from '../../../api/core/Execution.js';
+import { Game } from '../../../api/core/Game.js';
+import { Prayer } from '../../../api/hud/Prayer.js';
+import { Sustain } from '../../../api/core/Sustain.js';
 import { ChatDialog } from '../../../api/hud/ChatDialog.js';
 import { Inventory } from '../../../api/hud/Inventory.js';
 import { Skills } from '../../../api/hud/Skills.js';
-import { Npcs, type Npc } from '../../../api/queries/Npcs.js';
+import { Npcs, type Npc } from '../../../api/entities/Npcs.js';
 import { pickPreferred } from '../../exec/primitives.js';
 import { PRAYER_SIP_AT } from './areas.js';
 

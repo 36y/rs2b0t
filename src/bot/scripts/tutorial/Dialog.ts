@@ -1,5 +1,5 @@
-import type { Task } from '../../api/Bot.js';
-import { Execution } from '../../api/Execution.js';
+import type { Task } from '../../api/core/Bot.js';
+import { Execution } from '../../api/core/Execution.js';
 import { ChatDialog } from '../../api/hud/ChatDialog.js';
 
 const DECLINE_SKIP = ['no, thank you'];

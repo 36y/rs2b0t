@@ -1,13 +1,13 @@
 import * as RealInventory from '#/bot/api/hud/Inventory.js';
 import { expect, test, describe, beforeEach, afterAll } from 'bun:test';
 
-import { EventSignal } from '#/bot/api/EventSignal.js';
-import { Execution } from '#/bot/api/Execution.js';
-import { Game } from '#/bot/api/Game.js';
-import { Traversal } from '#/bot/api/Traversal.js';
-import { GroundItems } from '#/bot/api/queries/GroundItems.js';
-import { Npcs } from '#/bot/api/queries/Npcs.js';
-import Tile from '#/bot/api/Tile.js';
+import { EventSignal } from '#/bot/api/randomevents/EventSignal.js';
+import { Execution } from '#/bot/api/core/Execution.js';
+import { Game } from '#/bot/api/core/Game.js';
+import { Traversal } from '#/bot/nav/Traversal.js';
+import { GroundItems } from '#/bot/api/entities/GroundItems.js';
+import { Npcs } from '#/bot/api/entities/Npcs.js';
+import Tile from '#/bot/api/core/Tile.js';
 import { stubProps } from '../lib/stubSingletons.js';
 
 const COORD_CLUE_ID = 2801;

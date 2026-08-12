@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, test } from 'bun:test';
 import { actions, reader, type InvItemSnapshot } from '#/bot/adapter/ClientAdapter.js';
-import { Banking } from '#/bot/api/Banking.js';
-import { Execution } from '#/bot/api/Execution.js';
+import { Banking } from '#/bot/api/banking/Banking.js';
+import { Execution } from '#/bot/api/core/Execution.js';
 import { Bank } from '#/bot/api/hud/Bank.js';
 import { Inventory, type InvItem } from '#/bot/api/hud/Inventory.js';
 import { ScriptRunner } from '#/bot/runtime/ScriptRunner.js';

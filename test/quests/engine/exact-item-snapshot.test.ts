@@ -2,7 +2,7 @@
    assembly are exercised without constructing a live bot host. */
 import { afterEach, expect, test } from 'bun:test';
 
-import { Game } from '#/bot/api/Game.js';
+import { Game } from '#/bot/api/core/Game.js';
 import { Bank } from '#/bot/api/hud/Bank.js';
 import { Equipment } from '#/bot/api/hud/Equipment.js';
 import { Inventory } from '#/bot/api/hud/Inventory.js';

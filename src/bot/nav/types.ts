@@ -137,7 +137,7 @@ export interface TransportEdge {
     disabledReason?: string;
     /**
      * Stable teleport id for policy allowlists (`varrock`, `lumbridge`, …).
-     * Aligns with `Game.teleport` / `api/Teleport.ts` keys when kind is teleport.
+     * Aligns with `Game.teleport` / `api/movement/Teleport.ts` keys when kind is teleport.
      */
     teleportId?: string;
 }
@@ -229,7 +229,7 @@ export interface CrossingRecipe {
 }
 
 /** Default edge costs (tile-equivalent time). Canonical source: `edgeCosts.ts`. */
-export { DEFAULT_EDGE_COST } from './edgeCosts.js';
+export { DEFAULT_EDGE_COST } from './geometry/edgeCosts.js';
 
 /** True for originless spell/item teleports (not world portals like essence exit). */
 export function isTeleportKind(kind: TransportKind): boolean {

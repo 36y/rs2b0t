@@ -1,6 +1,6 @@
-import { Execution } from '../../../api/Execution.js';
+import { Execution } from '../../../api/core/Execution.js';
 import { Inventory, type InvItem } from '../../../api/hud/Inventory.js';
-import { Npcs } from '../../../api/queries/Npcs.js';
+import { Npcs } from '../../../api/entities/Npcs.js';
 import { driveDialog } from '../../exec/primitives.js';
 import { WT_ITEM, WT_NPC } from './areas.js';
 import { WATCHTOWER_STAGE } from './journal.js';

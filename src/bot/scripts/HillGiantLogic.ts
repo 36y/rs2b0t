@@ -1,4 +1,4 @@
-import Tile from '../api/Tile.js';
+import Tile from '../api/core/Tile.js';
 import type { WorldTile } from '../adapter/ClientAdapter.js';
 import { shouldEatToUseFood } from '../api/combat/food.js';
 

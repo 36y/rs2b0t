@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
-import { NEARBY_BANK_RADIUS, resolveBankOpenRoute } from '#/bot/api/Banking.js';
-import type { BankLocation } from '#/bot/api/BankLocations.js';
-import Tile from '#/bot/api/Tile.js';
+import { NEARBY_BANK_RADIUS, resolveBankOpenRoute } from '#/bot/api/banking/Banking.js';
+import type { BankLocation } from '#/bot/api/banking/BankLocations.js';
+import Tile from '#/bot/api/core/Tile.js';
 
 const draynor = { x: 3093, z: 3243, level: 0 };
 const edgeville = { x: 3094, z: 3493, level: 0 };

@@ -1,8 +1,8 @@
 import { Bank } from '../api/hud/Bank.js';
 import { Inventory } from '../api/hud/Inventory.js';
-import type { BankDestination } from '../api/Banking.js';
-import { Traversal } from '../api/Traversal.js';
-import type Tile from '../api/Tile.js';
+import type { BankDestination } from '../api/banking/Banking.js';
+import { Traversal } from '../nav/Traversal.js';
+import type Tile from '../api/core/Tile.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import ChickenKiller, { SETTINGS as CHICKEN_SETTINGS } from './ChickenKiller.js';
 import {
@@ -16,7 +16,7 @@ import {
     shouldBootstrapTollCoins,
     TOLL_COIN_TARGET,
     type CowLocation
-} from '../api/CowKillerLocations.js';
+} from '../api/skilling/CowKillerLocations.js';
 
 function chickenPreset(overrides: Record<string, unknown>): SettingsSchema {
     const schema: SettingsSchema = {};

@@ -1,9 +1,9 @@
-import { Execution } from '../../../api/Execution.js';
-import type Tile from '../../../api/Tile.js';
-import { Traversal } from '../../../api/Traversal.js';
+import { Execution } from '../../../api/core/Execution.js';
+import type Tile from '../../../api/core/Tile.js';
+import { Traversal } from '../../../nav/Traversal.js';
 import { Bank } from '../../../api/hud/Bank.js';
-import { GroundItems } from '../../../api/queries/GroundItems.js';
-import { Npcs } from '../../../api/queries/Npcs.js';
+import { GroundItems } from '../../../api/entities/GroundItems.js';
+import { Npcs } from '../../../api/entities/Npcs.js';
 import { driveUntil, settleScene } from '../../exec/prompts.js';
 import { gatherWool, type WoolSites } from '../../exec/wool.js';
 import type { QuestSnapshot, QuestStep } from '../../engine/types.js';

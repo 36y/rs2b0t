@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { parseLcCoord, lcCoord } from '#/bot/nav/lcCoord.js';
+import { parseLcCoord, lcCoord } from '#/bot/nav/geometry/lcCoord.js';
 import {
     SPIRIT_TREE,
     GLIDER_PAD,

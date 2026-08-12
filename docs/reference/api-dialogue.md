@@ -70,7 +70,7 @@ GatheringBot `muleMode` + `mulePartner`:
 | Cooker | Accept **raw fish** → cook at camp range → bank cooked (`burntPolicy`) |
 | Supplier | Withdraw raw from bank when N ready → trade at meet (pairs with Cooker) |
 
-### Cooking ranges (`api/CookingRanges`)
+### Cooking ranges (`api/catalogs/CookingRanges`)
 
 Map-pack catalog of `debugname=range` ovens + curated surfaces for fishing camps:
 
@@ -97,7 +97,7 @@ Locs.query().name('…').withinOf(tile, radius).nearest()
 Locs.query().… .nearestPreferLocal(preferRadius)  // local cluster first
 ```
 
-See also `api/TargetPick` (`pickNearestPreferLocal`) and `api/GatherCamp` (membership disks).
+See also `api/combat/TargetPick` (`pickNearestPreferLocal`) and `api/catalogs/GatherCamp` (membership disks).
 
 ## See also
 

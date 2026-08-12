@@ -1,16 +1,16 @@
 import type { InvItemSnapshot, WorldTile } from '../../adapter/ClientAdapter.js';
 import { reader, actions } from '../../adapter/ClientAdapter.js';
 import { ActionRouter } from '../../input/ActionRouter.js';
-import type { BankNpcAccess, BankObjectAccess } from '../BankLocations.js';
-import { Execution } from '../Execution.js';
-import { Reachability } from '../Reachability.js';
-import { Traversal } from '../Traversal.js';
-import { Locs } from '../queries/Locs.js';
-import { Npcs } from '../queries/Npcs.js';
+import type { BankNpcAccess, BankObjectAccess } from '../banking/BankLocations.js';
+import { Execution } from '../core/Execution.js';
+import { Reachability } from '../../nav/geometry/Reachability.js';
+import { Traversal } from '../../nav/Traversal.js';
+import { Locs } from '../entities/Locs.js';
+import { Npcs } from '../entities/Npcs.js';
 import { ChatDialog } from './ChatDialog.js';
 import { backpackCapacity, backpackSnapshots } from './Inventory.js';
 
-export { withdrawOp } from './bankOps.js';
+export { withdrawOp } from '../banking/bankOps.js';
 
 function backpackFull(): boolean {
     const size = backpackCapacity();

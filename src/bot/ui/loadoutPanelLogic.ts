@@ -1,6 +1,6 @@
-import { ITEM_DB } from '../items/data/itemdb.js';
-import type { Loadout } from '../items/loadouts.js';
-import type { ItemRecord, Slot } from '../items/types.js';
+import { ITEM_DB } from '../api/items/data/itemdb.js';
+import type { Loadout } from '../api/items/loadouts.js';
+import type { ItemRecord, Slot } from '../api/items/types.js';
 
 /** The equipment interface grid; null is a spacer cell. */
 export const SLOT_LAYOUT: readonly (readonly (Slot | null)[])[] = [

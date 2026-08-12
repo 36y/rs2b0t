@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { GAS_ROCK_IDS, ROCK_OPTIONS, ROCK_TYPES, resolveRockIds } from '#/bot/api/MiningRocks.js';
-import { PICKAXES, bestPickaxe } from '#/bot/api/Tools.js';
+import { GAS_ROCK_IDS, ROCK_OPTIONS, ROCK_TYPES, resolveRockIds } from '#/bot/api/skilling/MiningRocks.js';
+import { PICKAXES, bestPickaxe } from '#/bot/api/acquisition/Tools.js';
 
 test('every ore type maps to exactly two rock loc ids', () => {
     for (const [name, ids] of Object.entries(ROCK_TYPES)) {

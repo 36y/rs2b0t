@@ -1,13 +1,13 @@
 import { afterAll, beforeEach, describe, expect, test } from 'bun:test';
 
 import { reader } from '#/bot/adapter/ClientAdapter.js';
-import { Execution } from '#/bot/api/Execution.js';
-import { Game } from '#/bot/api/Game.js';
-import { Reachability } from '#/bot/api/Reachability.js';
-import { Traversal } from '#/bot/api/Traversal.js';
+import { Execution } from '#/bot/api/core/Execution.js';
+import { Game } from '#/bot/api/core/Game.js';
+import { Reachability } from '#/bot/nav/geometry/Reachability.js';
+import { Traversal } from '#/bot/nav/Traversal.js';
 import { ChatDialog } from '#/bot/api/hud/ChatDialog.js';
-import { Locs } from '#/bot/api/queries/Locs.js';
-import { Npcs } from '#/bot/api/queries/Npcs.js';
+import { Locs } from '#/bot/api/entities/Locs.js';
+import { Npcs } from '#/bot/api/entities/Npcs.js';
 import { WalkExecutor } from '#/bot/nav/WalkExecutor.js';
 import { stubProps } from '../../lib/stubSingletons.js';
 

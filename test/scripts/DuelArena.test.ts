@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
 import { reader } from '#/bot/adapter/ClientAdapter.js';
-import { Execution } from '#/bot/api/Execution.js';
-import { Game } from '#/bot/api/Game.js';
+import { Execution } from '#/bot/api/core/Execution.js';
+import { Game } from '#/bot/api/core/Game.js';
 import { ChatDialog } from '#/bot/api/hud/ChatDialog.js';
 import { Duel } from '#/bot/api/hud/Duel.js';
 import { Skills } from '#/bot/api/hud/Skills.js';

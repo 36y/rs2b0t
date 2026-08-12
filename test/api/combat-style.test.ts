@@ -9,8 +9,8 @@ import {
     resolveCombatStyle,
     resolveSplitCombatSettings,
     tryParseCombatStyle
-} from '#/bot/api/CombatStyle.js';
-import type { CombatModeLabel } from '#/bot/api/CombatStyle.js';
+} from '#/bot/api/combat/CombatStyle.js';
+import type { CombatModeLabel } from '#/bot/api/combat/CombatStyle.js';
 
 const ORDINARY_SWORD: CombatModeLabel[] = [
     { mode: 0, label: '(Accurate)' },

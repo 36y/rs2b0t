@@ -16,7 +16,7 @@ import { specialRequiresAt } from './specialRequires.js';
 import { activateTransportRows } from './activateStateAware.js';
 import { tileInDangerZones, type DangerZoneRect } from './data/dangerZones.js';
 import { essenceReturnIdFromStateIndex, essenceReturnStateIndex } from './essenceExit.js';
-import { DEFAULT_EDGE_COST, edgeCostForKind, teleportEdgeCost } from './edgeCosts.js';
+import { DEFAULT_EDGE_COST, edgeCostForKind, teleportEdgeCost } from './geometry/edgeCosts.js';
 
 /**
  * A* search key = tileId * 16 + essenceReturnIdx (0..15).

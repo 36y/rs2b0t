@@ -15,7 +15,7 @@ import {
 } from '#/bot/scripts/RoguesPurseLogic.js';
 import { JP_STAGE } from '#/bot/quests/defs/junglepotion.js';
 import { SPECIAL_CROSSINGS } from '#/bot/nav/data/specialCrossings.js';
-import { BANK_LOCATIONS, bankDistance } from '#/bot/api/BankLocations.js';
+import { BANK_LOCATIONS, bankDistance } from '#/bot/api/banking/BankLocations.js';
 
 describe('planCycle (one tick of packets)', () => {
     test('an empty pack only searches', () => {

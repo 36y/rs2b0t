@@ -1,11 +1,11 @@
-import { Execution } from '../../../api/Execution.js';
-import { Traversal } from '../../../api/Traversal.js';
+import { Execution } from '../../../api/core/Execution.js';
+import { Traversal } from '../../../nav/Traversal.js';
 import { Inventory } from '../../../api/hud/Inventory.js';
 import { QUESTS } from '../../data/quests.js';
 import { hasFlag, type QuestModule, type QuestSnapshot, type QuestStep } from '../../engine/types.js';
 import { talkThrough } from '../../exec/primitives.js';
 import { GUNNJORN, HD_ID, HD_ITEM, HD_STAGE, HD_TILE, LARRISSA } from './areas.js';
-import { ensureBarcrawl } from '../../../barcrawl/RunBarcrawl.js';
+import { ensureBarcrawl } from '../../barcrawl/RunBarcrawl.js';
 import { barcrawlFunds } from './barcrawl.js';
 import { exitAfterQuest, inCavern, openWallAndDescend } from './dungeon.js';
 import { fightJunior, fightMother } from './fight.js';

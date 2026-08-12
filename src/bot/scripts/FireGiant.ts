@@ -1,9 +1,9 @@
-import { TaskBot, type Task } from '../api/Bot.js';
-import { EventSignal } from '../api/EventSignal.js';
-import { Execution } from '../api/Execution.js';
+import { TaskBot, type Task } from '../api/core/Bot.js';
+import { EventSignal } from '../api/randomevents/EventSignal.js';
+import { Execution } from '../api/core/Execution.js';
 import { buryOneInFight } from '../api/combat/fightUpkeep.js';
-import { Game } from '../api/Game.js';
-import Tile from '../api/Tile.js';
+import { Game } from '../api/core/Game.js';
+import Tile from '../api/core/Tile.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
 import { Bank } from '../api/hud/Bank.js';
 import { ChatDialog } from '../api/hud/ChatDialog.js';
@@ -12,7 +12,7 @@ import { Inventory } from '../api/hud/Inventory.js';
 import { Skills } from '../api/hud/Skills.js';
 import { Paint } from '../api/hud/Paint.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
-import { COMBAT_STYLE_OPTIONS, RANGE_STYLE_OPTIONS, parseCombatStyle, parseRangeStyle, type MeleeCombatStyle } from '../api/CombatStyle.js';
+import { COMBAT_STYLE_OPTIONS, RANGE_STYLE_OPTIONS, parseCombatStyle, parseRangeStyle, type MeleeCombatStyle } from '../api/combat/CombatStyle.js';
 import { Autocast } from '../api/combat/Autocast.js';
 import { castsAvailable, runeWithdrawList } from '../api/combat/CombatStyleLogic.js';
 import { SPELL_DB } from '../api/combat/data/spelldb.js';
@@ -20,23 +20,23 @@ import { DROP_DB } from '../api/combat/data/dropdb.js';
 import { BOWS, STAFFS } from '../api/combat/equipment.js';
 import { foodForms, foodCount as foodCountIn, foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
 import { combatKeepNames } from '../api/combat/keepList.js';
-import { depositAllExcept, matchesCommonBankLoot } from '../api/Banking.js';
-import { GroundItems } from '../api/queries/GroundItems.js';
-import { Npcs, type Npc } from '../api/queries/Npcs.js';
-import { Traversal } from '../api/Traversal.js';
+import { depositAllExcept, matchesCommonBankLoot } from '../api/banking/Banking.js';
+import { GroundItems } from '../api/entities/GroundItems.js';
+import { Npcs, type Npc } from '../api/entities/Npcs.js';
+import { Traversal } from '../nav/Traversal.js';
 import { DirectNavigator } from '../nav/DirectNavigator.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import { reader } from '../adapter/ClientAdapter.js';
 import { Quests } from '../api/hud/Quests.js';
-import { Locs } from '../api/queries/Locs.js';
+import { Locs } from '../api/entities/Locs.js';
 import {
     AMULET, BARREL_BANK, BARREL_EXIT, BARREL_LOC, BARREL_OP, DEFAULT_MELEE_TILE, DEFAULT_SAFESPOT, DEFAULT_SAFESPOT_FALLBACK, DUNGEON_MIN_Z, EXIT_DOOR, EXIT_DOOR_LOC, EXIT_OPTIONS, ESCAPE_TELES,
     LEDGE_DOOR, LEDGE_LOC, LEDGE_OP, legFor, RAFT_LOC, RAFT_OP, RAFT_STAND,
     attackRangeFor, eastFirst, lootWaitMs, ROCK_LOC, sameRoom, takenByAnother, ROPE, ROPE_THROW_STAND, TREE_LOC, TREE_STAND, type EscapeTele
 } from './FireGiantLogic.js';
-import { scriptFood } from '../items/loadoutPlan.js';
-import { LOADOUT_SETTING } from '../items/loadoutSetting.js';
+import { scriptFood } from '../api/items/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../api/items/loadoutSetting.js';
 
 const TARGET = 'Fire giant';
 const FIELD_RADIUS = 10;

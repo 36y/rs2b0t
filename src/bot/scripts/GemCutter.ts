@@ -1,14 +1,14 @@
-import { TaskBot, type Task } from '../api/Bot.js';
-import { Execution } from '../api/Execution.js';
-import { Game } from '../api/Game.js';
+import { TaskBot, type Task } from '../api/core/Bot.js';
+import { Execution } from '../api/core/Execution.js';
+import { Game } from '../api/core/Game.js';
 import { Inventory, type InvItem } from '../api/hud/Inventory.js';
 import { Bank } from '../api/hud/Bank.js';
 import { Skills } from '../api/hud/Skills.js';
 import { Paint } from '../api/hud/Paint.js';
-import { Traversal } from '../api/Traversal.js';
+import { Traversal } from '../nav/Traversal.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import { nearestBank } from '../api/BankLocations.js';
+import { nearestBank } from '../api/banking/BankLocations.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
 import {
     CHISEL_ID,

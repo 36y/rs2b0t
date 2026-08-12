@@ -1,4 +1,4 @@
-import { Execution } from '../../../api/Execution.js';
+import { Execution } from '../../../api/core/Execution.js';
 import { gotoNpc, talkStrict } from '../../exec/primitives.js';
 import type { QuestSnapshot, QuestStep } from '../../engine/types.js';
 import { KELI_PRINT, LEELA_STOP, OSMAN_FORGE, PA_ITEM, PA_SHOP, PA_TILE } from './areas.js';

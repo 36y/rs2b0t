@@ -1,10 +1,10 @@
-import { Execution } from '../../../api/Execution.js';
-import { Game } from '../../../api/Game.js';
-import { Sustain } from '../../../api/Sustain.js';
-import type Tile from '../../../api/Tile.js';
-import { Traversal } from '../../../api/Traversal.js';
+import { Execution } from '../../../api/core/Execution.js';
+import { Game } from '../../../api/core/Game.js';
+import { Sustain } from '../../../api/core/Sustain.js';
+import type Tile from '../../../api/core/Tile.js';
+import { Traversal } from '../../../nav/Traversal.js';
 import { Inventory } from '../../../api/hud/Inventory.js';
-import { GroundItems } from '../../../api/queries/GroundItems.js';
+import { GroundItems } from '../../../api/entities/GroundItems.js';
 import { GameMessages } from '../../../events/gameMessages.js';
 import { promptLoc, settleScene, useOnLoc } from '../../exec/prompts.js';
 import { EC_ID, EC_NAME, EC_TILE } from './areas.js';

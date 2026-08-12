@@ -5,7 +5,7 @@
  * Policy (partner filter, empty-own-offer safety) stays in {@link PartnerTrade};
  * this module sequences HUD actions from those decisions plus optional script hooks.
  */
-import { Execution } from '../Execution.js';
+import { Execution } from '../core/Execution.js';
 import { Inventory } from '../hud/Inventory.js';
 import { Trade } from '../hud/Trade.js';
 import {

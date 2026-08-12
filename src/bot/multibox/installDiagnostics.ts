@@ -3,9 +3,9 @@
 // Wires the diagnostics pieces to the live wall. Kept out of main.ts so the wiring
 // stays readable and the sampler can be tested without a DOM.
 
-import { FreezeWatch } from '../diag/FreezeWatch.js';
-import { InputLatency, browserObserverFactory } from '../diag/InputLatency.js';
-import type { FrameSample } from '../diag/BotDiag.js';
+import { FreezeWatch } from '../runtime/diag/FreezeWatch.js';
+import { InputLatency, browserObserverFactory } from '../runtime/diag/InputLatency.js';
+import type { FrameSample } from '../runtime/diag/BotDiag.js';
 import { installWorkerClockHub } from '../../util/WorkerClock.js';
 import { DiagSampler } from './DiagSampler.js';
 

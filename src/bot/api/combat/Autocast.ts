@@ -1,6 +1,6 @@
 import { actions, reader } from '#/bot/adapter/ClientAdapter.js';
-import { Execution } from '#/bot/api/Execution.js';
-import { Game } from '#/bot/api/Game.js';
+import { Execution } from '#/bot/api/core/Execution.js';
+import { Game } from '#/bot/api/core/Game.js';
 import { ATTACKSTYLE_MAGIC_VARP, AUTOCAST_ARMED, AUTO_CHOOSE_COM, AUTO_TOGGLE_COM, spellButtonCom } from '#/bot/api/combat/CombatStyleLogic.js';
 
 const COMBAT_TAB = 0;

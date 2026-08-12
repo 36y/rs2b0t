@@ -12,7 +12,7 @@ import {
     SAFE_PICKPOCKET_HP,
     VARROCK_FUNDING_MAN
 } from '#/bot/quests/exec/fundCoins.js';
-import { EventSignal } from '#/bot/api/EventSignal.js';
+import { EventSignal } from '#/bot/api/randomevents/EventSignal.js';
 
 afterEach(() => EventSignal.setInterrupt(null));
 

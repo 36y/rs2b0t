@@ -9,7 +9,7 @@
  */
 
 import { actions, reader } from '../adapter/ClientAdapter.js';
-import { BotHost } from '../BotHost.js';
+import { BotHost } from '../runtime/BotHost.js';
 import { SettingsStore } from '../runtime/Settings.js';
 
 /** Scene-unit / tile delta → orbit camera yaw (0–2047). */

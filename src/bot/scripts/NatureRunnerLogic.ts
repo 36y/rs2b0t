@@ -1,4 +1,4 @@
-import Tile from '../api/Tile.js';
+import Tile from '../api/core/Tile.js';
 
 export const TRADE_CAP = 25; // max essence offered per trade; the store-visit target
 export const BUY_ONLY_STOCK = 30; // shop stock above which the runner only buys (drain mode)

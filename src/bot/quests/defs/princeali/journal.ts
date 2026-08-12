@@ -1,6 +1,6 @@
 // docs/reference/quest-engine.md#quest-state
 import { actions, reader } from '../../../adapter/ClientAdapter.js';
-import { Execution } from '../../../api/Execution.js';
+import { Execution } from '../../../api/core/Execution.js';
 import { Quests } from '../../../api/hud/Quests.js';
 import type { QuestProgress } from '../../engine/types.js';
 

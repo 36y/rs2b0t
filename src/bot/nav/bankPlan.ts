@@ -12,7 +12,7 @@ import { SPELL_TELEPORTS, JEWELLERY_TELEPORTS } from './teleportCatalog.js';
 import { specialCrossingForTransport } from './data/specialCrossings.js';
 import { isSlashWebTransport, WEB_SLASH_KNIFE_NAME } from './slashTool.js';
 
-import { BANK_WITHDRAW_COST } from './edgeCosts.js';
+import { BANK_WITHDRAW_COST } from './geometry/edgeCosts.js';
 
 /** Flat cost for opening bank + withdrawing (tile-equivalent time). */
 export const WITHDRAW_COST = BANK_WITHDRAW_COST;

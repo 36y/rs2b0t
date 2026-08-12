@@ -1,8 +1,8 @@
-import { Execution } from '../../../api/Execution.js';
-import { Game } from '../../../api/Game.js';
-import { Traversal } from '../../../api/Traversal.js';
-import { Locs } from '../../../api/queries/Locs.js';
-import { Npcs } from '../../../api/queries/Npcs.js';
+import { Execution } from '../../../api/core/Execution.js';
+import { Game } from '../../../api/core/Game.js';
+import { Traversal } from '../../../nav/Traversal.js';
+import { Locs } from '../../../api/entities/Locs.js';
+import { Npcs } from '../../../api/entities/Npcs.js';
 import { talkStrict } from '../../exec/primitives.js';
 import { driveUntil, settleScene } from '../../exec/prompts.js';
 import type { QuestSnapshot, QuestStep } from '../../engine/types.js';

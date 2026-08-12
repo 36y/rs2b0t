@@ -1,7 +1,7 @@
 import { beforeEach, expect, test } from 'bun:test';
 import { Paint } from '#/bot/api/hud/Paint.js';
 import { cycleOption, paintState } from '#/bot/api/hud/paintLogic.js';
-import { WALK_OPTIONS } from '#/bot/api/WalkDestinations.js';
+import { WALK_OPTIONS } from '#/bot/nav/WalkDestinations.js';
 
 function stubCtx(): CanvasRenderingContext2D {
     return {

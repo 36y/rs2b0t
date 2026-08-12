@@ -1,4 +1,4 @@
-import type { Task } from '../Bot.js';
+import type { Task } from '../core/Bot.js';
 import { ChatDialog } from '../hud/ChatDialog.js';
 
 export class ContinueDialog implements Task {

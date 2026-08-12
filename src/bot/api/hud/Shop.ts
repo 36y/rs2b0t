@@ -1,7 +1,7 @@
 import { actions, reader } from '../../adapter/ClientAdapter.js';
 import { ActionRouter } from '../../input/ActionRouter.js';
-import { Execution } from '../Execution.js';
-import { Npcs } from '../queries/Npcs.js';
+import { Execution } from '../core/Execution.js';
+import { Npcs } from '../entities/Npcs.js';
 import { Inventory } from './Inventory.js';
 
 const SHOP_ROOT = 3824;

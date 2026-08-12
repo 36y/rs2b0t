@@ -1,10 +1,10 @@
-import { LoopingBot } from '../api/Bot.js';
-import { Execution } from '../api/Execution.js';
-import { EventSignal } from '../api/EventSignal.js';
-import { Game } from '../api/Game.js';
-import type Tile from '../api/Tile.js';
-import { Traversal } from '../api/Traversal.js';
-import { depositAllExcept } from '../api/Banking.js';
+import { LoopingBot } from '../api/core/Bot.js';
+import { Execution } from '../api/core/Execution.js';
+import { EventSignal } from '../api/randomevents/EventSignal.js';
+import { Game } from '../api/core/Game.js';
+import type Tile from '../api/core/Tile.js';
+import { Traversal } from '../nav/Traversal.js';
+import { depositAllExcept } from '../api/banking/Banking.js';
 import { Bank } from '../api/hud/Bank.js';
 import { ChatDialog } from '../api/hud/ChatDialog.js';
 import { Equipment } from '../api/hud/Equipment.js';
@@ -12,11 +12,11 @@ import { Inventory } from '../api/hud/Inventory.js';
 import { Paint } from '../api/hud/Paint.js';
 import { Skills } from '../api/hud/Skills.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
-import { Locs, type Loc } from '../api/queries/Locs.js';
+import { Locs, type Loc } from '../api/entities/Locs.js';
 import { GameMessages } from '../events/gameMessages.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
-import { GAS_ROCK_IDS } from '../api/MiningRocks.js';
-import { bestPickaxe } from '../api/Tools.js';
+import { GAS_ROCK_IDS } from '../api/skilling/MiningRocks.js';
+import { bestPickaxe } from '../api/acquisition/Tools.js';
 import {
     COAL,
     COAL_MINING_LEVEL,

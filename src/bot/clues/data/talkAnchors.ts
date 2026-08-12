@@ -1,4 +1,4 @@
-import Tile from '#/bot/api/Tile.js';
+import Tile from '#/bot/api/core/Tile.js';
 
 export const TALK_ANCHORS: Record<number, Tile> = {
     2681: new Tile(3207, 3233, 0), // Hans — Lumbridge Castle courtyard

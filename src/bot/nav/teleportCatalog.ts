@@ -5,7 +5,7 @@
  */
 
 import { ensureEdgeId } from './edgeId.js';
-import { teleportEdgeCost } from './edgeCosts.js';
+import { teleportEdgeCost } from './geometry/edgeCosts.js';
 import type { NavPoint, TransportEdge, TransportRequires } from './types.js';
 import { GLORY_MAX_WILDERNESS, SPELL_MAX_WILDERNESS, wildernessLevelAt } from './wilderness.js';
 

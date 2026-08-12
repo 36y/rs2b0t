@@ -1,8 +1,8 @@
-import { TaskBot, type Task } from '../api/Bot.js';
-import { EventSignal } from '../api/EventSignal.js';
-import { Execution } from '../api/Execution.js';
-import { Game } from '../api/Game.js';
-import { Traversal } from '../api/Traversal.js';
+import { TaskBot, type Task } from '../api/core/Bot.js';
+import { EventSignal } from '../api/randomevents/EventSignal.js';
+import { Execution } from '../api/core/Execution.js';
+import { Game } from '../api/core/Game.js';
+import { Traversal } from '../nav/Traversal.js';
 import { Bank } from '../api/hud/Bank.js';
 import { Inventory } from '../api/hud/Inventory.js';
 import { Paint } from '../api/hud/Paint.js';
@@ -11,9 +11,9 @@ import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
 import { talkThrough } from '../quests/exec/primitives.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import { buyoutPlan } from '../shops/BuyoutLogic.js';
-import { SHOP_DB } from '../shops/data/shopdb.js';
-import type { ShopRecord } from '../shops/types.js';
+import { buyoutPlan } from '../api/shops/BuyoutLogic.js';
+import { SHOP_DB } from '../api/shops/data/shopdb.js';
+import type { ShopRecord } from '../api/shops/types.js';
 import { SHOP_PRESETS, presetByLabel, presetBuyableNames } from './shopPresets.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
 

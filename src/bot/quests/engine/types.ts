@@ -1,4 +1,4 @@
-import type Tile from '../../api/Tile.js';
+import type Tile from '../../api/core/Tile.js';
 import type { WorldTile } from '../../adapter/ClientAdapter.js';
 import type { QuestStatus } from '#/bot/api/hud/Quests.js';
 import type { QuestRecord } from '../types.js';

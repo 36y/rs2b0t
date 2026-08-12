@@ -1,5 +1,5 @@
 import { actions, reader } from '../../adapter/ClientAdapter.js';
-import { Execution } from '../../api/Execution.js';
+import { Execution } from '../../api/core/Execution.js';
 import { StageTask } from './StageTask.js';
 
 const DESIGN_MODAL = 3559;

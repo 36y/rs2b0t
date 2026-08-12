@@ -1,12 +1,12 @@
 import { actions, reader } from '../../../adapter/ClientAdapter.js';
-import { Execution } from '../../../api/Execution.js';
-import { Game } from '../../../api/Game.js';
+import { Execution } from '../../../api/core/Execution.js';
+import { Game } from '../../../api/core/Game.js';
 import { Inventory } from '../../../api/hud/Inventory.js';
 import { Quests } from '../../../api/hud/Quests.js';
-import { Locs, type Loc } from '../../../api/queries/Locs.js';
-import { Npcs } from '../../../api/queries/Npcs.js';
-import { Reach } from '../../../api/Reach.js';
-import { Traversal } from '../../../api/Traversal.js';
+import { Locs, type Loc } from '../../../api/entities/Locs.js';
+import { Npcs } from '../../../api/entities/Npcs.js';
+import { Reach } from '../../../nav/Reach.js';
+import { Traversal } from '../../../nav/Traversal.js';
 import { driveDialog, talkThrough } from '../../exec/primitives.js';
 import { WT_ITEM, WT_LOC, WT_NPC, WT_TILE, watchtowerArea } from './areas.js';
 import { WATCHTOWER_QUEST, WATCHTOWER_STAGE } from './journal.js';

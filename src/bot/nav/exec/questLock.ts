@@ -4,7 +4,7 @@
  */
 
 import { ChatDialog } from '../../api/hud/ChatDialog.js';
-import { Execution } from '../../api/Execution.js';
+import { Execution } from '../../api/core/Execution.js';
 
 /** Phrases that mean "this door will never open for you right now". */
 const QUEST_LOCK_PATTERNS: RegExp[] = [

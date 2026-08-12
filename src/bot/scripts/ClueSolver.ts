@@ -1,15 +1,15 @@
 import { foodHealAmount, shouldEatToUseFood } from '../api/combat/food.js';
-import { TaskBot } from '../api/Bot.js';
-import type { Task } from '../api/Bot.js';
-import { Execution } from '../api/Execution.js';
-import { Game } from '../api/Game.js';
-import { nearestBank } from '../api/BankLocations.js';
-import { Sustain } from '../api/Sustain.js';
-import { Traversal } from '../api/Traversal.js';
+import { TaskBot } from '../api/core/Bot.js';
+import type { Task } from '../api/core/Bot.js';
+import { Execution } from '../api/core/Execution.js';
+import { Game } from '../api/core/Game.js';
+import { nearestBank } from '../api/banking/BankLocations.js';
+import { Sustain } from '../api/core/Sustain.js';
+import { Traversal } from '../nav/Traversal.js';
 import { Paint } from '../api/hud/Paint.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import { Bank } from '../api/hud/Bank.js';
-import { depositAllExcept } from '../api/bankRules.js';
+import { depositAllExcept } from '../api/banking/bankRules.js';
 import { Inventory } from '../api/hud/Inventory.js';
 import { SPADE_NAME, TRIO } from '../clues/data/toolAcquire.js';
 import { Skills } from '../api/hud/Skills.js';
@@ -18,8 +18,8 @@ import { ClueExecutor } from '../clues/ClueExecutor.js';
 import { paintClueProgress } from '../clues/cluePaint.js';
 import { SolveClue, heldClueLikeId } from '../clues/SolveClue.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
-import { scriptFood } from '../items/loadoutPlan.js';
-import { LOADOUT_SETTING } from '../items/loadoutSetting.js';
+import { scriptFood } from '../api/items/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../api/items/loadoutSetting.js';
 
 export const SETTINGS: SettingsSchema = {
     loadout: LOADOUT_SETTING,

@@ -1,5 +1,5 @@
 import { actions, reader, WELCOME_SCREEN } from '../adapter/ClientAdapter.js';
-import { BotHost } from '../BotHost.js';
+import { BotHost } from './BotHost.js';
 
 /**
  * Dismiss the post-login welcome modal once it appears.

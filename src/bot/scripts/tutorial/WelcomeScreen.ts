@@ -1,4 +1,4 @@
-import type { Task } from '../../api/Bot.js';
+import type { Task } from '../../api/core/Bot.js';
 import { actions, reader, WELCOME_SCREEN } from '../../adapter/ClientAdapter.js';
 
 export class WelcomeScreen implements Task {

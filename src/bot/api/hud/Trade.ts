@@ -1,7 +1,7 @@
 import { actions, reader } from '../../adapter/ClientAdapter.js';
 import { ActionRouter } from '../../input/ActionRouter.js';
-import { Execution } from '../Execution.js';
-import { Players } from '../queries/Players.js';
+import { Execution } from '../core/Execution.js';
+import { Players } from '../entities/Players.js';
 
 const TRADE_OP = 4; // OP_PLAYER4 = "Trade with" (login.rs2: set_player_op("Trade with", 4))
 const OFFER_INV = 3322; // tradeside:inv — your pack while trading; option4 = "Offer All"

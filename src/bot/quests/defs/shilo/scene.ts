@@ -1,4 +1,4 @@
-import { Game } from '../../../api/Game.js';
+import { Game } from '../../../api/core/Game.js';
 import { shiloArea, type ShiloArea } from './areas.js';
 
 export { driveChoice, driveUntil, heldId, locNear, promptLoc, settleScene, useOnLoc } from '../../exec/prompts.js';

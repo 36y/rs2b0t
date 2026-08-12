@@ -1,6 +1,6 @@
 import { actions, reader } from '../adapter/ClientAdapter.js';
-import { Game } from '../api/Game.js';
-import { BotHost } from '../BotHost.js';
+import { Game } from '../api/core/Game.js';
+import { BotHost } from './BotHost.js';
 import { SettingsStore } from './Settings.js';
 
 const RUN_AUTO_DEFAULT = true;

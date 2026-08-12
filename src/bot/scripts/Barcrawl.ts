@@ -1,13 +1,13 @@
-import { LoopingBot } from '../api/Bot.js';
-import { Execution } from '../api/Execution.js';
-import { Game } from '../api/Game.js';
+import { LoopingBot } from '../api/core/Bot.js';
+import { Execution } from '../api/core/Execution.js';
+import { Game } from '../api/core/Game.js';
 import { Bank } from '../api/hud/Bank.js';
 import { Inventory } from '../api/hud/Inventory.js';
 import { Paint } from '../api/hud/Paint.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import { openBankLeg } from '../quests/exec/steps.js';
-import { BARCRAWL_CARD, BARCRAWL_GP, BARS, COINS } from '../barcrawl/BarcrawlLogic.js';
-import { ensureBarcrawl, readCard } from '../barcrawl/RunBarcrawl.js';
+import { BARCRAWL_CARD, BARCRAWL_GP, BARS, COINS } from '../quests/barcrawl/BarcrawlLogic.js';
+import { ensureBarcrawl, readCard } from '../quests/barcrawl/RunBarcrawl.js';
 import { Modals } from '../api/hud/Modals.js';
 
 /**
@@ -16,7 +16,7 @@ import { Modals } from '../api/hud/Modals.js';
  * The tour is a miniquest of its own — it is what opens the Barbarian Outpost
  * gate and gates Barbarian Training — so it is runnable on its own as well as
  * from Horror from the Deep, which calls the same driver in
- * {@link ../barcrawl/RunBarcrawl.js}.
+ * {@link ../quests/barcrawl/RunBarcrawl.js}.
  */
 export default class Barcrawl extends LoopingBot {
     override loopDelay = 600;

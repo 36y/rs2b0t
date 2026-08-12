@@ -109,7 +109,7 @@ class AcquireTask implements Task { constructor(bot, needs: ItemNeed[]); } // ob
 ```
 
 `AcquireTask` plugs into a `TaskBot` to gather/shop/withdraw a set of item needs.
-See `src/bot/api/ItemAcquisition.ts` and the bots that use it for usage.
+See `src/bot/api/acquisition/ItemAcquisition.ts` and the bots that use it for usage.
 
 ---
 

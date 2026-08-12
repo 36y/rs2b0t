@@ -1,18 +1,18 @@
-import { TaskBot, type Task } from '../api/Bot.js';
-import { Game } from '../api/Game.js';
-import { Execution } from '../api/Execution.js';
-import { Traversal } from '../api/Traversal.js';
+import { TaskBot, type Task } from '../api/core/Bot.js';
+import { Game } from '../api/core/Game.js';
+import { Execution } from '../api/core/Execution.js';
+import { Traversal } from '../nav/Traversal.js';
 import { Skills } from '../api/hud/Skills.js';
 import { Paint } from '../api/hud/Paint.js';
 import { fmtXpHr } from '../api/hud/paintLogic.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
-import { Players, type Player } from '../api/queries/Players.js';
+import { Players, type Player } from '../api/entities/Players.js';
 import { Duel } from '../api/hud/Duel.js';
 import { GameMessages } from '../events/gameMessages.js';
 import { reader } from '../adapter/ClientAdapter.js';
-import { BotHost } from '../BotHost.js';
+import { BotHost } from '../runtime/BotHost.js';
 import { DirectNavigator } from '../nav/DirectNavigator.js';
-import Tile from '../api/Tile.js';
+import Tile from '../api/core/Tile.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import {

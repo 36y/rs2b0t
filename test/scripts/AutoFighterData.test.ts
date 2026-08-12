@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import Tile from '#/bot/api/Tile.js';
+import Tile from '#/bot/api/core/Tile.js';
 import { SETTINGS, shouldKeepBankItem } from '#/bot/scripts/AutoFighter.js';
 import {
     autoBankEnabled,
@@ -13,7 +13,7 @@ import {
     START_POSITION,
     wantsAutoFighterLoot
 } from '#/bot/scripts/AutoFighterData.js';
-import { matchesEntityName } from '#/bot/api/queries/Query.js';
+import { matchesEntityName } from '#/bot/api/entities/Query.js';
 import { resolveControl } from '#/bot/ui/paramControls.js';
 
 describe('AutoFighter data', () => {

@@ -1,10 +1,10 @@
 import { actions, reader } from '../adapter/ClientAdapter.js';
-import { TaskBot, type Task } from '../api/Bot.js';
-import { Execution } from '../api/Execution.js';
-import { Game } from '../api/Game.js';
-import { Reachability } from '../api/Reachability.js';
-import Tile from '../api/Tile.js';
-import { Traversal } from '../api/Traversal.js';
+import { TaskBot, type Task } from '../api/core/Bot.js';
+import { Execution } from '../api/core/Execution.js';
+import { Game } from '../api/core/Game.js';
+import { Reachability } from '../nav/geometry/Reachability.js';
+import Tile from '../api/core/Tile.js';
+import { Traversal } from '../nav/Traversal.js';
 import { ContinueDialog } from '../api/tasks/ContinueDialog.js';
 import { Bank } from '../api/hud/Bank.js';
 import { ChatDialog } from '../api/hud/ChatDialog.js';
@@ -13,8 +13,8 @@ import { Paint } from '../api/hud/Paint.js';
 import { Skills } from '../api/hud/Skills.js';
 import { fmtDuration } from '../api/hud/paintLogic.js';
 import { foodCount as foodCountIn, foodForms } from '../api/combat/food.js';
-import { Locs, type Loc } from '../api/queries/Locs.js';
-import { Npcs } from '../api/queries/Npcs.js';
+import { Locs, type Loc } from '../api/entities/Locs.js';
+import { Npcs } from '../api/entities/Npcs.js';
 import { DirectNavigator } from '../nav/DirectNavigator.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
@@ -54,8 +54,8 @@ import {
     wantRunForGoal,
     type ArenaEdge
 } from './BrimhavenAgilityLogic.js';
-import { scriptFood } from '../items/loadoutPlan.js';
-import { LOADOUT_SETTING } from '../items/loadoutSetting.js';
+import { scriptFood } from '../api/items/loadoutPlan.js';
+import { LOADOUT_SETTING } from '../api/items/loadoutSetting.js';
 
 export const BRIMHAVEN_AGILITY_SETTINGS: SettingsSchema = {
     loadout: LOADOUT_SETTING,

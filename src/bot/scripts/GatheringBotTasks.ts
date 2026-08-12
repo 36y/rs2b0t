@@ -2,22 +2,22 @@
  * GatheringBot task implementations (combat, mule, bank, cook, tools, gather).
  * Separated from the bot class for maintainability; behavior is unchanged.
  */
-import { beyondLeash, shouldSoftHomeFromGatherMiss, tileWithinLeash } from '../api/Anchor.js';
-import type { Task } from '../api/Bot.js';
-import { EventSignal } from '../api/EventSignal.js';
-import { Execution } from '../api/Execution.js';
-import { Game } from '../api/Game.js';
-import Tile from '../api/Tile.js';
+import { beyondLeash, shouldSoftHomeFromGatherMiss, tileWithinLeash } from '../api/skilling/Anchor.js';
+import type { Task } from '../api/core/Bot.js';
+import { EventSignal } from '../api/randomevents/EventSignal.js';
+import { Execution } from '../api/core/Execution.js';
+import { Game } from '../api/core/Game.js';
+import Tile from '../api/core/Tile.js';
 import type { Npc } from '../api/entities/index.js';
 import { Bank, withdrawOp } from '../api/hud/Bank.js';
 import { ChatDialog } from '../api/hud/ChatDialog.js';
 import { Equipment } from '../api/hud/Equipment.js';
 import { Inventory } from '../api/hud/Inventory.js';
 import { Skills } from '../api/hud/Skills.js';
-import { Locs } from '../api/queries/Locs.js';
-import { Npcs } from '../api/queries/Npcs.js';
-import { Traversal } from '../api/Traversal.js';
-import { isOpenableObstacle, openOp, walkOpening } from '../api/walkOpening.js';
+import { Locs } from '../api/entities/Locs.js';
+import { Npcs } from '../api/entities/Npcs.js';
+import { Traversal } from '../nav/Traversal.js';
+import { isOpenableObstacle, openOp, walkOpening } from '../nav/walkOpening.js';
 import { DirectNavigator } from '../nav/DirectNavigator.js';
 import { ScriptRunner } from '../runtime/ScriptRunner.js';
 import {
@@ -25,8 +25,8 @@ import {
     gatherSpotRangeOrigin,
     resourceWithinCamp,
     spotWithinGatherRange
-} from '../api/GatherCamp.js';
-import { LOCAL_MINE_PREFER_RADIUS, shouldCooldownGatherTile } from '../api/TargetPick.js';
+} from '../api/skilling/GatherCamp.js';
+import { LOCAL_MINE_PREFER_RADIUS, shouldCooldownGatherTile } from '../api/skilling/TargetPick.js';
 import { Trade } from '../api/hud/Trade.js';
 import {
     DEFAULT_TRADE_RANGE,
@@ -34,9 +34,9 @@ import {
     isConfiguredPartner
 } from '../api/mule/PartnerTrade.js';
 import { driveActivePartnerTrade } from '../api/mule/drivePartnerTrade.js';
-import { BROKEN_PICKAXE, GAS_ROCK_IDS, GAS_ROCK_TICKS } from '../api/MiningRocks.js';
-import { bestPickaxe } from '../api/Tools.js';
-import { WHIRLPOOL_IDS, fishingRestockPlan } from '../api/FishingMethods.js';
+import { BROKEN_PICKAXE, GAS_ROCK_IDS, GAS_ROCK_TICKS } from '../api/skilling/MiningRocks.js';
+import { bestPickaxe } from '../api/acquisition/Tools.js';
+import { WHIRLPOOL_IDS, fishingRestockPlan } from '../api/skilling/FishingMethods.js';
 import {
     bankPaceTicks,
     cookFilterLabel,
@@ -57,9 +57,9 @@ import {
     shouldCookForTannerfish,
     shouldEatForTannerfish
 } from './TickManipLogic.js';
-import { Banking } from '../api/Banking.js';
-import { parseRangeStyle } from '../api/CombatStyle.js';
-import { BROKEN_AXE, COINS, buyPlansCost, fishingGearShopCart, planGatherToolAcquire } from '../api/ToolAcquire.js';
+import { Banking } from '../api/banking/Banking.js';
+import { parseRangeStyle } from '../api/combat/CombatStyle.js';
+import { BROKEN_AXE, COINS, buyPlansCost, fishingGearShopCart, planGatherToolAcquire } from '../api/acquisition/ToolAcquire.js';
 import {
     fishingSessionBroken,
     hostileAttackerNearby,

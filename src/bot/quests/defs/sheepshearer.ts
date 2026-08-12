@@ -1,4 +1,4 @@
-import Tile from '../../api/Tile.js';
+import Tile from '../../api/core/Tile.js';
 import type { NpcStop } from '../exec/primitives.js';
 import { gatherWool, type WoolSites } from '../exec/wool.js';
 import type { QuestModule, QuestSnapshot, QuestStep } from '../engine/types.js';

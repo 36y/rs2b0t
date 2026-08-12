@@ -7,7 +7,7 @@
  */
 
 import type { TransportEdgeData } from './PathFinder.js';
-import { packNavPoint, parseLcCoord } from './lcCoord.js';
+import { packNavPoint, parseLcCoord } from './geometry/lcCoord.js';
 import type { NavPoint } from './types.js';
 
 const parse = parseLcCoord;

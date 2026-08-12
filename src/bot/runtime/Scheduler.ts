@@ -1,4 +1,4 @@
-import { BotHost } from '../BotHost.js';
+import { BotHost } from './BotHost.js';
 import { ScriptAborted, ScriptContext, type Waiter, type WaiterSpec } from './ScriptContext.js';
 
 const WATCHDOG_MS = 10000;

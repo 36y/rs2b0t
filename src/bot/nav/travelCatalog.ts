@@ -10,7 +10,7 @@
 
 import type { TransportEdgeData } from './PathFinder.js';
 import { essenceExitEdges } from './essenceExit.js';
-import { parseLcCoord } from './lcCoord.js';
+import { parseLcCoord } from './geometry/lcCoord.js';
 import { REQ } from './transportQuestReqs.js';
 import type { NavPoint, TransportRequires } from './types.js';
 

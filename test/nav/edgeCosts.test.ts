@@ -15,7 +15,7 @@ import {
     runEnergyRecoverPerTick,
     teleportEdgeCost,
     ticksToCost
-} from '#/bot/nav/edgeCosts.js';
+} from '#/bot/nav/geometry/edgeCosts.js';
 import { WITHDRAW_COST } from '#/bot/nav/bankPlan.js';
 import { DEFAULT_DISTANCE_BEFORE_TELEPORT } from '#/bot/nav/policy.js';
 

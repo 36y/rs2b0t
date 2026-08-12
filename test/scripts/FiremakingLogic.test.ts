@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import Tile from '#/bot/api/Tile.js';
+import Tile from '#/bot/api/core/Tile.js';
 import {
     BURN_WEST,
     FIRE_SPOTS,

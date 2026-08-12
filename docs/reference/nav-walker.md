@@ -17,7 +17,7 @@ One `PathFinder` / `WalkExecutor` / transport graph. No classic/v2 dual stack.
 
 ## Arrival
 
-[`arrival.ts`](../../src/bot/nav/arrival.ts) answers "are we there?" honestly, and the
+[`arrival.ts`](../../src/bot/nav/geometry/arrival.ts) answers "are we there?" honestly, and the
 subtlety is that many destinations are **not standable** — a bank booth, a furnace,
 a tree are all solid.
 
@@ -39,7 +39,7 @@ collision-data fix, not a walker fix.
 ## The Reach primitive
 
 Most last-mile bugs came from every caller hand-rolling its own approach loop.
-[`Reach`](../../src/bot/api/Reach.ts) is the shared one — **use it rather than writing
+[`Reach`](../../src/bot/nav/Reach.ts) is the shared one — **use it rather than writing
 another**:
 
 ```ts

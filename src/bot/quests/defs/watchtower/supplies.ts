@@ -1,4 +1,4 @@
-import Tile from '../../../api/Tile.js';
+import Tile from '../../../api/core/Tile.js';
 import type { QuestSnapshot, QuestStep } from '../../engine/types.js';
 import { WT_ITEM, WT_TILE, type WatchtowerItem } from './areas.js';
 
