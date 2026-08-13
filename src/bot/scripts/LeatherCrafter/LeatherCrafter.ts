@@ -53,7 +53,7 @@ const LEATHERS: Record<string, LeatherKind> = {
             { level: 9, qty: 1, label: 'Leather cowl', make1: 8653, make10: 8651 },
             { level: 11, qty: 1, label: 'Leather vambraces', make1: 8644, make10: 8642 },
             { level: 14, qty: 1, label: 'Leather body', make1: 8635, make10: 8633 },
-            { level: 18, qty: 1, label: 'Leather chaps', make1: 8647 },
+            { level: 18, qty: 1, label: 'Leather chaps', make1: 8647, make10: 8645 },
             { level: 38, qty: 1, label: 'Coif', make1: 8650, make10: 8648 }
         ]
     },

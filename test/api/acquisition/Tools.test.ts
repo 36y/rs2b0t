@@ -36,10 +36,10 @@ describe('Tools kit', () => {
         }
     });
 
-    test('bestPickaxe / bestAxe respect level gates', () => {
+    test('bestPickaxe respects mining gates; bestAxe has none', () => {
         expect(bestPickaxe(41, n => n === 'Rune pickaxe')).toBe('Rune pickaxe');
         expect(bestPickaxe(40, n => n === 'Rune pickaxe' || n === 'Adamant pickaxe')).toBe('Adamant pickaxe');
-        expect(bestAxe(20, n => ['Rune axe', 'Steel axe', 'Bronze axe'].includes(n))).toBe('Steel axe');
+        expect(bestAxe(20, n => ['Rune axe', 'Steel axe', 'Bronze axe'].includes(n))).toBe('Rune axe');
     });
 
     test('bestFromTiers matches bestPickaxe', () => {

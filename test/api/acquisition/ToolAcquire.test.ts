@@ -308,12 +308,13 @@ describe('ToolAcquire helpers', () => {
             bestSmithableAxe(41, 51, null, bar => (bar === 'Mithril bar' ? 1 : 0), true)?.name
         ).toBe('Mithril axe');
         expect(bestSmithableAxe(41, 51, null, () => 1, false)).toBeNull();
-        // WC 5 can only use bronze; smithing 1 + bronze bar → bronze axe
+        // Smithing 1 + bronze bar → bronze axe
         expect(
             bestSmithableAxe(5, 1, null, bar => (bar === 'Bronze bar' ? 1 : 0), true)?.name
         ).toBe('Bronze axe');
-        // No usable bar for WC 5 when only mith bars present
-        expect(bestSmithableAxe(5, 51, null, bar => (bar === 'Mithril bar' ? 1 : 0), true)).toBeNull();
+        // Woodcutting never gates the axe — smithing and the bar do
+        expect(bestSmithableAxe(5, 51, null, bar => (bar === 'Mithril bar' ? 1 : 0), true)?.name).toBe('Mithril axe');
+        expect(bestSmithableAxe(41, 50, null, bar => (bar === 'Mithril bar' ? 1 : 0), true)).toBeNull();
     });
 
     test('coinsToWithdraw / canFundPlan / acquireKeepNames', () => {
