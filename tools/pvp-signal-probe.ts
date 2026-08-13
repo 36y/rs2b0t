@@ -246,7 +246,7 @@ function inNpcFight(page: Page): Promise<boolean> {
     });
 }
 
-/** A single click gets dropped or cleared; a real PKer keeps clicking. */
+/** A single click gets dropped or cleared; a PKer keeps clicking. */
 async function sustainAttack(page: Page, targetName: string, ms: number): Promise<number> {
     const until = Date.now() + ms;
     let sent = 0;
@@ -387,7 +387,7 @@ function report(phase: string, rows: Row[], attackerName: string): void {
             console.log(`  held player-target for    ${((lastFlip.t - firstFlip.t) / 1000).toFixed(1)}s (last sample +${((lastFlip.t - t0) / 1000).toFixed(1)}s)`);
         }
         // A phase that never established its own preconditions proves nothing —
-        // run 2's scenario B looked like a disproof but was just an idle attacker.
+        // run 2's scenario B looked like a disproof but was an idle attacker.
         const engagedPct = Math.round((attackerTargetedUs.length / rows.length) * 100);
         const npcPct = Math.round((selfFacedNpc.length / rows.length) * 100);
         console.log(`  PRECONDITIONS: attacker engaged ${engagedPct}% of samples | victim in npc-fight ${npcPct}%`);

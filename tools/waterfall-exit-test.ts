@@ -75,7 +75,7 @@ try {
         fail(`could not log in '${username}' at ${base}: ${JSON.stringify(diagnostic)}`);
     }
 
-    // Twice the normal server rate keeps this real walk quick while preserving
+    // Twice the normal server rate keeps this walk quick while preserving
     // every server-side movement and scenery interaction.
     if (!(await cheatQuiet(page, 'speed 300'))) fail('could not set the isolated server to 300ms ticks');
     if (!(await cheatQuiet(page, 'tele 0,40,154,43,57', 1500))) fail('could not teleport to the raised chamber');
@@ -124,7 +124,7 @@ try {
     );
 
     // Debug replies are reported through the client's legacy tutorial-message
-    // overlay, not a ChatDialog interface. A real canvas click dismisses it.
+    // overlay, not a ChatDialog interface. A canvas click dismisses it.
     for (let click = 0; click < 3; click++) {
         const message = await page.evaluate(() => (globalThis as never as BrowserApi).rs2b0t.client.tutComMessage);
         if (message === null) break;
@@ -149,7 +149,7 @@ try {
         { timeout: 5000 }
     );
 
-    // Clear any ordinary interface dialogue under the real scheduler too,
+    // Clear any ordinary interface dialogue under the live scheduler too,
     // before proving that scenery interactions are usable.
     await page.evaluate(() => {
         const global = globalThis as never as BrowserApi;

@@ -2,12 +2,12 @@ import { afterAll, beforeEach, describe, expect, test } from 'bun:test';
 
 import { reader } from '#/bot/adapter/ClientAdapter.js';
 import { Execution } from '#/bot/api/execution/Execution.js';
-import { Reachability } from '#/bot/nav/geometry/Reachability.js';
+import { Reachability } from '#/bot/event/webwalk/geometry/Reachability.js';
 import { Traversal } from '#/bot/api/walking/Traversal.js';
-import { ChatDialog } from '#/bot/api/dialogue/ChatDialog.js';
+import { ChatDialog } from '#/bot/api/ui/dialogue/ChatDialog.js';
 import { Locs } from '#/bot/api/locs/Locs.js';
 import { Npcs } from '#/bot/api/npcs/Npcs.js';
-import { WalkExecutor } from '#/bot/nav/WalkExecutor.js';
+import { WalkExecutor } from '#/bot/event/webwalk/WalkExecutor.js';
 import { stubProps } from '../../lib/stubSingletons.js';
 
 let sceneLoc: { name: string; ops: string[]; tile: { x: number; z: number; level: number }; interactResult: boolean } | null;
@@ -132,7 +132,7 @@ const restoreTraversal = stubProps(Traversal, {
         return walkResult;
     }
 });
-// Real WalkExecutor — pin lastOutcome via the writable field (no module mock).
+// WalkExecutor — pin lastOutcome via the writable field (no module mock).
 const realLastOutcome = WalkExecutor.lastOutcome;
 afterAll(() => {
     restoreReader();

@@ -189,7 +189,7 @@ try {
         const herbs = Math.round((last.xp - grindStart.xp) / IDENTIFY_XP);
         console.log(`CYCLE ${herbs} herbs in ${ticks} ticks = ${(herbs / Math.max(1, ticks)).toFixed(2)} herbs/tick`);
     }
-    // A run that is expected to be refused must prove it was refused, not just survive.
+    // A run that is expected to be refused must prove it was refused, not survive.
     const expectGrind = stage === '12' && !flag('--no-maxme');
     if (expectGrind && gained <= 0) {
         fail('no herblore xp — the grind never landed');

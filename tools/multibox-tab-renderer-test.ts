@@ -76,7 +76,7 @@ try {
     if (back[1].frames !== 0) fail('the away-tab bot kept drawing after being backgrounded again');
 
     // the suspension is the wall's own state: each bot's renderer switch and its
-    // persisted setting must read exactly as the user left them (enabled)
+    // persisted setting must read as the user left them (enabled)
     const switches = await page.evaluate(() => Array.from(document.querySelectorAll('iframe')).map(f => {
         const w = (f as HTMLIFrameElement).contentWindow as unknown as { rs2b0t?: { renderGate: { enabled: boolean } } };
         const doc = (f as HTMLIFrameElement).contentDocument;

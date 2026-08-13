@@ -1,6 +1,6 @@
 import type { InvItemSnapshot } from '../../adapter/ClientAdapter.js';
 import { reader } from '../../adapter/ClientAdapter.js';
-import { Input } from '../input/Input.js';
+import { Input } from '../../input/Input.js';
 import { Loc } from '../model/Loc.js';
 import { Npc } from '../model/Npc.js';
 

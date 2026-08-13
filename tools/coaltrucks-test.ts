@@ -40,7 +40,7 @@ interface Snapshot {
     coal: number;
     /** Anything held that is neither coal nor a pickaxe — random-event junk must not pile up. */
     junk: string[];
-    /** Count, not a flag: a kept spare is exactly the leak the keep-list must not have. */
+    /** Count, not a flag: a kept spare is the leak the keep-list must not have. */
     picks: number;
     xp: number;
     tick: number;
@@ -159,7 +159,7 @@ try {
     let sawNoPickaxe = false;
     const deposits: string[] = [];
     // A completed cycle ends back at the mine, so the final position is no evidence
-    // Seers was ever reached — track it across the whole run.
+    // Seers was ever reached — track it across the run.
     let reachedSeers = false;
     // Capping the truck should not end the fill phase: the bot tops the pack up first,
     // so mining xp must still move between the capping deposit and the crossing.

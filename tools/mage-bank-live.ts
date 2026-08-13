@@ -9,7 +9,7 @@ import { HARNESS_VIEWPORT, boot, bringUpOffIsland, cheatQuiet, fail, launchBrows
 const { base } = parseArgs(process.argv.slice(2), { base: 'http://localhost:8888' });
 const user = process.env.USER_NAME ?? `mageb${Date.now() % 100000}`;
 
-/** Outside Ardougne, a walk away from the lever, so the first leg is real. */
+/** Outside Ardougne, a walk away from the lever, so the first leg is a true walk. */
 const START = { x: 2570, z: 3320, level: 0 } as const;
 const LEVER_ARDY = { x: 2562, z: 3311, level: 0 } as const;
 const LEVER_WILD = { x: 3154, z: 3924, level: 0 } as const;

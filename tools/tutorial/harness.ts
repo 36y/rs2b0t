@@ -233,7 +233,7 @@ export async function getServerVarQuiet(page: Page, name: string): Promise<numbe
 // Lumbridge courtyard — same hop other live harnesses use (not a tutorial stage walk).
 const OFF_ISLAND_TELE = '0,50,50,20,20';
 
-/** New account → off Tutorial Island without running TutorialBot: boot and login, tele off-island and setvar tutorial 1000, clean IF_BUTTON logout (com 2458), then login again so the side icons and tutorial UI lock refresh from the login payload.
+/** New account → off Tutorial Island without playing it: boot and login, tele off-island and setvar tutorial 1000, clean IF_BUTTON logout (com 2458), then login again so the side icons and tutorial UI lock refresh from the login payload.
  *  Why: CLIENT_CHEAT packets are used rather than keyboard `::…` typing, since the island chat/tutorial UI eats keystrokes and stalls for a long time before a setvar sticks; the clean logout avoids the unclean-disconnect 60s "already logged in" hold, so with RELOG_COOLDOWN_MS≈2s the hop runs ~9s after boot. */
 export async function mainlandAccount(page: Page, base: string, user: string): Promise<void> {
     const t0 = Date.now();

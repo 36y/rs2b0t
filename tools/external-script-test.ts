@@ -12,9 +12,9 @@ function fail(msg: string): never {
     process.exit(1);
 }
 
-const build = Bun.spawnSync(['bun', 'run', 'build'], { cwd: 'templates/script-template' });
+const build = Bun.spawnSync(['bun', 'run', 'build'], { cwd: 'docs/script-template' });
 if (build.exitCode !== 0) fail(`template build failed: ${build.stderr.toString()}`);
-fs.copyFileSync('templates/script-template/dist/bot.js', `${engineDir}/public/bot/external-test-bot.js`);
+fs.copyFileSync('docs/script-template/dist/bot.js', `${engineDir}/public/bot/external-test-bot.js`);
 console.log('template built and copied to engine public/bot/');
 
 type Rs2b0t = {

@@ -17,7 +17,7 @@ interface Route {
     from: Tile;
     to: Tile;
     radius?: number;
-    /** Wall-clock budget for the whole walk (ms). */
+    /** Wall-clock budget for the walk (ms). */
     budgetMs?: number;
 }
 

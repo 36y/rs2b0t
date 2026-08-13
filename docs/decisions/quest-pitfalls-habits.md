@@ -83,7 +83,7 @@ Family Crest added four more, and the first two generalise past this quest:
 - **A lever's model is not its state.** `loc_change(loc, 500)` reverts the lever to its
   down model after five minutes and leaves the varp bit set, so a lever that *looks* down
   may well be up. Reading the loc is reading a lie; the "The lever is now up." line is
-  emitted exactly when the bit changes. Set levers by pulling until the message confirms
+  emitted when the bit changes. Set levers by pulling until the message confirms
   the state you want, rather than reading and deciding.
 - **An unread bank is not an empty bank.** `snap.bankIds` is empty until something opens
   a booth, so "is the pickaxe banked?" answers *no* on the first decide tick and the

@@ -24,7 +24,7 @@ const SHIELD = 1540;
 const SPADE = 952;
 const HARD_CLUE = 2723; // trail_clue_hard_sextant001
 const DRAGON_BONES = 536;
-/** Mirrors TRAIL_FOOD_CAP in src/bot/clues/packPlan.ts. */
+/** Mirrors TRAIL_FOOD_CAP in src/bot/api/ai/clues/packPlan.ts. */
 const TRAIL_FOOD_CAP = 10;
 
 interface Api {

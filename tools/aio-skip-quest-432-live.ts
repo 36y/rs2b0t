@@ -10,7 +10,7 @@ const base = args[0];
 const username = `sk${Date.now().toString(36).slice(-7)}`;
 const BUDGET_MS = 8 * 60_000;
 
-// Two implemented free-to-play quests so skip has a real "next" target.
+// Two implemented free-to-play quests so skip has a "next" target.
 const QUEUE = [
     { id: 'runemysteries', name: 'Rune Mysteries Quest' },
     { id: 'doric', name: "Doric's Quest" }

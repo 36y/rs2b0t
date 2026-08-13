@@ -5,8 +5,8 @@
 ## Run the unit gates
 
 ```bash
-bun test test/nav/travelCatalog.test.ts test/nav/transportQuestReqs.test.ts \
-         test/nav/specialRequires.test.ts test/nav/specialCrossingMatch.test.ts
+bun test test/event/webwalk/travelCatalog.test.ts test/event/webwalk/transportQuestReqs.test.ts \
+         test/event/webwalk/specialRequires.test.ts test/event/webwalk/specialCrossingMatch.test.ts
 ```
 
 ## Check curated endpoints are walkable in the pack

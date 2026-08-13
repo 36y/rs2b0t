@@ -204,7 +204,7 @@ async function prepareFixture(page: Page, base: string, username: string): Promi
     await command(page, '~clearinv worn');
     await command(page, '~clearbank');
 
-    // Inspect the empty bank through the real interface, then relog to close it
+    // Inspect the empty bank through the live interface, then relog to close it
     // and refresh the ordinary backpack component before seeding the sole item.
     await command(page, '~bank', 1200);
     await page.waitForFunction(() => (globalThis as never as BrowserGlobal).__rs2b0t.Bank.isOpen(), undefined, {

@@ -33,8 +33,8 @@ Full write-up: [NAV.md § Nav teleports](../reference/nav-teleports.md).
 | Verify transport coverage | [verify-transports.md](../how-to/verify-transports.md) |
 | Why paint and walk diverge | [client-vs-pack-path.md](../decisions/client-vs-pack-path.md) |
 | Compare pack and client paint | [compare-path-paint.md](../how-to/compare-path-paint.md) |
-| Code | `src/bot/nav/` |
-| Unit tests | `bun test test/nav/` |
+| Code | `src/bot/event/webwalk/` |
+| Unit tests | `bun test test/event/webwalk/` |
 | Pack corpus | `bun --preload ./test/setup-dom.ts tools/nav/script-route-corpus.ts` |
 
 ## Live operator tools (not CI)

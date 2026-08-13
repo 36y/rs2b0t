@@ -399,7 +399,7 @@ try {
                     `| ${s.lastLog.slice(0, 72)}`
             );
 
-            // Success requires real cooking XP — standing on the stand alone is a false pass
+            // Success requires cooking XP — standing on the stand alone is a false pass
             // (Draynor fireplace / Seers bank were at tile with 0 cook XP).
             if (cookXp > 0) {
                 ok = true;

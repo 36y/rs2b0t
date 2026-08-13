@@ -53,7 +53,7 @@ try {
     );
     push(`ingame as ${user}`);
 
-    // Keep a real ScriptRunner loop alive so RandomEvents is on the Supervisor path.
+    // Keep a ScriptRunner loop alive so RandomEvents is on the Supervisor path.
     await page.evaluate(() => {
         const g = globalThis as never as Api;
         const api = g.__rs2b0t;

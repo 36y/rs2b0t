@@ -2,7 +2,7 @@
 
 # Quest exec primitives
 
-[`exec/primitives.ts`](../../src/bot/quests/exec/primitives.ts) is the shared vocabulary
+[`exec/primitives.ts`](../../src/bot/api/ai/quests/exec/primitives.ts) is the shared vocabulary
 that quest steps are built from:
 
 | Primitive | What it handles |
@@ -14,7 +14,7 @@ that quest steps are built from:
 | `talkOp(actions)` / `pickPreferred(options, prefer)` | choosing an op or an option |
 | `isUnderground(t)` / `needsHop(here, anchor)` | whether a level change is required |
 
-[`exec/prompts.ts`](../../src/bot/quests/exec/prompts.ts) covers the other half — the
+[`exec/prompts.ts`](../../src/bot/api/ai/quests/exec/prompts.ts) covers the other half — the
 world, rather than a conversation:
 
 | Primitive | What it handles |
@@ -45,7 +45,7 @@ continue leaves the conversation half-finished and the quest un-advanced.
 
 `gotoNpc` is leash-limited by design. For an NPC that patrols, that is the wrong
 tool: it wanders out of leash and the step is abandoned. Use
-[`Reach.npcDialog`](../reference/nav-walker.md#the-reach-primitive), which searches the whole scene and
+[`Reach.npcDialog`](../reference/nav-walker.md#the-reach-primitive), which searches the scene and
 lets the server chase.
 
 Opening the dialogue itself goes through [`Reach`](../reference/nav-walker.md#the-reach-primitive), so an

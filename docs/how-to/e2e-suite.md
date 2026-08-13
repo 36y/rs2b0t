@@ -27,7 +27,7 @@ Exit code is 1 when anything is failing, so it drives a cron or a CI job directl
 | `full` | all 77 harnesses, including the 10 stage-driven quest runs | overnight |
 
 `smart` selects a harness when one of its filename tokens appears in a changed path, and
-adds the nav harnesses when anything under `src/bot/nav/` changed. A change to shared
+adds the nav harnesses when anything under `src/bot/event/webwalk/` changed. A change to shared
 code — `adapter/`, `runtime/`, `api/` or `package.json` — can reach anything, so it
 selects everything rather than pretending to be clever. The report states which rule
 fired.

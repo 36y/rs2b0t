@@ -116,7 +116,7 @@ async function equipScimitar(page: Page): Promise<void> {
 
 async function main(): Promise<void> {
     const browser = await launchBrowser({ swiftshader: !process.env.HEADED });
-    // VIDEO=1 records the whole run to out/ so the fight can be watched back.
+    // VIDEO=1 records the run to out/ so the fight can be watched back.
     const context = await browser.newContext(
         process.env.VIDEO
             ? { viewport: HARNESS_VIEWPORT, recordVideo: { dir: 'out/guardian-video', size: HARNESS_VIEWPORT } }

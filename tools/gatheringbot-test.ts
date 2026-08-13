@@ -1066,7 +1066,7 @@ const SCENARIOS: Scenario[] = [
             if (cur.runner === 'crashed') {
                 return 'fail';
             }
-            // Real bank loop: mine last → walk to bank → deposit → return toward camp.
+            // Bank loop: mine last → walk to bank → deposit → return toward camp.
             if (
                 xpGain > 0
                 && productPeak >= 26
@@ -1369,7 +1369,7 @@ const SCENARIOS: Scenario[] = [
             if (cur.runner === 'crashed') {
                 return 'fail';
             }
-            // Real bank loop: fish last → walk to bank → deposit → return toward camp.
+            // Bank loop: fish last → walk to bank → deposit → return toward camp.
             if (
                 xpGain > 0
                 && productPeak >= 26
@@ -1999,7 +1999,7 @@ const SCENARIOS: Scenario[] = [
         // Independent path loop: rune pick; acquire scenarios wipe/buy separately.
         seed: [{ debug: 'rune_pickaxe', name: 'Rune pickaxe', qty: 1 }],
         scene: 'skip',
-        // Spiders + flee can eat wall-clock; must still land a real ore before pass.
+        // Spiders + flee can eat wall-clock; must still land a live ore before pass.
         budgetMs: 300_000,
         check: ({ start, cur, sawProduct, productPeak, minDistToCamp, startDistToCamp }) => {
             if (cur.runner === 'crashed') {
@@ -2029,7 +2029,7 @@ const SCENARIOS: Scenario[] = [
         id: 'fish-path-shark',
         tags: ['fishing', 'fish', 'endgame', 'path', 'guild'],
         script: 'Fisher',
-        // Real flow: leave Ardougne north/west bank and walk into the Fishing Guild.
+        // Flow: leave Ardougne north/west bank and walk into the Fishing Guild.
         start: SPOT.ardougneWestBank,
         camp: SPOT.fishingGuild,
         settings: {
@@ -2074,7 +2074,7 @@ const SCENARIOS: Scenario[] = [
         id: 'buy-pick',
         tags: ['acquire', 'buy', 'mining', 'tools'],
         script: 'Miner',
-        // Real flow: missing tool + 32k → Fally East bank, then Nurmof for Rune pickaxe.
+        // Flow: missing tool + 32k → Fally East bank, then Nurmof for Rune pickaxe.
         start: SPOT.faladorEast,
         camp: SPOT.nurmofHop,
         settings: {
@@ -2581,7 +2581,7 @@ try {
     await mainlandAccount(page, base, USER);
     console.log(`${stamp()} mainland-ready as '${USER}'`);
 
-    // Why: early zones (Draynor jail guard) kill a low-HP bot stuck behind "Congratulations, you just advanced…", so max once and drain the chat before any tele/seed/start.
+    // Why: early zones (Draynor jail guard) kill a low-HP bot stuck behind "Congratulations, you advanced…", so max once and drain the chat before any tele/seed/start.
     console.log(`${stamp()} base stats → 99 (maxme + clear dialogs)`);
     await maxAccountAndClearDialogs(page);
 
@@ -2865,7 +2865,7 @@ try {
                 }
                 prevProduct = product;
 
-                // After deposit at bank, require a real walk back toward camp resources.
+                // After deposit at bank, require a live walk back toward camp resources.
                 // Do not use overall minDistToCamp — start tile is already near camp.
                 if (bankedHint && sawNearBank && cur.tile && sc.camp) {
                     const dCamp = chebyshev(cur.tile, sc.camp);

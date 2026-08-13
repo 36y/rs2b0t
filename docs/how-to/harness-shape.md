@@ -44,7 +44,7 @@ It does **not** deploy. Deploy first (`bun run b0t`, or
 
 The other harnesses are per-subsystem and are run individually — a quest chain,
 FireGiant, GatheringBot (`bun run verify:gatheringbot`), the hosted wall, relogin,
-external script loading, a nature-runner soak. Several want a real GPU or a special
+external script loading, a nature-runner soak. Several want a physical GPU or a special
 environment rather than a plain local engine.
 
 ```sh

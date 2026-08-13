@@ -29,7 +29,7 @@ import {
     teleTo,
     type BankSeedItem
 } from './tutorial/harness.js';
-import { QUESTS } from '../src/bot/quests/data/quests.js';
+import { QUESTS } from '../src/bot/api/ai/quests/data/quests.js';
 
 const args = positionalArgs(process.argv.slice(2), 'http://localhost:8890');
 const base = args[0];

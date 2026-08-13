@@ -141,7 +141,7 @@ const STAGE_BITS: Record<number, string[]> = {
         'horrorfire', 'horrorwater', 'horrorearth', 'horrorair', 'horrorsword', 'horrorarrow']
 };
 
-/** Where each stage's first real action is, so the walk under test is the short one. */
+/** Where each stage's first action is, so the walk under test is the short one. */
 const STAGE_START: Record<number, { x: number; z: number; level: number }> = {
     0: CAMELOT_BANK,
     1: VARROCK_EAST_BANK,          // the hammer, the nails and the Varrock shops
@@ -301,7 +301,7 @@ try {
         }
         if (last.logs.length > 0) { lastLogTime = Math.max(lastLogTime, ...last.logs.map(l => l.time)); }
 
-        // A full run waits for the journal to go green, not just the varp: the
+        // A full run waits for the journal to go green, not the varp: the
         // completion recolour and the QP award land a tick behind %horrorquest.
         const done = args.until >= 10 ? last.status === 'complete' : stage >= args.until;
         if (done) {

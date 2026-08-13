@@ -41,7 +41,7 @@ try {
     console.log(`seeded ${seeded} empty vials at the Falador West bank`);
 
     // the script's own bank leg deposits these and withdraws them back out,
-    // so the whole bank -> fountain -> bank loop is exercised for real
+    // so the bank -> fountain -> bank loop is exercised end to end
     await page.evaluate(() => {
         const g = globalThis as never as Api;
         const meta = g.rs2b0t.registry.get('VialFiller');

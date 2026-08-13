@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { chromium, type Browser, type Page } from 'playwright-core';
-import { CLUE_DB } from '#/bot/clues/data/cluedb.js';
-import { PACK_UNREACHABLE } from '#/bot/clues/data/unreachable.js';
+import { CLUE_DB } from '#/bot/api/ai/clues/data/cluedb.js';
+import { PACK_UNREACHABLE } from '#/bot/api/ai/clues/data/unreachable.js';
 
 const base = process.env.CLUE_BASE ?? 'http://localhost:8890';
 const argv = process.argv.slice(2);

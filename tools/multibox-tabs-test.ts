@@ -42,7 +42,7 @@ try {
         return { tabs: m.tabs(), active: m.activeTab(), slots: m.slots().map(s => ({ username: s.username, tab: s.tab, focused: s.focused })) };
     });
 
-    // ---- create the vault and three profiles through the real UI ----
+    // ---- create the vault and three profiles through the UI ----
     for (const [i, user] of users.entries()) {
         await page.click('#mbx-add');
         if (i === 0) {

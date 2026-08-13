@@ -37,7 +37,7 @@ the pack, routes still build but anchors may land on solid locs.
 | **firemaking** | `FIRE_SPOTS` bank pins | Full directed mesh bank_i → bank_j (i ≠ j). |
 | **cooking** | `FISH_CAMP_COOK_PLANS` pier/bank stands; sample of `COOKING_RANGE_LOCS` | Pier ↔ bank per camp; chain every 8th range loc (max 24 samples). |
 | **gathering-all** | All of the above gathering flags + residual `NAV_TARGETS` (not ClueSolver / AIOQuester / island) | Filter: `r.gathering \|\| segment === gathering-all`. Residual nav targets: consecutive chain only. |
-| **quests** | Every `new Tile(x, z[, level])` in `src/bot/quests/defs/**/areas.ts` (and single-file quests with ≥2 tiles) | **Consecutive pairs in source order** within each file, plus reverse. Not full quest mesh; not full quest state (transport varps only when `SEED_QUESTS` / `SEGMENT=quests`). Ids: `quest-<name>-i-j`. |
+| **quests** | Every `new Tile(x, z[, level])` in `src/bot/api/ai/quests/defs/**/areas.ts` (and single-file quests with ≥2 tiles) | **Consecutive pairs in source order** within each file, plus reverse. Not full quest mesh; not full quest state (transport varps only when `SEED_QUESTS` / `SEGMENT=quests`). Ids: `quest-<name>-i-j`. |
 | **all** | Union of every segment | No filter. |
 
 Shared rules on every leg (`add`):
@@ -79,7 +79,7 @@ HEADED=1 SEGMENT=quests LIMIT=50 OFFSET=0 bun tools/nav-script-travel-live.ts
 | `STUCK_FACTOR` | Multiplier on est wall time (default **2.5**) |
 | `STUCK_MIN_S` | Min elapsed before stuck kill (default **20**) |
 | `STUCK_NOMOVE_S` | Min seconds without tile change (default **12**) |
-| `HARNESS_SUITE_ABORT` | Default **on** — stop the **whole** suite only on harness death (`is still running`, seed fail, tele fail). Product OD fails continue. |
+| `HARNESS_SUITE_ABORT` | Default **on** — stop the full suite only on harness death (`is still running`, seed fail, tele fail). Product OD fails continue. |
 | `HP_REFILL_AT` | Effective HP ≤ this → `setstat hitpoints 99` (default **40**; `0` = off). Not invuln. |
 | `SUSTAIN_EVERY_S` | Energy + HP check period mid-walk (default **5**; floor 2). Keeps multi-suite fleets light. |
 | `ENERGY_REFILL_AT` | Run energy % threshold mid-walk (default **25**). Same sustain cadence. |

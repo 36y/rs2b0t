@@ -36,7 +36,7 @@ import type { ScriptRoute } from './nav/script-route-corpus.js';
 import {
     transportQuestJournalNames,
     transportQuestSetvarCommands
-} from '../src/bot/nav/transportQuestReqs.js';
+} from '../src/bot/event/webwalk/transportQuestReqs.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -148,7 +148,7 @@ export function loadTransportHeavyRoutes(limit: number, file = TRANSPORT_HEAVY_J
 const DEFAULT_MINE_PAD = { x: 2912, z: 4833, level: 0 };
 
 /**
- * Real multiloc product path: tele to wizard → walk into mine (entry sets
+ * Multiloc product path: tele to wizard → walk into mine (entry sets
  * EssenceSession) → walk out via portal. No setvar / harness override.
  */
 async function runEssenceRoundtrip(
@@ -273,7 +273,7 @@ async function runWalk(page: Page, opts: WalkOpts): Promise<{ walkOk: boolean; t
 
 /**
  * Optional isolation legs (JEWELLERY_ONLY=1): clear pack, force allowlist Rub.
- * Default HARD/transport runs use seedTeleKit on real routes instead.
+ * Default HARD/transport runs use seedTeleKit on routes instead.
  */
 async function runJewelleryLegs(page: Page, budget: number): Promise<{ id: string; ok: boolean; detail: string }[]> {
     const out: { id: string; ok: boolean; detail: string }[] = [];
@@ -449,7 +449,7 @@ try {
         }
     }
 
-    // Runes + charged jewellery at start so real OD paths may spell/Rub (not a fake end test).
+    // Runes + charged jewellery at start so OD paths may spell/Rub (not a fake end test).
     await seedTeleKit(page, stamp);
     // Coins for cart / toll / ship fares (classic + transport-heavy + #352 ships).
     if (USE_TRANSPORT_HEAVY || USE_SHIP_352 || USE_HARDEST || !USE_TELEPORTS) {

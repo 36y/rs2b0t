@@ -320,7 +320,7 @@ try {
         }
         if (last.logs.length > 0) { lastLogTime = Math.max(lastLogTime, ...last.logs.map(l => l.time)); }
 
-        // A full run waits for the journal to go green, not just the varp: the
+        // A full run waits for the journal to go green, not the varp: the
         // quest-complete recolour and the QP award land a tick behind the varp.
         const done = args.until >= 50 ? last.status === 'complete' : stage >= args.until;
         if (done) {

@@ -44,7 +44,7 @@ import {
 import {
     transportQuestJournalNames,
     transportQuestSetvarCommands
-} from '../src/bot/nav/transportQuestReqs.js';
+} from '../src/bot/event/webwalk/transportQuestReqs.js';
 
 const TICK_MS = 300;
 const TICK_RESTORE_MS = 600;

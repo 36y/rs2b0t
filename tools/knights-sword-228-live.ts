@@ -81,7 +81,7 @@ const BANK_SEED: BankSeedItem[] = [
     { debugName: 'lobster', displayName: 'Lobster', qty: 40 }
 ];
 
-/** Where each stage's first real action is, so the walk under test is the short one. */
+/** Where each stage's first action is, so the walk under test is the short one. */
 const STAGE_START: Record<number, { x: number; z: number; level: number }> = {
     0: FALADOR_BANK,        // Squire, in the courtyard
     1: VARROCK_EAST_BANK,   // Reldo + the pie-dish spawn
@@ -207,7 +207,7 @@ try {
         }
         if (last.logs.length > 0) { lastLogTime = Math.max(lastLogTime, ...last.logs.map(l => l.time)); }
 
-        // A full run waits for the journal to go green, not just the varp: the
+        // A full run waits for the journal to go green, not the varp: the
         // quest-complete recolour and the QP award land a tick behind %squire.
         const done = args.until >= 7 ? last.status === 'complete' : stage >= args.until;
         if (done) {

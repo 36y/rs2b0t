@@ -514,7 +514,7 @@ export async function applyNavPaintSettings(
 
 // ── inventory seed (tele kit) ───────────────────────────────────────────────
 
-/** Charged jewellery for real OD Rub (plan scans inventory names). */
+/** Charged jewellery for OD Rub (plan scans inventory names). */
 export const JEWELLERY_SEEDS: readonly SeedSpec[] = [
     {
         debug: 'ring_of_dueling_8',
@@ -819,7 +819,7 @@ export async function seedTeleKit(
     opts?: { useTeleports?: boolean; waitScene?: boolean }
 ): Promise<void> {
     const useTele = opts?.useTeleports ?? useTeleportsFromEnv();
-    // 377 lesson: seed after scene 2 so inv lists are real.
+    // 377 lesson: seed after scene 2 so inv lists are populated.
     if (opts?.waitScene !== false) {
         const ok = await waitSceneReady(page, 30_000);
         if (!ok) {
@@ -886,7 +886,7 @@ export function stuckAbortFromEnv(): StuckAbortOpts | undefined {
     };
 }
 
-/** HARNESS_SUITE_ABORT default on — kill whole travel suite on harness death. */
+/** HARNESS_SUITE_ABORT default on — kill travel suite on harness death. */
 export function harnessSuiteAbortFromEnv(): boolean {
     return envDefaultOn('HARNESS_SUITE_ABORT');
 }
@@ -935,7 +935,7 @@ export type RunNavWalkOpts = {
     pollMs?: number;
     /**
      * Per-leg early stop when wall time ≫ path-cost estimate and no tile move
-     * (door thrash / pathfind loop). Does not abort the whole suite.
+     * (door thrash / pathfind loop). Does not abort the suite.
      */
     stuckAbort?: StuckAbortOpts;
 };

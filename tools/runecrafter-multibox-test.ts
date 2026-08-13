@@ -271,7 +271,7 @@ try {
         console.log(`PREP=0 — reusing accounts with stamp '${stamp}'`);
     }
 
-    // tall viewport so screenshots show a long run of rail tiles, not just 4 slots
+    // tall viewport so screenshots show a long run of rail tiles, not 4 slots
     const page = await (await browser.newContext({ viewport: { width: 1600, height: 2000 } })).newPage();
     page.on('pageerror', e => console.log(`[wall] pageerror: ${e}`));
     await page.goto(`${base}/multibox.html?nodeid=10`);

@@ -402,7 +402,7 @@ async function startAioQuester(page: Page): Promise<void> {
         sessionStorage.setItem('rs2b0t:set:AIOQuester:food', '');
         g.rs2b0t.paint.set('tabs:aio', 'Current');
     });
-    // Select and start through the real BotPanel so its live-log subscription is part of the
+    // Select and start through the BotPanel so its live-log subscription is part of the
     // proof too. Direct ScriptRunner.start() bypasses that UI-only subscription.
     await startFromLibrary(page, 'Quest', 'AIOQuester');
     await page.getByRole('button', { name: 'Start', exact: true }).click();

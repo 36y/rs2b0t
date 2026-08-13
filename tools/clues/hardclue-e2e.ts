@@ -10,8 +10,8 @@ import fs from 'node:fs';
 
 import type { Browser, Page } from 'playwright-core';
 
-import { CLUE_DB } from '#/bot/clues/data/cluedb.js';
-import { PACK_UNREACHABLE } from '#/bot/clues/data/unreachable.js';
+import { CLUE_DB } from '#/bot/api/ai/clues/data/cluedb.js';
+import { PACK_UNREACHABLE } from '#/bot/api/ai/clues/data/unreachable.js';
 
 import { boot as bootClient, cheatQuiet, launchBrowser, login, logout, setSettings } from '../lib/harness.js';
 
@@ -193,7 +193,7 @@ interface TrailResult {
  *  Why: a third of hard clues sit behind one, and dying on those is not a solver regression. */
 function blockedBy(seedId: number, lines: string[]): string | null {
     const name = (id: number): string => CLUE_DB[id]?.obj ?? `clue_${id}`;
-    // The seed itself may never reach a leg line — an unreachable coord just
+    // The seed itself may never reach a leg line — an unreachable coord
     // grinds the walker — so check it directly before scanning the log.
     if (PACK_UNREACHABLE[seedId]) {
         return `${name(seedId)}: ${PACK_UNREACHABLE[seedId]}`;

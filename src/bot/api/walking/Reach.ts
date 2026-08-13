@@ -1,14 +1,14 @@
 import type { WorldTile } from '../../adapter/ClientAdapter.js';
 import { reader } from '../../adapter/ClientAdapter.js';
 import { Execution } from '../execution/Execution.js';
-import { ChatDialog } from '../dialogue/ChatDialog.js';
+import { ChatDialog } from '../ui/dialogue/ChatDialog.js';
 import { Locs } from '../locs/Locs.js';
 import { Npcs, talkOp } from '../npcs/Npcs.js';
-import { Reachability } from '../../nav/geometry/Reachability.js';
+import { Reachability } from '../../event/webwalk/geometry/Reachability.js';
 import { Traversal } from './Traversal.js';
-import { WalkExecutor, isOpenableBarrier } from '../../nav/WalkExecutor.js';
-import { openOp, towardDest } from '../../nav/walkOpening.js';
-import { chebyshev } from '../../nav/geometry/followMath.js';
+import { WalkExecutor, isOpenableBarrier } from '../../event/webwalk/WalkExecutor.js';
+import { openOp, towardDest } from '../../event/webwalk/walkOpening.js';
+import { chebyshev } from '../../event/webwalk/geometry/followMath.js';
 import { CANT_REACH, GameMessages } from '../chatbox/gameMessages.js';
 import type { Interactable } from '../model/Interactable.js';
 

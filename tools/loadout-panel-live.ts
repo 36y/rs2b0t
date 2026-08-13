@@ -75,8 +75,8 @@ try {
         fail('weapon slot never rendered an icon — the panel gave up before the model streamed in');
     }
 
-    // "from worn" is the other half a DOM test cannot reach: it needs a real
-    // character with real equipment on.
+    // "from worn" is the other half a DOM test cannot reach: it needs a live
+    // character with equipment on.
     await cheatQuiet(page, 'setstat attack 70');
     await cheatQuiet(page, 'setstat defence 70');
     for (const [obj] of KIT) {

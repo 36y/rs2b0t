@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { LocLayer, LocShape, locShapeLayer } from '#/bot/nav/rsmod/flags.js';
+import { LocLayer, LocShape, locShapeLayer } from '#/bot/event/webwalk/rsmod/flags.js';
 
 import { Reader, bridgedLevel, forEachLoc, loadLocTypes, loadMapsquares, parseLands } from './lib.js';
 
@@ -19,7 +19,7 @@ const ANGLE_DIR: ('W' | 'N' | 'E' | 'S')[] = ['W', 'N', 'E', 'S'];
 function parseArgs(): { engine: string; out: string } {
     const args = process.argv.slice(2);
     let engine = '/Users/elliotninjaone/code/lostcity-dev/engine';
-    let out = 'src/bot/nav/data/doors.json';
+    let out = 'src/bot/event/webwalk/data/doors.json';
     for (let i = 0; i < args.length; i++) {
         if (args[i] === '--engine') {
             engine = args[++i];

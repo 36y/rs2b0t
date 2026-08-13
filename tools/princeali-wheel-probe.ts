@@ -162,7 +162,7 @@ try {
         console.log('');
         console.log(`The ${target.label} wheel did not spin. Re-run with --wheel falador to confirm the`);
         console.log('fallback works, then set PA_TILE.SPIN_STAND to (2982,3315,0) in');
-        console.log('src/bot/quests/defs/princeali/areas.ts and note it in the design spec.');
+        console.log('src/bot/api/ai/quests/defs/princeali/areas.ts and note it in the design spec.');
         fail(`${target.label} spinning wheel probe failed: ${res?.reason ?? 'no result'}`);
     }
 } finally {

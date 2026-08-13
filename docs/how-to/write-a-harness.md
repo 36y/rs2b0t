@@ -2,7 +2,7 @@
 
 # The live-harness ABI
 
-`tools/*-test.ts` drive a real browser against a real engine with Playwright. They
+`tools/*-test.ts` drive a live browser against a live engine with Playwright. They
 attach to the client through the harness ABI the client installs at
 `globalThis.rs2b0t`:
 
@@ -53,8 +53,8 @@ Smoke:
 | `bun run verify:map-picker -- <base>` | UI pick → Confirm → tile fields (`tools/map-picker-basemap-live.ts`); asserts `data-basemap` settled |
 | `bun run verify:map-picker-e2e -- <base>` | login + pick + WalkTo arrives (`tools/map-picker-walkto-e2e-live.ts`; needs a loggable world / cheats for short hops) |
 
-Unit: `test/ui/worldMapBasemap.test.ts`, `test/ui/mapPickerTheme.test.ts`,
-`test/ui/worldMapPicker.test.ts` (collision pack for snap tests).
+Unit: `test/panel/worldMapBasemap.test.ts`, `test/panel/mapPickerTheme.test.ts`,
+`test/panel/worldMapPicker.test.ts` (collision pack for snap tests).
 
 **Viewport (local preference).** Headed Chrome should use the **smaller** client scale
 used by GatheringBot / `verify-gather-locs` / plain `browser.newPage()` — Playwright’s
@@ -87,7 +87,7 @@ These details are not obvious from the code:
 - **Prove the bot worked, don't assume it.** Assert on game state — XP gained, items
   held, tiles reached — not on log lines.
 - Software rendering (SwiftShader) is unreliable for some harnesses; several need a
-  real GPU. Parallel browsers also perturb door timing, so validate a door fix solo.
+  a physical GPU. Parallel browsers also perturb door timing, so validate a door fix solo.
 - **`~maxme` grants stats and never gear.** A quest with a fight in it needs
   the harness to give and equip a kit, or the "max stats" account is punching a
   level-93 boss. `Equipment.equip()` awaits `Execution.delayUntil`, which needs a

@@ -87,7 +87,7 @@ function smartSelect(changed: string[]): { files: string[]; why: string } {
 
     const hay = changed.join(' ').toLowerCase();
     const picked = allHarnesses().filter(f => tokens(f).some(t => hay.includes(t)));
-    const navTouched = changed.some(c => c.startsWith('src/bot/nav/'));
+    const navTouched = changed.some(c => c.startsWith('src/bot/event/webwalk/'));
     const withNav = navTouched ? [...new Set([...picked, ...allHarnesses().filter(f => f.includes('nav'))])] : picked;
     return { files: withNav.sort(), why: `${changed.length} changed files matched ${withNav.length} harnesses` };
 }

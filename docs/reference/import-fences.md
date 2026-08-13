@@ -2,12 +2,12 @@
 
 # Import fences
 
-Five fences in [`eslint.config.ts`](../../eslint.config.ts) declare the layering.
+Six fences in [`eslint.config.ts`](../../eslint.config.ts) declare the layering.
 
 | Fence | Applies to | Allows |
 |---|---|---|
 | Client internals | `src/bot/**`, except `src/bot/adapter/**` and `src/bot/runtime/BotClient.ts` | the four protocol const-enums and `worldmapKeyNames` |
-| DOM | `src/bot/**`, except `src/bot/ui/`, `src/bot/main.ts`, `src/bot/multibox/{DomSlotOps,ProfileChooser,TabBar,VaultPrompt,main}.ts` and `src/bot/runtime/WorkerClock.ts` | — |
+| DOM | `src/bot/**`, except `src/bot/panel/`, `src/bot/main.ts`, `src/bot/multibox/{DomSlotOps,ProfileChooser,TabBar,VaultPrompt,main}.ts` and `src/bot/runtime/WorkerClock.ts` | — |
 | api leaf | `src/bot/api/**` | `runtime/{Settings,BotHost,Scheduler}` only — never script lifecycle |
 | data inert | `src/bot/data/**` | value imports from `geometry/` only; type-only imports anywhere |
 | abi surface | `src/bot/runtime/abi.ts` | `api/`, `data/`, `geometry/`, `nav/`, `adapter/`, and `runtime/{Settings,defineBot}` |
@@ -74,6 +74,23 @@ Two bypasses survive the escape:
 
 - `patterns` does not cover dynamic `import()`.
 - The DOM fence's `no-restricted-globals` is laundered by `(globalThis as {document?: Document}).document`.
+
+## Contribution boundary
+
+`src/bot/scripts/<A>/**` may not import `src/bot/scripts/<B>/**`.
+
+Enforced by `bun run audit:script-dirs`.
+
+Why it sits outside `no-restricted-imports`: specifiers inside `scripts/` are
+relative, so a sibling reads `../MossGiant/X.js` and carries no `scripts`
+segment for `**/scripts/**` to match — the same reason `abi.ts` needs a `./*`
+deny-list. Globs would need one pattern per directory per nesting depth. The
+audit resolves the specifier and compares two paths, which holds at any depth.
+
+`src/bot/scripts/index.ts` is exempt — the registry barrel names every bot.
+
+Probe: add `import { rangeSupplyEmpty } from '../RockCrab/RockCrabRangeLogic.js';`
+to `src/bot/scripts/ChickenKiller/CowKiller.ts`. One report, exit 1.
 
 ## Prove a fence fires before trusting it
 

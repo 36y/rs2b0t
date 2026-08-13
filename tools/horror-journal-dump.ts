@@ -14,7 +14,7 @@ const stages = stagesArg === -1
     ? [0, 1, 2, 4, 5]
     : process.argv[stagesArg + 1].split(',').map(Number);
 
-/** Set alongside the stage, so each page renders the state the quest really reaches. */
+/** Set alongside the stage, so each page renders the state the quest reaches. */
 const BITS: Record<number, string[]> = {
     0: [],
     1: ['horrorbridgeleft', 'horrorbridgeright', 'horroragilitykey'],

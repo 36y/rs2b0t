@@ -44,7 +44,7 @@ slower per tick, so any wall-clock comparison against it measures the flag. Two
 runs at 300ms also wedged on the first step, with Larrissa one tile away
 and every `Talk-to` refused in silence — the nav probe rules out geometry (all
 the tiles around her are mutually reachable at cost 1) and the engine's own
-recovery named a leftover **main** modal, which refuses dialogue exactly like
+recovery named a leftover **main** modal, which refuses dialogue like
 this. The poll line now prints `MAIN-MODAL=<id>` whenever one is open, so the
 next occurrence names the interface instead of having to be inferred.
 
@@ -93,7 +93,7 @@ death recovery re-enters with **Push** (no key) and re-withdraws bank tools.
   and `--speed` changes it again, so an actions/hour figure read off a sim is fiction.
   [`tools/roguespurse-test.ts`](../../tools/roguespurse-test.ts) reports herbs/**tick**
   from the `host.tickCount` delta, which is comparable to the engine's own limits
-  (5 user events per tick) and to a real 600ms world.
+  (5 user events per tick) and to a 600ms world.
 
 ## See also
 
