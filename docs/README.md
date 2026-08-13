@@ -28,7 +28,7 @@ pure Lost City or 2004scape projects and is not maintained for those targets.
 | [Clue scrolls](CLUES.md) | [database](reference/clues-database.md), [mechanics](reference/clues-mechanics.md), [host yielding](decisions/clue-host-yielding.md), [tracing a failure](how-to/trace-a-clue-failure.md) |
 | [MultiBox](MULTIBOX.md) | the wall, then [reference](reference/multibox.md), [telemetry honesty](decisions/multibox-telemetry-honesty.md) and [diagnosis](how-to/diagnose-multibox.md) |
 | [Bundled scripts](SCRIPTS.md) | catalog of the shipped bots and their settings (generated) |
-| [Testing](TESTING.md) | [suites](reference/test-suites.md), [why it is testable](decisions/testability.md), [writing a harness](how-to/write-a-harness.md), [seeding](reference/seeding-test-accounts.md) |
+| [Testing](TESTING.md) | [suites](reference/test-suites.md), [why it is testable](decisions/testability.md), [writing a harness](how-to/write-a-harness.md), [seeding](reference/seeding-test-accounts.md), [the tools/e2e boundary](reference/live-harness-boundary.md), [case manifest](reference/e2e-manifest.md) |
 | [Dev and deploy](DEV.md) | the three run modes, then [live wall](how-to/run-the-live-wall.md), [build targets](reference/build-targets.md), [maintainer infra](how-to/maintainer-infra.md) |
 | [Loc identity](decisions/loc-identity-model.md) | why a loc is a placement, not an ID |
 | [Loc state in the client](reference/loc-identity.md) | what the client does with locs that change state, and the gaps |

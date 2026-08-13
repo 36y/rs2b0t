@@ -25,7 +25,7 @@ CONTENT_DIR=~/experiments/Server/content bun tools/nav/content-transport-audit.t
 
 ```bash
 bun tools/nav/transport-heavy-routes.ts --write --n=14 --explain
-HEADED=1 TRANSPORT_HEAVY=1 LIMIT=14 ENERGY_REFILL_AT=25 bun tools/nav-script-routes-live.ts
+HEADED=1 TRANSPORT_HEAVY=1 LIMIT=14 ENERGY_REFILL_AT=25 bun e2e/nav-script-routes-live.ts
 ```
 
 Quest seeds and the relog are automatic. `TH-ess-round-*` pins the essence roundtrip:

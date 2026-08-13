@@ -26,7 +26,7 @@ Constants:
 The ideal smoke run is this:
 
 ```sh
-HEADED=1 bun tools/aio-quest-test.ts http://localhost:8890 ew1 elemental_workshop 15 \
+HEADED=1 bun e2e/aio-quest-test.ts http://localhost:8890 ew1 elemental_workshop 15 \
   'knife:1,hammer:1,bronze_pickaxe:1,thread:1,leather:1,needle:1,coal:4,lobster:15,steel_scimitar:1' \
   max Lobster 'speed 300' '2716,3481'
 ```
@@ -34,7 +34,7 @@ HEADED=1 bun tools/aio-quest-test.ts http://localhost:8890 ew1 elemental_worksho
 Realistic bank-seed at **proven floor** (safe default for writers):
 
 ```sh
-HEADED=1 bun tools/aio-quest-test.ts http://localhost:8890 ewreal elemental_workshop 25 \
+HEADED=1 bun e2e/aio-quest-test.ts http://localhost:8890 ewreal elemental_workshop 25 \
   'bank:knife:1,bank:hammer:1,bank:bronze_pickaxe:1,bank:thread:2,bank:leather:1,bank:needle:1,bank:coal:8,bank:lobster:20,bank:steel_scimitar:1,bank:coins:50000' \
   'mining:20,smithing:20,crafting:20,attack:50,strength:50,defence:40,hitpoints:50' \
   Lobster 'speed 300' '2725,3491'
@@ -43,13 +43,13 @@ HEADED=1 bun tools/aio-quest-test.ts http://localhost:8890 ewreal elemental_work
 ## Family Crest — stage-scoped harness
 
 Family Crest is eleven server stages across four kingdoms, so it has its own
-harness rather than a `tools/aio-quest-test.ts` invocation:
-[`tools/family-crest-210-live.ts`](../../tools/family-crest-210-live.ts). It seeds a
+harness rather than a `e2e/aio-quest-test.ts` invocation:
+[`e2e/family-crest-210-live.ts`](../../e2e/family-crest-210-live.ts). It seeds a
 fixed bank, jumps `%crestquest`, and passes when the journal reaches `--until`.
 
 ```sh
-HEADED=1 bun tools/family-crest-210-live.ts --stage 7 --until 8 --minutes 28   # the gold mine
-HEADED=1 bun tools/family-crest-210-live.ts --stage 0 --minutes 120            # end to end
+HEADED=1 bun e2e/family-crest-210-live.ts --stage 7 --until 8 --minutes 28   # the gold mine
+HEADED=1 bun e2e/family-crest-210-live.ts --stage 0 --minutes 120            # end to end
 ```
 
 Two things that harness has to do and a plain `setvar` does not:
@@ -70,15 +70,15 @@ a pickaxe) is bought live.
 
 ## Ernest the Chicken — stage-scoped harness
 
-[`tools/ernest-chicken-229-live.ts`](../../tools/ernest-chicken-229-live.ts) drives
+[`e2e/ernest-chicken-229-live.ts`](../../e2e/ernest-chicken-229-live.ts) drives
 the quest from a clean account, or one stage of it. `--stage N` sets
 `%haunted` and relogs; the module reads the quest tab, not the varp.
 
 ```sh
-HEADED=1 bun tools/ernest-chicken-229-live.ts --stage 0 --until 3 --minutes 90   # end to end
-HEADED=1 bun tools/ernest-chicken-229-live.ts --stage 2 --until 3 --minutes 60   # the three parts
-HEADED=1 bun tools/ernest-chicken-229-live.ts --stage 1 --until 2 --minutes 20   # Oddenstein, on L2
-HEADED=1 bun tools/ernest-chicken-229-live.ts --stage 2 --until 3 --poisoned     # Search-first branch
+HEADED=1 bun e2e/ernest-chicken-229-live.ts --stage 0 --until 3 --minutes 90   # end to end
+HEADED=1 bun e2e/ernest-chicken-229-live.ts --stage 2 --until 3 --minutes 60   # the three parts
+HEADED=1 bun e2e/ernest-chicken-229-live.ts --stage 1 --until 2 --minutes 20   # Oddenstein, on L2
+HEADED=1 bun e2e/ernest-chicken-229-live.ts --stage 2 --until 3 --poisoned     # Search-first branch
 ```
 
 The bank is seeded with coins and food and nothing else. The spade, poison, fish

@@ -5,7 +5,7 @@
 | Layer | What it proves | Cost |
 |---|---|---|
 | Unit tests (`bun test`) | the logic is right | seconds |
-| Live harnesses (`tools/*-test.ts`) | the bot works against a live engine | minutes to hours |
+| Live harnesses (`e2e/*-test.ts`, `e2e/*-live.ts`) | the bot works against a live engine | minutes to hours |
 
 ## Pages
 

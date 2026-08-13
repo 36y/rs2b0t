@@ -500,7 +500,7 @@ if (import.meta.main) {
                     description:
                         'Travel legs scraped from clues, gathering catalogs, cooking/firemaking, and quest areas. '
                         + 'Regenerate: bun --preload ./test/setup-dom.ts tools/nav/script-travel-corpus.ts --write. '
-                        + 'Live: SEGMENT=… bun tools/nav-script-travel-live.ts',
+                        + 'Live: SEGMENT=… bun e2e/nav-script-travel-live.ts',
                     generatedAt: new Date().toISOString(),
                     stats,
                     routes

@@ -41,11 +41,11 @@ Full write-up: [NAV.md § Nav teleports](../reference/nav-teleports.md).
 
 | Tool | Covers |
 |---|---|
-| `tools/nav-script-routes-live.ts` | multi-OD script routes; set `LIMIT=10+`. HARD list comes from the ranked corpus, a different tool |
-| `tools/nav-script-travel-live.ts` | scrapes every clue / gathering / quest travel OD. `SEGMENT=clues`\|`quests`\|`gathering-all`\|`fishing`\|`mining`\|`woodcutting`\|`firemaking`\|`cooking`\|`all` |
-| `tools/nav-stress-live.ts` | teles, jewellery, paint cases |
-| `tools/nav-tele-smoke.ts` | Lumbridge → Varrock spell tele |
-| `tools/nav-path-paint-live.ts` | pack vs client segment paint |
+| `e2e/nav-script-routes-live.ts` | multi-OD script routes; set `LIMIT=10+`. HARD list comes from the ranked corpus, a different tool |
+| `e2e/nav-script-travel-live.ts` | scrapes every clue / gathering / quest travel OD. `SEGMENT=clues`\|`quests`\|`gathering-all`\|`fishing`\|`mining`\|`woodcutting`\|`firemaking`\|`cooking`\|`all` |
+| `e2e/nav-stress-live.ts` | teles, jewellery, paint cases |
+| `e2e/nav-tele-smoke.ts` | Lumbridge → Varrock spell tele |
+| `e2e/nav-path-paint-live.ts` | pack vs client segment paint |
 
 ## Regenerate the corpora
 

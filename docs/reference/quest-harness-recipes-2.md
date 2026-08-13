@@ -4,15 +4,15 @@
 
 ## Horror from the Deep — stage-scoped harness
 
-[`tools/horror-deep-216-live.ts`](../../tools/horror-deep-216-live.ts), same shape,
+[`e2e/horror-deep-216-live.ts`](../../e2e/horror-deep-216-live.ts), same shape,
 also members-only:
 
 ```sh
-HEADED=1 bun tools/horror-deep-216-live.ts --stage 0 --until 10 --minutes 210        # end to end
-HEADED=1 bun tools/horror-deep-216-live.ts --stage 4 --until 5 --seedkit --minutes 25 # the strange wall
-HEADED=1 bun tools/horror-deep-216-live.ts --stage 1 --barcrawl 0 \
+HEADED=1 bun e2e/horror-deep-216-live.ts --stage 0 --until 10 --minutes 210        # end to end
+HEADED=1 bun e2e/horror-deep-216-live.ts --stage 4 --until 5 --seedkit --minutes 25 # the strange wall
+HEADED=1 bun e2e/horror-deep-216-live.ts --stage 1 --barcrawl 0 \
   --bits horrorbridgeleft,horrorbridgeright --minutes 120                            # the barcrawl
-HEADED=1 bun tools/horror-deep-216-live.ts --stage 0 --until 10 --teleports          # end to end, hops on
+HEADED=1 bun e2e/horror-deep-216-live.ts --stage 0 --until 10 --teleports          # end to end, hops on
 ```
 
 Four things it does that the Family Crest one does not:
@@ -49,7 +49,7 @@ this. The poll line now prints `MAIN-MODAL=<id>` whenever one is open, so the
 next occurrence names the interface instead of having to be inferred.
 
 Two more tools sit alongside it.
-[`tools/horror-journal-dump.ts`](../../tools/horror-journal-dump.ts) prints the
+[`e2e/horror-journal-dump.ts`](../../e2e/horror-journal-dump.ts) prints the
 quest journal verbatim at each stage — `~quest_journal` word-wraps the page and
 re-emits the active colour tags on every line it produces, so needles have to be
 written against what the client receives, not against the `.rs2`.
@@ -60,7 +60,7 @@ deliberately so a map change fails loudly instead of quietly.
 Next lower probe (update `EW_PROVEN_COMBAT_FLOOR` only if green):
 
 ```sh
-HEADED=1 bun tools/aio-quest-test.ts http://localhost:8890 ewprobe elemental_workshop 25 \
+HEADED=1 bun e2e/aio-quest-test.ts http://localhost:8890 ewprobe elemental_workshop 25 \
   'bank:knife:1,bank:hammer:1,bank:bronze_pickaxe:1,bank:thread:2,bank:leather:1,bank:needle:1,bank:coal:8,bank:lobster:25,bank:steel_scimitar:1,bank:coins:50000' \
   'mining:20,smithing:20,crafting:20,attack:45,strength:45,defence:30,hitpoints:45' \
   Lobster 'speed 300' '2725,3491'
@@ -86,12 +86,12 @@ death recovery re-enters with **Push** (no key) and re-withdraws bank tools.
 - **A stage test seeds only what that stage produces, never its tools.** See
   [Quests](../how-to/add-a-quest.md) — every Watch Tower stage-10 test handed the bot
   a pickaxe, so all of them passed while the quest could not mine.
-  [`tools/shilo-solo-test.ts`](../../tools/shilo-solo-test.ts) is the current worked
+  [`e2e/shilo-solo-test.ts`](../../e2e/shilo-solo-test.ts) is the current worked
   example: `--stage`/`--bits` jump the quest varps, `--tele` drops the account beside
   the leg under test, and `--speed 300` runs the engine at 2× ticks.
 - **Measure throughput per tick, never per hour.** A dev world does not tick at 600ms
   and `--speed` changes it again, so an actions/hour figure read off a sim is fiction.
-  [`tools/roguespurse-test.ts`](../../tools/roguespurse-test.ts) reports herbs/**tick**
+  [`e2e/roguespurse-test.ts`](../../e2e/roguespurse-test.ts) reports herbs/**tick**
   from the `host.tickCount` delta, which is comparable to the engine's own limits
   (5 user events per tick) and to a 600ms world.
 

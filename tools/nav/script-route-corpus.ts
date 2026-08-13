@@ -568,7 +568,7 @@ if (isMain) {
                             `Hardest unique journeys (useTeleports=${useTele}). `
                             + 'Journey-deduped (end map-square + hop sequence; pure-walks to same dest collapse). '
                             + 'Regenerate with script-route-corpus.ts [--hardest=N] [--no-tele]. '
-                            + 'Live: HARD=1 bun tools/nav-script-routes-live.ts',
+                            + 'Live: HARD=1 bun e2e/nav-script-routes-live.ts',
                         metric: 'difficulty = cost*1000 + min(expanded,500k) + hops*10 + cheb',
                         ...meta,
                         count: hardRoutes.length,

@@ -41,7 +41,7 @@ re-admits `./Settings.js` and `./defineBot.js`.
 
 `abi.ts` carries one line-scoped `eslint-disable-next-line` for the Merlin
 harness hooks, absent from `packages/rs2b0t-api/index.d.ts` and consumed only by
-`tools/merlin-mordred-353-live.ts`. A new quest import there still errors.
+`e2e/merlin-mordred-353-live.ts`. A new quest import there still errors.
 
 Exempt from the client fence: the protocol const-enums `ServerProt`, `ClientProt`,
 `CollisionFlag` and `MiniMenuAction`, plus `mapview/worldmapKeyNames`. They are inlined
@@ -111,3 +111,4 @@ while repealing another on the same files.
 ## See also
 
 - [Architecture](../decisions/architecture.md)
+- [Live-harness boundary](live-harness-boundary.md) — the `tools/` and `e2e/` split
