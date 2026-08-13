@@ -139,10 +139,8 @@ export async function handleSpecialCrossing(
                 ? sc.action
                 : 'Talk-to';
         const tryActs = preferred === 'Talk-to' ? (['Talk-to'] as const) : ([preferred, 'Talk-to'] as const);
-        // Key on specialCrossing stand tile, not type alone — one NPC type can serve
-        // multiple routes (Customs officer: coordx(npc) < 2815 → Ardougne, else Port Sarim).
-        // Global nearest() would be fine while piers are far apart, but prefer the instance
-        // at this pier so a wrong officer can never steal the hop (#404).
+        // Why: keying on the specialCrossing stand tile rather than the NPC type alone matters because one type serves several routes — a Customs officer with coordx(npc) < 2815 goes to Ardougne, else Port Sarim.
+        // Why: a global nearest() would work while piers are far apart, but the instance at this pier is preferred so a wrong officer can never steal the hop (#404).
         const stand = { x: sc.x, z: sc.z, level: sc.level };
         let interacted = false;
         for (const act of tryActs) {

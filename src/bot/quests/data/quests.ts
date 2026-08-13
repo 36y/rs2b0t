@@ -238,24 +238,20 @@ export const QUESTS: QuestRecord[] = [
     },
     {
         id: 'crest', name: 'Family Crest', questPoints: 1,
-        // Journal gates. Magic 59 is Fire Blast, the last of the four spells
-        // Chronozon has to be hit with; crafting 40 is the perfect ruby necklace.
+        // Why: journal gates — Magic 59 is Fire Blast, the last of the four spells Chronozon has to be hit with.
+        // Why: crafting 40 is the perfect ruby necklace.
         requirements: { skills: [
             { skill: 'mining', level: 40 },
             { skill: 'crafting', level: 40 },
             { skill: 'smithing', level: 40 },
             { skill: 'magic', level: 59 }
         ] },
-        // The module owns its inventory and sources per leg, so this is the
-        // dashboard's view rather than an up-front loadout. No shop in the game
-        // sells cooked bass or shrimp, so Caleb's five come from the bank; the
-        // Ardougne gem merchant restocks one ruby every 60k ticks, so the second
-        // usually does too. The perfect jewellery is made during the quest.
-        //
-        // All `acquirable`: eligibility is evaluated before the bot has opened a
-        // bank, so its item snapshot is empty at that point and any `mustHave`
-        // would block the quest at startup rather than after a bank scan. The
-        // module parks with the exact shortfall instead.
+        // Why: the module owns its inventory and sources per leg, so this list is the dashboard's view rather than an up-front loadout.
+        // Why: no shop in the game sells cooked bass or shrimp, so Caleb's five come from the bank.
+        // Why: the Ardougne gem merchant restocks one ruby every 60k ticks, so the second ruby usually does too.
+        // Why: the perfect jewellery is made during the quest.
+        // Why: every entry is `acquirable` because eligibility is evaluated before the bot has opened a bank, so its item snapshot is empty and any `mustHave` would block the quest at startup instead of after a bank scan.
+        // Why: the module parks with the exact shortfall instead.
         items: [
             { name: 'Tuna', qty: 1, kind: 'acquirable' },
             { name: 'Bass', qty: 1, kind: 'acquirable' },
@@ -271,9 +267,8 @@ export const QUESTS: QuestRecord[] = [
     {
         id: 'death', name: 'Death Plateau', questPoints: 1,
         requirements: {},
-        // Bread ×10, Trout ×10, Iron bar ×1 are mid-quest Tenzing/Dunstan supplies.
-        // The deathplateau module withdraws them when the map track needs them; listing
-        // them as mustHave here parks the queue before Denulth even starts (Tourist Trap pattern).
+        // Why: Bread ×10, Trout ×10 and Iron bar ×1 are mid-quest Tenzing/Dunstan supplies the deathplateau module withdraws when the map track needs them.
+        // Why: listing them as mustHave here parks the queue before Denulth even starts (the Tourist Trap pattern).
         items: []
     },
     {
@@ -282,33 +277,22 @@ export const QUESTS: QuestRecord[] = [
             { skill: 'fletching', level: 10 },
             { skill: 'smithing', level: 20 }
         ] },
-        // The quest module owns its restart-safe loadout and naturally sources every item.
-        // Listing the smithing supplies as must-have here makes the generic eligibility pass
-        // reject a fresh account before that module ever gets a chance to buy them.
+        // Why: the quest module owns its restart-safe loadout and sources every item.
+        // Why: listing the smithing supplies as mustHave here makes the generic eligibility pass reject a fresh account before that module can buy them.
         items: []
     },
     {
         id: 'dragon', name: 'Dragon Slayer', questPoints: 2,
         requirements: { minQuestPoints: 32 },
         items: [
-            // Deliberately 1, not the quest's real 12k bill. Provisioning re-checks
-            // every mustHave each loop while anything is outstanding, so a coin
-            // requirement of any size sends the bot back to the bank after every
-            // single purchase — a Dwarven Mine round trip to collect one coin, in
-            // the run that found this. The float covers the shopping; the module
-            // withdraws Wormbrain's 10k and the ship's 2k when it needs them.
+            // Why: 1 is deliberate against the quest's 12k bill, since provisioning re-checks every mustHave each loop while anything is outstanding.
+            // Why: a coin requirement of any size then sends the bot back to the bank after every purchase — a Dwarven Mine round trip to collect one coin, in the run that found this.
+            // Why: the float covers the shopping, and the module withdraws Wormbrain's 10k and the ship's 2k when it needs them.
             { name: 'Coins', qty: 1, kind: 'mustHave' },
-            // Ordered as a geographic sweep, because provisioning walks this list
-            // in order and the bot otherwise crosses Asgarnia between each item:
-            // Port Sarim, then Falador, then Varrock, then the wilderness.
-            //
-            // Nails are deliberately NOT here. Six steel bars is eighteen slots of
-            // ore, which will not fit behind the rest of the shopping, so that leg
-            // runs from decide() once provisioning is done — late enough to bank
-            // the shopping first without the engine withdrawing it straight back.
-            //
-            // Melee kit is not here either: what the player fights in is their
-            // own business, and the quest takes the account as it finds it.
+            // Why: provisioning walks this list in order, so it is ordered as a geographic sweep — Port Sarim, Falador, Varrock, then the wilderness — or the bot crosses Asgarnia between each item.
+            // Why: nails are deliberately absent, as six steel bars is eighteen slots of ore that will not fit behind the rest of the shopping.
+            // Why: that nails leg runs from decide() once provisioning is done, late enough to bank the shopping first without the engine withdrawing it straight back.
+            // Why: melee kit is absent too — what the player fights in is their own business, and the quest takes the account as it finds it.
             { name: 'Lobster pot', qty: 1, kind: 'acquirable' },   // Gerrant, Port Sarim
             { name: 'Hammer', qty: 1, kind: 'acquirable' },        // Falador general store
             { name: "Wizard's mind bomb", qty: 1, kind: 'acquirable' }, // Rising Sun, Falador
@@ -421,9 +405,7 @@ export const QUESTS: QuestRecord[] = [
         id: 'horror', name: 'Horror from the Deep', questPoints: 2,
         requirements: { skills: [{ skill: 'agility', level: 35 }] },
         items: [
-            // All five have a source the module walks to: the plank spawns by the
-            // outpost, nails off the Dwarven Mine anvil, a 1gp hammer, the
-            // Lumbridge swamp tar patch and Catherby seaweed for the glass.
+            // Why: all five have a source the module walks to — the plank spawns by the outpost, nails off the Dwarven Mine anvil, a 1gp hammer, the Lumbridge swamp tar patch and Catherby seaweed for the glass.
             { name: 'Plank', qty: 2, kind: 'acquirable' },
             { name: 'Nails', qty: 8, kind: 'acquirable' },
             { name: 'Hammer', qty: 1, kind: 'acquirable' },

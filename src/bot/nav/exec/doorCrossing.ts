@@ -110,11 +110,9 @@ async function walkThroughWeb(
 
 type WebSlashAttempt = 'success' | 'fail' | 'no_blade' | 'cant_reach' | 'timeout';
 
-/**
- * One Slash / use-on attempt on a bigweb. Outcome is **chat-driven** (web.rs2):
- * success → "You slash the web apart."; fail → "You fail to cut through it."
- * (retry same web); no blade → "Only a sharp blade…".
- */
+// Why: web.rs2 reports the outcome by chat — success is "You slash the web apart.", fail is "You fail to cut through it." (retry the same web), and no blade is "Only a sharp blade…".
+
+/** One Slash / use-on attempt on a bigweb. */
 async function attemptSlashWeb(
     shut: Loc,
     transport: TransportInfo,
@@ -202,23 +200,14 @@ export function isOpenBarrierLeaf(name: string | null, ops: readonly (string | n
 /** Failed crossings at one placement before A* is told to avoid it this walk. */
 export const DOOR_AVOID_STRIKES = 2;
 
-/**
- * Failed crossings before the placement is banned for the whole session.
- *
- * The per-walk avoid list is thrown away by `resetAvoids` on the next `walkTo`,
- * so a door that cannot be crossed at all — a quest-locked gate, a leaf the
- * server refuses — is replanned by the very next `walkResilient` ladder pass and
- * the walk loops forever. Strikes therefore count across walks, and a placement
- * that has refused this many crossings is treated as shut for good.
- */
+// Why: `resetAvoids` throws the per-walk avoid list away on the next `walkTo`, so a door that cannot be crossed — a quest-locked gate, a leaf the server refuses — is replanned by the next `walkResilient` ladder pass and the walk loops forever.
+// Why: strikes therefore count across walks, and a placement that has refused this many crossings is treated as shut for the session.
 export const DOOR_SESSION_STRIKES = 3;
 
-/**
- * Only openable barriers may be banned for the run. A gangplank or a ladder that
- * "refuses" is usually a scene that has not caught up, and banning it can strand
- * the walker somewhere with one exit — live, three missed `Gangplank` frames on
- * the Karamja ship left a bot marooned on the deck.
- */
+// Why: a gangplank or ladder that "refuses" is usually a scene that has not caught up, and banning it can strand the walker somewhere with one exit.
+// Why: live, three missed `Gangplank` frames on the Karamja ship left a bot marooned on the deck.
+
+/** True when the barrier is openable, the only kind that may be banned for the run. */
 export function barrierBannable(kind: string | undefined, locName: string | undefined): boolean {
     return kind === 'door' || kind === 'gate' || /\b(door|gate)\b/i.test(locName ?? '');
 }
@@ -249,11 +238,10 @@ export function noteFailedDoor(
 interface PathDoorHint {
     tiles: readonly { x: number; z: number; level: number }[];
     pathIdx: number;
-    /**
-     * Max Chebyshev distance from a path *tile* to count as on-route.
-     * Default **0** (door placement must be a path tile). Pathfinder door edges
-     * put the closed loc on an edge endpoint; lateral house doors are d≥1.
-     */
+    // Why: defaults to 0, so the door placement must be a path tile.
+    // Why: pathfinder door edges put the closed loc on an edge endpoint, while lateral house doors sit at d≥1.
+
+    /** Max Chebyshev distance from a path tile for a door to count as on-route. */
     corridor?: number;
     /** How far ahead of pathIdx to consider (default 12). */
     window?: number;
@@ -264,15 +252,11 @@ interface PathDoorHint {
     hopDoors?: readonly { x: number; z: number }[];
 }
 
-/**
- * Pick which nearby closed barrier to open.
- *
- * - **With path hint:** only doors whose placement is a path tile (or matches a
- *   planned hop). Never open an off-path house/shop door because it is nearer.
- * - **Without path:** nearest closed barrier (walkResilient unstick only).
- *
- * Pure helper so tests can pin preference without a live scene.
- */
+// Why: with a path hint only doors whose placement is a path tile (or matches a planned hop) qualify — an off-path house or shop door is never opened for being nearer.
+// Why: without a path the nearest closed barrier wins, which is the walkResilient unstick case only.
+// Why: kept a pure helper so tests can pin the preference without a live scene.
+
+/** Pick which nearby closed barrier to open. */
 export function pickNearbyDoorTile(
     candidates: readonly { x: number; z: number; level: number }[],
     me: { x: number; z: number; level: number },
@@ -448,9 +432,8 @@ export async function crossMultiTileDoor(
     const dir = { x: Math.sign(step.x - approach.x), z: Math.sign(step.z - approach.z) };
     const landing = { x: step.x + dir.x, z: step.z + dir.z, level: step.level };
 
-    // Web already slashed (multiloc / prior cut): walk through as soon as we see
-    // "Slashed web" or passage — do not wait on a long canStep-only poll, and do
-    // not try to Slash the neighbour (exact placement match only).
+    // Why: a web already slashed (multiloc or a prior cut) is walked through as soon as "Slashed web" or passage shows, without a long canStep-only poll.
+    // Why: only an identical placement matches, so a neighbouring web is never slashed instead.
     if (isSlashWebTransport(transport.locName, transport.action)) {
         const here0 = reader.worldTile();
         if (isOnFarSide(here0, approach, step)) {
@@ -551,10 +534,8 @@ export async function crossMultiTileDoor(
                     return p !== null && p.x === approach.x && p.z === approach.z && p.level === approach.level;
                 }, APPROACH_WALK_MS);
             }
-            // Slashable webs (content web.rs2): chat decides success/fail.
-            // random(2) fail → "You fail to cut through it." — retry same web now.
-            // Success → wait for Slashed web / passage, walk through once, return
-            // (do not continue-loop onto the neighbour web).
+            // Why: content web.rs2 decides a slash by chat — random(2) fail sends "You fail to cut through it.", which retries the same web now.
+            // Why: on success the code waits for Slashed web or passage, walks through once and returns rather than continue-looping onto the neighbour web.
             if (isSlashWebTransport(transport.locName, transport.action)) {
                 const outcome = await attemptSlashWeb(shut, transport, mark, log);
                 if (outcome === 'no_blade' || outcome === 'cant_reach') {

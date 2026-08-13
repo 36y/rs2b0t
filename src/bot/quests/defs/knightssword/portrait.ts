@@ -18,12 +18,10 @@ const VYVIN_LEASH = 1;
 
 const ATTEMPTS = 60;
 
-/**
- * How many passes may be skipped on Vyvin's position alone. He has
- * `wanderrange=8` in a room barely wider than that, so he is adjacent most of
- * the time — treating the check as a blocker spins until the watchdog parks.
- * It is a hint that saves a wasted click, never a gate.
- */
+// Why: Vyvin has `wanderrange=8` in a room barely wider than that, so he is adjacent most of the time.
+// Why: treating the position check as a blocker spins until the watchdog parks, so it is a hint that saves a wasted click rather than a gate.
+
+// How many passes may be skipped on Vyvin's position alone.
 const MAX_SKIPS = 4;
 
 /** Consecutive refused searches before vacating the approach entirely. */
@@ -41,11 +39,10 @@ export function shouldWaitOut(skips: number, here: WorldTile | null, vyvin: Worl
     return skips < MAX_SKIPS && vyvinTooClose(here, vyvin);
 }
 
-/**
- * Both approaches sit south of the cupboard, so when Sir Vyvin stands directly
- * south neither is clear and only time helps. Off to one side, though, the
- * far tile is clear and the near one is not — so always take the far one.
- */
+// Why: both approaches sit south of the cupboard, so when Sir Vyvin stands directly south neither is clear and only time helps.
+// Why: off to one side the far tile is clear and the near one is not, so the far one is always taken.
+
+/** Pick the approach tile furthest from Sir Vyvin. */
 export function bestApproach(approaches: readonly Tile[], vyvin: WorldTile | null): Tile {
     if (!vyvin) {
         return approaches[0];
@@ -57,12 +54,10 @@ function vyvinTile(): WorldTile | null {
     return Npcs.query().name('Sir Vyvin').nearest()?.tile() ?? null;
 }
 
-/**
- * Only ever logged on a refusal, and the varying text matters: the engine
- * dedupes identical sub-log lines within a step, so a fixed message would hide
- * every repeat. A silent cupboard stuck at 2271 is what an illegal approach
- * looks like, and this line is how that gets diagnosed.
- */
+// Why: the engine dedupes identical sub-log lines within a step, so a fixed message would hide every repeat — hence the varying text.
+// Why: a silent cupboard stuck at 2271 is what an illegal approach looks like, and this line is how that gets diagnosed.
+
+/** The refusal line for one search pass. */
 function describe(pass: number): string {
     const here = Game.tile();
     const vyvin = vyvinTile();
@@ -81,15 +76,11 @@ async function dismissRefusal(): Promise<void> {
     }
 }
 
-/**
- * `vyvincupboardshut` is `forceapproach=east` at rotation 1, so the only legal
- * approach is its south side. Open turns it into `vyvincupboardopen`, which is
- * the one that Searches.
- *
- * The oracle is whether the portrait lands, not whether Vyvin looks far enough
- * away: his position is read a tick before the click and re-evaluated
- * server-side after the walk, so the only honest test is to search and see.
- */
+// Why: `vyvincupboardshut` is `forceapproach=east` at rotation 1, so the only legal approach is its south side.
+// Why: Open turns it into `vyvincupboardopen`, which is the one that Searches.
+// Why: the oracle is whether the portrait lands rather than whether Vyvin looks far enough away, as his position is read a tick before the click and re-evaluated server-side after the walk.
+
+/** Search Sir Vyvin's cupboard for the portrait. */
 export async function fetchPortrait(log: (m: string) => void): Promise<boolean> {
     if (Inventory.countById(KS_ID.PORTRAIT) > 0) {
         return true;
@@ -102,9 +93,8 @@ export async function fetchPortrait(log: (m: string) => void): Promise<boolean> 
     let skips = 0;
     let refusals = 0;
     for (let i = 0; i < ATTEMPTS; i++) {
-        // He wanders on a timer and can camp the tile south of the cupboard,
-        // where both approaches are within his one-tile reach. Vacating the
-        // whole approach gives him somewhere to go; standing on it does not.
+        // Why: he wanders on a timer and can camp the tile south of the cupboard, where both approaches are within his one-tile reach.
+        // Why: vacating the whole approach gives him somewhere to go, where standing on it does not.
         if (refusals >= REFUSALS_BEFORE_RETREAT) {
             refusals = 0;
             log('stepping away to give Sir Vyvin room to wander');
@@ -144,8 +134,7 @@ export async function fetchPortrait(log: (m: string) => void): Promise<boolean> 
             return true;
         }
         refusals++;
-        // Only blame Vyvin when he is actually in range; a search can also just
-        // not land yet, and mislabelling that sends the next reader hunting him.
+        // Why: Vyvin is only blamed when he is in range, as a search can fail to land yet and mislabelling that sends the next reader hunting him.
         const blocked = vyvinTooClose(Game.tile(), vyvinTile());
         log(`${blocked ? 'Sir Vyvin was watching' : 'search did not land'} — ${describe(i)}`);
         await Execution.delayTicks(4);

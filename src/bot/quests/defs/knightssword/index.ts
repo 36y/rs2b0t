@@ -80,9 +80,8 @@ export function decideAt(snap: QuestSnapshot, miningLevel: number): QuestStep {
         case KS_STAGE.NOT_STARTED:
             return talk(SQUIRE);
         case KS_STAGE.STARTED:
-            // The dish's only non-members source is a ground spawn thirteen tiles
-            // from the librarian, so it rides this leg rather than its own trip.
-            // Routed through supplies so both callers agree where a dish comes from.
+            // Why: the dish's only non-members source is a ground spawn thirteen tiles from the librarian, so it rides this leg rather than its own trip.
+            // Why: it is routed through supplies so both callers agree where a dish comes from.
             if (heldId(snap, KS_ID.PIE_DISH) === 0 && bankedId(snap, KS_ID.PIE_DISH) === 0) {
                 return pieDish(snap);
             }

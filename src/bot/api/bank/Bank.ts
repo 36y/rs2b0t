@@ -34,9 +34,8 @@ async function bankBackpackReady(): Promise<boolean> {
 }
 
 /**
- * The bank interface. `isOpen()` only means the component exists — the item
- * list fills a beat later, and the deposit side view lags the main modal by a
- * tick, so a count of zero is not proof of an empty bank.
+ * The bank interface.
+ * Why: `isOpen()` only means the component exists — the item list fills a beat later and the deposit side view lags the main modal by a tick, so a count of zero is not proof of an empty bank.
  * @see docs/reference/api-items.md#bank
  */
 export const Bank = {
@@ -290,9 +289,8 @@ export const Bank = {
     },
 
     /**
-     * Open a bank that lives behind a conversation rather than a booth. Gundai
-     * chats, offers two options, and only runs `@openbank` once the right one is
-     * picked — so this drives the dialogue rather than waiting on a single op.
+     * Open a bank that lives behind a conversation rather than a booth.
+     * Why: Gundai chats, offers two options, and only runs `@openbank` once the right one is picked, so this drives the dialogue rather than waiting on a single op.
      */
     async openNpcAccess(access: BankNpcAccess, log?: (msg: string) => void): Promise<boolean> {
         for (let attempt = 0; attempt < 3 && !Bank.isOpen(); attempt++) {

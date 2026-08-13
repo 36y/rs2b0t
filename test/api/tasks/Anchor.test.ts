@@ -4,11 +4,7 @@ import { beyondLeash, createReturnToAnchorTask, resolveRunAnchor, tileWithinLeas
 import { Game } from '#/bot/api/game/Game.js';
 import Tile from '#/bot/geometry/Tile.js';
 
-/**
- * Run `body` with no player position. Asserting on "there is no live tile" has to
- * establish it: another test file mocking Game leaves a tile behind, and this assertion
- * silently inverted whenever that file ran first.
- */
+/** Run `body` with no player position. Why: another file mocking Game leaves a tile behind and inverts the assertion. */
 function withNoPlayerTile(body: () => void): void {
     const realTile = Game.tile;
     (Game as unknown as { tile: () => Tile | null }).tile = () => null;

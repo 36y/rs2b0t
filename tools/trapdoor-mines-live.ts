@@ -1,11 +1,7 @@
-/**
- * Live smoke: Edgeville trapdoor + Dwarven Mine (Falador party-room) trapdoor.
- *
- * Operator tooling — not an upstream CI gate. Deploy bot client to your engine,
- * then: HEADED=1 bun tools/trapdoor-mines-live.ts
- *
- * Asserts open→climb (or climb if already open) and arrival underground / surface.
- */
+/** Live smoke: the Edgeville trapdoor and the Dwarven Mine (Falador party-room) trapdoor. Operator tooling, not a CI gate — deploy the bot client to your engine first.
+ *  Asserts open→climb (or climb when already open) and arrival underground or on the surface. */
+
+// then: HEADED=1 bun tools/trapdoor-mines-live.ts
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';

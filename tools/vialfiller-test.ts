@@ -1,7 +1,6 @@
-// Issue #313 — live VialFiller proof against a local engine: seed a pack of
-// empty vials at the Falador West bank, run the real script, and require real
-// Vials of water to come back from the fountain.
-//
+// Issue #313 — live VialFiller proof against a local engine: [base].
+// Seeds a pack of empty vials at the Falador West bank, runs the script, and requires Vials of water to come back from the fountain.
+
 //   bun tools/vialfiller-test.ts [http://localhost:8888]
 import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, positionalArgs } from './lib/harness.js';
 

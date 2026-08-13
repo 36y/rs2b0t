@@ -1,11 +1,5 @@
-/**
- * Nav v2 transport contract.
- *
- * Docs: docs/NAV.md · docs/nav/
- *
- * Unified edge shape (origin, destination, skills, items, quests, currency,
- * loc id/action) for a 2004 bot that must *execute* every hop, not only plan it.
- */
+// docs/NAV.md
+// Why: the nav v2 transport contract is one edge shape (origin, destination, skills, items, quests, currency, loc id/action) for a bot that must execute every hop, not only plan it.
 
 export interface NavPoint {
     x: number;
@@ -69,25 +63,20 @@ export interface TransportRequires {
      * (weapons/armour heuristic matching content category bans).
      */
     forbidEntranaRestricted?: boolean;
-    /**
-     * Slashable webs (content web.rs2): need plain Knife (use-on) or a
-     * slash-capable weapon (worn for menu Slash, or use-on). Plan-time uses
-     * {@link WorldState.canSlashWeb}; bank plan withdraws Knife when missing.
-     * When `canSlashWeb` is undefined (offline / no snapshot), fail open.
-     */
+    // Why: content web.rs2 wants a plain Knife by use-on, or a slash-capable weapon worn for the menu Slash or used on the web.
+    // Why: plan time reads {@link WorldState.canSlashWeb} and the bank plan withdraws a Knife when missing; an undefined `canSlashWeb` (offline, no snapshot) fails open.
+
+    /** Edge needs a slash tool for a web. */
     slashTool?: boolean;
-    /**
-     * Essence mine exit: only usable when the *path's* session return matches
-     * this id. PathFinder carries return in the A* key (entry hops set it via
-     * `essenceEntrySetsReturn`); live WorldState/EssenceSession seeds the start.
-     * Unset path return → fail open (offline pack).
-     */
+    // Why: PathFinder carries the return in the A* key, where entry hops set it via `essenceEntrySetsReturn`, and live WorldState / EssenceSession seeds the start.
+    // Why: an unset path return fails open, which is the offline-pack case.
+
+    /** Essence mine exit: usable only when the path's session return matches this id. */
     essenceExitReturn?: string;
-    /**
-     * Essence mine entry: after this hop, PathFinder treats the path's session
-     * return as this id (wizard entry sets server `%exit_essence_mine_coord`).
-     * Not a gate — ignored by meetsRequires / hasGatingRequires.
-     */
+    // Why: a wizard entry sets the server's `%exit_essence_mine_coord`, so PathFinder treats the path's session return as this id after the hop.
+    // Why: not a gate — meetsRequires and hasGatingRequires ignore it.
+
+    /** Essence mine entry: the session return id this hop establishes. */
     essenceEntrySetsReturn?: string;
 }
 
@@ -116,14 +105,11 @@ interface TransportDebug {
     source?: string;
 }
 
-/**
- * Unified non-walk edge. Compiled from doors / stairs / transports (and later
- * a single transportGraph artifact). Rows with disabledReason are audit-only.
- *
- * Teleports: `from` is a placeholder (often ignored); search attaches the edge
- * from the *player* node when policy allows. Prefer `landing.toTile` / `to` as
- * the arrival stand (e.g. Varrock square).
- */
+// Why: compiled from doors, stairs and transports (and later one transportGraph artifact); rows carrying disabledReason are audit-only.
+// Why: for teleports `from` is a placeholder and often ignored — the search attaches the edge from the player node when policy allows.
+// Why: `landing.toTile` or `to` is the arrival stand (e.g. Varrock square).
+
+/** Unified non-walk edge. */
 export interface TransportEdge {
     id: string;
     from: NavPoint;
@@ -161,27 +147,23 @@ export interface WorldState {
      * (offline pack); meetsRequires slashTool fails open when unset.
      */
     canSlashWeb?: boolean;
-    /**
-     * Active essence-mine return id (`aubury`|`sedridor`|…).
-     * Live: `EssenceSession` (server varp 64 is not client-transmitted).
-     * Seeds PathFinder path-state; entry hops can update return mid-path.
-     * Undefined when unknown.
-     */
+    // Why: live values come from `EssenceSession`, since server varp 64 is not client-transmitted.
+    // Why: this seeds PathFinder path-state and entry hops can update the return mid-path; undefined means unknown.
+
+    /** Active essence-mine return id (`aubury` | `sedridor` | …). */
     essenceExitReturn?: string;
 }
 
-/**
- * Planner preferences (2004-sized toggles).
- * Teleport policy is intentionally first-class: few destinations, high value.
- */
+// Why: teleport policy is first-class here — few destinations, high value.
+
+/** Planner preferences (2004-sized toggles). */
 export interface PathPolicy {
     /** When false, all kind==='teleport' edges are excluded. Default true when unset. */
     useTeleports?: boolean;
-    /**
-     * Min Chebyshev distance (start→goal, or remaining estimate) before a teleport
-     * edge may be used. Default **0** when unset (`DEFAULT_DISTANCE_BEFORE_TELEPORT`) — A* cost decides (`edgeCosts.ts`).
-     * Set a positive floor only when a caller wants a hard gate.
-     */
+    // Why: defaults to 0 when unset (`DEFAULT_DISTANCE_BEFORE_TELEPORT`), leaving A* cost to decide (`edgeCosts.ts`).
+    // Why: a positive floor is set only when a caller wants a hard gate.
+
+    /** Min Chebyshev distance (start→goal, or remaining estimate) before a teleport edge may be used. */
     distanceBeforeTeleport?: number;
     /**
      * If set, only these teleportId values are admissible (e.g. `['varrock']` for wildy escape).

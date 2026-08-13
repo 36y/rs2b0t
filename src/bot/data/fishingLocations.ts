@@ -8,13 +8,8 @@ import {
 } from './gatheringLocations.js';
 
 /**
- * Fishing camps for GatheringBot / Fisher.
- *
- * Catalog from rs2b2tgathering.csv + legacy presets, polished via live verify +
- * visual stand checks. All entries ship `verified: true` after confirmation.
- *
- * Cook surfaces ({@link rangeStand}) come from {@link CookingRanges} when a
- * Range/Fire is within a useful walk of the pier (Catherby, Seers fly, Barb fires, …).
+ * Fishing camps for GatheringBot / Fisher, catalogued from rs2b2tgathering.csv plus legacy presets and polished via live verify and visual stand checks.
+ * Cook surfaces ({@link rangeStand}) come from {@link CookingRanges} when a Range/Fire is within a useful walk of the pier (Catherby, Seers fly, Barb fires, …).
  */
 export interface FishingLocation extends GatheringLocation {
     rangeStand?: Tile;
@@ -65,12 +60,12 @@ export const FISHING_LOCATIONS: FishingLocation[] = (
         },
         {
             name: 'Catherby',
-            // Shore stand — previous 2846,3429 sat on the fishing-spot tile in water.
+            // Shore stand: 2846,3429 sits on the fishing-spot tile, in water.
             spot: new Tile(2845, 3431, 0),
             bankStand: BANK.catherby,
             boothName: 'Bank booth',
             boothOp: 'Use-quickly',
-            // Long shore hops — membership past the old pin-disk stuck (~72).
+            // Long shore hops: spots reach past ~72, beyond the old pin-disk radius.
             campRadius: 80,
             chaseRadius: 28,
             verified: true,
@@ -141,7 +136,7 @@ export const FISHING_LOCATIONS: FishingLocation[] = (
             resources: ['lava eel'],
             notes: 'Dungeon spot; surface bank at Falador West'
         },
-        // #160 Tannerfishing camp — verified:false until live polish.
+        // Seed camp; stays unverified until live polish (#160).
         {
             name: 'Gnome Stronghold (fishing)',
             spot: new Tile(2388, 3420, 0),

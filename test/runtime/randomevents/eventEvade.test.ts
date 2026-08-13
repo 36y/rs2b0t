@@ -19,9 +19,7 @@ describe('fleeCandidates', () => {
         }
     });
 
-    // A single ring strands the bot indoors: from the Waterfall Dungeon safespot only
-    // 2 of 8 tiles at distance 12 are walkable, so the evade gave up and stood there
-    // being hit. Closer rings are far more likely to be open.
+    // Why: only 2 of 8 tiles at distance 12 from the Waterfall Dungeon safespot are walkable, so a single ring strands the bot indoors.
     test('sweeps inward so a cramped room still yields options', () => {
         const c = fleeCandidates(HERE, WEST_THREAT, 12);
         for (const d of [12, 10, 8, 6, 4]) {

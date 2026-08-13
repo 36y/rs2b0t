@@ -1,19 +1,11 @@
-/**
- * End-to-end hard-trail run against the local server.
- *
- * The per-clue sweep (live-clue-sweep.ts) proves one leg at a time. This runs a
- * whole trail — up to six legs, each handing back a random new hard clue — so
- * the multi-leg path, the guardian fights and the puzzle boxes are exercised in
- * the order a real trail produces them.
- *
- *   bun tools/clues/hardclue-e2e.ts                     # start from a random hard clue
- *   bun tools/clues/hardclue-e2e.ts --id 2794 --mins 45 # start from a chosen one
- *   bun tools/clues/hardclue-e2e.ts --trails 3          # run three trails back to back
- *   bun tools/clues/hardclue-e2e.ts --speed 150         # 4x world tick rate
- *   bun tools/clues/hardclue-e2e.ts --no-teleports      # force everything on foot
- *
- * HEADED=1 (optionally SLOWMO=ms) opens a visible window to watch a trail run.
- */
+/** End-to-end hard-trail run against the local server — one trail of up to six legs, each handing back a random new hard clue: --id, --mins, --trails, --speed, --no-teleports.
+ *  HEADED=1 (optionally SLOWMO=ms) opens a visible window to watch a trail run. */
+
+//   bun tools/clues/hardclue-e2e.ts                     # start from a random hard clue
+//   bun tools/clues/hardclue-e2e.ts --id 2794 --mins 45 # start from a chosen one
+//   bun tools/clues/hardclue-e2e.ts --trails 3          # run three trails back to back
+//   bun tools/clues/hardclue-e2e.ts --speed 150         # 4x world tick rate
+//   bun tools/clues/hardclue-e2e.ts --no-teleports      # force everything on foot
 import fs from 'node:fs';
 
 import type { Browser, Page } from 'playwright-core';
@@ -50,8 +42,7 @@ const GEAR = ['rune_chainbody', 'rune_platelegs', 'rune_full_helm', 'rune_kitesh
 const FOOD = 'Lobster';
 const FOOD_OBJ = 'lobster';
 const FOOD_COUNT = 12;
-// Teleport kit, so long legs can actually route through the catalog rather than
-// walking because the runes were never in the pack.
+// Why: without the runes in the pack a long leg walks rather than routing through the teleport catalog.
 const TELEPORT_KIT: [string, number][] = [
     ['lawrune', 40],
     ['airrune', 100],
@@ -100,9 +91,7 @@ async function boot(browser: Browser): Promise<Page> {
     for (let i = 0; i < 6 && !(await login(page, username)); i++) {
         await page.waitForTimeout(3000);
     }
-    // Skip the tutorial, then come back in on a clean scene. Log out through the
-    // game's button first: reloading alone leaves the server holding the player
-    // online, and the relogin loop then burns minutes waiting for it to drop.
+    // Why: reloading alone leaves the server holding the player online, so log out through the game's button first or the relogin loop burns minutes.
     log('skipping the tutorial');
     await cheat(page, 'tele 0,50,50,20,20');
     const cleanExit = await logout(page);
@@ -170,8 +159,7 @@ async function boot(browser: Browser): Promise<Page> {
         }
     }
 
-    // Without this the solver's bank stop treats the food as loot and deposits
-    // it, because ClueSolver's `food` setting defaults to blank.
+    // Why: ClueSolver's `food` setting defaults to blank, and its bank stop then deposits the food as loot.
     await setSettings(page, 'ClueSolver', { food: FOOD, foodWithdraw: FOOD_COUNT, eatAtHp: 60, restorePrayer: true, useTeleports: teleports });
 
     if (tickMs !== null) {
@@ -201,11 +189,8 @@ interface TrailResult {
     tail: string[];
 }
 
-/**
- * A third of hard clues sit behind a known nav-pack gap, and a trail that rolls
- * one dies through no fault of the solver. Name it so a long run's failures can
- * be read apart from real regressions.
- */
+/** Names the known nav-pack gap a trail rolled into.
+ *  Why: a third of hard clues sit behind one, and dying on those is not a solver regression. */
 function blockedBy(seedId: number, lines: string[]): string | null {
     const name = (id: number): string => CLUE_DB[id]?.obj ?? `clue_${id}`;
     // The seed itself may never reach a leg line — an unreachable coord just

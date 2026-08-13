@@ -8,7 +8,7 @@ Two habits fall out of the tool lesson, and both cost hours here:
   Watch Tower stage-10 test handed the bot a pickaxe, so all of them passed and the
   quest still could not mine. Only the uncheated run found it.
 - **Guarding a requirement by location inverts it.** "Skip the pickaxe check inside the
-  enclave, because one cannot be fetched from there" describes exactly the state that
+  enclave, because one cannot be fetched from there" describes the state that
   must walk back out. Source before entering, and let the pocket-escape handle the rest.
 
 Prince Ali Rescue added four more, and each is a class of bug rather than a one-off:
@@ -20,7 +20,7 @@ Prince Ali Rescue added four more, and each is a class of bug rather than a one-
   already forged, so the same step goes on to collect it from Leela. Counters and
   `noProgress` tie-breaks are not a substitute — they turn a crash window into a wedge
   that holds an unusable print forever.
-- **Display names collide, and the collisions are exactly the quest items.** `plainwig`
+- **Display names collide, and the collisions are the quest items.** `plainwig`
   and `blondwig` both render `Wig`, and only the blond one satisfies any check. `Beer`,
   `Pot of flour`, `Logs` and `Coins` each have a twin too. Wherever two objects share a
   name, `snap.invIds` is the only correct lookup — `snap.inv` silently accepts the wrong
@@ -102,7 +102,7 @@ Family Crest added four more, and the first two generalise past this quest:
 - **A safespot is derivable, and "walkable" is not enough.** For a size-N melee NPC:
   BFS the placements it can slide between, take every tile those placements touch, and
   the walkable remainder is the safespot set — *intersected with the component you can
-  actually reach*, because the passage that looks ideal on the map is often a sealed
+  reach*, because the passage that looks ideal on the map is often a sealed
   island, and `exitMask` does not cross door edges, so a flood seeded outside a gate
   never sees the room behind it. Whether a shut gate blocks the cast is not something
   the configs answer, so the module proves the spot at runtime — three casts that do
@@ -113,16 +113,16 @@ Family Crest added four more, and the first two generalise past this quest:
 - **Geometry is necessary, not sufficient — check what else patrols there.** Chronozon's
   search returns several tiles the demon provably cannot reach. The east alcove is one,
   and it sits three tiles from poison spiders with `wanderrange=10`, so the bot is safe
-  from the demon and chewed on the whole fight. The south end of the chamber is eleven
+  from the demon and chewed on throughout the fight. The south end of the chamber is eleven
   away, past their limit. Read the neighbours' `wanderrange` and `maxrange` as well as the
   target's footprint.
 - **Auto-retaliate is what breaks a safespot.** Anything that hits you — a spider,
   a stray skeleton — draws a swing back, and the swing walks the character off the
-  tile the whole plan depends on. `Game.setAutoRetaliate(false)` for the duration,
+  tile the plan depends on. `Game.setAutoRetaliate(false)` for the duration,
   restored in a `finally` so a thrown step does not leave it off.
 - **Preparation must stop at the door.** A `decide()` that tops up food or potions
   re-runs every tick, so eating three sharks mid-fight drops the pack under the
-  threshold and the bot walks out of the dungeon to re-bank. Gate the whole
+  threshold and the bot walks out of the dungeon to re-bank. Gate the
   provisioning block on being outside the fight area; once through, the fight owns
   what it is carrying.
 - **Poison is invisible to the client.** `%poison` is `scope=perm` with no transmit, so

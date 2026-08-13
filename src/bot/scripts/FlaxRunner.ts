@@ -230,11 +230,10 @@ export default class FlaxRunner extends TaskBot {
         return Inventory.used() > flaxCount();
     }
 
-    /**
-     * Bank non-flax (keep flax) when:
-     * - pack is full and still has junk — clear trash *before* walking to the meet; or
-     * - mid-trip junk has cut flax capacity below minFlaxCapacity.
-     */
+    // Why: a full pack that still holds junk clears the trash before walking to the meet.
+    // Why: mid-trip junk that cuts flax capacity below minFlaxCapacity also forces the bank.
+
+    /** Whether non-flax should be banked, keeping flax. */
     needsJunkBank(): boolean {
         if (!this.hasNonFlax()) return false;
         // Handoff-ready pack with trash: bank first, refill if needed, then meet.
@@ -311,9 +310,8 @@ export default class FlaxRunner extends TaskBot {
 
     atMeet(): boolean {
         const here = Game.tile();
-        // Tight radius so WaitAndTrade/RequestTrade do not pre-empt GoToMeet
-        // while still several tiles short of the handoff tile (LEASH would let
-        // partners "meet" on opposite sides of the house and never trade).
+        // Why: a tight radius stops WaitAndTrade and RequestTrade pre-empting GoToMeet several tiles short of the handoff tile.
+        // Why: LEASH would let partners "meet" on opposite sides of the house and never trade.
         return here !== null && MEET_TILE.distanceTo(here) <= TRADE_RANGE;
     }
 
@@ -604,7 +602,7 @@ class GoToMeet implements Task {
         if (Trade.active()) return false;
         const here = Game.tile();
         if (!here) return false;
-        // Match atMeet / TRADE_RANGE — previously d<=1 fought WaitAndTrade at d=2.
+        // Match atMeet / TRADE_RANGE — a d<=1 test fights WaitAndTrade at d=2.
         if (this.bot.atMeet()) return false;
         // Runner only leaves the field when the pack is ready to hand off.
         if (this.bot.getMode() === 'Runner') return this.bot.readyToDeliver();
@@ -789,7 +787,7 @@ class HandleTrade implements Task {
                     this.pending = 0;
                 },
                 onComplete: delta => {
-                    // Prefer live metric; pending only as lag fallback when flax is actually held.
+                    // Prefer the live metric; pending is only a lag fallback while flax is held.
                     const liveGain = delta > 0 ? delta : 0;
                     const held = flaxCount();
                     const gained =
@@ -887,12 +885,9 @@ class SpinFlax implements Task {
     }
 }
 
-/**
- * Spinner pack clear before handoff / after spinning.
- * Previously only ran when bow strings were held — random-event garbage alone
- * left the spinner at the meet with no free slots, so the runner's full flax
- * offer could never land and both sides re-traded forever.
- */
+// Why: random-event garbage alone leaves the spinner at the meet with no free slots, so the runner's full flax offer never lands and both sides re-trade.
+
+/** Spinner pack clear before handoff and after spinning. */
 class BankStrings implements Task {
     constructor(private bot: FlaxRunner) {}
     validate(): boolean {

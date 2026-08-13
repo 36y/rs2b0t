@@ -29,7 +29,7 @@ describe('sustainUntil', () => {
         const h = harness({ ticksToSatisfy: 10 });
         const done = await sustainUntil(h.cond, 180_000, h.deps);
         expect(done).toBe(true);
-        // The regression: one 180s park pumped once. A tick-paced wait pumps per tick.
+        // A tick-paced wait pumps once per tick; a single 180s park pumps once.
         expect(h.pumps()).toBeGreaterThanOrEqual(10);
     });
 

@@ -1,8 +1,6 @@
-// Issue #294 — rail tabs: full user journey against a local engine.
-// Creates a vault + three profiles through the real UI, groups bots into tabs
-// with real drag events, renames/reorders/deletes tabs, then reloads the page
-// and proves the whole tab state (list, order, membership, active) restores.
-//
+// Issue #294 — rail tabs, full user journey: [base]. Creates a vault and three profiles through the UI, groups bots into tabs with drag events, renames, reorders and deletes tabs.
+// Reloads the page and proves the tab state (list, order, membership, active) restores.
+
 //   bun tools/multibox-tabs-test.ts [http://localhost:8888]
 import { fail, launchBrowser, positionalArgs } from './lib/harness.js';
 
@@ -123,9 +121,7 @@ try {
                 fail(`${what}: ${report.join(', ')}`);
             });
 
-    // Park each bot in a different town so the focused pane itself shows which
-    // bot the wall came back to — a screenshot of three Lumbridge spawns proves
-    // nothing about focus.
+    // Why: parking each bot in a different town makes the focused pane itself show which bot the wall came back to — three Lumbridge spawns prove nothing about focus.
     const teleport = async (username: string, tele: string): Promise<void> => {
         for (const frame of page.frames()) {
             const who = await frame.evaluate(() => (globalThis as never as { rs2b0t?: { client?: { loginUser?: string } } }).rs2b0t?.client?.loginUser ?? null).catch(() => null);

@@ -13,9 +13,8 @@ export const EventSignal = {
     },
 
     /**
-     * Optional second signal (OR'd with the main provider). Used so a UI action
-     * like "Skip quest" or death can abort a walk without stopping the whole script.
-     * Pass `null` to clear.
+     * Optional second signal, OR'd with the main provider; pass `null` to clear.
+     * Why: lets a UI action such as "Skip quest", or a death, abort a walk without stopping the script.
      */
     setInterrupt(p: (() => boolean) | null): void {
         interrupt = p;

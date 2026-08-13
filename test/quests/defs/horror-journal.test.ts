@@ -15,9 +15,7 @@ const NOT_STARTED = [
     '@dre@I must also be able to defeat strong level 100 enemies'
 ];
 
-// Verbatim from a live client, not from horror_journal.rs2: `~quest_journal`
-// word-wraps the page through `split_init` and re-emits the active tags at the
-// head of every line it produces, which is where `@str@@bla@` comes from.
+// Why: `~quest_journal` word-wraps through `split_init` and re-emits the active tags per line, so `@str@@bla@` appears only in client output, never in horror_journal.rs2.
 const STARTED_NOTHING_DONE = [
     'Close Window',
     '@dre@Horror from the Deep',

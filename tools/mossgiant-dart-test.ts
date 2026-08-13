@@ -1,13 +1,7 @@
-/**
- * Live proof for MossGiant dart support (#420).
- *
- * Fresh account at Ardougne North bank with empty pack/worn; Bronze darts and
- * food exist only in the bank. MossGiant (range) must withdraw the dart stack
- * as projectiles (not as a durable bow weapon), equip them, walk to the
- * safespot, and land Ranged XP on a natural Moss giant with darts worn.
- *
- *   bun tools/mossgiant-dart-test.ts --base http://127.0.0.1:8888 --minutes 10
- */
+/** Live proof for MossGiant dart support (#420): --base --minutes.
+ *  A fresh account at Ardougne North bank with empty pack and worn slots; darts and food exist only in the bank, so MossGiant must withdraw the dart stack as projectiles rather than a durable bow weapon, equip them, walk to the safespot and land Ranged XP with darts worn. */
+
+//   bun tools/mossgiant-dart-test.ts --base http://127.0.0.1:8888 --minutes 10
 import { createHash } from 'node:crypto';
 import { mkdir } from 'node:fs/promises';
 

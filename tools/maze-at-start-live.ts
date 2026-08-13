@@ -1,13 +1,7 @@
-/**
- * Regression: a bot that relogs *inside* the maze random must still solve it.
- *
- * The door list only works in sequence from its spawn corner, so a player who is
- * already partway in is out of step with it and the next door sits behind a wall.
- * Before the fix the bot clicked through walls until the give-up cooldown handed
- * control back to the script, which then walked against the solver forever.
- *
- * Usage: bun tools/maze-at-start-live.ts [--base http://localhost:8895]
- */
+/** Regression: a bot that relogs inside the maze random must still solve it: [--base].
+ *  Why: the door list only works in sequence from its spawn corner, so a player already partway in is out of step with it and the next door sits behind a wall. */
+
+// Usage: bun tools/maze-at-start-live.ts [--base http://localhost:8895]
 import { boot, bringUpOffIsland, cheatQuiet, launchBrowser, login, parseArgs } from './lib/harness.js';
 import type { Page } from 'playwright-core';
 

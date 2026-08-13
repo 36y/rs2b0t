@@ -1,17 +1,7 @@
-/**
- * Live proof for #370 — west Varrock sewer slashable web.
- *
- * Sequence (no tele past the web):
- *   tele to sewer bottom under manhole (3237,9859)
- *   give knife (use-on works; slash_checker needs a wielded slash weapon)
- *   walkResilient to dig stand (3160,9905) — must Slash bigweb_slashable @ (3210,9898)
- *
- * Content: web.rs2 oploc1 uses ~slash_checker (wielded slash anim); oplocu accepts knife.
- * doorCrossing uses Knife useOn when present, else Slash interact.
- * Cut is 50% — walker retries in the multi-door loop.
- *
- *   ~/redeploy.sh && HEADED=1 bun tools/varrock-sewer-web-370-live.ts
- */
+/** Live proof for #370 — the west Varrock sewer slashable web. Tele to the sewer bottom under the manhole (3237,9859), give a knife, then walkResilient to the dig stand (3160,9905), which must Slash bigweb_slashable @ (3210,9898). Nothing teleports past the web.
+ *  Content: web.rs2 oploc1 uses ~slash_checker (a wielded slash weapon) while oplocu accepts a knife, so doorCrossing uses Knife useOn when present and Slash otherwise; the cut is 50%, and the walker retries in the multi-door loop. */
+
+//   ~/redeploy.sh && HEADED=1 bun tools/varrock-sewer-web-370-live.ts
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';

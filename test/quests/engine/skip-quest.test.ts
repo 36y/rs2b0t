@@ -49,7 +49,7 @@ describe('Skip quest (#432) session block', () => {
             new Set()
         );
         expect(onlySkipped).toBeNull();
-        // parking would have returned the skipped quest (the old bug)
+        // A park alone still returns the id; only the session block takes it out of selectable.
         expect(nextQuest(ORDER, new Set(['runemysteries']), elig, new Set(['runemysteries']))).toBe(
             'runemysteries'
         );

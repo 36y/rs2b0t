@@ -7,9 +7,8 @@ export const PUZZLE_BLANK_SLOT = PUZZLE_SIZE - 1;
 export type PuzzleBoard = (number | null)[];
 
 /**
- * Cells are placed in these batches, each batch frozen once solved. Batching
- * the awkward ones (a row's last two, the final 3x3) lets the search find the
- * rotation that frees them instead of hard-coding escape sequences.
+ * Cells are placed in these batches, each batch frozen once solved.
+ * Why: batching the awkward ones (a row's last two, the final 3x3) lets the search find the rotation that frees them instead of hard-coding escape sequences.
  */
 const GROUPS: number[][] = [
     [0], [1], [2], [3, 4],
@@ -92,9 +91,8 @@ export function applyPuzzleMove(board: PuzzleBoard, slot: number): boolean {
 }
 
 /**
- * Turn the interface's slot/id pairs into a board. Every piece must be known
- * and every slot but one filled — a half-transmitted interface reads as null
- * rather than as a board with extra gaps.
+ * Turn the interface's slot/id pairs into a board.
+ * Why: every piece must be known and every slot but one filled, so a half-transmitted interface reads as null rather than as a board with extra gaps.
  */
 export function readPuzzleBoard(
     slots: { slot: number; id: number }[],

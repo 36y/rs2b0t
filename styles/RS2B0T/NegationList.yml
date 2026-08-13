@@ -1,0 +1,7 @@
+extends: existence
+message: "Verbless negation list: '%s'. State the constraint as a rule naming the mechanism."
+level: warning
+ignorecase: true
+tokens:
+  - 'no [\w ]{1,30}, no [\w ]{1,30}, no \w+'
+  - 'no [\w ]{1,20}, no [\w ]{1,20}'

@@ -30,7 +30,7 @@ side of a wall are adjacent in space and far apart along the path.
 
 ### The starvation case
 
-Those two rules interact badly at very short range. `selectClickTarget` searches
+Those two rules interact badly at short range. `selectClickTarget` searches
 strictly `i > pathIdx`, and the terminal snap can put `pathIdx` **on the last tile**.
 For any hop of three tiles or fewer the search window is then empty, and the executor
 emits **zero clicks** — reporting "blocked" or "as close as reachable" while standing

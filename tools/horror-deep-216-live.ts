@@ -1,27 +1,12 @@
-/**
- * Live Horror from the Deep harness (#216), stage-scoped or end-to-end.
- *
- *   HEADED=1 bun tools/horror-deep-216-live.ts --stage 0 --until 10 --minutes 240
- *   HEADED=1 bun tools/horror-deep-216-live.ts --stage 4 --until 10 --minutes 60
- *   HEADED=1 bun tools/horror-deep-216-live.ts --stage 1 --barcrawl 0 --minutes 90
- *   HEADED=1 bun tools/horror-deep-216-live.ts --stage 1 --bits horrorbridgeleft,horrorbridgeright
- *   HEADED=1 bun tools/horror-deep-216-live.ts --stage 0 --until 10 --teleports
- *   HEADED=1 bun tools/horror-deep-216-live.ts --stage 0 --until 2 --stocked --teleports
- *
- * `--stage N` sets `%horrorquest` and relogs: `update_questlist` only recolours
- * the journal entry at login, and the module reads the tab rather than the varp.
- * Every sub-flag of `deephorror` is seeded to match the stage, because the
- * bridge, the key and the three lamp repairs are separate bits of the same varp
- * and a stage jump that leaves them clear describes a state the quest cannot
- * reach.
- *
- * The bank gets coins and food and nothing else. Seeding a stage with its own
- * tools proves nothing: a stage-1 run handed eight nails passes while the quest
- * cannot smith them.
- *
- * Members-only, so the base is :8890 (rs2b2t-engine) — the :8888 sim has no
- * `node` block and every members gate refuses.
- */
+/** Live Horror from the Deep harness (#216): --stage N --until N --minutes N --barcrawl 0 --bits <names> --teleports --stocked. Members-only, so base :8890 — the :8888 sim has no `node` block and every members gate refuses.
+ *  Why: `--stage` relogs since update_questlist only recolours the journal entry at login; every `deephorror` sub-bit is seeded to match, since the bridge, the key and the three lamp repairs are separate bits of one varp and a stage jump leaving them clear describes a state the quest cannot reach; the bank holds coins and food alone, since a stage-1 run handed eight nails passes while the quest cannot smith them. */
+
+//   HEADED=1 bun tools/horror-deep-216-live.ts --stage 0 --until 10 --minutes 240
+//   HEADED=1 bun tools/horror-deep-216-live.ts --stage 4 --until 10 --minutes 60
+//   HEADED=1 bun tools/horror-deep-216-live.ts --stage 1 --barcrawl 0 --minutes 90
+//   HEADED=1 bun tools/horror-deep-216-live.ts --stage 1 --bits horrorbridgeleft,horrorbridgeright
+//   HEADED=1 bun tools/horror-deep-216-live.ts --stage 0 --until 10 --teleports
+//   HEADED=1 bun tools/horror-deep-216-live.ts --stage 0 --until 2 --stocked --teleports
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 
@@ -111,30 +96,20 @@ const QUEST = 'Horror from the Deep';
 const CAMELOT_BANK = { x: 2725, z: 3491, level: 0 };
 const VARROCK_EAST_BANK = { x: 3253, z: 3420, level: 0 };
 
-/**
- * Coins and food only. Everything else has a source in the world, and banking
- * one would hide whether the bot can find it. The food follows `--food`, or the
- * quest withdraws a name the bank has never heard of.
- */
+/** Coins and food only — everything else has a source in the world, and banking one would hide whether the bot can find it.
+ *  Why: the food follows `--food`, or the quest withdraws a name the bank has never heard of. */
 function bankSeed(): BankSeedItem[] {
     const seed: BankSeedItem[] = [
         { debugName: 'coins', displayName: 'Coins', qty: 2_000_000 },
         { debugName: args.food.toLowerCase().replace(/ /g, '_'), displayName: args.food, qty: 60 },
-        // Nothing in the game sells a rune scimitar, so the bank is the only
-        // source the quest has. Seeded unconditionally: without it the melee
-        // form of the mother is prayed through and the branch never runs.
+        // Why: nothing in the game sells a rune scimitar, so without it the melee form of the mother is prayed through and the branch never runs.
         { debugName: 'rune_scimitar', displayName: 'Rune scimitar', qty: 1 }
     ];
-    // Law is the one rune the module will not shop for — only the Magic Guild
-    // and the Mage Arena stock it — so `--teleports` has to bank it or the
-    // toggle changes nothing and the run walks exactly as before.
+    // Why: law is the one rune the module will not shop for — only the Magic Guild and the Mage Arena stock it — so `--teleports` has to bank it or the toggle changes nothing.
     if (args.teleports) {
         seed.push({ debugName: 'lawrune', displayName: 'Law rune', qty: 500 });
     }
-    // The common case, and the one a from-scratch run never exercises: an
-    // account that has owned a hammer and a pile of nails for years. Every step
-    // of the bridge kit reads the bank first, so this should collapse thirteen
-    // minutes of shopping, mining and smithing into one withdrawal.
+    // Why: an account that has owned a hammer and a pile of nails for years is the common case a from-scratch run never exercises, and every bridge-kit step reads the bank first.
     if (args.stocked) {
         seed.push(
             { debugName: 'hammer', displayName: 'Hammer', qty: 1 },
@@ -153,11 +128,8 @@ const DUNGEON_SEED: readonly [string, number][] = [
     ['firerune', 250], ['deathrune', 150], ['chaosrune', 150]
 ];
 
-/**
- * `deephorror` sub-bits that must be true at each stage, by varbit debugname.
- * `~update_questlist` and every branch in quest_horror.rs2 read these, not the
- * stage alone.
- */
+/** `deephorror` sub-bits that must be true at each stage, by varbit debugname.
+ *  Why: `~update_questlist` and every branch in quest_horror.rs2 read these, not the stage alone. */
 const STAGE_BITS: Record<number, string[]> = {
     0: [],
     1: [],
@@ -205,24 +177,15 @@ async function snapshot(page: Page): Promise<Snapshot> {
             status: g.__rs2b0t.Quests.status(quest),
             qp: g.__rs2b0t.Quests.points(),
             runner: g.rs2b0t.runner.state,
-            // A main modal nobody closed refuses every talk in silence, so the
-            // poll reports it rather than leaving a stall looking like a bad
-            // decide().
+            // Why: a main modal nobody closed refuses every talk in silence, so the poll reports it rather than leaving a stall looking like a bad decide().
             modal: g.__rs2b0t.reader.modals(),
             logs: ring.slice(-80).map(l => ({ time: l.time, level: l.level, msg: l.msg }))
         };
     }, QUEST);
 }
 
-/**
- * A live run loads the deployed bundles, never the working tree.
- *
- * `navworker.js` is copied as well as `botclient.js`: the transport graph — and
- * with it the basalt causeway, the bridge and the outpost pipe this quest walks
- * — is compiled into the nav worker, which is a separate entrypoint. Deploying
- * only the client leaves the navigator on the old edges, and the symptom is a
- * flat "no path to (2508,3635,0): unreachable".
- */
+/** A live run loads the deployed bundles, never the working tree.
+ *  Why: the transport graph — the basalt causeway, the bridge and the outpost pipe — compiles into navworker.js, a separate entrypoint, so deploying only the client leaves the navigator on the old edges and every route reports "unreachable". */
 const DEPLOYED = ['botclient.js', 'botclient.js.map', 'navworker.js', 'navworker.js.map'];
 
 function deployBundle(): void {
@@ -282,10 +245,7 @@ try {
     }
 
     if (args.seedKit) {
-        // Deliberately a debugging shortcut, not part of any passing claim: it
-        // hands the bot the dungeon load so a run can iterate on the wall and the
-        // fight without the twenty-minute Varrock round trip first. Every "the
-        // quest works" run leaves it off, so the sourcing is exercised too.
+        // Why: --seedkit hands the bot the dungeon load so a run can iterate on the wall and the fight without the twenty-minute Varrock round trip; a "the quest works" run leaves it off and exercises the sourcing.
         console.log('seeding the dungeon load into the pack (--seedkit)');
         for (const [name, qty] of DUNGEON_SEED) {
             await cheatQuiet(page, `give ${name} ${qty}`);

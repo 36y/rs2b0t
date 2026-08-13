@@ -171,9 +171,8 @@ function makeSpace(snap: QuestSnapshot, slots: number): QuestStep | null {
     if ([...snap.inv.keys()].some(name => !keep.includes(name))) {
         return { kind: 'deposit', keep, bank: DRAYNOR_BANK, exactKeep: true };
     }
-    // A restart can contain nothing but an oversized pile of otherwise-valid quest supplies or
-    // food. The generic deposit step cannot retain quantities, so bank the whole load (coins are
-    // the only stack worth preserving) and let the state machine withdraw one clean loadout.
+    // Why: a restart can hold nothing but an oversized pile of otherwise-valid quest supplies or food, and the generic deposit step cannot retain quantities.
+    // Why: the whole load is banked, keeping only coins, and the state machine withdraws one clean loadout.
     return { kind: 'deposit', keep: ['coins'], bank: DRAYNOR_BANK, exactKeep: true };
 }
 
@@ -257,9 +256,8 @@ async function takeGarlic(log: (message: string) => void): Promise<boolean> {
 
 async function leaveMorganUpper(log: (message: string) => void): Promise<boolean> {
     if (Game.tile()?.level !== 1) return true;
-    // The upper staircase's map tile itself is blocked by its collision shape. On a restart the
-    // staircase is already in the loaded scene, so interact with it before asking navigation to
-    // route onto an impossible destination.
+    // Why: the upper staircase's map tile is blocked by its own collision shape.
+    // Why: on a restart the staircase is already in the loaded scene, so it is interacted with before navigation is asked to route onto an impossible destination.
     const visible = Locs.query().name('Staircase').action('Climb-down').within(8).nearest();
     if (visible) {
         if (!(await visible.interact('Climb-down'))) return false;

@@ -2,21 +2,15 @@ import Tile from '../geometry/Tile.js';
 import type { WorldTile } from '../adapter/ClientAdapter.js';
 import { shouldEatToUseFood } from '../api/combat/food.js';
 
-/**
- * Pure decisions for HillGiant, kept out of the game-touching bot so the pit
- * spot spread, the key/food trip requirements and the loot rules can be tested
- * without a client.
- */
+// Pure decisions for HillGiant, kept out of the game-touching bot so the pit spot spread, the key/food trip requirements and the loot rules can be tested without a client.
 
 export const BRASS_KEY = 'Brass key';
 export const BIG_BONES = 'Big bones';
 export const LIMPWURT = 'Limpwurt root';
 
-/**
- * Stand tiles spread across the Edgeville dungeon giant pit. Several bots on one
- * world otherwise pile onto the same corner and starve each other of spawns, so
- * a trip picks one at random.
- */
+// Why: several bots on one world otherwise pile onto the same corner and starve each other of spawns, so a trip picks one at random.
+
+/** Stand tiles spread across the Edgeville dungeon giant pit. */
 export const PIT_SPOTS: WorldTile[] = [
     new Tile(3110, 9832, 0),
     new Tile(3117, 9835, 0),
@@ -61,15 +55,12 @@ interface BankDecision {
     heal: number;
 }
 
-/**
- * Leave for the bank when:
- * - loot target is hit, or
- * - pack is full with no food left to free a slot, or
- * - out of food and HP is in the smart-eat band (a full heal would fit, or the
- *   safety floor) — fighting on with an empty pack is how the bot used to die.
- *
- * Example: lobster (12), 40/53 HP, 0 food → bank (40+12 still under max; full heal fits).
- */
+// Why: hitting the loot target ends the trip.
+// Why: a full pack with no food left to free a slot ends it too.
+// Why: out of food with HP in the smart-eat band — a full heal would fit, or the safety floor — ends it, since fighting on with an empty pack is how the bot dies.
+// Why: lobster (12) at 40/53 HP with 0 food banks, because 40+12 is still under max and a full heal fits.
+
+/** Whether the trip should leave for the bank. */
 export function shouldBank(d: BankDecision): boolean {
     if (d.usedLootSlots >= d.lootSlotsTarget) {
         return true;
@@ -89,11 +80,10 @@ export function shouldBank(d: BankDecision): boolean {
     return false;
 }
 
-/**
- * Eating for space is only worth it while there is loot still to pick up and
- * the pack is genuinely full; eating at full health purely to free a slot is
- * what the issue asks for, so HP is deliberately not part of this decision.
- */
+// Why: eating for space is worth it only while loot is still to pick up and the pack is full.
+// Why: eating at full health purely to free a slot is the intent, so HP is deliberately not part of this decision.
+
+/** Whether to eat to free a pack slot. */
 export function shouldEatForSpace(freeSlots: number, foodInPack: number): boolean {
     return freeSlots === 0 && foodInPack > 0;
 }
@@ -108,12 +98,10 @@ export function keepOnDeposit(food: string): string[] {
     return [BRASS_KEY, food];
 }
 
-/**
- * Kill counter gate (#479). Only true when the engaged NPC has left the scene.
- * Counting on Attack multi-counted: a death anim stayed Attackable for several
- * ticks and each Fight loop re-clicked Attack. Health bars are often 0/0 until
- * hit on this client, so presence-by-index is the reliable signal.
- */
+// Why: counting on Attack multi-counts, since a death anim stays Attackable for several ticks and each Fight loop re-clicks Attack (#479).
+// Why: health bars are often 0/0 until hit on this client, so presence-by-index is the reliable signal.
+
+/** Kill counter gate: true only when the engaged NPC has left the scene. */
 export function isHillGiantKill(stillPresent: boolean): boolean {
     return !stillPresent;
 }

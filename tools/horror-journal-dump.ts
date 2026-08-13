@@ -1,14 +1,7 @@
-/**
- * Dump the Horror from the Deep journal at each stage, verbatim.
- *
- * `~quest_journal` runs the whole page through `split_init(…, 400, 49, q8_full)`,
- * which word-wraps it across twenty-odd components — so a needle that reads fine
- * in `horror_journal.rs2` can arrive split down the middle, and a colour tag can
- * end up on a different line from the words it colours. This prints what the
- * client actually receives, which is the only thing the parser can rely on.
- *
- *   bun tools/horror-journal-dump.ts --stages 0,1,2,4,5
- */
+/** Dump the Horror from the Deep journal at each stage, verbatim: --stages 0,1,2,4,5.
+ *  Why: `~quest_journal` word-wraps the page through `split_init(…, 400, 49, q8_full)` across twenty-odd components, so a needle that reads fine in `horror_journal.rs2` can arrive split down the middle and a colour tag can land on a different line from the words it colours. */
+
+//   bun tools/horror-journal-dump.ts --stages 0,1,2,4,5
 import type { Page } from 'playwright-core';
 
 import { launchBrowser } from './lib/harness.js';

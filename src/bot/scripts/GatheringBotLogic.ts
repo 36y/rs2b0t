@@ -25,11 +25,9 @@ export function wildernessMinerAt(opts: {
     return opts.isMiner && opts.tile !== null && wildernessLevelAt(opts.tile) > 0;
 }
 
-/**
- * Live incoming-player signal; clears as soon as no loaded player targets us.
- * FleeCombat separately requires the local victim's `Game.inCombat()` signal,
- * reducing false positives from harmless idle/follow face targets.
- */
+// Why: FleeCombat separately requires the local victim's `Game.inCombat()` signal, which cuts false positives from harmless idle or follow face targets.
+
+/** Live incoming-player signal; clears as soon as no loaded player targets us. */
 export function incomingPlayerAttacker(
     players: readonly { targetsMe: () => boolean }[]
 ): boolean {
@@ -50,14 +48,11 @@ export function wildernessMinerStanceNeeded(opts: {
     );
 }
 
-/**
- * Resolve the gatherer's live combat policy.
- *
- * Wilderness Miner is the only special case: aggressive NPCs are part of those
- * mining camps, so it holds its ground and keeps mining. A detectable player
- * attack always restores flee behavior. Every other gatherer keeps the existing
- * Auto / tick-manip policy unchanged.
- */
+// Why: Wilderness Miner is the only special case — aggressive NPCs are part of those mining camps, so it holds its ground and keeps mining.
+// Why: a detectable player attack always restores flee behaviour.
+// Why: every other gatherer keeps the Auto and tick-manip policy unchanged.
+
+/** Resolves the gatherer's live combat policy. */
 export function gatheringCombatPolicy(opts: {
     isMiner: boolean;
     tile: WildTile | null;
@@ -117,13 +112,10 @@ export function hostileAttackerNearby(
     });
 }
 
-/**
- * Whether FleeCombat should take the loop (multi-combat kite).
- *
- * Sticky `inCombat` with no face target is common after randoms / login and used
- * to trigger blind east walks that bung gather for tens of seconds. Only kite
- * when a real attacker is in play; yield to random-event handling otherwise.
- */
+// Why: sticky `inCombat` with no face target is common after randoms and login, and it triggers blind east walks that bung gather for tens of seconds.
+// Why: the kite only runs with an attacker in play, and otherwise yields to random-event handling.
+
+/** Whether FleeCombat should take the loop for a multi-combat kite. */
 export function shouldFleeCombat(opts: {
     inCombat: boolean;
     eventPending: boolean;

@@ -16,9 +16,8 @@ class SchedulerImpl {
     private lastPumpAt = 0;
 
     /**
-     * Waiters from {@link Execution} when no script is active, or when
-     * {@link runHost} is nested (RandomEventGuardian). Settled every frame
-     * regardless of ScriptRunner state — including paused scripts.
+     * Waiters from {@link Execution} when no script is active, or when {@link runHost} is nested (RandomEventGuardian).
+     * Why: settled every frame regardless of ScriptRunner state, including paused scripts.
      */
     private hostWaiters: Waiter[] = [];
 
@@ -34,8 +33,7 @@ class SchedulerImpl {
 
     /**
      * Run `fn` with Execution waits forced onto hostWaiters.
-     * Used by RandomEventGuardian so always-on event solving is not bound to
-     * the script waiter queue (which is frozen while paused / not running).
+     * Why: RandomEventGuardian's always-on event solving must not be bound to the script waiter queue, which is frozen while paused or not running.
      */
     async runHost<T>(fn: () => Promise<T>): Promise<T> {
         this.hostScopeDepth++;

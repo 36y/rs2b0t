@@ -1,10 +1,7 @@
-/**
- * Live proof for the loadout panel: open it in a real client, define a loadout,
- * and confirm it survives a reload. Item icons only render against a loaded
- * cache, which is the half a DOM test cannot cover.
- *
- *   HEADED=1 bun tools/loadout-panel-live.ts
- */
+/** Live proof for the loadout panel: open it in a client, define a loadout, confirm it survives a reload.
+ *  Why: item icons only render against a loaded cache, which is the half a DOM test cannot cover. */
+
+//   HEADED=1 bun tools/loadout-panel-live.ts
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 
@@ -64,16 +61,13 @@ try {
     console.log(`mainland-ready as '${user}'`);
 
     await page.click('button:has-text("Loadouts")');
-    // No "+ new": opening gives you a loadout to edit, and this is the path a
-    // player actually takes on first use.
+    // Opening gives a loadout to edit with no "+ new", which is the path a player takes on first use.
     await page.click('[data-slot=righthand]');
     await page.fill('[data-role=item-search]', 'Rune scimitar');
     await page.click('[data-item="Rune scimitar"]');
     console.log('picked Rune scimitar for the weapon slot');
 
-    // The client streams item models on demand, so the icon is not there the
-    // instant the slot is filled — the panel fills it in once the sprite builds.
-    // A freshly-logged-in client has never seen a rune scimitar.
+    // Why: the client streams item models on demand and a fresh login has never seen a rune scimitar, so the icon appears only once the sprite builds.
     try {
         await page.waitForSelector('[data-slot=righthand] img', { timeout: 20_000 });
         console.log('item icon filled in from the client cache');

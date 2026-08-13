@@ -2,8 +2,7 @@
 
 # Add a quest
 
-1. Add the record to [`data/quests.ts`](../../src/bot/quests/data/quests.ts) — id, name,
-   quest points, requirements, items.
+1. Add the record to [`data/quests.ts`](../../src/bot/quests/data/quests.ts) — id, name, quest points, requirements, items.
 2. Write `defs/<quest>.ts`: anchors as `Tile` constants, `NpcStop`s with `prefer`
    lists, `gather` functions for anything the bot must fetch, and a `decide()` that
    reads only the snapshot.

@@ -10,11 +10,10 @@ export const NAMED_CAMP_LEASH_FLOOR = DEFAULT_CAMP_RADIUS;
 /** @deprecated Prefer {@link NAMED_CAMP_LEASH_FLOOR} — same value, kept for imports. */
 export const START_TILE_LEASH_FLOOR = NAMED_CAMP_LEASH_FLOOR;
 
-/**
- * Effective gather leash from the UI value + location mode.
- * - Auto → respect setting (freeform / unverified chunk snaps).
- * - Named camp or None → at least {@link NAMED_CAMP_LEASH_FLOOR} (camp membership).
- */
+// Why: Auto respects the setting, for freeform and unverified chunk snaps.
+// Why: a named camp or None gets at least {@link NAMED_CAMP_LEASH_FLOOR}, which is camp membership.
+
+/** Effective gather leash from the UI value and the location mode. */
 export function effectiveGatherLeash(settingLeash: number, locationSetting: string): number {
     const raw = Math.max(2, Math.floor(Number.isFinite(settingLeash) ? settingLeash : 10));
     if (locationSetting.trim().toLowerCase() === 'auto') {
@@ -28,14 +27,11 @@ export function isAutoLocation(locationSetting: string): boolean {
     return locationSetting.trim().toLowerCase() === 'auto';
 }
 
-/**
- * Origin for fishing-spot distance checks.
- *
- * - **Named camp**: measure from the **player** so pier/river hops beside the bot
- *   stay valid even when far from the home pin (resource fence is camp membership).
- * - **Freeform fish**: same player origin.
- * - No player tile → fall back to anchor/home.
- */
+// Why: a named camp measures from the player, so pier and river hops beside the bot stay valid even far from the home pin — the resource fence is camp membership.
+// Why: freeform fish uses the same player origin.
+// Why: with no player tile it falls back to the anchor or home.
+
+/** Origin for fishing-spot distance checks. */
 export function gatherSpotRangeOrigin(
     freeformFish: boolean,
     hasPlayerTile: boolean,

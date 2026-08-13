@@ -8,13 +8,8 @@ const { RandomEvents } = await import('#/bot/runtime/randomevents/RandomEvents.j
 const { Game } = await import('#/bot/api/game/Game.js');
 const { BotHost } = await import('#/bot/runtime/BotHost.js');
 
-/**
- * detectRaw() walks every NPC twice and every scene loc, so it must run once per
- * server tick -- not once per client frame. Stamping the tick only after a
- * successful detect left the guard permanently disarmed whenever nothing was
- * found, which is the steady state: measured 19.7 scans/sec per bot across 27
- * bots, and fixing it cut main-thread stall from 938ms/s to 276ms/s.
- */
+// Why: detectRaw() walks every NPC twice and every scene loc, so it runs once per server tick; stamping only after a successful detect leaves the guard disarmed in the steady state.
+// Why: the steady state measured 19.7 scans/sec per bot across 27 bots, and the gate cut main-thread stall from 938ms/s to 276ms/s.
 describe('RandomEventGuardian tick gate', () => {
     let detectCalls: number;
     let origDetect: typeof RandomEvents.detect;

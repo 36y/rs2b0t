@@ -1,15 +1,9 @@
-/**
- * Real browser + current local LostCity end-to-end proof for Doric's Quest.
- *
- * The harness refuses non-loopback servers, attests the served bundle, creates
- * fresh accounts, and uses the real AIOQuester UI.  The natural scenario starts
- * in Lumbridge with 10 Hitpoints, every other skill at 1, an empty backpack,
- * and only 2m coins in the bank.
- *
- *   bun tools/doric-level3-test.ts http://127.0.0.1:8990 staged 12
- *   bun tools/doric-level3-test.ts http://127.0.0.1:8990 natural 30
- *   bun tools/doric-level3-test.ts http://127.0.0.1:8990 all 40
- */
+/** Local LostCity end-to-end proof for Doric's Quest: [base] staged|natural|all [minutes].
+ *  The natural scenario starts in Lumbridge at 10 Hitpoints, every other skill 1, an empty backpack and 2m coins banked. */
+
+//   bun tools/doric-level3-test.ts http://127.0.0.1:8990 staged 12
+//   bun tools/doric-level3-test.ts http://127.0.0.1:8990 natural 30
+//   bun tools/doric-level3-test.ts http://127.0.0.1:8990 all 40
 import { createHash } from 'node:crypto';
 import { chromium, type Browser, type Page } from 'playwright-core';
 

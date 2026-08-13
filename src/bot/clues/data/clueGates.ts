@@ -1,13 +1,9 @@
-/**
- * Clues behind a gate the bot cannot pass. The solver reports the reason and
- * abandons rather than walking until the navigator gives up, and the audit
- * allowlists them instead of counting them as findings.
- *
- * A clue belongs here only when the gate is a *quest or region* the bot has no
- * route through. A clue that merely walks somewhere awkward does not.
- *
- * @see docs/reference/clues-gates.md#gated-clues
- */
+// Why: the solver reports the reason and abandons rather than walking until the navigator gives up.
+// Why: the audit allowlists these instead of counting them as findings.
+// Why: a clue belongs here only when the gate is a quest or region the bot has no route through, not when it merely walks somewhere awkward.
+// @see docs/reference/clues-gates.md#gated-clues
+
+/** Clues behind a gate the bot cannot pass. */
 export const CLUE_GATES: Record<number, string> = {
     // Isafdar / the elf camp is sealed behind Underground Pass + Regicide, and
     // neither quest is automated.

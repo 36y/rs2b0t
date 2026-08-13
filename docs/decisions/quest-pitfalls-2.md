@@ -61,7 +61,7 @@ Horror from the Deep added six, and the first two are not quest facts at all:
   the same pass loses two of the three — and the one it loses is the food. The Dagannoth
   mother killed the bot twice at a full pack of sharks before the loop was rewritten to
   advance on `Game.tick()` and issue exactly one action, priority eat → pray → cast. With
-  the budget honoured she landed ten damage in the whole fight.
+  the budget honoured she landed ten damage in the fight.
 - **`navworker.js` is a second bundle, and the transport graph is inside it.** A harness
   that deploys only `botclient.js` leaves the navigator on the old edges, and the symptom
   is a flat `no path to (…): unreachable` for a route that the offline probe says is
@@ -73,7 +73,7 @@ Horror from the Deep added six, and the first two are not quest facts at all:
   eat, eating spends the tick's one action, and the prayer stops flipping exactly when
   it matters — half the time on the wrong one, which is 99 hitpoints to dead inside a
   single form. **Holding** Protect from Missiles instead forces her onto melee, whose
-  max hit is single figures, needs no timing at all, and leaves the whole action budget
+  max hit is single figures, needs no timing at all, and leaves the action budget
   for food and casts. Four runs since, hitpoints never went below 85.
 - **Which protection to hold is a question about the npc's script, not its name.** Both
   dagannoths look like ranged attackers and only one is. `horror_dagannoth_jr4` declares
@@ -85,14 +85,14 @@ Horror from the Deep added six, and the first two are not quest facts at all:
 - **Two fights back to back share one prayer, and the gap between them is a fight too.**
   `spawn_dagmother` adds the mother on the tick the junior dies and sets her ranging
   three ticks later. Clearing the junior's protection on the way out and arming the
-  mother's inside the next `decide()` costs a whole quest-engine round trip — journal
+  mother's inside the next `decide()` costs a quest-engine round trip — journal
   read included — and she spends it hitting an unprotected character for up to
   twenty-four a time. It killed a run outright from full hitpoints. Hand the prayer
   over at the moment of the win, inside the step that won.
 - **A consumed item is not a missing item.** Each slot of the strange wall eats what it
   is given, so the pass that re-checks the wall finds no dagger, stops at that slot, and
   never reaches the arrow behind it — a permanent wedge one death after the first
-  attempt. Skip what is not held, and let the door say whether the wall is really short.
+  attempt. Skip what is not held, and let the door say whether the wall is short.
 - **When both branches of a journal line say the same words, the colour tag is the
   oracle.** `horror_journal.rs2` prints "I need to repair the bridge leading to Rellekka"
   either way and only swaps `@dbl@` for `@str@` when it is done, so that one flag has to
@@ -105,7 +105,7 @@ Horror from the Deep added six, and the first two are not quest facts at all:
 - **Turning teleports on is a provisioning change, not a routing one.** A* only injects
   a hop the *live pack* can pay for, so flipping Global `navTeleports` against an empty
   rune pouch changes nothing at all — the log even says `tele=true` while the bot walks
-  the whole quest. What made it real was buying the rune stack the dungeon needs anyway
+  the quest. What made it work was buying the rune stack the dungeon needs anyway
   at the Varrock counter the nails leg already ends at, **before** the barcrawl instead
   of after it: 45 minutes end to end against 68 walking, 16 hops, and a ten-bar tour that
   fell from 927s to 622s.

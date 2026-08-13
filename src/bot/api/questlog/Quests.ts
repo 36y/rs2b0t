@@ -12,11 +12,11 @@ const COLOUR_NOT_STARTED = 0xf80000;
 const COLOUR_IN_PROGRESS = 0xf8f800;
 const COLOUR_COMPLETE = 0x00f800;
 
+// Why: mid-progress stages are not on the wire as varps for almost every quest (`scope=perm` without `transmit`).
+// Why: the client therefore has list colour (3-way), total QP, inventory, and journal text only after this API opens the log modal.
+
 /**
- * Quest tab + journal. Mid-progress stages are **not** on the wire as varps for
- * almost every quest (`scope=perm` without `transmit`). What the client has:
- * list colour (3-way), total QP, inventory, and journal text only after this
- * API opens the log modal.
+ * Quest tab + journal.
  * @see docs/reference/quest-engine.md#what-the-client-can-see
  * @see docs/reference/api-quests.md
  */
@@ -35,8 +35,7 @@ export const Quests = {
     },
     /**
      * Open the quest's journal scroll and return its text lines.
-     * This flashes the main modal — the only durable client view of mid-stage
-     * narrative. Prefer item/message oracles when they uniquely prove progress.
+     * Why: this flashes the main modal, the only durable client view of mid-stage narrative, so prefer item or message oracles when they uniquely prove progress.
      */
     async journal(name: string): Promise<string[]> {
         const entry = reader.questStatuses().find(q => q.name.toLowerCase() === name.toLowerCase());

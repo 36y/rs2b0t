@@ -7,11 +7,11 @@ export const BANK_ENTRANCE = new Tile(2726, 3487, 0);
 export const BANK_STAND = new Tile(2725, 3493, 0);
 /** Walkable stand tile inside the wheel house beside the ladder. */
 export const LADDER_TILE = new Tile(2714, 3471, 0);
-/**
- * Runner↔Spinner handoff tile — outside the wheel house, a few tiles east of the
- * east-wall door at (2716,3472). Meeting inside meant a closed door left partners
- * "at meet" (LEASH) but unable to trade or path through.
- */
+
+// Why: the tile sits outside the wheel house, a few tiles east of the east-wall door at (2716,3472).
+// Why: meeting inside leaves partners "at meet" under LEASH behind a closed door, unable to trade or path through.
+
+/** Runner↔Spinner handoff tile. */
 export const MEET_TILE = new Tile(2719, 3471, 0);
 
 export const TRADE_RANGE = 2;
@@ -49,25 +49,17 @@ export function flaxUnitsInOffer(items: readonly { name: string | null; count: n
     return n;
 }
 
-/**
- * Spinner must bank before handoff when the pack is not empty of non-flax
- * (bow strings, random-event junk). A full runner pack cannot land if the
- * spinner only has a few free slots — trade fails and both sides re-request.
- */
+// Why: a full runner pack cannot land when the spinner has only a few free slots, so the trade fails and both sides re-request.
+
+/** Whether the spinner must bank non-flax (bow strings, random-event junk) before handoff. */
 export function spinnerNeedsClearPack(flaxHeld: number, slotsUsed: number): boolean {
     return flaxHeld === 0 && slotsUsed > 0;
 }
 
 /** True if free inventory slots can hold `units` of offered flax (1 slot per stack item in trade). */
 export function canReceiveFlaxOffer(freeSlots: number, offeredFlaxUnits: number): boolean {
-    // Flax stacks in trade still need one free slot per offered stack line; a full
-    // runner pack is typically one stack ≤28. Require freeSlots >= 1 when any flax
-    // is offered, and freeSlots >= offered units when they would not stack (we
-    // treat needed slots as min(offered, free needed for one stack) = 1 if free>0
-    // for a single stack). Safest for 2004 one-stack offers: need freeSlots >= 1
-    // for a stack that merges into empty inv, but if inv has partial flax stack
-    // free can be 0 and still receive into existing stack — spinner should be
-    // empty of flax at handoff (flaxHeld===0), so one free slot receives one stack.
+    // Why: flax stacks in a trade still need one free slot per offered stack line, and a full runner pack is typically one stack of 28 or fewer.
+    // Why: the spinner holds no flax at handoff, so one free slot receives the whole stack.
     if (offeredFlaxUnits <= 0) {
         return true;
     }

@@ -5,20 +5,8 @@ import transports from '#/bot/nav/data/transports.json';
 import { allTransportRows } from '#/bot/nav/loadTransportGraph.js';
 import type { TransportEdgeData } from '#/bot/nav/PathFinder.js';
 
-/**
- * Gu'Tanoth chasm (#364 / #398).
- *
- * Two separate rocks, one per side, both `Jump-From`, both shape 10 (blocking) —
- * so the stand is the tile beside the rock, never the rock's own tile. Content
- * (`quest_itwatchtower.rs2`) verified against `maps/m39_47.jm2`:
- *
- *   tanothjump1 (loc 2830) @ (2530,3026) — Agility 25, then a 20gp toll if
- *     ogre_guard4 is within 8 tiles. p_teleport(0_39_47_34_21) = (2530,3029).
- *   tanothjump2 (loc 2831) @ (2531,3029) — no skill check, no toll, no dialogue.
- *     p_teleport(0_39_47_35_18) = (2531,3026).
- *
- * The asymmetry is real and deliberate: only the inbound jump is gated.
- */
+// tanothjump1 (loc 2830) needs Agility 25 plus a 20gp toll within 8 tiles of ogre_guard4; tanothjump2 (loc 2831) is ungated.
+// Why: both rocks are shape 10 (blocking), so the stand is the tile beside the rock, never the rock's own tile.
 
 const rows = transports as TransportEdgeData[];
 
@@ -69,10 +57,7 @@ describe("Gu'Tanoth chasm", () => {
 
 describe('skill-gated crossings', () => {
     test('every one has a transport edge starting at its stand', () => {
-        // The invariant #398 tripped: a skill-gated crossing whose stand tile is
-        // not some edge's `from` can never be pruned, so the walker plans through
-        // a shortcut it has no level for. Graph = transports.json + curatedTravelEdges
-        // (PathFinder / NavWorker load the same set via allTransportRows).
+        // Why: a skill-gated crossing whose stand is no edge's `from` can never be pruned, so the walker plans through a shortcut it has no level for.
         const graph = allTransportRows();
         const gated = SPECIAL_CROSSINGS.filter(sc => sc.requiresSkill);
         expect(gated.length).toBeGreaterThan(0);

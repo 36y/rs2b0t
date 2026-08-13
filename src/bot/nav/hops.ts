@@ -16,15 +16,10 @@ function kindOf(t: TransportInfo): TransportKind | 'walk' {
     return 'door';
 }
 
-/**
- * Collapse waypoints into first-class transport hops for explain tooling.
- *
- * Transport metadata is attached to the **arrival** waypoint (PathFinder
- * reconstruct). Hop endpoints are therefore:
- *   from = previous waypoint (approach), to = current waypoint (landing).
- * Prefer `t.toTile` / `t.toLevel` when present for the landing coords.
- * Prefer `t.edgeCost` when reconstruction preserved the real graph cost (#337).
- */
+// Why: PathFinder's reconstruct attaches transport metadata to the arrival waypoint, so a hop's from is the previous waypoint (approach) and its to is the current waypoint (landing).
+// Why: `t.toTile` / `t.toLevel` win for the landing coords when present, and `t.edgeCost` wins when reconstruction preserved the graph cost (#337).
+
+/** Collapse waypoints into first-class transport hops for explain tooling. */
 export function hopsFromWaypoints(waypoints: Waypoint[]): PathHop[] {
     const hops: PathHop[] = [];
     for (let i = 0; i < waypoints.length; i++) {

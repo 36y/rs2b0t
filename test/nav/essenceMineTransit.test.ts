@@ -5,13 +5,8 @@ import { allTransportRows } from '#/bot/nav/loadTransportGraph.js';
 import { ESSENCE_MINE_PAD, ESSENCE_RETURN, essenceEntryEdges } from '#/bot/nav/travelCatalog.js';
 import { emptyWorldStateData } from '#/bot/nav/worldStateData.js';
 
-/**
- * Essence mine multiloc (#388 / #377):
- * - **Entry** blacklisted: random over 22 pads — scripts own wizard Teleport.
- * - **Exit** stays on the graph behind `essenceExitReturn` path-state: destination
- *   is the entry wizard’s return stand ±2 (`map_findsquare` r=2), fully determined
- *   given the session.
- */
+// Why: scripts own the wizard teleport, so entry is blacklisted (random over 22 pads) rather than modelled in the nav graph.
+// Exit stays on the graph behind `essenceExitReturn`, landing on the entry wizard's return stand ±2 (`map_findsquare` r=2).
 
 const DX = [0, 1, 0, -1, 1, 1, -1, -1] as const;
 const DZ = [1, 0, -1, 0, 1, -1, -1, 1] as const;

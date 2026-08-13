@@ -169,14 +169,11 @@ function talkAtStage(stage: number, action: string): QuestStep {
 const COINS_ID = 995;
 const DORIC_REWARD_COINS = 180;
 
-/**
- * Doric's server script queues the quest-complete scroll before its final
- * dialogue and coin reward.  A generic dialogue driver therefore sees the
- * chat modal close, returns, and leaves the engine free to treat stage 100 as
- * finished before the remaining queue has run.  Own that transition here and
- * do not report success until the post-scroll queue has awarded the coins and
- * fully drained.
- */
+// Why: Doric's server script queues the quest-complete scroll before its final dialogue and coin reward.
+// Why: a generic dialogue driver sees the chat modal close and returns, leaving the engine free to treat stage 100 as finished before the remaining queue has run.
+// Why: success is therefore withheld until the post-scroll queue has awarded the coins and drained.
+
+/** Hand Doric his materials and drive the completion queue to the end. */
 async function handInMaterials(log: (message: string) => void): Promise<boolean> {
     if (!(await gotoNpc(DORIC, [], log))) {
         log('stage 10: could not reach Doric for the material hand-in');
@@ -394,11 +391,8 @@ function hasDepositableItem(snap: QuestSnapshot): boolean {
 function makeSpace(snap: QuestSnapshot, needed: number, bank: Tile): QuestStep | null {
     if (snap.freeSlots === undefined || snap.freeSlots >= needed) return null;
     if (hasDepositableItem(snap)) return preserveQuestItems(bank);
-    // A restored account can have all 28 slots occupied by exact Doric items
-    // (surplus ore, redundant picks, or an unusable high-tier pick).  Keeping
-    // every quantity would park forever.  Bank the exact set as well; the next
-    // authoritative bank snapshot withdraws only the material deficits and one
-    // best usable pickaxe.
+    // Why: a restored account can have all 28 slots occupied by exact Doric items — surplus ore, redundant picks, or an unusable high-tier pick — so keeping every quantity would park forever.
+    // Why: the exact set is banked too, and the next authoritative bank snapshot withdraws only the material deficits and one best usable pickaxe.
     return {
         kind: 'deposit',
         keep: [],

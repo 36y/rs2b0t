@@ -48,9 +48,6 @@ async function applyTerser(script: BunOutput): Promise<boolean> {
             content: script.sourcemap
         },
         toplevel: true,
-        // format: {
-        //     beautify: true
-        // },
         compress: {
             ecma: 2020
         },

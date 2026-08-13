@@ -17,7 +17,7 @@ With the toggle **off** (default):
 - Combat escape kits, AIOTeleport law stacks, and looted laws are not spent as *routing*.
 - Ships, gliders, spirit trees, ladders, doors, and other travel-catalog edges still work.
 
-With the toggle **on**:
+With the toggle **on**, these apply:
 
 - A* may inject standard-spellbook teles (Varrock, Lumbridge, Falador, Camelot, …) and
   jewellery Rub destinations (dueling ring, games necklace, glory, …) when

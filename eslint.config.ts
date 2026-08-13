@@ -3,10 +3,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 import { defineConfig, globalIgnores } from 'eslint/config';
 
-// ESLint flat config REPLACES rule options; it does not merge them. Any later
-// block that declares `no-restricted-imports` for a path silently repeals every
-// earlier one covering it, so every fence below must carry this pattern too.
-// See docs/reference/import-fences.md#a-later-block-repeals-an-earlier-one.
+// Why: flat config replaces rule options rather than merging them, so a later `no-restricted-imports` block for a path repeals every earlier one — every fence below must carry CLIENT_INTERNALS.
 const CLIENT_INTERNALS = {
     group: ['\\#/client/*/*', '!\\#/client/io/ServerProt.js', '!\\#/client/io/ClientProt.js', '!\\#/client/dash3d/CollisionFlag.js', '!\\#/client/shell/MiniMenuAction.js', '!\\#/client/mapview/worldmapKeyNames.js'],
     message: 'Only src/bot/adapter/ may touch client internals.'
@@ -47,9 +44,7 @@ export default defineConfig([
         }
     },
 
-    // The ported 2004 client swallows exceptions in dozens of places, faithfully to the
-    // original. It is a frozen port, so an empty catch there is intent rather than an
-    // oversight. Everything we write ourselves keeps the rule and comments the intent.
+    // Why: the ported 2004 client is a frozen port that swallows exceptions faithfully, so an empty catch there is intent.
     {
         files: ['src/client/**/*.ts', 'src/dash3d/**/*.ts', 'src/graphics/**/*.ts', 'src/mapview/**/*.ts', 'src/config/**/*.ts', 'src/io/**/*.{ts,js}', 'src/sound/**/*.ts', 'src/datastruct/**/*.ts', 'src/wordfilter/**/*.ts'],
         rules: {
@@ -58,9 +53,7 @@ export default defineConfig([
     },
 
     // ---- rs2b0t fences ----
-    // Only adapter/ may name client internals; everything else in src/bot/
-    // imports the adapter. Protocol const-enums are exempt (inlined, no
-    // runtime coupling).
+    // Only adapter/ may name client internals; protocol const-enums are exempt — inlined, no runtime coupling.
     {
         files: ['src/bot/**/*.ts'],
         ignores: ['src/bot/adapter/**', 'src/bot/runtime/BotClient.ts'],
@@ -74,10 +67,7 @@ export default defineConfig([
         }
     },
     // Only ui/ and the entrypoints may touch the DOM (keeps headless viable).
-    // The MultiBox manager is a second DOM entrypoint: main.ts (its bundle
-    // entry) and its DOM view layers DomSlotOps.ts and ProfileChooser.ts
-    // (analogous to ui/) are exempted the same way; the rest of
-    // src/bot/multibox/ stays fenced.
+    // Why: MultiBox is a second DOM entrypoint, so main.ts, DomSlotOps.ts and ProfileChooser.ts are exempted while the rest of src/bot/multibox/ stays fenced.
     {
         files: ['src/bot/**/*.ts'],
         ignores: ['src/bot/ui/**', 'src/bot/main.ts', 'src/bot/multibox/DomSlotOps.ts', 'src/bot/multibox/ProfileChooser.ts', 'src/bot/multibox/TabBar.ts', 'src/bot/multibox/VaultPrompt.ts', 'src/bot/multibox/main.ts', 'src/bot/runtime/WorkerClock.ts'],
@@ -86,9 +76,8 @@ export default defineConfig([
         }
     },
 
-    // api/ sits above adapter/, nav/ and data/, and on the host substrate
-    // (Settings, BotHost, Scheduler) that Execution/Game/loadouts genuinely need.
-    // It must not reach up into script lifecycle or the layers that consume it.
+    // api/ sits above adapter/, nav/ and data/, and on the host substrate (Settings, BotHost, Scheduler).
+    // Why: it must not reach up into script lifecycle or the layers that consume it.
     {
         files: ['src/bot/api/**/*.ts'],
         rules: {
@@ -117,10 +106,8 @@ export default defineConfig([
             ]
         }
     },
-    // data/ holds inert catalogs: tables plus pure resolvers over them, no live
-    // game reads. geometry/ is a top-level leaf, so no re-inclusion is needed —
-    // gitignore semantics cannot re-admit a path under an excluded parent, which
-    // is why geometry does not live under api/.
+    // data/ holds inert catalogs: tables plus pure resolvers over them, no live game reads.
+    // Why: gitignore semantics cannot re-admit a path under an excluded parent, so geometry/ is a top-level leaf rather than a child of api/.
     {
         files: ['src/bot/data/**/*.ts'],
         rules: {
@@ -140,10 +127,8 @@ export default defineConfig([
             ]
         }
     },
-    // The published surface is decidable. abi.ts lives inside runtime/, so its
-    // siblings are named './X.js' with no 'runtime' in the specifier — a
-    // '**/runtime/**' pattern can never match them. Deny the whole sibling
-    // directory and re-admit the two it needs.
+    // abi.ts lives inside runtime/, so its siblings are named './X.js' and a '**/runtime/**' pattern can never match them.
+    // Why: deny the sibling directory and re-admit the two entries it needs.
     {
         files: ['src/bot/runtime/abi.ts'],
         rules: {

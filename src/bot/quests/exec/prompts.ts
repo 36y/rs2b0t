@@ -16,19 +16,20 @@ export function locNear(name: string, op: string, within = 12): Loc | null {
     return Locs.query().name(name).action(op).within(within).nearest();
 }
 
+// Why: every loc query is empty for about a tick after a level or region change, so a blank scene is not evidence that a loc is absent.
+
 /**
- * Every loc query is empty for about a tick after a level or region change, so a
- * blank scene is not evidence that a loc is absent.
+ * Wait out the window after a level or region change before trusting a loc query.
  * @see docs/decisions/level-change-lag.md
  */
 export async function settleScene(): Promise<void> {
     await Execution.delayTicks(2);
 }
 
+// Why: loc prompts routinely put the refusal first — "I don't think so, it might animate and attack me!" — so falling through to an unmatched option is worse than stopping.
+
 /**
- * Like `driveDialog`, but abandons rather than guessing. Loc prompts routinely put
- * the refusal first — "I don't think so, it might animate and attack me!" — so
- * falling through to an unmatched option is worse than stopping.
+ * Like `driveDialog`, but abandons rather than guessing.
  * @see docs/reference/quest-primitives.md
  */
 export async function driveChoice(prefer: string[], log: (m: string) => void): Promise<boolean> {
@@ -57,10 +58,10 @@ export async function driveChoice(prefer: string[], log: (m: string) => void): P
     return !ChatDialog.isOpen();
 }
 
+// Why: a scripted chain leaves gaps where nothing is open yet, and `driveChoice` alone returns at the first of them, leaving the rest of the chain unrun.
+
 /**
- * Keep answering prompts until the goal lands. A scripted chain leaves gaps where
- * nothing is open yet — `driveChoice` alone returns at the first of them and the
- * rest of the chain never runs.
+ * Keep answering prompts until the goal lands.
  * @see docs/reference/quest-primitives.md
  */
 export async function driveUntil(
@@ -96,8 +97,7 @@ export interface LocPrompt {
 }
 
 /**
- * Walk to a stand, act on a loc, then answer whatever prompt it raised — the shape
- * of nearly every world interaction in a jungle quest.
+ * Walk to a stand, act on a loc, then answer whatever prompt it raised.
  * @see docs/reference/quest-primitives.md
  */
 export async function promptLoc(step: LocPrompt, log: (m: string) => void): Promise<boolean> {
@@ -118,9 +118,10 @@ export async function promptLoc(step: LocPrompt, log: (m: string) => void): Prom
     return driveUntil(step.expect, step.prefer ?? [], log, step.expectMs ?? 20_000);
 }
 
+// Why: quest item chains run through `oplocu`, which no op-based step can express.
+
 /**
- * Use a carried item on a loc, then answer whatever prompt it raised. Quest item
- * chains run through `oplocu`, which no op-based step can express.
+ * Use a carried item on a loc, then answer whatever prompt it raised.
  * @see docs/reference/quest-primitives.md
  */
 export async function useOnLoc(

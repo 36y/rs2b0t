@@ -54,15 +54,10 @@ export const KS_NAME = {
 export const KS_TILE = {
     FALADOR_BANK: new Tile(2946, 3369, 0),
     FURNACE: new Tile(2975, 3368, 0),
-    /**
-     * South of the cupboard, which spans (2984,3336)-(2985,3336).
-     *
-     * `forceapproach` is all-blocked with the named side cleared, so
-     * `forceapproach=east` means east is the *only* approach — and the flags
-     * rotate with the loc, which is placed at rotation 1. East in the loc's own
-     * frame is south in world space; true east (2986,3336) is not even pathable.
-     * Standing anywhere else has every op silently dropped.
-     */
+    // Why: this stands south of the cupboard, which spans (2984,3336)-(2985,3336).
+    // Why: `forceapproach` is all-blocked with the named side cleared, so `forceapproach=east` means east is the only approach, and the flags rotate with the loc, which is placed at rotation 1.
+    // Why: east in the loc's own frame is south in world space, and true east (2986,3336) is not pathable.
+    // Why: standing anywhere else has every op silently dropped.
     VYVIN_ROOM: new Tile(2985, 3335, 2),
     /** Far enough to vacate both approaches and let Sir Vyvin wander off them. */
     VYVIN_RETREAT: new Tile(2980, 3340, 2),
@@ -77,11 +72,8 @@ export const KS_TILE = {
     LADDER_BOTTOM: new Tile(3008, 9551, 0)
 } as const;
 
-/**
- * The cupboard spans (2984,3336)-(2985,3336) and only its south side is legal,
- * so these two tiles are the whole approach. Standing on the one further from
- * Sir Vyvin is often the difference between a refused search and a taken one.
- */
+// Why: the cupboard spans (2984,3336)-(2985,3336) and only its south side is legal, so these two tiles are the whole approach.
+// Why: standing on the one further from Sir Vyvin is often the difference between a refused search and a taken one.
 export const VYVIN_APPROACHES: readonly Tile[] = [
     new Tile(2985, 3335, 2),
     new Tile(2984, 3335, 2)

@@ -1,12 +1,6 @@
-/**
- * Optional orbit-camera path facing (client-only — no server/LC changes).
- *
- * Yaw math matches the client's cinema look-at:
- *   yaw = (atan2(dx, dz) * -325.949) & 0x7ff
- *
- * Smoothing runs on the game frame loop (not the walk tick) so turns ease like
- * a human holding left/right rather than stepping once per path poll.
- */
+// Why: optional orbit-camera path facing, client-only, with no server or LC changes.
+// Why: the yaw math matches the client's cinema look-at — yaw = (atan2(dx, dz) * -325.949) & 0x7ff.
+// Why: smoothing runs on the game frame loop rather than the walk tick, so turns ease like a human holding left/right instead of stepping once per path poll.
 
 import { actions, reader } from '../adapter/ClientAdapter.js';
 import { BotHost } from '../runtime/BotHost.js';
@@ -101,11 +95,7 @@ export function lookAheadTile(tiles: TileLike[], pathIdx: number, lookAhead = 12
     return tiles[i] ?? null;
 }
 
-/**
- * Same-plane dungeon/portal hops use large coordinate jumps (e.g. z ± 6400).
- * Averaging past that boundary points the camera at the remote landing instead
- * of the local ladder/object being approached (#332).
- */
+// Why: same-plane dungeon and portal hops use large coordinate jumps (e.g. z ± 6400), and averaging past that boundary points the camera at the remote landing instead of the local ladder or object being approached (#332).
 const TRANSPORT_JUMP_TILES = 32;
 
 function isTransportBoundary(a: TileLike, b: TileLike): boolean {
@@ -121,11 +111,10 @@ function isTransportBoundary(a: TileLike, b: TileLike): boolean {
     return Math.max(dx, dz) >= TRANSPORT_JUMP_TILES;
 }
 
-/**
- * Average heading from `from` across several path tiles ahead — smoother than a
- * single far point on zigzags. Stops at the next transport / discontinuity so
- * same-plane dungeon landings do not yank yaw toward the remote side.
- */
+// Why: averaging is smoother than one far point on zigzags.
+// Why: the scan stops at the next transport or discontinuity so same-plane dungeon landings do not yank yaw toward the remote side.
+
+/** Average heading from `from` across several path tiles ahead. */
 export function pathFacingYaw(
     from: TileLike,
     tiles: TileLike[],
@@ -182,11 +171,9 @@ export function yawTowardTiles(from: TileLike, to: TileLike): number | null {
 
 /** How far desired yaw may jump before we retarget (reduces micro-chatter). */
 const TARGET_RETARGET_MIN = 28;
-/**
- * Stop driving camera this long after the last path sample (walk ended / stalled).
- * Walk follow samples once per loop then `delayTicks(2)` (~1200ms @ 600ms ticks),
- * so this must exceed that interval with margin or the camera freeze-starts.
- */
+// Why: walk follow samples once per loop then `delayTicks(2)`, about 1200 ms at 600 ms ticks, so this must exceed that interval with margin or the camera freeze-starts.
+
+/** Stop driving the camera this long after the last path sample (walk ended or stalled). */
 const STALE_MS = 3000;
 
 /**

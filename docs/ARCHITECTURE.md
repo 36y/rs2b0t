@@ -2,8 +2,8 @@
 
 # Architecture
 
-rs2b0t drives a real era client through its own action dispatch, so bot packets are
-byte-identical to a human click. `src/bot/adapter/ClientAdapter.ts` is the entire
+rs2b0t drives a 2004-era client through its own action dispatch, so bot packets are
+byte-identical to a human click. `src/bot/adapter/ClientAdapter.ts` is the
 boundary between bot code and client internals.
 
 ## Pages

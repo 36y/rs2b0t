@@ -1,9 +1,7 @@
-/**
- * Live proof for #353 Mordred re-attack loop.
- * Drives product fortress() via __rs2b0t.questLive (same code as Merlin's Crystal).
- *
- *   ~/redeploy.sh && HEADED=1 bun tools/merlin-mordred-353-live.ts
- */
+/** Live proof for #353 Mordred re-attack loop.
+ *  Drives product fortress() through __rs2b0t.questLive, the same code as Merlin's Crystal. */
+
+//   ~/redeploy.sh && HEADED=1 bun tools/merlin-mordred-353-live.ts
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';

@@ -132,9 +132,8 @@ const USER_OPS_PER_TICK = 5;
 const BUY_STEPS = [10, 5, 1] as const;
 
 /**
- * One tick's worth of buy ops: up to USER_OPS_PER_TICK op indexes whose step
- * sizes sum to at most `remaining`, largest steps first, so a full batch moves
- * 50 items per tick instead of one op per tick.
+ * One tick's worth of buy ops: up to USER_OPS_PER_TICK op indexes whose step sizes sum to at most `remaining`, largest steps first.
+ * Why: a full batch then moves 50 items per tick instead of one op per tick.
  */
 function buyBatch(ops: (string | null)[], remaining: number): number[] {
     const batch: number[] = [];

@@ -8,27 +8,25 @@ export const LEDGE = new Tile(2511, 3463, 0);
 export const LEDGE_DOOR = new Tile(2511, 3464, 0);
 export const WASHED_OUT = new Tile(2527, 3413, 0);
 
-// Two-tier: 9892 sees two west giants so it kills faster, but a 2x2 footprint fits
-// with its origin on that tile, so a giant can occasionally reach you there. 9893 is
-// the melee-proof nook (live-verified: zero pull-offs, zero food eaten) but only
-// sees one giant. Hold 9892, drop back to 9893 whenever a giant actually lands on us.
+// Why: 9892 sees two west giants, so it kills faster.
+// Why: a 2x2 footprint fits with its origin on 9892, so a giant can occasionally reach you there.
+// Why: 9893 is the melee-proof nook — live-verified at zero pull-offs and zero food eaten — but sees one giant.
+// Why: hold 9892 and drop back to 9893 whenever a giant lands a hit.
 export const DEFAULT_SAFESPOT = new Tile(2568, 9892, 0);
 export const DEFAULT_SAFESPOT_FALLBACK = new Tile(2568, 9893, 0);
 export const DEFAULT_MELEE_TILE = new Tile(2575, 9893, 0);
 
-// Clicking Attack on a giant beyond weapon range makes the server walk you into
-// range, which steps off the safespot — so a target is only engaged once it is
-// already close enough to hit from where you stand. Bow figure is the short-bow
-// one, which is safe for long bows too; melee just needs adjacency.
+// Why: clicking Attack on a giant beyond weapon range makes the server walk you into range, which steps off the safespot.
+// Why: a target is only engaged once it is already close enough to hit from where you stand.
+// Why: the bow figure is the short-bow one, which is safe for long bows too, and melee needs adjacency.
 const ATTACK_RANGE: Record<string, number> = { melee: 1, range: 7, mage: 10 };
 
 export function attackRangeFor(style: string): number {
     return ATTACK_RANGE[style] ?? 1;
 }
 
-// Distance is the wrong ordering in the west room. The giants wander up to 3 tiles,
-// so the westmost one often reads as nearest while a wall blocks line of sight — the
-// bot picks it, cannot hit it, and dances. Engage east-to-west, nearest breaking ties.
+// Why: the giants wander up to 3 tiles, so under distance ordering the westmost one often reads as nearest while a wall blocks line of sight.
+// Why: engage east-to-west with nearest breaking ties, so the bot never picks a giant it cannot hit.
 interface TargetLike {
     x: number;
     distance: number;
@@ -38,18 +36,13 @@ export function eastFirst(a: TargetLike, b: TargetLike): number {
     return b.x - a.x || a.distance - b.distance;
 }
 
-// The chambers split cleanly on x: west spawns top out at 2568, east ones start at
-// 2573. Distance cannot separate them — from the safespot the nearest east giant is
-// closer than two of the three west ones — so targeting is gated on room, not range.
-/**
- * Whether a giant already belongs to someone else's fight.
- *
- * `targetsAnotherPlayer` alone is not enough: an NPC's faceEntity clears between its
- * attacks, so a giant another player is mid-fight with reads as free for a tick and
- * the bot dives on it. Treating "in combat but not with us" as taken closes that gap.
- * Our own target is always exempt, because its faceEntity flickers the same way and
- * dropping it on that would churn targets every few ticks.
- */
+// Why: the chambers split cleanly on x — west spawns top out at 2568, east ones start at 2573.
+// Why: from the safespot the nearest east giant is closer than two of the three west ones, so targeting is gated on room, not range.
+// Why: an NPC's faceEntity clears between its attacks, so a giant another player is mid-fight with reads as free for a tick.
+// Why: treating "in combat but not with us" as taken closes that gap.
+// Why: our own target is exempt, since its faceEntity flickers the same way and dropping it would churn targets every few ticks.
+
+/** Whether a giant already belongs to someone else's fight. */
 interface Engagement {
     isOurs: boolean;
     inCombat: boolean;
@@ -64,14 +57,10 @@ export function takenByAnother(e: Engagement): boolean {
     return e.targetsAnother || (e.inCombat && !e.targetsMe);
 }
 
-/**
- * How long to wait for a Take to land, given how far the drop is.
- *
- * A Take on a corpse several tiles off walks there first, so a flat short wait
- * reports failure while the pickup is still in flight — and with a safespot walk-back
- * queued behind it, the bot cancels its own pickup and trades places with the loot
- * forever.
- */
+// Why: a Take on a corpse several tiles off walks there first, so a flat short wait reports failure while the pickup is still in flight.
+// Why: with a safespot walk-back queued behind it, the bot cancels its own pickup and trades places with the loot.
+
+/** How long to wait for a Take to land, given how far the drop is. */
 export function lootWaitMs(distance: number): number {
     return 1200 + Math.max(0, distance) * 700;
 }
@@ -84,12 +73,9 @@ function inBox(t: PointLike, b: { minX: number; maxX: number; minZ: number; maxZ
     return t.x >= b.minX && t.x <= b.maxX && t.z >= b.minZ && t.z <= b.maxZ;
 }
 
-/**
- * Whether two points share a chamber, permissive when the reference is not in one.
- *
- * The chambers overlap inside FIELD_RADIUS, so distance cannot tell them apart — a
- * drop in the next room reads as nearer than half of our own room's spawns.
- */
+// Why: the chambers overlap inside FIELD_RADIUS, so a drop in the next room reads as nearer than half of our own room's spawns.
+
+/** Whether two points share a chamber, permissive when the reference is not in one. */
 export function sameRoom(reference: PointLike | null, other: PointLike | null): boolean {
     const room = roomOf(reference);
     return room === null || roomOf(other) === room;
@@ -105,10 +91,8 @@ export function roomOf(t: PointLike | null): Room | null {
     return inBox(t, EAST_ROOM) ? 'east' : null;
 }
 
-// The dungeon DOES have a walk-out. The exit door sits on the entry tile and drops
-// you on the ledge, where the barrel ("A wooden barrel, maybe a way off this rock.")
-// washes you to 2527,3413 — 118 tiles from Ardougne West. No runes, no magic level,
-// no quest. A teleport only saves the walk back to the exit door.
+// Why: the exit door sits on the dungeon entry tile and drops you on the ledge, where the barrel ("A wooden barrel, maybe a way off this rock.") washes you to 2527,3413 — 118 tiles from Ardougne West.
+// Why: that walk-out needs no runes, no magic level and no quest, so a teleport only saves the walk back to the exit door.
 export const EXIT_DOOR = new Tile(2575, 9861, 0);
 export const EXIT_DOOR_LOC = 'Door';
 export const BARREL_LOC = 'Barrel';

@@ -42,12 +42,8 @@ const LIVE_WAIT: SustainWaitDeps = {
 };
 
 /**
- * Wait for `cond` on the tick, running per-pass upkeep the whole time.
- *
- * A guardian is a mage that lands hits through Protect-from-Magic, so a fight is
- * exactly when eating matters most. Waiting it out in a single `delayUntil` left
- * `Sustain` unpumped for the whole fight — the bot held full food and died with
- * it in the pack.
+ * Wait for `cond` on the tick, running per-pass upkeep throughout.
+ * Why: a guardian is a mage that lands hits through Protect-from-Magic, so a single `delayUntil` leaves `Sustain` unpumped for the fight and the bot dies holding full food.
  */
 export async function sustainUntil(
     cond: () => boolean,
@@ -77,10 +73,7 @@ function findGuardian(name: string): Npc | null {
     return candidates.find(n => n.targetsMe()) ?? candidates[0] ?? null;
 }
 
-/**
- * Wait out the spawn window after digging a guarded coord and, if the wizard
- * appears, kill it. Prayer is only touched when there is actually a fight.
- */
+/** Wait out the spawn window after digging a guarded coord and, if the wizard appears, kill it. */
 export async function fightGuardian(name: string, log: (m: string) => void): Promise<GuardianOutcome> {
     await Execution.delayUntil(() => findGuardian(name) !== null, SPAWN_WAIT_MS);
     if (!findGuardian(name)) {
@@ -111,12 +104,9 @@ export async function fightGuardian(name: string, log: (m: string) => void): Pro
                 break;
             }
 
-            // Only (re-)engage when we are not already trading blows. The engine
-            // takes one action per tick, so an Attack sent here lands in the same
-            // tick as the bite `Sustain.run()` just sent and replaces it: measured
-            // two bites logged and zero lobsters consumed while the bot was beaten
-            // from 62 to 0 in six ticks. Once the guardian is facing us the fight
-            // continues on its own and the tick belongs to food.
+            // Why: the engine takes one action per tick, so an Attack sent here lands in the same tick as the bite `Sustain.run()` just sent and replaces it.
+            // Why: measured two bites logged and zero lobsters consumed while the bot was beaten from 62 to 0 in six ticks.
+            // Why: once the guardian is facing us the fight continues on its own and the tick belongs to food.
             if (!(Game.inCombat() && target.targetsMe())) {
                 if (target.distance() > CLOSE_IN_RADIUS && !Game.inCombat()) {
                     await Traversal.walkResilient(target.tile(), { radius: CLOSE_IN_RADIUS, attempts: 2, timeoutMs: WALK_TIMEOUT_MS, log });
@@ -140,10 +130,8 @@ export async function fightGuardian(name: string, log: (m: string) => void): Pro
                 }
             }
 
-            // Ride the fight out on the tick so food keeps going in. Bounded in
-            // slices rather than one long park: our own combat bar is a poor
-            // "still fighting" signal (it is set by *taking* hits too), and
-            // exiting on it spun this loop into the re-attack above every tick.
+            // Why: our own combat bar is set by taking hits too, so exiting on it spun this loop into the re-attack above every tick.
+            // Why: bounded in slices rather than one long park, so food keeps going in.
             await sustainUntil(
                 () => findGuardian(name) === null || GameMessages.sawSince(fightMark, DIED),
                 Math.min(RIDE_MS, Math.max(0, deadline - Date.now()))

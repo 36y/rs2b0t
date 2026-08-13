@@ -82,9 +82,8 @@ export default class HerbloreSecondaries extends TaskBot {
             `HerbloreSecondaries — ${def.name} (${def.mode}) bank ${def.bankName}, food '${this.foodName}' x${this.foodWant}${def.needShield ? `, shield '${SHIELD_NAME}'` : ''}`
         );
 
-        // ProcessSource before BankTrip so swamp toads become legs before deposit.
-        // Eat before BankTrip: a full pack with food left is a free slot away from
-        // more loot, and BankTrip would otherwise always win and bank the food.
+        // Why: ProcessSource sits before BankTrip so swamp toads become legs before the deposit.
+        // Why: Eat sits before BankTrip because a full pack with food left is one free slot away from more loot, and BankTrip would otherwise win and bank the food.
         this.add(
             new ContinueDialog(),
             new GearUp(this),

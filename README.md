@@ -1,7 +1,7 @@
 # rs2b0t — a scriptable bot client for 2004scape / Lost City servers
 
 rs2b0t is a TypeScript botting client for 2004-era RuneScape private servers. It renders
-the real game client in the browser and drives it through a typed scripting API. Bots
+the game client in the browser and drives it through a typed scripting API. Bots
 call the client's own `doAction` and `tryMove` instead of synthesising input or reading
 the screen, so a bot's packets match a human click byte for byte.
 
@@ -29,7 +29,7 @@ tab is throttled by the browser, which starves every bot in it.
 | World-walking | A\* over a baked collision pack plus a door and transport graph, with stuck recovery, teleports and multi-level routing |
 | Quests | pure `decide(snapshot) → step` modules |
 | Clues | easy, medium and hard trails, including puzzle boxes and dig guardians |
-| Real client | bots drive the client's own `doAction` and `tryMove`, so packets match a human click byte for byte |
+| Unmodified client | bots drive the client's own `doAction` and `tryMove`, so packets match a human click byte for byte |
 | Outcome checking | every action is verified against game state before the bot proceeds |
 | In-client panel | script library, per-script parameters, live logs, `onPaint` HUD overlay |
 | Out-of-tree scripts | compile against `@rs2b0t/api` in your own repo and load by URL |
@@ -56,7 +56,7 @@ Step 2 derives the engine's RSA modulus and exponent from `data/config/private.p
 passes them to the build. Skipping it ends in login code 6, because a fresh upstream
 engine's key differs from the hosted build's.
 
-[docs/RUNNING.md](docs/RUNNING.md) covers the whole path from a cold clone.
+[docs/RUNNING.md](docs/RUNNING.md) covers the path from a cold clone.
 
 ## Writing a bot
 

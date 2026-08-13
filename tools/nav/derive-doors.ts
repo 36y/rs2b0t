@@ -44,9 +44,8 @@ function main(): void {
         if (!type.op || !type.op.some(op => op?.toLowerCase() === 'open')) {
             continue;
         }
-        // Doors whose script refuses the Open its ops advertise. Baking them as
-        // ordinary edges makes the pathfinder route through a wall and the walker
-        // repath forever against "This door is completely sealed".
+        // Doors whose script refuses the Open its ops advertise.
+        // Why: baked as ordinary edges the pathfinder routes through a wall and the walker repaths forever against "This door is completely sealed".
         const SCRIPT_REFUSED = new Set([
             'closet_door', '1to2', '2to3', '4to5', '5to6', '8to9', '2to5', '3to6', '4to7', '5to8',
             // Rashiliyia's skeletal doors: three bones, or nothing.
@@ -56,11 +55,8 @@ function main(): void {
             // McGrubor's Wood: locked from inside, the Forester turns you away from
             // outside. The Loose Railing is the way in, curated in transports.json.
             'mcgruborgatel', 'mcgruborgater',
-            // Melzar's Maze. Every one of these opens only to its own coloured key,
-            // which the maze hands out one kill at a time, and the key teleports you
-            // through rather than leaving the door open. Baked as ordinary edges the
-            // pathfinder routes straight at them and the walker loops on "This door
-            // is securely locked". funexit is the one-way way out.
+            // Melzar's Maze. Each opens only to its own coloured key, which the maze hands out one kill at a time, and the key teleports you through rather than leaving the door open.
+            // Why: baked as ordinary edges the pathfinder routes straight at them and the walker loops on "This door is securely locked". funexit is the one-way way out.
             'melzardoor', 'reddoor', 'orangedoor', 'yellowdoor', 'bluedoor', 'magentadoor', 'greendoor', 'funexit',
             // The Oracle's door: silk, an unfired bowl, a lobster pot and a mind bomb,
             // and only after she has been asked about the map.
@@ -68,10 +64,8 @@ function main(): void {
             // Elvarg's lair, locked until the ship has sailed, and Crandor's secret
             // door, which only opens from the island side.
             'elvarg_gate_right', 'elvarg_gate_left', 'dragonsecretdoor',
-            // Family Crest's perfect-gold mine. Each of the four answers "This door
-            // is locked" unless its own combination of the three levers is set, and
-            // the combination that opens one shuts another — the quest drives the
-            // chain itself (defs/familycrest/mine.ts).
+            // Family Crest's perfect-gold mine — each answers "This door is locked" unless its own combination of the three levers is set.
+            // Why: the combination that opens one shuts another, so the quest drives the chain itself (defs/familycrest/mine.ts).
             'famcrest_doorh2', 'famcrest_doorh2i2', 'famcrest_doorg2h1',
             'famcrest_doori2h1', 'famcrest_doorh2g1'
         ]);
@@ -85,17 +79,11 @@ function main(): void {
 
     const ONE_WAY_EXCLUDED = new Set([
         '3108,3353,0', '3109,3353,0',
-        // Gu'Tanoth's east gate. Its ogre guard demands a bar of gold and teleports
-        // you down the hill otherwise, and nothing in the game needs that crossing —
-        // a baked edge here just lets the walker loop against him. Its north-west
-        // twin is deliberately left in: that guard refuses only until the relic is
-        // shown, after which the gate behaves as an ordinary door and everything
-        // west of it depends on the edge.
+        // Gu'Tanoth's east gate: the ogre guard demands a bar of gold and teleports you down the hill otherwise, and nothing in the game needs that crossing.
+        // Why: its north-west twin is left in — that guard refuses only until the relic is shown, after which the gate behaves as an ordinary door and everything west of it depends on the edge.
         '2549,3028,0', '2550,3028,0'
     ]);
-    // Current Engine gates.rs2 hits loc_add(type=-1) for this Duel Arena outer
-    // leaf and leaves Gate#3198 closed. Omit that unusable edge so navigation
-    // detours through its paired Gate#3197 one tile north.
+    // Why: gates.rs2 hits loc_add(type=-1) for this Duel Arena outer leaf and leaves Gate#3198 closed, so navigation has to detour through its paired Gate#3197 one tile north.
     const BROKEN_ENGINE_EXCLUDED = new Set(['3198@3312,3235,0']);
 
     const edges: DoorEdge[] = [];

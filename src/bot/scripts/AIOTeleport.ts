@@ -9,10 +9,6 @@ import { Skills } from '../api/skills/Skills.js';
 import { Traversal } from '../api/walking/Traversal.js';
 import type { SettingsSchema } from '../runtime/Settings.js';
 
-// ============================================
-// CONFIGURATION - EDIT THESE
-// ============================================
-
 // Define bank location type
 interface BankLocation {
     x: number;
@@ -125,10 +121,6 @@ const CONFIG = {
     magicTabIndex: 6,
 };
 
-// ============================================
-// SETTINGS SCHEMA - EXPORTED FOR INDEX.TS
-// ============================================
-
 export const SETTINGS: SettingsSchema = {
     teleportName: {
         type: 'string',
@@ -170,10 +162,6 @@ export const SETTINGS: SettingsSchema = {
     }
 };
 
-// ============================================
-// HELPER FUNCTIONS
-// ============================================
-
 function distanceTo(a: { x: number; z: number }, b: { x: number; z: number }): number {
     return Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z));
 }
@@ -199,10 +187,6 @@ function formatNumber(num: number): string {
     }
     return num.toString();
 }
-
-// ============================================
-// MAIN BOT CLASS
-// ============================================
 
 export default class AIOTeleport extends LoopingBot {
     private selectedTeleport: string = 'progressive';
@@ -359,16 +343,13 @@ export default class AIOTeleport extends LoopingBot {
         return nearest;
     }
 
-    // ✅ Only log when bank location changes
     private updateBankLocation(): void {
         const nearest = this.findNearestBank();
         if (nearest) {
-            // Only log if bank location actually changed
             if (!this.currentBankPos || this.currentBankPos.name !== nearest.name) {
                 this.currentBankPos = nearest;
                 this.log(`📍 Using nearest bank: ${nearest.name} at ${nearest.x},${nearest.z}`);
             } else {
-                // Bank hasn't changed, just update silently
                 this.currentBankPos = nearest;
             }
         } else {
@@ -431,7 +412,6 @@ export default class AIOTeleport extends LoopingBot {
         try {
             this.checkStaffRunes();
             
-            // ✅ Check level EVERY loop (instant, no delay)
             if (this.isProgressiveMode) {
                 this.updateProgressiveTeleport();
             }
@@ -770,7 +750,6 @@ export default class AIOTeleport extends LoopingBot {
             const result = await this.castSpellByName(spellName);
             
             if (result) {
-                // ✅ Instant bank location update - NO DELAY
                 this.updateBankLocation();
                 
                 const lawAfter = Inventory.count('Law rune');

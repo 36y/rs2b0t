@@ -18,12 +18,9 @@ import { tileInDangerZones, type DangerZoneRect } from './data/dangerZones.js';
 import { essenceReturnIdFromStateIndex, essenceReturnStateIndex } from './essenceExit.js';
 import { DEFAULT_EDGE_COST, edgeCostForKind, teleportEdgeCost } from './geometry/edgeCosts.js';
 
-/**
- * A* search key = tileId * 16 + essenceReturnIdx (0..15).
- * Must not use `idx << 30` — JS bitwise ops are 32-bit; idx≥4 wraps to 0 and
- * wipes path-state (brimstail/cromperty wormhole regression).
- * Return idx 0 = unknown (exit edges fail-open); 1..n = known session return.
- */
+// Why: the A* search key is tileId * 16 + essenceReturnIdx (0..15).
+// Why: `idx << 30` must not be used — JS bitwise ops are 32-bit, so idx≥4 wraps to 0 and wipes path-state (the brimstail/cromperty wormhole regression).
+// Why: return idx 0 means unknown, where exit edges fail open; 1..n is a known session return.
 const TILE_KEY_MASK = 0x3fffffff;
 const ESSENCE_STATE_SLOTS = 16;
 function packSearchKey(tileId: number, essenceReturnIdx: number): number {
@@ -89,12 +86,10 @@ interface FindPathCallOptions {
      * Default false when policy.useTeleports is false; else true if policy set with useTeleports!==false.
      */
     useTeleportCatalog?: boolean;
-    /**
-     * Tiles inside these rects are never expanded into (walk or transport landing).
-     * Start tile may still sit inside — the bot can path *out*, not *in*.
-     * Resolve known ids via `resolveDangerZones` before calling.
-     * @see src/bot/nav/data/dangerZones.ts — idea @lolwut
-     */
+    // Why: the start tile may sit inside one — the bot can path out of a zone, never into one.
+    // Why: known ids must be resolved via `resolveDangerZones` before calling (idea @lolwut).
+
+    /** Tiles inside these rects are never expanded into, by walk step or transport landing. */
     avoidZones?: readonly DangerZoneRect[];
 }
 
@@ -124,12 +119,10 @@ export interface TransportEdgeData {
     options?: string[];
     /** Keep a known-invalid derived row documented without making it routable. */
     disabledReason?: string;
-    /**
-     * When true, never enter the path graph. Use for transports whose destination
-     * is not a static function of the loc placement (RNG, session varps, multi-exit
-     * without a single plan-time dest). Scripts own those hops; nav plans around them.
-     * Distinct from `disabledReason` (broken/invalid derived rows kept for audit).
-     */
+    // Why: set for transports whose destination is not a static function of the loc placement (RNG, session varps, multi-exit without one plan-time dest) — scripts own those hops and nav plans around them.
+    // Why: separate from `disabledReason`, which keeps broken or invalid derived rows for audit.
+
+    /** When true, the edge never enters the path graph. */
     blacklist?: boolean;
     /** Why the edge is blacklisted (docs / audits). */
     blacklistReason?: string;
@@ -158,16 +151,9 @@ export type NavResponse =
     | ({ type: 'path'; id: number; elapsedMs: number } & PathOutcome);
 
 const DOOR_COST = DEFAULT_EDGE_COST.door;
-/**
- * First-try expansion budget. Long-range edges force Dijkstra (h = 0), so this
- * scales with **total path cost**, not distance — and the time-based edge costs
- * raised those costs by 10–25 %. At 500 000 the longest clue routes out of
- * Edgeville sat at 96–99 % of budget and Varrock → deep Wilderness needed
- * 502 246, so ordinary destinations were failing first-try and only surviving on
- * `walkResilient`'s bigger-budget retry — a wasted ladder pass each time.
- * Matched to that retry budget instead. Genuinely unreachable destinations still
- * empty the open set long before this and return in well under a second.
- */
+// Why: long-range edges force Dijkstra (h = 0), so this first-try budget scales with total path cost rather than distance, and the time-based edge costs raised those costs by 10–25 %.
+// Why: at 500 000 the longest clue routes out of Edgeville sat at 96–99 % of budget and Varrock → deep Wilderness needed 502 246, so ordinary destinations failed first-try and survived only on `walkResilient`'s bigger-budget retry — one wasted ladder pass each time.
+// Why: matched to that retry budget; unreachable destinations empty the open set long before this and return in well under a second.
 const MAX_EXPANSIONS = 1_200_000;
 
 const DX = [0, 1, 0, -1, 1, 1, -1, -1];
@@ -274,11 +260,9 @@ export class PathFinder {
     readonly members: boolean;
 
     private readonly edges = new Map<number, CompiledEdge[]>();
-    /**
-     * True when any compiled edge spans more tiles than its cost (dungeon
-     * z±6400, ships, portals). Chebyshev is then inadmissible without a
-     * transport-aware lower bound (#335).
-     */
+    // Why: Chebyshev is then inadmissible without a transport-aware lower bound (#335).
+
+    /** True when any compiled edge spans more tiles than its cost (dungeon z±6400, ships, portals). */
     private hasLongRangeEdges = false;
     doorEdges = 0;
     transportEdges = 0;
@@ -416,9 +400,7 @@ export class PathFinder {
             const transport: TransportInfo = {
                 locName: edge.locName,
                 action: edge.action,
-                // Diagonal wall doors occupy the otherwise-unwalkable midpoint
-                // between their two stand tiles. Recording a stand tile here
-                // makes the executor confuse nearby doors and avoidance strikes.
+                // Why: diagonal wall doors occupy the otherwise-unwalkable midpoint between their two stand tiles, and recording a stand tile here makes the executor confuse nearby doors and avoidance strikes.
                 locX: edge.locX ?? (hasMidpointDoor ? edge.from.x + dx / 2 : edge.from.x),
                 locZ: edge.locZ ?? (hasMidpointDoor ? edge.from.z + dz / 2 : edge.from.z),
                 locId: edge.locId,
@@ -635,9 +617,7 @@ export class PathFinder {
                 if (!teleportAllowedByPolicy(edgeProbe, policy, routeSpan).ok) {
                     continue;
                 }
-                // Origin gates (wildy thresholds): always evaluate at the **path start**
-                // tile. Preferring live state.wildernessLevel would poison bank→dest
-                // plans that reuse a deep-wildy snapshot while `from` is a bank stand (#339).
+                // Why: origin gates (wildy thresholds) are evaluated at the path start tile — preferring live `state.wildernessLevel` would poison bank→dest plans that reuse a deep-wildy snapshot while `from` is a bank stand (#339).
                 const wildy = wildernessLevelAt(from);
                 if (!teleportAllowedFromOrigin(dest, from, wildy).ok) {
                     continue;
@@ -749,14 +729,10 @@ export class PathFinder {
         const viaEdge = new Map<number, { transport: TransportInfo; cost: number; kind?: string }>();
         const closed = new Set<number>();
         const open = new MinHeap();
-        // Lower bounds (#335):
-        // - Unit-cost walk → Chebyshev is admissible.
-        // - Originless spell teles (injected at start) → min over teleCost+Chebyshev(landing,goal)
-        //   is admissible from any node (can cast from anywhere).
-        // - Long-range graph edges (dungeons z±6400, ships, portals) make pure Chebyshev
-        //   inadmissible — without a tele floor we fall back to Dijkstra (h=0). Classic
-        //   and v2 share this graph; both need correct transport preference (#335 test).
-        //   Tele inject uses teleFloor so HARD long OD stays under budget.
+        // Why: unit-cost walk makes Chebyshev an admissible lower bound (#335).
+        // Why: originless spell teles injected at the start give min over teleCost + Chebyshev(landing, goal), admissible from any node since the cast works anywhere.
+        // Why: long-range graph edges (dungeons z±6400, ships, portals) make pure Chebyshev inadmissible, so without a tele floor the search falls back to Dijkstra (h=0).
+        // Why: classic and v2 share this graph and both need correct transport preference (#335 test); the tele inject uses teleFloor to keep HARD long OD under budget.
         const chebAt = (x: number, z: number): number =>
             Math.max(0, Math.max(Math.abs(x - goalX), Math.abs(z - goalZ)) - goalSlack);
         let teleFloor = Infinity;
@@ -838,13 +814,9 @@ export class PathFinder {
             if (curTile === ctx.startId) {
                 extras.push(...ctx.teleFromStart);
             }
-            // A staircase with two ground-floor stand tiles is baked as an edge
-            // per combination, so up-then-straight-back-down composes into a
-            // same-level teleport across whatever wall separates them. The
-            // server lands you on one tile only, so the walker climbs down on
-            // the wrong side and bounces. Refuse a stair hop that returns to the
-            // level we just left without moving on the landing; a genuine
-            // multi-storey climb keeps going the same way and is unaffected.
+            // Why: a staircase with two ground-floor stand tiles is baked as one edge per combination, so up-then-straight-back-down composes into a same-level teleport across whatever wall separates them.
+            // Why: the server lands you on one tile only, so the walker climbs down on the wrong side and bounces — hence refusing a stair hop that returns to the level it came from without moving on the landing.
+            // Why: a multi-storey climb keeps going the same way and is unaffected.
             const arrivedBy = viaEdge.get(current);
             const cameFromLevel = arrivedBy?.kind === 'stair'
                 ? nodeLevel(searchTileId(cameFrom.get(current) ?? current))

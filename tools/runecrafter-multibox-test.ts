@@ -1,9 +1,6 @@
-// RuneCrafter multibox e2e: 1 Mule Recipient + N Runners (default 20) in ONE
-// multibox wall page — the issue-#209 acceptance test at scale.
-// Phase 1 preps each account on a throwaway page (tutorial skip, maxme, seed,
-// tele, logout) — server-side state persists, so STAMP=<tag> PREP=0 reuses them.
-// Phase 2 opens multibox.html, presets each box's settings, adds every account,
-// waits for the staggered logins, then controller.startAll() and soaks.
+// RuneCrafter multibox e2e: 1 Mule Recipient + N Runners (default 20) in one multibox wall page — the issue-#209 acceptance test at scale. Usage: [base] [budget-min] [num-runners] [rune].
+// Why: phase 1 preps each account on a throwaway page (tutorial skip, maxme, seed, tele, logout) and server-side state persists, so STAMP=<tag> PREP=0 reuses them; phase 2 opens multibox.html, presets each box's settings, adds every account, waits for the staggered logins, then calls controller.startAll() and soaks.
+
 // Usage: bun tools/runecrafter-multibox-test.ts [base] [budget-min] [num-runners] [rune]
 
 import type { Browser, Page } from 'playwright-core';
@@ -235,9 +232,7 @@ function sampleWall(page: Page): Promise<SlotSample[]> {
                 // the runtime's own bare 'stopping...' line would otherwise mask the script's reason
                 stopReason: msgs.filter(m => /Stopping\.|crashed|threw/i.test(m) && !/^stopping\.\.\.$/i.test(m)).slice(-1)[0] ?? '',
                 tail: msgs.slice(-10),
-                // every delivery either side booked, so a dribbled 1-2 essence trade is visible.
-                // Counting these beats sampling the pack: a runner's whole cycle is ~30s, so
-                // polling for a 26 -> 0 transition aliases against the dashboard interval.
+                // Why: a runner's cycle is ~30s, so polling for a 26 → 0 pack transition aliases against the dashboard interval — count every delivery either side booked, which also makes a dribbled 1-2 essence trade visible.
                 received: msgs.flatMap(m => { const hit = /(?:received|delivered) (\d+) essence/.exec(m); return hit ? [Number(hit[1])] : []; }),
                 // why a camper ever left its altar: pack junk, a random event, or the watchdog
                 excursions: msgs.filter(m => /not essence|random event|watchdog/i.test(m)).map(m => m.slice(0, 70))
@@ -444,9 +439,8 @@ try {
     if (bookedSizes.length > 0 && short.length > Math.max(1, bookedSizes.length * 0.1)) {
         problems.push(`${short.length}/${bookedSizes.length} deliveries were short (${[...new Set(short)].join(', ')} essence) — a run must start on a full ${TRADE_LOAD}`);
     }
-    // the recipient completes ~2 trades/min flat out, so with enough runners the queue is
-    // deliberately over-saturated (most-recent-wins) and some can't be served in-budget.
-    // Under-saturated: everyone must deliver. Over-saturated: total throughput must hold.
+    // The recipient completes ~2 trades/min flat out, so with enough runners the queue is deliberately over-saturated (most-recent-wins) and some cannot be served in budget.
+    // Under-saturated, everyone must deliver; over-saturated, total throughput must hold.
     const totalDeliv = perRunner.reduce((a, b) => a + b, 0);
     if (NUM_RUNNERS <= elapsedMin * 1.5) {
         if (idle.length > 0) problems.push(`${idle.length} runner(s) never delivered: ${idle.join(', ')}`);

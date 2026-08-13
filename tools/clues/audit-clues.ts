@@ -82,10 +82,7 @@ function loadPack(pack: string): PathFinder {
         bytes = gunzipSync(bytes);
     }
     const finder = new PathFinder(bytes);
-    // The same edge set the live navigator builds. Loading transports.json alone
-    // left out every curated travel edge, so the audit routed on a smaller graph
-    // than the bot actually walks and reported destinations unreachable that the
-    // navigator reaches without trouble.
+    // Why: transports.json alone omits every curated travel edge, so the audit routed on a smaller graph than the bot walks and called reachable destinations unreachable.
     finder.addEdges(doorsJson as DoorEdgeData[], allTransportRows(), stairsJson as TransportEdgeData[]);
     return finder;
 }
@@ -216,9 +213,7 @@ export function runClueAudit(opts: ClueAuditOptions = {}, log: (m: string) => vo
             if (!near && !exact) {
                 return { msg: `terminal (${last.x},${last.z}) not ${slack === 'interact' ? 'interact-legal' : `within ${slack}`} of coord (cheb ${d})`, unreachable: false };
             }
-            // The bot stands within a tile of the coord, so a terminal with no
-            // egress of its own (a walkable-but-sealed gate tile) is fine as
-            // long as some neighbouring stand gets home.
+            // Why: the bot stands within a tile of the coord, so a walkable-but-sealed terminal passes as long as a neighbouring stand gets home.
             const stands: NavPoint[] = [last];
             for (let dx = -1; dx <= 1; dx++) {
                 for (let dz = -1; dz <= 1; dz++) {

@@ -5,12 +5,7 @@ import { ScriptRegistry } from '#/bot/runtime/ScriptRegistry.js';
 import { ScriptRunner } from '#/bot/runtime/ScriptRunner.js';
 import BotPanel from '#/bot/ui/BotPanel.js';
 
-/**
- * The URL is process-global and `boxId()` reads it on every call, so a test that
- * navigates to `?box=alice` and leaves it there re-namespaces every later
- * `boxKey()` in the run — which silently moved the MapPicker settings tests'
- * storage keys out from under them. Restore it.
- */
+// Why: the URL is process-global and `boxId()` reads it per call, so a `?box=alice` left behind re-namespaces every later `boxKey()` in the run.
 const setURL = (url: string): void =>
     (window as unknown as { happyDOM: { setURL(u: string): void } }).happyDOM.setURL(url);
 
@@ -129,9 +124,7 @@ test('wall start and stop use the script selected in the bot panel', async () =>
     panel.stopScript();
     expect(ScriptRunner.state).toBe('stopped');
 
-    // ScriptRegistry is a process-wide singleton, so a fixture left registered leaks into
-    // every later test — it made docs/SCRIPTS.md read as stale against a registry holding
-    // a script that does not exist.
+    // Why: ScriptRegistry is a process-wide singleton, so a fixture left registered leaks into every later test.
     ScriptRegistry.unregister(name);
 });
 

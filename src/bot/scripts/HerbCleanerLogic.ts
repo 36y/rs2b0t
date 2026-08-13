@@ -1,9 +1,7 @@
-/**
- * Pure data and decisions for the HerbCleaner script.
- * 2004scape herbs are "Unidentified" — every unid renders as the same display
- * name ("Unidentified herb"), so matches must go through the numeric id, not
- * the name. `unidId` is the grimy/unidentified form, `id` the cleaned form.
- */
+// Pure data and decisions for the HerbCleaner script.
+
+// Why: 2004scape unids all render as the same display name ("Unidentified herb"), so matches go through the numeric id, never the name.
+// Why: `unidId` is the grimy or unidentified form and `id` is the cleaned form.
 
 /** How the bot cleans a grimy herb (the first/held op; same as RoguesPurse). */
 export const IDENTIFY_OP = 'Identify';
@@ -57,11 +55,9 @@ export function herbByUnidId(id: number): HerbDef | null {
     return HERBS.find(h => h.unidId === id) ?? null;
 }
 
-/**
- * The herbs the player can clean this run: those the player's Herblore level
- * allows, restricted to `selected` when a non-empty selection is given.
- * Returned lowest-level first so cheap identify XP comes before expensive.
- */
+// Why: the list comes back lowest-level first, so cheap identify XP precedes expensive.
+
+/** The herbs the player can clean this run: those Herblore allows, restricted to `selected` when non-empty. */
 export function eligibleHerbs(herbloreLevel: number, selected: readonly string[]): HerbDef[] {
     return HERBS
         .filter(h => h.level <= herbloreLevel)

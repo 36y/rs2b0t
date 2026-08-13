@@ -1,11 +1,7 @@
-/**
- * Live proof for #371: clue bank prep keeps/withdraws a Shantay pass, then
- * southbound crossing into the desert is walkable (requires-gated edge).
- *
- *   ~/redeploy.sh && HEADED=1 bun tools/clue-shantay-pass-live.ts
- *
- * Proof: out/issue371-clue-shantay-pass-proof.json + screenshots/
- */
+// Live proof for #371 — clue bank prep keeps and withdraws a Shantay pass, then the southbound desert crossing walks (requires-gated edge).
+// Proof: out/issue371-clue-shantay-pass-proof.json + screenshots/
+
+//   ~/redeploy.sh && HEADED=1 bun tools/clue-shantay-pass-live.ts
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';

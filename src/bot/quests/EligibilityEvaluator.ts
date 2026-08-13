@@ -21,11 +21,9 @@ export function evaluate(
             reasons.push(r.reason);
         }
     }
-    // Item requirements gate *starting* a quest. Once it is under way the items may
-    // legitimately be gone — handed over, ground up, drunk — and re-imposing them
-    // blocks a bot from ever resuming. From here the module's decide() sources what
-    // it still needs. Requirements above are checked either way: nothing consumes a
-    // skill level or a quest point.
+    // Why: item requirements gate starting a quest, and re-imposing them mid-quest blocks a bot from ever resuming, since the items may legitimately be gone — handed over, ground up, drunk.
+    // Why: past the start, the module's decide() sources what it still needs.
+    // Why: the requirements above are checked either way, as nothing consumes a skill level or a quest point.
     if (journalStatus !== 'inProgress') {
         for (const it of checkItems(record, snapshot)) {
             if (!it.ok) {

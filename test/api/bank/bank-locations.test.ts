@@ -15,9 +15,7 @@ test('every bank centre is a plausible world tile', () => {
         expect(b.tile.x, b.name).toBeGreaterThan(2300);
         expect(b.tile.x, b.name).toBeLessThan(3600);
         expect(b.tile.z, b.name).toBeGreaterThan(2900);
-        // The Mage Arena chamber is its own region high above the surface map
-        // (^mage_arena_finish_coord z=4716), so the surface band is asserted on
-        // the tile the bot actually walks to instead.
+        // Why: the Mage Arena chamber is its own region above the surface map (^mage_arena_finish_coord z=4716), so the band is asserted on the walked-to tile.
         expect(b.tile.z, b.name).toBeLessThan(4800);
     }
 });
@@ -89,10 +87,7 @@ test('Grand Tree still wins from the ground floor beneath it', () => {
 });
 
 describe('upstairs banks at the nearest bank, not the only bank off level 0', () => {
-    // The Grand Tree is the one bank that is not on level 0. While bank choice
-    // filtered by plane it was the sole candidate for anyone standing upstairs
-    // anywhere in the world, so a clue trail ending on a first floor walked the
-    // map to Gnome Stronghold. Stairs are baked into the nav graph; rank on x/z.
+    // Why: the Grand Tree is the only bank off level 0, so filtering by plane made it the sole candidate for anyone upstairs. Stairs are in the nav graph; rank on x/z.
     test('Varrock East 1F banks downstairs, not at the Grand Tree', () => {
         expect(nearestBank({ x: 3250, z: 3420, level: 1 })?.name).toBe('Varrock East');
     });
@@ -175,12 +170,7 @@ describe('nearestUsableBank', () => {
 
 describe('nearestBanks', () => {
     test('is a shortlist in straight-line order, not an answer', () => {
-        // The Lumbridge respawn is the case that matters. Al Kharid, Shantay
-        // Pass and the Duel Arena are all behind the same 10gp toll gate, and the
-        // navigator prunes a fare it cannot pay — so to a bot that has just died
-        // the three nearest banks by air are the three it cannot reach, and
-        // Draynor, the first it can, is only third. Callers probe this list for
-        // real path costs; the order alone is not the answer.
+        // Why: from the Lumbridge respawn the three nearest banks by air sit behind the 10gp toll gate a dead bot cannot pay, so callers must probe this shortlist for path costs.
         const order = nearestBanks({ x: 3222, z: 3218, level: 0 }).map(b => b.name);
         expect(order.slice(0, 4)).toEqual(['Al Kharid', 'Shantay Pass', 'Draynor', 'Duel Arena']);
     });

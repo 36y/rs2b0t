@@ -183,13 +183,11 @@ function readMapFlags(text: string): Set<string> {
     return flags;
 }
 
-/**
- * Pure journal → progress. Stage is the equip-room track; map bits are flags.
- *
- * Real journals always open with the equip-room lines, but unit tests (and a
- * partial journal open) may only carry map paragraphs — if those are present
- * we still emit progress with stage STARTED rather than failing closed.
- */
+// Why: stage is the equip-room track and the map bits are flags.
+// Why: live journals always open with the equip-room lines, but unit tests and a partial journal open may carry only map paragraphs.
+// Why: progress is still emitted at stage STARTED when those are present, rather than failing closed.
+
+/** Turn journal lines into quest progress. */
 export function parseDeathPlateauJournal(lines: readonly string[] | string): QuestProgress | undefined {
     const text = normalizeJournal(lines);
     const flags = readMapFlags(text);

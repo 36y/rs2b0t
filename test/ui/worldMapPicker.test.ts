@@ -24,7 +24,7 @@ describe('sampleStep', () => {
 
 describe('cappedSampleStep', () => {
     test('raises step when the viewport would sample too many tiles', () => {
-        // Very zoomed out: large tile span must not use step=1
+        // Zoomed far out: a large tile span must not use step=1
         const step = cappedSampleStep(0.35, 900, 700, 96);
         expect(step).toBeGreaterThanOrEqual(Math.ceil(900 / 96));
         expect(step).toBeGreaterThan(sampleStep(0.35));

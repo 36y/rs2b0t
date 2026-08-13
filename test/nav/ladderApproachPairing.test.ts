@@ -14,18 +14,8 @@ const rows = stairsJson as unknown as StairRow[];
 const cheb = (ax: number, az: number, bx: number, bz: number): number =>
     Math.max(Math.abs(ax - bx), Math.abs(az - bz));
 
-/**
- * A climb-up must be anchored on the tile its own climb-down lands on.
- *
- * `derive-ladders.snap()` picks an approach by scanning tiles around the loc, so
- * it can settle on a diagonal the server refuses — which surfaces as an endless
- * `server says can't reach Ladder` / `no path` loop and the destination reported
- * unreachable (clues 3497, 3505, 3507). The paired climb-down is authoritative:
- * the engine puts the player on that tile, so Climb-up works from it.
- *
- * Ladders that teleport (the Watch Tower one lands 400 tiles away) are exempt —
- * their landing is not the ladder's foot.
- */
+// A climb-up must be anchored on the tile its own climb-down lands on; teleporting ladders are exempt.
+// Why: `derive-ladders.snap()` scans tiles around the loc and can settle on a diagonal the server refuses.
 describe('ladder climb-up approaches', () => {
     const downLandings = new Map<string, Set<string>>();
     for (const r of rows) {

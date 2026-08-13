@@ -84,10 +84,7 @@ beforeEach(() => {
 });
 
 describe('trail upkeep', () => {
-    // The regression: a whole trail runs inside one SolveClue.execute(), so a
-    // host's own Eat task never gets a turn, and GreenDragon installed no hook
-    // at all — every Sustain.run() the executor and fightGuardian pump was a
-    // no-op and the bot fought guardians without eating.
+    // Why: a trail runs inside one SolveClue.execute(), so a host's own Eat task never gets a turn and every Sustain.run() pump is a no-op without a hook.
     test('a host with no hook of its own still eats while the trail runs', async () => {
         let ateMidTrail = 0;
         const restoreSolve = stubProps(ClueExecutor, {
@@ -108,10 +105,7 @@ describe('trail upkeep', () => {
         expect(logs.some(l => l.includes('eating Lobster'))).toBe(true);
     });
 
-    // The regression: the post-eat wait watched only for hp to rise. A guardian's
-    // hit lands in the same tick as the heal, so hp ends up below where it started,
-    // the wait burns its whole 3s budget, and Sustain.running blanks every pump in
-    // that window — no bites at all while the damage is heaviest.
+    // Why: a guardian's hit lands in the same tick as the heal, so a post-eat wait watching only for hp to rise burns its budget while Sustain.running blanks every pump.
     test('a bite that damage cancels out still confirms, so the next pump can eat', async () => {
         incoming = 20;
         const restoreSolve = stubProps(ClueExecutor, {
@@ -149,7 +143,7 @@ describe('trail upkeep', () => {
             banks.push(inv.length);
             return true;
         };
-        // The bank check only runs while a clue scroll is actually held.
+        // The bank check only runs while a clue scroll is held.
         const CLUE = { id: HELD_CLUE, name: 'Clue scroll' };
         try {
             task.bankedThisSolve = true;

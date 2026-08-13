@@ -1,10 +1,5 @@
-/**
- * Shared partner + trade-screen policy for mule/runner scripts
- * (NatureCrafter, FlaxRunner, GatheringBot mule modes).
- *
- * HUD actions stay on {@link Trade}; this module is pure name matching and
- * offer-screen decisions so scripts do not re-copy partner filters.
- */
+// Shared partner and trade-screen policy for mule/runner scripts (NatureCrafter, FlaxRunner, GatheringBot mule modes).
+// Why: HUD actions stay on Trade, so this module is name matching and offer-screen decisions only, and scripts do not re-copy partner filters.
 
 export const DEFAULT_TRADE_RANGE = 2;
 
@@ -94,13 +89,12 @@ export function decideGiverOfferScreen(myOfferSlots: number): GiverOfferDecision
     return 'accept';
 }
 
-/**
- * GatheringBot partner roles:
- * - gatherer: produce haul → trade at camp meet (no bank)
- * - mule: accept haul → bank (demo for ore/logs; processors should replace this)
- * - cooker: accept raw fish → cook at camp range → bank cooked (burntPolicy)
- * - supplier: withdraw raw from bank when N ready → trade at meet (bank-raw feeder)
- */
+// Why: gatherer produces a haul and trades at the camp meet, with no bank.
+// Why: mule accepts a haul and banks it (a demo for ore and logs; processors should replace this).
+// Why: cooker accepts raw fish, cooks at the camp range and banks the cooked (burntPolicy).
+// Why: supplier withdraws raw from the bank when N are ready and trades at the meet, feeding bank-raw.
+
+/** GatheringBot partner roles. */
 export type MuleMode = 'off' | 'gatherer' | 'mule' | 'cooker' | 'supplier';
 
 export function parseMuleMode(raw: string): MuleMode {

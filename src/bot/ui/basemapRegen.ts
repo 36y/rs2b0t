@@ -1,8 +1,6 @@
 /**
- * Manual basemap rebuild for the map picker (user clicks Rebuild + confirms).
- *
- * Not called on picker open, not on a timer, not when settings change — only from
- * the Rebuild button path. Freezes the tab briefly while worldmap.jag decodes + paints.
+ * Manual basemap rebuild for the map picker, reached only from the Rebuild button path: never on picker open, never on a timer, never when settings change.
+ * Why: the tab freezes briefly while worldmap.jag decodes and paints.
  */
 // eslint-disable-next-line no-restricted-imports -- TODO: route through ClientAdapter
 import { sleep } from '#/client/util/JsUtil.js';
@@ -157,11 +155,8 @@ function pix2dToImageData(pixels: Int32Array, width: number, height: number): Im
 }
 
 /**
- * Re-render the full world basemap with MapView layer flags (same idea as the
- * classic /worldmap applet). Saves/restores the game canvas; still costly.
- *
- * Concurrent calls are queued: each waits for the previous bake, then runs with
- * its own prefs (does not reuse the first caller's result).
+ * Re-render the full world basemap with MapView layer flags (same idea as the classic /worldmap applet), saving and restoring the game canvas; still costly.
+ * Concurrent calls queue: each waits for the previous bake, then runs with its own prefs rather than reusing the first caller's result.
  */
 export function regenerateBasemap(prefs: BasemapBakePrefs = resolveBasemapBakePrefs()): Promise<RegeneratedBasemap> {
     const run = (): Promise<RegeneratedBasemap> => regenerateBasemapOnce(prefs);

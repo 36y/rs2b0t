@@ -2,13 +2,13 @@
 
 # Architecture
 
-rs2b0t wraps a real era (~2004) game client and drives it from TypeScript for
+rs2b0t wraps a 2004-era game client and drives it from TypeScript for
 [rs2b2t](https://rs2b2t.com).
 
 Why the design looks like this: **a bot must be indistinguishable from a player at the
-wire.** No forged packets, no synthetic mouse events — bot actions go through the
-client's own action dispatch, so the bytes on the socket are the bytes a human click
-would have produced.
+wire.** The bot forges no packets and synthesises no mouse events; every action goes
+through the client's own action dispatch, so the bytes on the socket are the bytes a
+human click would have produced.
 
 ## Layers
 
@@ -31,13 +31,12 @@ entity collection, or one reusable script behaviour. One directory per noun,
 sized to what that noun needs; single-file directories are expected. Not
 catalogs, not solvers, not engines, not sole-consumer helpers.
 
-[`src/bot/adapter/ClientAdapter.ts`](../../src/bot/adapter/ClientAdapter.ts) is the whole
-boundary, and it has exactly two halves:
+[`src/bot/adapter/ClientAdapter.ts`](../../src/bot/adapter/ClientAdapter.ts) is the
+boundary, and it has two halves:
 
 - **`reader`** — typed snapshots out of the client: `worldTile()`, npc/player/loc/obj
   lists, inventory and stat state. Everything above reads the world through it.
-- **`actions`** — input into the client: `login()`, `menuAction()`, `walkTo()`,
-  `answerCountDialog()`.
+- **`actions`** — input into the client: `login()`, `menuAction()`, `walkTo()`, `answerCountDialog()`.
 
 `attach(client)` binds the adapter to a live client instance and returns whatever it
 could not resolve, so a client-shape change surfaces as a list of missing members
@@ -59,7 +58,7 @@ A script calls `npc.interact('Attack')`. What happens:
 From step 4 onward the code path is the client's, unmodified. Movement is the same
 shape: `walkTo(x, z)` calls the client's `tryMove(...)`.
 
-Two consequences worth knowing:
+Two consequences follow from that dispatch path:
 
 - **Actions are fire-and-forget.** `menuAction` returns `false` only when there is no
   client or you are not in-game — never because the action failed. A bot must verify

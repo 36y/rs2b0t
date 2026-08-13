@@ -22,11 +22,9 @@ export interface SpecialCrossing {
      */
     arrivalRadius?: number;
     reopenAfterDialogue?: boolean;
-    /**
-     * When `quest` is notStarted, walk to `npc` at `stand`, run `dialogue`, then
-     * re-attempt the crossing. Used when a permanent unlock is granted by starting
-     * a quest (Mort Myre / Nature Spirit via Drezel).
-     */
+    // Why: used when a permanent unlock is granted by starting a quest (Mort Myre / Nature Spirit via Drezel).
+
+    /** When `quest` is notStarted, walk to `npc` at `stand`, run `dialogue`, then re-attempt the crossing. */
     unlockQuest?: {
         quest: string;
         /** Must already be complete (e.g. Priest in Peril before Nature Spirit). */
@@ -34,11 +32,10 @@ export interface SpecialCrossing {
         npc: string;
         stand: { x: number; z: number; level: number };
         dialogue: { choose: string[] };
-        /**
-         * Free inventory slots required before talking (NPC may grant items).
-         * Drezel hands 3 meat pie + 3 apple pie (unstackable) = 6.
-         * Short packs try to bank disposable junk first; if still tight, give up.
-         */
+        // Why: Drezel hands 3 meat pie + 3 apple pie, unstackable, so 6.
+        // Why: a short pack banks disposable junk first and gives up if still tight.
+
+        /** Free inventory slots required before talking, since the NPC may grant items. */
         freeSlots?: number;
     };
     label: string;
@@ -93,19 +90,11 @@ export const SPECIAL_CROSSINGS: SpecialCrossing[] = [
         label: 'West Ardougne manhole → sewer (#366)'
     },
 
-    // Gu'Tanoth chasm (#364 dig 3546) — two separate Jump-From rocks, one per side.
-    //
-    // Content (quest_itwatchtower.rs2), verified against maps/m39_47.jm2:
-    //   tanothjump1 (loc 2830) @ (2530,3026) south — Agility 25, then ogre_guard4
-    //     within 8 tiles demands 20gp; p_teleport(0_39_47_34_21) = (2530,3029).
-    //   tanothjump2 (loc 2831) @ (2531,3029) north — no skill, no toll, no dialogue;
-    //     p_teleport(0_39_47_35_18) = (2531,3026). "I'm glad that was easier on the
-    //     way back!" The return really is ungated (#398).
-    //
-    // x/z here is the **stand tile**, not the loc: both rocks are shape 10 and block
-    // walking, so the stand is the adjacent tile, and it must equal the transport
-    // edge's `from` or the skill-gated-crossing invariant cannot prune the edge.
-    // Each landing is the opposite rock's stand, so the pair is a closed round trip.
+    // Why: the Gu'Tanoth chasm (#364 dig 3546) is two separate Jump-From rocks, one per side.
+    // Why: in quest_itwatchtower.rs2, verified against maps/m39_47.jm2, tanothjump1 (loc 2830) @ (2530,3026) south needs Agility 25 and then ogre_guard4 within 8 tiles demands 20gp; p_teleport(0_39_47_34_21) = (2530,3029).
+    // Why: tanothjump2 (loc 2831) @ (2531,3029) north has no skill, no toll and no dialogue; p_teleport(0_39_47_35_18) = (2531,3026), and the return is ungated (#398).
+    // Why: x/z here is the stand tile, not the loc — both rocks are shape 10 and block walking, so the stand is the adjacent tile and it must equal the transport edge's `from` or the skill-gated-crossing invariant cannot prune the edge.
+    // Why: each landing is the opposite rock's stand, so the pair is a closed round trip.
     {
         x: 2531,
         z: 3026,
@@ -153,17 +142,15 @@ export const SPECIAL_CROSSINGS: SpecialCrossing[] = [
 
     { x: 2568, z: 9893, level: 0, locName: 'Door', action: 'Open', useItem: { id: 298, name: 'A key' }, label: 'Baxtorian keyed door' },
 
-    // edgeville_dungeon.rs2 brasskeydoor — Open only answers "The door is locked";
-    // the key has to be USED on it (oplocu), in both directions, and the unlock walks
-    // you through. Without a key the graph must route around the hut (#421, #423).
+    // Why: edgeville_dungeon.rs2 brasskeydoor answers Open with "The door is locked" — the key has to be used on it (oplocu), in both directions, and the unlock walks you through.
+    // Why: without a key the graph must route around the hut (#421, #423).
     { x: 3115, z: 3450, level: 0, locName: 'Door', action: 'Open', useItem: { id: 983, name: 'Brass key' }, requires: { item: 'Brass key', count: 1 }, label: 'Hill giant hut brass key door' },
 
-    // Baxtorian Falls approach (#369 / #320) — same stands as FireGiantLogic:
-    //   Board Log raft @ ~2510,3493 → crash mound 2512,3481
-    //   Walk south to throw stand 2512,3477 (in THROW_ZONE z 3476–3481)
-    //   Rope on Rock @ 2512,3468 → PastRock (~2513,3468, r≤3)
-    //   Walk south to 2512,3466, Rope on Dead tree → ledge 2511,3463
-    // One Rope, not consumed. Barrel exit already in transports.json.
+    // Why: the Baxtorian Falls approach (#369 / #320) uses the same stands as FireGiantLogic — Board Log raft @ ~2510,3493 → crash mound 2512,3481.
+    // Why: walk south to the throw stand 2512,3477, inside THROW_ZONE z 3476–3481.
+    // Why: Rope on Rock @ 2512,3468 → PastRock (~2513,3468, r≤3).
+    // Why: walk south to 2512,3466 then Rope on Dead tree → ledge 2511,3463.
+    // Why: one Rope, not consumed; the barrel exit is already in transports.json.
     {
         x: 2509,
         z: 3493,
@@ -231,10 +218,8 @@ export const SPECIAL_CROSSINGS: SpecialCrossing[] = [
 
     { x: 2461, z: 3382, level: 0, locName: 'Gate', action: 'Open', dialogue: { choose: ['OK then'] }, reopenAfterDialogue: true, label: 'Gnome Stronghold gate (Femi boxes)' },
 
-    // Shantay pass (shantay_pass.rs2): one loc, direction from coordz vs loc.
-    // Southbound (player north of loc) consumes a pass + disclaimer; northbound free.
-    // transports.json already has dual directed edges; only south needs specialCrossing
-    // for plan-time item + dialog (#403 / #371).
+    // Why: shantay_pass.rs2 is one loc whose direction comes from coordz versus the loc — southbound (player north of the loc) consumes a pass and shows a disclaimer, northbound is free.
+    // Why: transports.json already carries dual directed edges, so only south needs a specialCrossing for the plan-time item and dialog (#403 / #371).
     {
         x: 3304,
         z: 3118,
@@ -247,10 +232,9 @@ export const SPECIAL_CROSSINGS: SpecialCrossing[] = [
         label: 'Shantay Pass -> Kharidian desert'
     },
 
-    // Mort Myre gate (#115). Server: Open is a hard mesbox while Nature Spirit is not
-    // started; once started/complete the gate opens with no dialog. Unlock = walk back
-    // to Drezel (post–Priest in Peril mausoleum), start Nature Spirit, return.
-    // Both leaves share the gate (PathFinder keys edge origin).
+    // Why: the server answers Open on the Mort Myre gate (#115) with a hard mesbox while Nature Spirit is not started; once started or complete the gate opens with no dialog.
+    // Why: the unlock is to walk back to Drezel in the post–Priest in Peril mausoleum, start Nature Spirit and return.
+    // Why: both leaves share the gate, since PathFinder keys the edge origin.
     {
         x: 3443,
         z: 3458,
@@ -302,10 +286,8 @@ export const SPECIAL_CROSSINGS: SpecialCrossing[] = [
     { x: 2598, z: 3477, level: 0, locName: 'Log balance', action: 'Walk-across', requiresSkill: { name: 'agility', level: 20 }, label: 'Coal trucks log balance' },
     { x: 2603, z: 3477, level: 0, locName: 'Log balance', action: 'Walk-across', requiresSkill: { name: 'agility', level: 20 }, label: 'Coal trucks log balance' },
 
-    // Yanille dungeon balancing ledge (agility_dungeon.rs2 balancing_ledge3, Agility 40).
-    // Stand tiles match content start coords; fail drops to pit (recovered via pit stairs).
-    // arrivalRadius 0 — mid-ledge tiles (9513–9519) are not walkable; claiming "crossed"
-    // at radius 2 left the player stranded on the gap and repath returned unreachable.
+    // Why: the Yanille dungeon balancing ledge is agility_dungeon.rs2 balancing_ledge3, Agility 40, and the stand tiles match the content start coords; a fail drops to the pit, recovered via the pit stairs.
+    // Why: arrivalRadius is 0 because mid-ledge tiles (9513–9519) are not walkable, and claiming "crossed" at radius 2 left the player stranded on the gap while repath returned unreachable.
     {
         x: 2580,
         z: 9520,
@@ -329,9 +311,9 @@ export const SPECIAL_CROSSINGS: SpecialCrossing[] = [
         label: 'Yanille dungeon balancing ledge (S→N)'
     },
 
-    // Elkoy maze escort (elkoy.rs2). Tree Gnome Village started+ (plan: edge requires).
-    // Outside elkoy @ entrance stand → maze land; village elkoy @ maze stand → entrance.
-    // Content p_choice2 "Yes please." / "Not now, thanks." (and postquest "No thanks Elkoy.").
+    // Why: the Elkoy maze escort (elkoy.rs2) needs Tree Gnome Village started or later, gated plan-time by the edge requires.
+    // Why: the outside elkoy at the entrance stand lands in the maze, and the village elkoy at the maze stand returns to the entrance.
+    // Why: content p_choice2 offers "Yes please." / "Not now, thanks.", and post-quest "No thanks Elkoy.".
     {
         x: 2504,
         z: 3192,
@@ -693,24 +675,17 @@ export const SPECIAL_CROSSINGS: SpecialCrossing[] = [
         dialogue: {
             choose: ["Yes I'm brave.", "Yes please, don't show this message again."]
         },
-        // ^ardougne_to_wilderness_coord, but the pull is observed landing on
-        // 3928. Keep the constant (the edge landing must match it or
-        // specialCrossingForTransport drops this crossing outright) and widen
-        // the arrival radius to cover both tiles.
+        // Why: this is ^ardougne_to_wilderness_coord, but the pull is observed landing on 3928.
+        // Why: the constant stays because the edge landing must match it or specialCrossingForTransport drops this crossing outright, so the arrival radius is widened to cover both tiles instead.
         toTile: { x: 3154, z: 3924, level: 0 },
         arrivalRadius: 6,
         label: 'Ardougne → deep wilderness lever'
     },
     {
-        // prayer_guild.rs2 [oploc1,monasteryladder]: the climb needs %prayer_guild,
-        // and the only way to set it is to climb within 5 tiles of Abbot Langley
-        // (3059,3484) and ask to join. The first climb only opens that conversation,
-        // so the hop is re-attempted. The west ladder (3046,3483) is 13 tiles from
-        // him and never offers it.
-        //
-        // No requiresSkill here on purpose: STATE_AWARE_ACTIVATIONS already prunes
-        // this edge below Prayer 31, and duplicating the gate would claim a
-        // skill-gated crossing whose edge is not in the graph until that state is met.
+        // Why: prayer_guild.rs2 [oploc1,monasteryladder] needs %prayer_guild, and the only way to set it is to climb within 5 tiles of Abbot Langley (3059,3484) and ask to join.
+        // Why: the first climb only opens that conversation, so the hop is re-attempted.
+        // Why: the west ladder (3046,3483) is 13 tiles from him and never offers it.
+        // Why: no requiresSkill here — STATE_AWARE_ACTIVATIONS already prunes this edge below Prayer 31, and duplicating the gate would claim a skill-gated crossing whose edge is not in the graph until that state is met.
         x: 3057,
         z: 3484,
         level: 0,
@@ -733,11 +708,9 @@ export const SPECIAL_CROSSINGS: SpecialCrossing[] = [
         label: 'Deep wilderness → Ardougne lever'
     },
 
-    // Ernest the Chicken (#229) — Draynor Manor's secret door. The bookcase
-    // refuses anyone west of it (coordx < loc coordx) and teleports the searcher
-    // one tile west; the lever inside teleports back east through the same wall
-    // and reverts after four ticks, so it is re-pullable. Without these the two
-    // puzzle_ladder transport edges are orphaned — nothing can reach the alcove.
+    // Why: Ernest the Chicken (#229) needs Draynor Manor's secret door — the bookcase refuses anyone west of it (coordx < loc coordx) and teleports the searcher one tile west.
+    // Why: the lever inside teleports back east through the same wall and reverts after four ticks, so it is re-pullable.
+    // Why: without these two entries the two puzzle_ladder transport edges are orphaned and nothing can reach the alcove.
     {
         x: 3098,
         z: 3358,
@@ -788,17 +761,10 @@ function toTileMatches(
     );
 }
 
-/**
- * Resolve a special crossing for a path transport hop.
- *
- * Try both approach and destination levels: ships (and similar) are stored as
- * from L0 → to L1 while SPECIAL_CROSSINGS are keyed at the stand/boarding level
- * (often 1). Pre-refactor matching used step.level; approach-only missed ships.
- *
- * When a candidate has `toTile`, it must match the hop destination — otherwise
- * a reverse ship (Customs on the Brimhaven deck) can steal a gangplank hop that
- * lands on the same pier tile at a different level (#live transport-heavy).
- */
+// Why: both approach and destination levels are tried — ships and similar are stored from L0 → to L1 while SPECIAL_CROSSINGS are keyed at the stand/boarding level, often 1, so matching on either alone misses them.
+// Why: a candidate carrying `toTile` must match the hop destination, or a reverse ship (Customs on the Brimhaven deck) steals a gangplank hop that lands on the same pier tile at a different level.
+
+/** Resolve a special crossing for a path transport hop. */
 export function specialCrossingForTransport(
     transport: { locX: number; locZ: number; locName?: string },
     approach: { x: number; z: number; level: number },
@@ -809,13 +775,9 @@ export function specialCrossingForTransport(
         levels.add(step.level);
     }
 
-    // Which tile of the hop a crossing is keyed at, best first.
-    //
-    // A two-sided obstacle registers one crossing per bank, and both match the
-    // same hop — one as the tile being left, one as the tile being reached. The
-    // executor then resolves the loc within Chebyshev 3 of the crossing's stand,
-    // so the far bank's entry aims the op at the opposite end of the obstacle,
-    // across the water. The bank under our feet is the one that can be used.
+    // Why: the order below is which tile of the hop a crossing is keyed at, best first.
+    // Why: a two-sided obstacle registers one crossing per bank and both match the same hop — one as the tile being left, one as the tile being reached.
+    // Why: the executor resolves the loc within Chebyshev 3 of the crossing's stand, so the far bank's entry aims the op at the opposite end of the obstacle, across the water; only the bank under our feet is usable.
     const ORIGIN_APPROACH = 0;
     const ORIGIN_LOC = 1;
     const ORIGIN_STEP = 2;

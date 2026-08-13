@@ -1,11 +1,5 @@
-/**
- * Reachability probe for Horror from the Deep (#216).
- *
- * Every tile the module names, checked against a flood from the mainland, plus
- * the ten barcrawl bars. The sealed pockets — the broken lighthouse copy, the
- * basement and the cavern — are linked by scripted teleport only, so they are
- * expected to be components of their own and are listed as such.
- */
+/** Reachability probe for Horror from the Deep (#216): every tile the module names, checked against a flood from the mainland, plus the ten barcrawl bars.
+ *  Why: the broken lighthouse copy, the basement and the cavern are linked by scripted teleport alone, so they are expected to be components of their own and are listed as such. */
 import fs from 'node:fs';
 import { gunzipSync } from 'fflate';
 import doorsJson from '../../src/bot/nav/data/doors.json';

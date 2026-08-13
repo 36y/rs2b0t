@@ -14,12 +14,8 @@ import { SELF_TEST, type RawClient } from './RawClient.js';
 
 const SCENE_SIZE = 104;
 
-// locs() sweeps 104x104 tiles x 4 typecodes and allocates one snapshot per hit --
-// measured 1.4-1.7ms and 586-2289 objects per call. Predicates in script waiters
-// call it at frame rate, so without memoisation the same unchanged scene is rebuilt
-// ~24x/sec per bot. The scene only changes on a zone packet, and the snapshots carry
-// a player-relative distance, so the memo is keyed on the scene and the player tile
-// and dropped whenever the server says a loc changed.
+// Why: locs() sweeps 104x104 tiles x 4 typecodes at a measured 1.4-1.7ms and 586-2289
+// objects per call, and frame-rate script waiters would rebuild the unchanged scene ~24x/sec per bot.
 let locCache: LocSnapshot[] | null = null;
 let locCacheKey = '';
 
@@ -28,10 +24,7 @@ export function invalidateLocSnapshots(): void {
     locCache = null;
 }
 
-/**
- * Releases the attached client. Reads then degrade to empty via the `raw?.` guards
- * rather than dereferencing a half-dead client.
- */
+/** Releases the attached client; later reads degrade to empty rather than dereferencing a half-dead client. */
 export function detach(): void {
     raw = null;
     invalidateLocSnapshots();
@@ -89,9 +82,8 @@ export function locHullHeight(
 }
 
 /**
- * Walls/scenery often store a static `Model` as ModelSource. Model does not
- * override getTempModel() (returns null), so use the instance itself when it is
- * a Model. Never use bare ModelSource.minY (defaults to 1000).
+ * Walls/scenery often store a static `Model` as ModelSource, and Model returns null from getTempModel().
+ * Why: bare ModelSource.minY defaults to 1000, so never read extents off the source itself.
  */
 export function resolveLocModelExtents(
     src: ModelSource | null | undefined
@@ -209,8 +201,7 @@ interface SelectButtonLabel {
 export function attach(client: unknown): string[] {
     const missing = SELF_TEST.filter(name => !(name in (client as Record<string, unknown>)));
     raw = client as RawClient;
-    // A new client is a new scene. Without this the memo outlives the client that
-    // filled it and a relogin would read the previous session's locs.
+    // Why: a memo that outlived its client would make a relogin read the previous session's locs.
     invalidateLocSnapshots();
 
     if (!missing.includes('tcpIn')) {
@@ -263,7 +254,6 @@ export const reader = {
     /**
      * Hint-arrow tile (type 2–6), or null when no tile hint is active.
      * Used by Brimhaven Agility Arena for the active ticket pillar.
-     * Reads Client private fields that exist on the live instance.
      */
     hintTile(): WorldTile | null {
         if (!raw) {
@@ -297,9 +287,7 @@ export const reader = {
 
     /**
      * Project a point on a world tile onto the bot overlay canvas (pixels).
-     * `u`/`v` are fractional offsets within the tile (0 = west/south edge, 1 = east/north),
-     * clamped to the tile interior so edge-of-scene tiles still project. Default 0.5,0.5 = centre.
-     * Same projection as npcBox / Client.overlayPos.
+     * `u`/`v` are fractional offsets within the tile (0 = west/south edge, 1 = east/north), clamped to the tile interior.
      */
     overlayPosWorld(x: number, z: number, height = 0, u = 0.5, v = 0.5): { x: number; y: number } | null {
         if (!raw) {
@@ -420,9 +408,8 @@ export const reader = {
     },
 
     /**
-     * The eight corners of an NPC's bounding box in overlay-canvas pixels, ground
-     * ring first then the top ring in the same winding, so edges are 0-1-2-3-0,
-     * 4-5-6-7-4 and 0-4, 1-5, 2-6, 3-7. Null when the NPC is gone or off-screen.
+     * The eight corners of an NPC's bounding box in overlay-canvas pixels, ground ring first then the top ring in the same winding.
+     * Edges are 0-1-2-3-0, 4-5-6-7-4 and 0-4, 1-5, 2-6, 3-7. Null when the NPC is gone or off-screen.
      */
     npcBox(index: number): { x: number; y: number }[] | null {
         const npc = raw?.npc[index];
@@ -445,10 +432,8 @@ export const reader = {
     },
 
     /**
-     * Loc object hull: eight corners of the object AABB in overlay pixels
-     * (or areaGame if `areaGame`). Prefer live scene placement for centre; size from
-     * LocType / multi-tile footprint / model minY (same height metric as npcBox).
-     * Null when the tile is outside the loaded scene or projection fails.
+     * Loc object hull: eight corners of the object AABB in overlay pixels, or areaGame pixels when `areaGame`.
+     * Centre comes from live scene placement; size from LocType, multi-tile footprint or model minY. Null when off-scene.
      */
     locBox(
         opts: { id?: number; x: number; z: number; level?: number; name?: string },
@@ -604,9 +589,8 @@ export const reader = {
 
         hits.sort((a, b) => a.rank - b.rank || a.dist - b.dist);
 
-        // Only draw when the loc is actually in the loaded scene. A tile-center
-        // fallback at locX/locZ (often the approach/from tile) looks like a cube
-        // around the player when the hop is active and the real loc was missed.
+        // Why: a tile-centre fallback at locX/locZ (often the approach tile) draws a cube
+        // around the player whenever the hop is active and the loc was missed.
         if (hits.length === 0) {
             return null;
         }
@@ -1232,8 +1216,7 @@ export const reader = {
 
     /**
      * Find a clickable main-modal button nearest a text label (substring match).
-     * Used for maps like glidermap where dest buttons have no buttonText but sit
-     * beside / over a text component (e.g. "Gandius", "Ta Quir Priw").
+     * Why: glidermap-style destination buttons carry no buttonText and only sit beside a text component (e.g. "Gandius", "Ta Quir Priw").
      */
     mainModalButtonNearText(label: string): number {
         if (!raw || raw.mainModalId === -1) {
@@ -1332,9 +1315,8 @@ export const reader = {
     },
 
     /**
-     * Raw item icon pixels, for the loadout picker. Deliberately not a canvas or
-     * a data URL: DOM belongs to src/bot/ui/, so the conversion lives there.
-     * Null whenever the cache is not loaded or the id has no sprite.
+     * Raw item icon pixels for the loadout picker. Null whenever the cache is not loaded or the id has no sprite.
+     * Why: DOM belongs to src/bot/ui/, so canvas and data-URL conversion lives there rather than here.
      */
     itemIconPixels(id: number): { width: number; height: number; data: Int32Array } | null {
         try {
@@ -1524,7 +1506,7 @@ function walkComponents(rootComId: number): IfType[] {
 }
 
 // player_controls.rs2: controls:com_2 toggles retaliate on, com_3 off. com_6/com_7
-// have no if_button handler, so the old indices sent presses the server discarded.
+// have no if_button handler, so the server discards presses sent to those indices.
 export function readRetaliateControls(): { onComId: number; offComId: number } | null {
     for (const root of IfType.list) {
         if (!root?.children) {
@@ -1626,17 +1608,14 @@ function heldOps(iop: (string | null)[] | null): (string | null)[] {
     return ops;
 }
 
-// Client stamps combatCycle at loopCycle + 400 and treats a target as fighting until
-// 100 cycles remain -- a 300-cycle window, i.e. 6s at the era client's 20ms tick. Both
-// ends are loop cycles, so a bot client running that loop slower would stretch the window
-// and see every target as still in combat. Express the window in time instead.
+// Client stamps combatCycle at loopCycle + 400 and treats a target as fighting until 100 cycles remain: a 300-cycle window, 6s at the era client's 20ms tick.
+// Why: both ends are loop cycles, so a bot client running that loop slower would stretch the window and see every target as still in combat.
 const COMBAT_STAMP_CYCLES = 400;
 const COMBAT_WINDOW_MS = 6000;
 
 /**
  * Cycles-remaining threshold that keeps the combat window at {@link COMBAT_WINDOW_MS}.
- * Guard deltime≤0 — during random-event teleports / scene rebuild deltime can
- * briefly be zero; division by zero would NaN the combat window and crash handlers.
+ * Why: deltime can be zero during random-event teleports and scene rebuilds, and dividing by it would NaN the window and crash handlers.
  */
 export function combatShowingThreshold(deltimeMs: number): number {
     const d = deltimeMs > 0 ? deltimeMs : 20;
@@ -1648,10 +1627,8 @@ function combatShowing(combatCycle: number): boolean {
 }
 
 /**
- * Client ms/tick for cycle-stamped combat windows.
- * Random-event teleports (maze) and scene rebuilds can leave deltime at 0 for a
- * tick; throwing here crashed AIOQuester mid-maze while RandomEvents was handling
- * (detect → reader.npcs() → combatShowing). Soft-default to a nominal 20ms tick.
+ * Client ms/tick for cycle-stamped combat windows, soft-defaulting to a nominal 20ms.
+ * Why: random-event teleports (maze) and scene rebuilds leave deltime at 0 for a tick, and throwing here crashed AIOQuester mid-maze.
  */
 function deltimeNow(): number {
     const deltime = raw?.deltime ?? 0;

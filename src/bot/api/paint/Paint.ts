@@ -132,16 +132,11 @@ export class PaintFrame {
         this.cursorY += LINE;
     }
 
-    /**
-     * A scrollable list of lines.
-     *
-     * Immediate mode has no retained scroll position, so the offset lives in
-     * paintState under the list id and the wheel notches are applied here. The
-     * whole window registers a 'scroll' region so the canvas swallows the wheel
-     * rather than letting the game zoom behind the panel.
-     *
-     * Returns the offset actually shown, already clamped.
-     */
+    // Why: immediate mode has no retained scroll position, so the offset lives in paintState under the list id and the wheel notches are applied here.
+    // Why: the window registers a 'scroll' region so the canvas swallows the wheel rather than letting the game zoom behind the panel.
+    // Why: the offset shown is returned, already clamped.
+
+    /** A scrollable list of lines. */
     list(id: string, lines: string[], rows: number, color?: string): number {
         if (this.collapsed) {
             return 0;

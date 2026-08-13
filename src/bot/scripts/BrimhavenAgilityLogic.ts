@@ -15,20 +15,18 @@ export const ARENA_VARP = 309; // agilityarena_varbit
 const PAID_BIT = 1;
 const PILLAR_TAGGED_BIT = 0;
 
-/**
- * Rough surface Karamja / Brimhaven footprint (ship landing through arena entrance).
- * Once here the outbound boat is already paid — only return fare (+ entrance if
- * unpaid) remains. Using TRIP_COINS here caused bank↔boat loops forever.
- */
+// Why: once on this footprint the outbound boat is paid, so only the return fare plus any unpaid entrance remains.
+// Why: charging TRIP_COINS here funds both legs again and loops the bot between bank and boat.
+
+/** Rough surface Karamja / Brimhaven footprint, ship landing through arena entrance. */
 export function onBrimhavenSurface(x: number, z: number, level: number): boolean {
     return level === 0 && x >= 2740 && x <= 2960 && z >= 3130 && z <= 3280;
 }
 
-/**
- * Absolute world tiles of arena platforms (level 3).
- * Indices 0–23 match the server ticket-pillar enum; 24 is the SE ladder landing
- * (no ticket dispenser) where Climb-Down drops you.
- */
+// Why: indices 0–23 match the server ticket-pillar enum.
+// Why: index 24 is the SE ladder landing where Climb-Down drops you, and it carries no ticket dispenser.
+
+/** Absolute world tiles of arena platforms (level 3). */
 export const PILLARS: ReadonlyArray<{ x: number; z: number }> = [
     { x: 2761, z: 9546 },
     { x: 2772, z: 9546 },
@@ -90,11 +88,9 @@ export function obstacleAxis(from: number, to: number): ArenaAxis | null {
     return { dx, dz };
 }
 
-/**
- * Ideal interaction stand: two tiles from the loc, toward the source platform.
- * The server's obstacle scripts use these directional start tiles (not merely
- * any tile that happens to snap to the same logical platform).
- */
+// Why: the server's obstacle scripts key off these directional start tiles, not any tile that snaps to the same logical platform.
+
+/** Ideal interaction stand: two tiles from the loc, toward the source platform. */
 export function edgeApproachPoint(from: number, to: number, loc: ArenaPoint): ArenaPoint | null {
     const axis = obstacleAxis(from, to);
     if (!axis) {
@@ -106,14 +102,10 @@ export function edgeApproachPoint(from: number, to: number, loc: ArenaPoint): Ar
     };
 }
 
-/**
- * Deterministic stand candidates for a live collision/reachability filter.
- *
- * Candidates stay within three tiles of the ideal stand, on the source
- * platform, and strictly on the source side of the loc. The ideal tile is
- * always first; equal-radius alternatives prefer lateral movement before
- * changing the required distance along the obstacle axis.
- */
+// Why: candidates stay within three tiles of the ideal stand, on the source platform, and strictly on the source side of the loc.
+// Why: the ideal tile comes first, and equal-radius alternatives prefer lateral movement before changing the distance along the obstacle axis.
+
+/** Deterministic stand candidates for a live collision/reachability filter. */
 export function edgeApproachCandidates(
     from: number,
     to: number,
@@ -265,13 +257,11 @@ export function pillarTagged(varp: number): boolean {
     return bitSet(varp, PILLAR_TAGGED_BIT);
 }
 
-/**
- * Coins still required for the rest of the trip.
- * - At Ardougne / leaving bank: both boat legs (+ entrance if unpaid).
- * - Already on Brimhaven surface: outbound boat is spent — only the return
- *   leg (+ entrance if unpaid). Without this, 230gp after the 30gp ship still
- *   looked "underfunded" vs 260 and the bot banked instead of entering.
- */
+// Why: at Ardougne or leaving the bank, both boat legs plus the entrance if unpaid are still owed.
+// Why: on the Brimhaven surface the outbound boat is spent, leaving the return leg plus the entrance if unpaid.
+// Why: without the split, the 230gp left after the 30gp ship reads as underfunded against 260 and the bot banks instead of entering.
+
+/** Coins still required for the rest of the trip. */
 export function coinsNeeded(alreadyPaid: boolean, outboundBoatDone = false): number {
     const boatLegs = outboundBoatDone ? 1 : 2;
     const boats = BOAT_FARE * boatLegs;
@@ -310,14 +300,10 @@ export function ticketInventoryGain(change: TicketInventoryChange, bankOpen: boo
         : Math.max(0, change.count - change.previousCount);
 }
 
-/**
- * What the bank could not supply after a restock, or null when the trip is funded.
- *
- * The bank trip is triggered by exactly these shortfalls, so anything still missing
- * when it finishes means the next loop re-opens the bank for the same reason —
- * the open/close spin a user sees when the account simply ran out of lobsters.
- * The caller stops on a non-null result instead of spinning.
- */
+// Why: the bank trip is triggered by these shortfalls, so anything still missing when it finishes sends the next loop back to the bank for the same reason.
+// Why: the caller stops on a non-null result rather than spinning the bank open and shut when the account ran out of lobsters.
+
+/** What the bank could not supply after a restock, or null when the trip is funded. */
 export function restockShortfall(s: {
     food: string;
     foodInPack: number;
@@ -365,11 +351,10 @@ export function pillarFromHint(hx: number, hz: number): number {
     return p >= 0 && p < TICKET_PILLAR_COUNT ? p : -1;
 }
 
-/**
- * The arena occupies the dedicated m43_149 content map square. Checking the
- * complete square keeps unrelated upper floors and dungeons from looking like
- * the arena merely because their plane or z coordinate happens to match.
- */
+// Why: the arena occupies the dedicated m43_149 content map square.
+// Why: checking the complete square keeps unrelated upper floors and dungeons from matching on plane or z alone.
+
+/** True when the tile falls inside the arena map square. */
 export function inArena(x: number, z: number): boolean {
     return x >= 2752 && x <= 2815 && z >= 9536 && z <= 9599;
 }
@@ -379,22 +364,20 @@ export function onArenaPlatform(level: number): boolean {
     return level >= 3;
 }
 
-/**
- * Failed obstacles drop the player to plane 0 under the same (x,z). Platform
- * pillars still snap by x/z, but edge locs only exist on plane 3 — treat this
- * as a pit fall and climb the rope before pathing (#user report 2802,9590,0).
- */
+// Why: a failed obstacle drops the player to plane 0 under the same (x,z) — user report 2802,9590,0.
+// Why: pillars still snap by x/z but edge locs exist only on plane 3, so the caller climbs the rope before pathing.
+
+/** True when the player is under the arena rather than on its platforms. */
 export function inArenaPit(x: number, z: number, level: number): boolean {
     return inArena(x, z) && level < 3;
 }
 
-/**
- * After an obstacle interact, whether we should release control for the next hop.
- * - fallen: plane-0 pit — climb rope next
- * - arrived: on the destination pillar (anim residual is fine — next hop can queue)
- * - elsewhere: left the start pillar for a different platform (partial progress)
- * - pending: still mid-attempt (soft fails need multi-tick idle confirmation in the waiter)
- */
+// Why: 'fallen' is the plane-0 pit, so the caller climbs the rope next.
+// Why: 'arrived' is the destination pillar, and a residual anim is fine because the next hop can queue.
+// Why: 'elsewhere' left the start pillar for a different platform, which counts as partial progress.
+// Why: 'pending' is still mid-attempt, and soft fails need multi-tick idle confirmation in the waiter.
+
+/** Whether an obstacle interact releases control for the next hop. */
 type ObstacleOutcome = 'arrived' | 'fallen' | 'elsewhere' | 'pending';
 
 export function obstacleOutcome(
@@ -473,11 +456,9 @@ function hopDistFrom(src: number, adj: Map<number, number[]>): Map<number, numbe
     return dist;
 }
 
-/**
- * Shortest hop path from `from` to `to`. Among equal-hop routes, each step
- * prefers the neighbour geographically closer to `to` so we don't detour
- * the long way around the grid when BFS insertion order would.
- */
+// Why: among equal-hop routes each step prefers the neighbour geographically closer to `to`, so BFS insertion order cannot send it the long way round the grid.
+
+/** Shortest hop path from `from` to `to`. */
 export function pathPlatforms(from: number, to: number, agility: number): number[] | null {
     if (from < 0 || to < 0 || from >= PILLARS.length || to >= PILLARS.length) {
         return null;

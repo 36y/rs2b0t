@@ -690,14 +690,12 @@ async function ensureRun(want: boolean): Promise<void> {
     await Execution.delayUntil(() => Game.runEnabled() === want, 1200);
 }
 
-/**
- * Wait until the hop is done enough to act again.
- * - success: on dest (anim residual OK)
- * - pit fall
- * - partial progress onto another platform
- * - soft fail: engaged then idle back on start (saws/pressure bounce)
- * Also ends after a few idle ticks on start so we never sit out the full timeout.
- */
+// Why: success is arriving on dest, where a residual anim is fine.
+// Why: a pit fall or partial progress onto another platform also settles the hop.
+// Why: a soft fail engages then goes idle back on start, which is the saws and pressure bounce.
+// Why: a few idle ticks on start settle it too, so it never sits out the full timeout.
+
+/** Waits until the hop is done enough to act again. */
 async function waitObstacleSettled(bot: BrimhavenAgility, from: number, to: number, timeoutMs: number): Promise<void> {
     let leftStart = false;
     let idleTicks = 0;
@@ -715,9 +713,8 @@ async function waitObstacleSettled(bot: BrimhavenAgility, from: number, to: numb
             !!tile &&
             !!lastTile &&
             (tile.x !== lastTile.x || tile.z !== lastTile.z || tile.level !== lastTile.level);
-        // Walk traps keep platform===from until near the dest — only treat as
-        // "left" when we actually leave the start island, fall, or sustain anim
-        // (ignore 1-frame click flashes that would false-fail before the hop starts).
+        // Why: walk traps keep platform===from until near the dest, so "left" means leaving the start island, falling, or sustaining an anim.
+        // Why: 1-frame click flashes would false-fail before the hop starts.
         const distFromStart =
             tile && startPillar
                 ? Math.max(Math.abs(tile.x - startPillar.x), Math.abs(tile.z - startPillar.z))
@@ -794,9 +791,8 @@ async function crossEdge(bot: BrimhavenAgility, edge: ArenaEdge, from: number, t
         bot.log(`${edge.locName} has no actions at ${loc.tile().x},${loc.tile().z}`);
         return;
     }
-    // Stage on the source side before every interaction. Platform membership is
-    // not enough: recovery ladders and ticket dispensers can separate the player
-    // from the obstacle's usable side while both tiles still belong to one island.
+    // Why: staging happens on the source side before every interaction.
+    // Why: platform membership is not enough — recovery ladders and ticket dispensers can separate the player from the obstacle's usable side while both tiles belong to one island.
     const lt = loc.tile();
     const approach = edgeApproachCandidates(from, to, lt)
         .map(t => new Tile(t.x, t.z, lt.level))

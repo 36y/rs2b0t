@@ -84,12 +84,9 @@ export const HD_LOC = {
     FURNACE: 'Furnace'
 } as const;
 
-/**
- * The lighthouse exists twice. During the quest its interior is the broken copy
- * in mapsquare 38_71; repairing the light teleports the player by (+64,-960)
- * into the real one in 39_56, and every staircase from there routes back into
- * the copy. Nothing walks between them — the doorway and the stairs teleport.
- */
+// Why: the lighthouse exists twice — during the quest its interior is the broken copy in mapsquare 38_71.
+// Why: repairing the light teleports the player by (+64,-960) into the real one in 39_56, and every staircase from there routes back into the copy.
+// Why: nothing walks between them, as the doorway and the stairs teleport.
 export const HD_TILE = {
     /** South shore of the causeway, one tile before the first basalt gap. */
     CAUSEWAY_SOUTH: new Tile(2522, 3594, 0),
@@ -140,11 +137,8 @@ export const HD_TILE = {
 
     /** Lumbridge swamp tar patch — the nearest spawns outside Morytania. */
     SWAMP_TAR: new Tile(3173, 3178, 0),
-    /**
-     * Rellekka's north-east shore: nine seaweed spawns, and by a long way the
-     * nearest to the lighthouse. Catherby's beach spawns sit on an islet the
-     * walker cannot reach at all.
-     */
+    // Why: Rellekka's north-east shore has nine seaweed spawns and is by a long way the nearest to the lighthouse.
+    // Why: Catherby's beach spawns sit on an islet the walker cannot reach.
     SEAWEED: new Tile(2708, 3728, 0),
     /** Yanille: the sand pit and a Range stand seven tiles apart. */
     SAND_PIT: new Tile(2541, 3103, 0),
@@ -153,13 +147,8 @@ export const HD_TILE = {
      * east really is east here, and the west side answers nothing at all.
      */
     YANILLE_RANGE: new Tile(2550, 3099, 0),
-    /**
-     * East Ardougne. Rellekka's furnace is nearer to everything this quest does
-     * and refuses anyone who has not finished The Fremennik Trials.
-     *
-     * Also `forceapproach=east`, but placed at angle 2, so the only legal side
-     * is **west** in world space — the furnace itself spans (2601-2603,3310-3312).
-     */
+    // Why: Rellekka's furnace is nearer to everything this quest does and refuses anyone who has not finished The Fremennik Trials, so this is East Ardougne's.
+    // Why: it is `forceapproach=east` placed at angle 2, so the only legal side is west in world space — the furnace itself spans (2601-2603,3310-3312).
     FURNACE: new Tile(2600, 3310, 0),
 
     VARROCK_SWORDSHOP: new Tile(3203, 3395, 0),
@@ -173,13 +162,10 @@ export const ARCHERY_SHOP = { npc: 'Lowe', anchor: HD_TILE.VARROCK_ARCHERY };
 export const RUNE_SHOP = { npc: 'Aubury', anchor: HD_TILE.VARROCK_RUNES };
 export const GENERAL_SHOP = { npc: 'Shop keeper', anchor: HD_TILE.VARROCK_GENERAL };
 
-/**
- * The ten bars of Alfred Grimhand's barcrawl.
- *
- * Every bartender in the game renders "Bartender", so they are found by npc id.
- * `line` is the fragment of the card's own scroll for that bar, which is the
- * only readable progress there is — `%barcrawl` is not on the wire.
- */
+// Why: every bartender in the game renders "Bartender", so they are found by npc id.
+// Why: `line` is the fragment of the card's own scroll for that bar, which is the only readable progress there is, as `%barcrawl` is not on the wire.
+
+// The ten bars of Alfred Grimhand's barcrawl.
 export const LARRISSA: NpcStop = {
     npc: 'Larrissa',
     anchor: HD_TILE.LARRISSA,

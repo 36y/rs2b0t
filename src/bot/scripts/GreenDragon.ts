@@ -89,13 +89,10 @@ let STYLE: 'melee' | 'mage' = 'melee';
 let MELEE_STYLE: MeleeCombatStyle = 'strength';
 let USE_SPECIAL = true;
 
-/**
- * Skills a dragon grind moves, split across two tabs.
- *
- * Each one costs a bar plus a rate row (~32px) and the panel only has ~112px
- * under the title and tabs, so three per tab is the honest budget — cramming all
- * seven into one tab silently pushed prayer off the bottom.
- */
+// Why: each skill costs a bar plus a rate row (~32px) and the panel has ~112px under the title and tabs, so three per tab fits.
+// Why: seven skills in one tab push prayer off the bottom with no warning.
+
+/** Skills a dragon grind moves, split across two tabs. */
 const MELEE_SKILLS = ['attack', 'strength', 'defence'];
 const SUPPORT_SKILLS = ['hitpoints', 'ranged', 'magic', 'prayer'];
 const GRIND_SKILLS = [...MELEE_SKILLS, ...SUPPORT_SKILLS];
@@ -158,10 +155,10 @@ function inField(tile: Tile): boolean {
 function fieldDragons(): Npc[] {
     return Npcs.query().name(TARGET).where(n => inField(n.tile()) && !n.targetsAnotherPlayer()).results();
 }
-/**
- * Players standing nearby are almost all bots. Only an actual attack counts,
- * which auto-retaliate surfaces by pointing our own face target at them.
- */
+// Why: players standing nearby are almost all bots, so proximity alone is no signal.
+// Why: auto-retaliate surfaces an attacker by pointing our own face target at them.
+
+/** True when a player is attacking us. */
 function underAttack(): boolean {
     return underPlayerAttack(Game.tile()?.z ?? null, Game.attackedByPlayer());
 }
@@ -324,11 +321,10 @@ class Eat implements Task {
         return needEat();
     }
 
-    /**
-     * Eating spends the tick it lands on, so landing it on the swing costs an
-     * attack. Hold that one tick and take the meal in the cooldown instead —
-     * unless health is low enough that waiting is the greater risk.
-     */
+    // Why: eating spends the tick it lands on, so a meal on the swing costs an attack.
+    // Why: low enough health makes waiting the greater risk.
+
+    /** Holds one tick and takes the meal in the swing cooldown. */
     async execute(): Promise<void> {
         attackClock.observe(reader.selfAnim(), BotHost.tickCount);
         const hold = Game.inCombat() && shouldHoldEat({
@@ -497,9 +493,8 @@ async function bankRoutine(bot: GreenDragon): Promise<void> {
 
     await withdrawStyleSupplies(bot);
 
-    // Heal before leaving, then top the food back up: eating spends the very
-    // load we just withdrew, and walking back on panic hp just forces another
-    // trip (or a death on the way in).
+    // Why: eating spends the load just withdrawn, so heal first and top the food back up after.
+    // Why: walking back on panic hp forces another trip, or a death on the way in.
     if (await eatToFull(bot)) {
         if (await Bank.openNearest('Bank booth', 'Use-quickly', m => bot.log(`  ${m}`))) {
             await withdrawFood(bot);
@@ -680,11 +675,9 @@ class LootCorpse implements Task {
     }
 }
 
-/**
- * Regains control after a clue trail ends wherever the last step left us.
- * Held off briefly after a threat escape so it does not walk straight back into
- * the player that caused it.
- */
+// Why: held off briefly after a threat escape, so it does not walk straight back into the player that caused it.
+
+/** Regains control after a clue trail ends wherever the last step left us. */
 class ReturnToField implements Task {
     constructor(private bot: GreenDragon) {}
     validate(): boolean {
@@ -763,9 +756,7 @@ class Fight implements Task {
                     continue;
                 }
             }
-            // Inline, not a sibling task: this cycle owns the bot for the whole
-            // kill, so a SpecialAttack task above Fight was never evaluated while
-            // in combat and never fired at all — energy just sat at full.
+            // Why: this cycle owns the bot for the whole kill, so a sibling SpecialAttack task above Fight never runs during combat.
             if (USE_SPECIAL && !Special.armed() && Special.ready(WEAPON) && Equipment.contains(WEAPON)) {
                 if (await Special.arm()) {
                     this.bot.countSpecial();
@@ -773,10 +764,8 @@ class Fight implements Task {
                 }
             }
             if (Game.inCombat()) {
-                // Burying costs a tick, exactly like eating, so spend it in the
-                // swing cooldown rather than on the swing. As a sibling task this
-                // only ran when Fight yielded, which is why it looked like the bot
-                // buried at random moments instead of steadily.
+                // Why: burying costs a tick like eating, so spend it in the swing cooldown rather than on the swing.
+                // Why: inline, not a sibling task — a sibling only runs when Fight yields, which spaces burials out.
                 if (BURY_BONES && (await buryOneInFight(BONE_NAME))) {
                     this.bot.countBurial();
                     this.bot.vlog(`buried ${BONE_NAME} (${this.bot.burials()} total)`);
@@ -815,7 +804,7 @@ export default class GreenDragon extends TaskBot {
 
     private xpAtStart = new Map<string, number>();
 
-    /** What has actually been picked up, for the scrollable loot tab. */
+    /** Items picked up, for the scrollable loot tab. */
     private readonly lootCounts = new Map<string, number>();
     private lastTask = '';
     private readonly lastVlog = new Map<string, string>();
@@ -921,7 +910,7 @@ export default class GreenDragon extends TaskBot {
             this.log(msg);
         }
     }
-    /** Verbose, but only when the message actually changes — hot loops repeat. */
+    /** Verbose, but only when the message changes — hot loops repeat. */
     vlogChange(key: string, msg: string): void {
         if (this.lastVlog.get(key) === msg) {
             return;
@@ -985,9 +974,8 @@ export default class GreenDragon extends TaskBot {
         const p = Paint.begin(ctx, { dock: 'chatbox', accent: '#6fbf73' });
         p.title(`GreenDragon — ${this.status}`);
 
-        // Clues get their own tab rather than one summary row: a trail can walk
-        // most of the map, and the leg/travel detail is the only way to see it is
-        // making progress. Same block ClueSolver paints.
+        // Why: a trail can walk most of the map, so leg and travel detail is the only sign it is progressing.
+        // Why: ClueSolver paints the same block, so the two stay in sync.
         const mins = (Date.now() - this.startedAt) / 60_000;
         const names = ['Grind', 'Melee', 'Support', 'Loot'];
         if (SOLVE_CLUES) {

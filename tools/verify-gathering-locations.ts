@@ -1,17 +1,13 @@
-/**
- * Live helper: teleport to each gather camp and sample nearby rocks / trees / fish.
- * Reports PASS/FAIL only — does not edit location tables.
- *
- * Requires a local engine + deployed bot client (default http://localhost:8890).
- *
- * Usage:
- *   bun tools/verify-gathering-locations.ts              # all skills
- *   bun tools/verify-gathering-locations.ts fishing
- *   bun tools/verify-gathering-locations.ts mining woodcutting
- *   BASE=http://localhost:8888 bun tools/verify-gathering-locations.ts
- *   HEADED=1 bun tools/verify-gathering-locations.ts fishing   # visible Chrome
- *   HEADED=1 SLOWMO=400 bun tools/verify-gathering-locations.ts mining
- */
+/** Live helper: teleport to each gather camp and sample nearby rocks / trees / fish. Reports PASS/FAIL only and never edits the location tables.
+ *  Skill names as argv (default all), BASE / HEADED / SLOWMO from the environment. Requires a local engine and a deployed bot client. */
+
+// Usage:
+//   bun tools/verify-gathering-locations.ts              # all skills
+//   bun tools/verify-gathering-locations.ts fishing
+//   bun tools/verify-gathering-locations.ts mining woodcutting
+//   BASE=http://localhost:8888 bun tools/verify-gathering-locations.ts
+//   HEADED=1 bun tools/verify-gathering-locations.ts fishing   # visible Chrome
+//   HEADED=1 SLOWMO=400 bun tools/verify-gathering-locations.ts mining
 import { boot, cheatQuiet, fail, launchBrowser, login } from './lib/harness.js';
 import type { GatheringLocation } from '../src/bot/data/gatheringLocations.js';
 
@@ -99,7 +95,7 @@ function chebyshev(a: { x: number; z: number }, b: { x: number; z: number }): nu
     return Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z));
 }
 
-/** Resources only count if we actually arrived near the seed spot. */
+/** Resources only count when the bot arrived near the seed spot. */
 const ARRIVE_MAX = 18;
 
 function passFor(expect: Row['expect'], sample: Sample, spot: { x: number; z: number; level: number }): boolean {

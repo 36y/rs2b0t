@@ -10,7 +10,7 @@ three separate problems, and conflating them is the classic bug:
   distances to the near and far tiles rather than trusting the door's state.
 - **Arrival at a door is wall-aware.** Plain Chebyshev distance says the tile on the
   other side of a wall is adjacent. `crossingEligible` requires the landing to be
-  genuinely reachable before the crossing is triggered.
+  reachable before the crossing is triggered.
 - **A door can re-shut** while you approach. `shouldApproachClosedBarrier` decides
   whether to close in first, and `chooseCrossClick` picks between stepping directly,
   clicking the landing tile, or clicking it in the scene.
@@ -77,7 +77,7 @@ shortcut therefore needs two entries, one per direction.
 Ship crossings carry a `toTile`, because they teleport rather than step — the
 executor waits to land near that tile instead of watching for an adjacent move. A
 crossing the bot cannot afford should be avoided **during planning**; discovering it
-at the gate wastes the whole walk.
+at the gate wastes the walk.
 
 ## Exact transport loc metadata
 

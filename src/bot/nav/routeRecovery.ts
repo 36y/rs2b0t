@@ -5,13 +5,10 @@
 
 import { chebyshev, type PathTileLike } from './geometry/followMath.js';
 
-/**
- * Furthest index in [fromIdx+1, limitIdx] that is on the same level, within
- * corridor of `me` **or** clickable, preferring the highest index that is
- * clickable and not behind the player on the path.
- *
- * Returns -1 when nothing usable is found (caller should repath / door scan).
- */
+// Why: the highest index that is clickable and not behind the player on the path wins.
+// Why: -1 means nothing usable was found, so the caller should repath or door-scan.
+
+/** Furthest index in [fromIdx+1, limitIdx] on the same level, within corridor of `me` or clickable. */
 export function findForwardRecoveryIndex(
     tiles: PathTileLike[],
     me: PathTileLike,
@@ -52,20 +49,9 @@ export function findForwardRecoveryIndex(
     return bestOnCorridor;
 }
 
-/**
- * What a stalled walk should do next.
- *
- * `recover` — click further along the published path.
- * `combat`  — hold course; a fight, not a nav problem.
- * `escalate` — open a route door, dismiss a quest lock, or declare blocked/repath.
- *
- * The search window for {@link findForwardRecoveryIndex} is capped at the tile
- * *before* the next hop, so it is empty — `recoverIdx === -1` — exactly when the
- * walk has already reached that hop's approach. That is the door/stair case, and
- * it is the one that most needs the escalation ladder. Repathing there instead
- * just replans the same route and burns the repath budget until the walk reports
- * failure, which `walkResilient` then escalates to **unreachable**.
- */
+// Why: `recover` clicks further along the published path, `combat` holds course for a fight rather than a nav problem, and `escalate` opens a route door, dismisses a quest lock, or declares blocked/repath.
+// Why: the search window for {@link findForwardRecoveryIndex} is capped at the tile before the next hop, so `recoverIdx === -1` happens when and only when the walk has already reached that hop's approach — the door/stair case that most needs the escalation ladder.
+// Why: repathing there replans the same route and burns the repath budget until the walk reports failure, which `walkResilient` then escalates to unreachable.
 type StallPhase = 'recover' | 'combat' | 'escalate';
 
 export function stallPhase(opts: { stallRetries: number; recoverIdx: number; inCombat: boolean }): StallPhase {

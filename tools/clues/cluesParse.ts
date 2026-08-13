@@ -118,11 +118,8 @@ export function parseTalkMappings(scriptText: string, tier: ClueTier = 'easy'): 
 
 const GIVE_PUZZLE_RE = /~give_trail_puzzle\(\s*(trail_clue_hard_[a-z0-9]+)_puzzlebox/;
 
-/**
- * Hard talk clues that hand over a sliding puzzle instead of the next scroll.
- * The handing NPC is the enclosing opnpc block, same attribution rule as
- * parseTalkMappings.
- */
+/** Hard talk clues that hand over a sliding puzzle instead of the next scroll.
+ *  The handing NPC is the enclosing opnpc block, same attribution rule as parseTalkMappings. */
 export function parsePuzzleTalk(scriptText: string): PuzzleMapping[] {
     const out: PuzzleMapping[] = [];
     let npc = '';

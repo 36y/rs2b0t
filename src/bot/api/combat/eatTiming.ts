@@ -1,15 +1,6 @@
-/**
- * When to spend a tick eating.
- *
- * Eating consumes the tick it happens on. Land it on the tick your weapon
- * swings and you lose that attack; land it anywhere in the cooldown that
- * follows and it costs nothing. So the rule is narrow: hold for exactly the tick
- * an attack started on, and eat on any other.
- *
- * Safety wins over DPS — an unknown attack tick, or health low enough that a
- * single hit could kill, both eat immediately. A missed attack is cheap; a
- * missed meal is a death.
- */
+// Why: eating consumes the tick it happens on, so landing it on the tick the weapon swings loses that attack while landing it anywhere in the cooldown costs nothing.
+// Why: the rule is therefore narrow — hold for the one tick an attack started on, and eat on any other.
+// Why: safety wins over DPS, so an unknown attack tick or health low enough that a single hit could kill both eat immediately.
 interface EatTimingInput {
     /** True only on the tick the attack animation began. */
     attackedThisTick: boolean;
@@ -30,11 +21,8 @@ export function shouldHoldEat(input: EatTimingInput): boolean {
 }
 
 /**
- * Tracks the tick our attack animation started on.
- *
- * Keyed on animation *changes*, not on "an animation is playing": a swing
- * animation spans several ticks, so treating the whole span as the attack tick
- * would hold eating almost permanently.
+ * Tracks the tick our attack animation started on, keyed on animation changes.
+ * Why: a swing animation spans several ticks, so treating its whole span as the attack tick would hold eating almost permanently.
  */
 export class AttackClock {
     private lastAnim = -1;

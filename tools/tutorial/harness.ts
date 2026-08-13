@@ -22,16 +22,8 @@ type Rs2b0t = {
 /** Cold cache / first headed Chrome often spends minutes on jag + ondemand. */
 const BOOT_MS = Number(process.env.BOOT_MS) || 180_000;
 const LOGIN_MS = Number(process.env.LOGIN_MS) || 120_000;
-/**
- * Minimum wait after logout before the first login probe.
- *
- * Prefer clean **IF_BUTTON logout** (com 2458 / `logout:try_logout` → `p_logout`,
- * ClientProt.IF_BUTTON = 9). That ends the session promptly so probes succeed in
- * ~a few seconds (total mainlandAccount often ~9s). Unclean `client.logout()` /
- * socket drop leaves login response 5 ("try again in 60 secs") for much longer.
- *
- * Override RELOG_COOLDOWN_MS if a local engine still needs a longer hold.
- */
+/** Minimum wait after logout before the first login probe; override with RELOG_COOLDOWN_MS when a local engine needs a longer hold.
+ *  Why: a clean IF_BUTTON logout (com 2458 / `logout:try_logout` → `p_logout`) ends the session promptly so probes succeed in a few seconds, where an unclean `client.logout()` or socket drop leaves login response 5 ("try again in 60 secs") standing for much longer. */
 const RELOG_COOLDOWN_MS = Number(process.env.RELOG_COOLDOWN_MS) || 2_000;
 /** How long each login probe waits for ingame+scene before retrying. */
 const RELOG_PROBE_MS = Number(process.env.RELOG_PROBE_MS) || 4_000;
@@ -39,11 +31,8 @@ const RELOG_PROBE_MS = Number(process.env.RELOG_PROBE_MS) || 4_000;
 const RELOG_RETRY_MS = Number(process.env.RELOG_RETRY_MS) || 2_000;
 const RELOG_BUDGET_MS = Number(process.env.RELOG_BUDGET_MS) || 90_000;
 
-/**
- * Logout via the real logout UI button (if_button 2458 → ClientProt.IF_BUTTON).
- * Falls back to client.logout() if the button packet cannot be sent.
- * @see tools/lib/harness.ts logout() — same component id
- */
+/** Logout via the logout UI button (if_button 2458 → ClientProt.IF_BUTTON).
+ *  Falls back to client.logout() when the button packet cannot be sent. Why: 2458 is the same component id as LOGOUT_BUTTON_COM in tools/lib/harness.ts, so the two logout paths have to move together. */
 async function cleanLogout(page: Page): Promise<'ifbutton' | 'client'> {
     // logout:try_logout — tab-rooted; engine accepts without the logout tab open.
     const LOGOUT_BUTTON = 2458;
@@ -244,22 +233,8 @@ export async function getServerVarQuiet(page: Page, name: string): Promise<numbe
 // Lumbridge courtyard — same hop other live harnesses use (not a tutorial stage walk).
 const OFF_ISLAND_TELE = '0,50,50,20,20';
 
-/**
- * New account → off Tutorial Island without running TutorialBot.
- *
- * Uses CLIENT_CHEAT packets (`cheatQuiet`), not keyboard `::…` typing. On the
- * island the chat/tutorial UI often eats keystrokes, which looks like the bot
- * is "doing tutorial wrong" and stalls for a long time before setvar sticks.
- *
- * Flow:
- *   1. boot + login (fresh account)
- *   2. tele off-island + setvar tutorial 1000
- *   3. clean **IF_BUTTON logout** (com 2458) so the session ends immediately
- *   4. login again — side icons / tutorial UI lock refresh from the login payload
- *
- * Clean logout avoids the unclean-disconnect 60s "already logged in" hold; with
- * RELOG_COOLDOWN_MS≈2s the whole mainland hop is typically ~9s after boot.
- */
+/** New account → off Tutorial Island without running TutorialBot: boot and login, tele off-island and setvar tutorial 1000, clean IF_BUTTON logout (com 2458), then login again so the side icons and tutorial UI lock refresh from the login payload.
+ *  Why: CLIENT_CHEAT packets are used rather than keyboard `::…` typing, since the island chat/tutorial UI eats keystrokes and stalls for a long time before a setvar sticks; the clean logout avoids the unclean-disconnect 60s "already logged in" hold, so with RELOG_COOLDOWN_MS≈2s the hop runs ~9s after boot. */
 export async function mainlandAccount(page: Page, base: string, user: string): Promise<void> {
     const t0 = Date.now();
     console.log(`mainlandAccount: boot+login as '${user}'`);
@@ -304,12 +279,8 @@ export async function startScript(page: Page, name: string): Promise<void> {
     }, name);
 }
 
-/**
- * Click through level-up / chat continues until the chat modal stays closed.
- * `~maxme` (and bulk advancestat) queue a long chain of "Congratulations..." pages
- * that otherwise block movement and swallow the next typed cheat.
- * @see tools/gatheringbot-test.ts
- */
+/** Click through level-up / chat continues until the chat modal stays closed.
+ *  Why: `~maxme` and bulk advancestat queue a long chain of "Congratulations…" pages that block movement and swallow the next typed cheat. */
 export async function clearChatDialogs(page: Page, label = 'dialogs'): Promise<void> {
     type DialogAbi = {
         rs2b0t: {
@@ -360,14 +331,8 @@ export async function clearChatDialogs(page: Page, label = 'dialogs'): Promise<v
     }
 }
 
-/**
- * Close a leftover **main** modal.
- *
- * `clearChatDialogs` only drains the chat slot, and `~maxme` can leave a scroll
- * in the main one. A script that starts behind it looks alive and does nothing:
- * every talk it issues is refused with no message, so the run reads as a broken
- * `decide()` rather than a modal nobody closed.
- */
+/** Close a leftover main modal.
+ *  Why: `clearChatDialogs` drains the chat slot only and `~maxme` can leave a scroll in the main one; a script starting behind it has every talk refused with no message, so the run reads as a broken `decide()`. */
 export async function clearMainModal(page: Page): Promise<void> {
     type MainAbi = {
         rs2b0t: {
@@ -472,7 +437,7 @@ type SeedBankResult = { done: boolean; ok: boolean; reason: string; banked: Reco
 
 /**
  * Open a bank booth and read Bank.count for each expected item (no deposit).
- * Used to verify `givebank` / `~bankitem` seeds actually landed.
+ * Used to verify that `givebank` / `~bankitem` seeds landed.
  */
 async function verifyBankCounts(
     page: Page,
@@ -576,20 +541,8 @@ async function verifyBankCounts(
     );
 }
 
-/**
- * Seed items **directly into the bank** on a local engine.
- *
- * Prefer engine cheat `givebank <obj> <qty>` (ClientCheatHandler, no busy-guard).
- * Falls back to content debugproc `~bankitem <obj> <qty>` if givebank is absent.
- * Verifies once by opening a booth and reading Bank.count.
- *
- * Bulk fixtures also exist: `~bank_f2p` (no dialog), `~clearbank`, `~foodbank`.
- * Use those for blunt max kits — not for realistic low-level quest seeds.
- *
- * Seed after level-up dialogs are drained (`~bankitem` needs p_finduid).
- *
- * @see docs/reference/seeding-test-accounts.md
- */
+/** Seed items directly into the bank on a local engine: engine cheat `givebank <obj> <qty>` (no busy-guard), falling back to the content debugproc `~bankitem <obj> <qty>`, verified once by opening a booth and reading Bank.count.
+ *  Why: seed after level-up dialogs are drained, since `~bankitem` needs p_finduid. Bulk fixtures `~bank_f2p` (no dialog), `~clearbank` and `~foodbank` exist for blunt max kits, not for realistic low-level quest seeds. */
 async function applyBankSeedCmds(
     page: Page,
     items: readonly BankSeedItem[],

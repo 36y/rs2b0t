@@ -1,15 +1,5 @@
-/**
- * Temporarily replace properties on a live singleton.
- *
- * Prefer this over `mock.module`: Bun's module mocks are **global and permanent**
- * for the process (docs/reference/test-suites.md). Spreading the real module only
- * fixes missing named exports — the stub still poisons every later file that
- * needs the real behaviour.
- *
- * Usage:
- *   const restore = stubProps(Game, { tile: () => playerTile, inCombat: () => false });
- *   afterAll(restore);
- */
+/** Temporarily replace properties on a live singleton; the returned function restores them. */
+// Why: Bun's `mock.module` is process-global and permanent, and spreading the real module fixes only missing named exports while the stub poisons every later file.
 export function stubProps<T extends object>(target: T, props: Partial<T>): () => void {
     const keys = Object.keys(props) as (keyof T)[];
     const saved = new Map<keyof T, T[keyof T]>();

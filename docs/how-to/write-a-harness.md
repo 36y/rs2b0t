@@ -64,7 +64,7 @@ game stage to fill the page; a large viewport makes the game look blown up and
 flip-flops between harness prototypes. Prefer omitting `setViewportSize` /
 `viewport` entirely so the default applies.
 
-Some hard-won details:
+These details are not obvious from the code:
 
 - **Logging in auto-creates the account** on a local engine, so harnesses generate a
   fresh username per run rather than sharing state. With an always-on engine those
@@ -81,15 +81,14 @@ Some hard-won details:
   idle suites before `--apply`. Stagger multi-suite boots (`sleep 45` between
   launches) so logins do not thrash the same title loop.
 
-- **`type()` clicks the canvas first.** Keystrokes sent without focusing the canvas
-  are dropped.
+- **`type()` clicks the canvas first.** Keystrokes sent without focusing the canvas are dropped.
 - **Cheats need a clean dialog state.** `::~maxme` raises level-up dialogs that
   swallow the *next* typed command.
 - **Prove the bot worked, don't assume it.** Assert on game state — XP gained, items
   held, tiles reached — not on log lines.
 - Software rendering (SwiftShader) is unreliable for some harnesses; several need a
   real GPU. Parallel browsers also perturb door timing, so validate a door fix solo.
-- **`~maxme` grants stats and never gear.** A quest with a real fight in it needs
+- **`~maxme` grants stats and never gear.** A quest with a fight in it needs
   the harness to give and equip a kit, or the "max stats" account is punching a
   level-93 boss. `Equipment.equip()` awaits `Execution.delayUntil`, which needs a
   running script context and throws from `page.evaluate` — drive the Wield/Wear

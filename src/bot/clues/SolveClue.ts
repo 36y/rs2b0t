@@ -111,13 +111,9 @@ export class SolveClue implements Task {
     }
 
     /**
-     * Eat one bite when the pack can afford it. Trail upkeep is owned here, not
-     * left to the host: a whole trail runs inside this one task call, so a host's
-     * own Eat task never gets a turn between legs, and every `Sustain.run()` the
-     * executor pumps is a no-op unless a hook is installed. GreenDragon never
-     * installed one, so it fought hard-clue guardians — level-65 mages that keep
-     * hitting through Protect from Magic — on a full pack of lobsters without
-     * touching a single one.
+     * Why: a trail runs inside this one task call, so a host's own Eat task never gets a turn between legs.
+     * Why: `Sustain.run()` is a no-op unless a hook is installed, so trail upkeep is owned here rather than by the host.
+     * Why: hard-clue dig guardians are level-65 mages that keep hitting through Protect from Magic, so a trail without upkeep dies on a full pack.
      */
     private async eatIfHurt(): Promise<void> {
         const held = (): { name: string | null; interact(a: string): boolean | Promise<boolean> }[] =>
@@ -130,16 +126,10 @@ export class SolveClue implements Task {
         }
         this.host.log(`[clue] eating ${food[0].name} (${hp}/${maxHp} hp)`);
         await food[0].interact('Eat');
-        // Confirm on the bite leaving the pack, not on hp rising. A guardian's hit
-        // lands in the same tick as the heal, so hp routinely ends up *below* where
-        // it started and an hp-only check waits out its whole budget — and because
-        // Sustain.running is set for the duration, that is a total eating blackout
-        // exactly while damage is heaviest. Measured: 3s of no bites at 8/70 hp
-        // with seven lobsters in the pack.
-        // Two ticks, not five. A bite that lands confirms on the next tick; one
-        // the server dropped must be re-sent, and every tick spent waiting is a
-        // tick `Sustain.running` blanks every other pump. At three seconds that
-        // was a four-tick blackout measured taking a guardian from 45 hp to 2.
+        // Why: a guardian's hit lands in the same tick as the heal, so hp can end below where it started and an hp-only check waits out its full budget.
+        // Why: Sustain.running is set for the duration of that wait, blanking every other pump while damage is heaviest.
+        // Why: measured 3s of no bites at 8/70 hp with seven lobsters in the pack; at three seconds the four-tick blackout took a guardian from 45 hp to 2.
+        // Why: two ticks, not five — a bite that lands confirms on the next tick, and one the server dropped must be re-sent.
         const landed = await Execution.delayUntilTicks(
             () => held().length < food.length || Skills.effective('hitpoints') > hp,
             EAT_CONFIRM_TICKS
@@ -160,14 +150,9 @@ export class SolveClue implements Task {
     }
 
     /**
-     * A trail banks once at the start and never again, so a long one runs dry and
-     * then walks the rest of the way — often through the Wilderness — with nothing
-     * to eat. Upkeep was never the problem: `Sustain` is pumped on every walk pass
-     * and the hook is installed for the whole trail, but an empty pack has no bite
-     * to take. Go back for more instead.
-     *
-     * Bounded: one restock trip per dry spell, so an empty bank cannot put the bot
-     * in a bank-walk loop.
+     * Why: a trail banks once at the start, so a long one runs dry and walks the rest of the way — often through the Wilderness — with nothing to eat.
+     * Why: `Sustain` is pumped on every walk pass but an empty pack has no bite to take, so upkeep alone cannot cover a long trail.
+     * Why: bounded to one restock trip per dry spell, so an empty bank cannot put the bot in a bank-walk loop.
      */
     private needsFood(): boolean {
         if ((this.host.foodName() ?? '') === '') {
@@ -219,9 +204,8 @@ export class SolveClue implements Task {
     }
 
     /**
-     * Put back what the Entrana strip banked. Nothing else restores it: the
-     * grind bots only re-equip their configured weapon and shield, so armour
-     * stripped for the monk search stayed in the bank for good.
+     * Put back what the Entrana strip banked.
+     * Why: the grind bots only re-equip their configured weapon and shield, so nothing else reclaims stripped armour.
      */
     private async restoreStrippedGear(): Promise<void> {
         const want = this.strippedGear.filter(n => !Equipment.contains(n));
@@ -265,7 +249,7 @@ export class SolveClue implements Task {
             }
         }
 
-        // Keep anything that would not go back on, so the next trail retries it.
+        // Why: names that would not go back on stay listed so the next trail retries them.
         this.strippedGear = want.filter(n => !Equipment.contains(n));
         if (this.strippedGear.length > 0) {
             this.host.log(`[clue] could not re-equip ${this.strippedGear.join(', ')} — will retry`);
@@ -320,8 +304,7 @@ export class SolveClue implements Task {
         const coordItems = new Set(['sextant', 'watch', 'chart']);
         const rowItems = scrollId !== null ? (CLUE_DB[scrollId]?.items ?? []) : [];
         const rowItemNames = new Set(rowItems.map(n => n.toLowerCase()));
-        // One snapshot for the whole bank stop: which teleports this account can
-        // actually reach. A spell it cannot cast must not reserve a pack slot.
+        // Why: one snapshot per bank stop — a spell this account cannot cast must not reserve a pack slot.
         const kit = teleportKitFor(snapshotWorldState());
         const keepTeleports = this.host.useTeleports?.() ?? true;
         // Southbound Shantay Pass is baked but consumes a pass (#371). Keep/withdraw
@@ -332,9 +315,7 @@ export class SolveClue implements Task {
             if (entranaStrip && ENTRANA_RESTRICTED_GEAR_RE.test(name)) {
                 return false;
             }
-            // Food is deliberately NOT kept: a bot arriving from a grind holds a
-            // grind-sized load, which fills the pack and starves the trail kit.
-            // It goes to the bank here and comes back capped below.
+            // Why: a bot arriving from a grind holds a grind-sized food load that fills the pack, so food is banked here and comes back capped below.
             return protectedNames.has(n) || n.includes('clue') || n.includes('casket')
                 || n === SPADE_NAME.toLowerCase() || n === 'coins' || n === SHANTAY_PASS.toLowerCase()
                 || coordItems.has(n) || rowItemNames.has(n)
@@ -428,7 +409,7 @@ export class SolveClue implements Task {
         return true;
     }
 
-    /** What the trail can actually teleport with, for the pack log. */
+    /** What the trail can teleport with, for the pack log. */
     private describeTeleports(kit: TeleportKit): string {
         if (!(this.host.useTeleports?.() ?? true)) {
             return 'teleports off';
@@ -441,11 +422,9 @@ export class SolveClue implements Task {
     }
 
     /**
-     * Top the teleport runes up from the bank. Only the spells this account can
-     * cast are stocked — runes for a spell it has not learned are dead weight on a
-     * pack that needs six free slots for a hard casket. Jewellery is kept if the
-     * account already carries it but never fetched — charges make the names
-     * inexact. A missing rune is not fatal: the router simply walks instead.
+     * Why: only spells this account can cast are stocked — a hard casket needs six free slots, so runes for an unlearned spell are dead weight.
+     * Why: jewellery is kept when already carried but never fetched, since charges make the names inexact.
+     * Why: a missing rune is not fatal — the router walks instead.
      */
     private async stockTeleports(kit: TeleportKit): Promise<void> {
         if (!(this.host.useTeleports?.() ?? true)) {
@@ -467,9 +446,8 @@ export class SolveClue implements Task {
     }
 
     /**
-     * Top up prayer at an altar before a hard trail starts, since any of its legs
-     * can be a guarded dig. Low prayer never blocks a trail — the fight simply
-     * runs without a protection prayer.
+     * Top up prayer at an altar before a hard trail starts, since any of its legs can be a guarded dig.
+     * Why: low prayer never blocks a trail — the fight runs without a protection prayer.
      */
     private async topUpPrayer(scrollId: number | null): Promise<void> {
         const hardTrail = scrollId !== null && (CLUE_DB[scrollId]?.obj.includes('_hard_') ?? false);

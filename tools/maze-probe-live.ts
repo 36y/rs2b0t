@@ -1,9 +1,5 @@
-/**
- * Debug probe: tele into maze NW spawn, watch guardian until exit or 4 min.
- *
- * Content: mapzone 0_45_71, 16-door NW route ending chamber door 2910,4576,
- * then Touch Strange shrine 3634 → end_macro_maze.
- */
+/** Debug probe: tele into the maze NW spawn, watch the guardian until exit or 4 min.
+ *  Content: mapzone 0_45_71, 16-door NW route ending at chamber door 2910,4576, then Touch Strange shrine 3634 → end_macro_maze. */
 import { boot, bringUpOffIsland, cheatQuiet, launchBrowser, login, positionalArgs } from './lib/harness.js';
 
 const args = positionalArgs(process.argv.slice(2), 'http://localhost:8890');

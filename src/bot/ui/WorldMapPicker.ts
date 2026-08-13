@@ -1,20 +1,6 @@
 /**
- * Walkable-tile map picker for `type: 'tile'` settings.
- *
- * Loads the bot collision pack (same `collision.lcnav.gz` as the nav worker) and
- * draws a zoomable/pannable **dot grid of walkable tiles**. Click snaps to the
- * nearest walkable tile.
- *
- * When MapPicker `showBasemap` is on and `worldmap-basemap.manifest.json` +
- * PNG are deployed, a worldmap basemap is drawn under the dots.
- *
- * **No continuous render loop.** Paint runs only on user input / setting change,
- * coalesced to one `requestAnimationFrame` (pan/zoom do not full-redraw every event).
- * **Basemap rebuild** is manual only (Rebuild + in-app confirm). Local IndexedDB
- * cache is keyed by client `/crc` + bake prefs; on mismatch the picker falls back
- * to the deploy PNG and asks the user to Rebuild — never silent MapView on open.
- *
- * Public API: `WorldMapPicker.open()` → `{ x, z, level } | null`.
+ * Walkable-tile map picker for `type: 'tile'` settings: loads the bot collision pack (same `collision.lcnav.gz` as the nav worker), draws a zoomable dot grid of walkable tiles under an optional worldmap basemap, and snaps a click to the nearest walkable tile. Public API: `WorldMapPicker.open()` → `{ x, z, level } | null`.
+ * Why: there is no continuous render loop — paint runs only on user input or setting change, coalesced to one `requestAnimationFrame` — and basemap rebuild is manual only, so opening the picker never runs MapView.
  */
 import { gunzipSync } from 'fflate';
 import { PathFinder } from '../nav/PathFinder.js';
@@ -184,8 +170,7 @@ function tileKey(t: { x: number; z: number; level: number } | null): string {
 
 /**
  * You Are Here marker.
- * - Basemap mode: classic media `mapmarker` pin when available, else yellow X.
- * - Classic dots mode: soft yellow glow + “You Are Here” label.
+ * Basemap mode draws the classic media `mapmarker` pin when available, else a yellow X; classic dots mode draws a soft yellow glow with a “You Are Here” label.
  */
 function paintYouAreHere(
     ctx: CanvasRenderingContext2D,
@@ -261,12 +246,7 @@ function paintYouAreHere(
 }
 
 /**
- * Load basemap once per page (never runs MapView):
- *  1. IndexedDB hit when **CRC + bake prefs** match → use local.
- *  2. `/crc` unavailable but local exists → use local with `crc-unverified`.
- *  3. Local CRC or prefs mismatch → deploy PNG + hint (user must **Rebuild map…**).
- *  4. Else deploy PNG/manifest next to the bot bundle.
- *
+ * Load basemap once per page, never running MapView: an IndexedDB hit on matching CRC + bake prefs wins, then local marked `crc-unverified` when `/crc` is unavailable, then the deploy PNG plus a Rebuild hint when CRC or prefs mismatch, then the deploy PNG/manifest next to the bot bundle.
  * Manual Rebuild always regenerates and overwrites the local entry.
  */
 async function loadBasemap(): Promise<LoadedBasemap | null> {
@@ -768,10 +748,8 @@ export class WorldMapPicker {
                 const minZ = Math.floor(centreZ - halfH) - step;
                 const maxZ = Math.ceil(centreZ + halfH) + step;
 
-                // Walkable dots:
-                // - basemap off → always (classic picker)
-                // - basemap on + L1–L3 → yes (surface basemap is L0 art only; dots prove level changed)
-                // - basemap on + L0 → no (clean map look)
+                // Walkable dots: always with basemap off (classic picker), on L1–L3 with basemap on, never on L0 with basemap on (clean map look).
+                // Why: the surface basemap is L0 art only, so the dots are what prove the level changed.
                 syncBasemapChrome();
                 const theme = resolveMapPickerDotTheme();
                 const showDots = theme.showWalkable || (theme.showBasemap && level !== 0);
@@ -870,8 +848,7 @@ export class WorldMapPicker {
 
             /**
              * Fit canvas bitmap to leftover space under chrome.
-             * Multibox client is 1100×620 — a fixed 720×540 map used to push
-             * toolbar/confirm off-screen and get clipped.
+             * Why: the multibox client is 1100×620, where a fixed 720×540 map pushes the toolbar and confirm off-screen and gets clipped.
              */
             const sizeCanvas = (): void => {
                 if (closed) {
@@ -978,9 +955,7 @@ export class WorldMapPicker {
                 requestPaint();
             });
 
-            // Rebuild-layer prefs (Basemap rebuild group) are draft while Settings is open.
-            // Snapshot is the baseline restored on close; successful Rebuild refreshes it so
-            // further uncommitted edits still discard to the last rebuilt state.
+            // Rebuild-layer prefs (Basemap rebuild group) are draft while Settings is open; the snapshot is the baseline restored on close, and a successful Rebuild refreshes it so further uncommitted edits discard to the last rebuilt state.
             // Display keys persist immediately for live preview.
             let bakeSettingsSnapshot: ReturnType<typeof snapshotMapPickerBakeSettings> | null = null;
 

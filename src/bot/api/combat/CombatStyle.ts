@@ -13,8 +13,8 @@ const COMBAT_STYLE: Record<string, MeleeCombatStyle> = {
 };
 
 /**
- * Melee styles a script may train. Re-applied on every login, because the
- * combat-mode varp is not persisted.
+ * Melee styles a script may train.
+ * Why: re-applied on every login, because the combat-mode varp is not persisted.
  * @see docs/reference/api-game.md
  */
 export const COMBAT_STYLE_OPTIONS: MeleeCombatStyle[] = ['attack', 'strength', 'controlled', 'defence'];
@@ -41,9 +41,8 @@ export function parseCombatStyle(name: string): MeleeCombatStyle {
 }
 
 /**
- * Parse a melee training style without defaulting. Used to detect legacy
- * `combatStyle=defence` (etc.) after scripts split that field into
- * combatStyle=melee|mage|range + meleeStyle.
+ * Parse a melee training style without defaulting.
+ * Why: detects legacy `combatStyle=defence` and the like, after scripts split that field into combatStyle=melee|mage|range plus meleeStyle.
  */
 export function tryParseCombatStyle(name: string): MeleeCombatStyle | null {
     return COMBAT_STYLE[name.trim().toLowerCase()] ?? null;
@@ -53,9 +52,7 @@ type CombatKind = 'melee' | 'mage' | 'range';
 
 /**
  * Resolve combatStyle + meleeStyle after the melee|mage|range split.
- * When storage still has the pre-split melee training value in combatStyle
- * (e.g. "defence"), treat it as melee + that training style so it is not
- * silently coerced to strength via the meleeStyle default (#461).
+ * Why: storage still holding a pre-split melee value in combatStyle (say "defence") is read as melee plus that training style, so it is not silently coerced to strength via the meleeStyle default (#461).
  */
 export function resolveSplitCombatSettings(
     rawCombatStyle: string,
@@ -78,17 +75,11 @@ export function resolveSplitCombatSettings(
     };
 }
 
-/**
- * Resolve a requested training style against the labelled buttons in the
- * current weapon's combat interface. This follows the interface's actual
- * Accurate/Aggressive/Controlled/Defensive metadata: button count and position
- * do not imply a style, and duplicate styles are valid.
- *
- * If the requested style is unavailable, use the last defensive option. This
- * includes the issue's controlled-on-three-mode case and is also deterministic
- * for unusual layouts such as spears and polearms. An incomplete interface
- * without either an exact match or a defensive option fails closed.
- */
+// Why: this follows the interface's Accurate/Aggressive/Controlled/Defensive metadata, because button count and position do not imply a style and duplicate styles are valid.
+// Why: an unavailable requested style falls to the last defensive option, which covers the controlled-on-three-mode case and stays deterministic for spears and polearms.
+// Why: an incomplete interface with neither an exact match nor a defensive option fails closed.
+
+/** Resolve a requested training style against the labelled buttons in the current weapon's combat interface. */
 export function resolveCombatStyle(style: MeleeCombatStyle, offeredModes: readonly CombatModeLabel[]): CombatStyleResolution | null {
     const seenModes = new Set<number>();
     const modes = offeredModes.flatMap(option => {

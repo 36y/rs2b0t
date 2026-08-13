@@ -18,18 +18,12 @@ import type { WorldStateData } from './worldStateData.js';
 import { worldStateFromData } from './worldStateData.js';
 import { wildernessLevelAt } from './wilderness.js';
 
-/**
- * Essence-mine session return for plan filters.
- *
- * `%exit_essence_mine_coord` (varp 64) is **server-only** (no transmit=yes) —
- * see docs/local/varp-transmit-inventory.md. We never trust reader.varp(64).
- * Source: EssenceSession (set when the bot completes a wizard entry hop), or
- * harness override when cheat-tele into the mine.
- *
- * When unknown, omit the field so requires fail-open (pack / offline tools).
- * Content default on portal when null is Sedridor — live bots that entered via
- * a wizard will have session set.
- */
+// Why: `%exit_essence_mine_coord` (varp 64) is server-only with no transmit=yes — see docs/local/varp-transmit-inventory.md — so reader.varp(64) is never trusted.
+// Why: the source is EssenceSession, set when the bot completes a wizard entry hop, or a harness override on a cheat-tele into the mine.
+// Why: when unknown the field is omitted so requires fail open for pack and offline tools.
+// Why: the content default on the portal when null is Sedridor, and a live bot that entered via a wizard has the session set.
+
+/** Essence-mine session return for plan filters. */
 function snapshotEssenceExitReturn(): EssenceReturnId | undefined {
     return EssenceSession.getReturnId();
 }

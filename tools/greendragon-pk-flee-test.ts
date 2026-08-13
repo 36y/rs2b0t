@@ -1,21 +1,7 @@
-/**
- * GreenDragon PK-threat behaviour, two accounts.
- *
- * The change under test: a player merely standing nearby is not a threat (they
- * are almost all bots), only one actually attacking us is.
- *
- *   1 bystander — a second account idles 3 tiles from the bot at the dragon
- *     field. The bot must keep grinding. Before this change it fled.
- *   2 attacker  — the same account attacks. The bot must log
- *     `escaping (under attack)`.
- *
- * Phase 2 runs at empty low wilderness on purpose: these zones are single-way,
- * so while ANY npc is on the bot the engine refuses the PvP attack outright
- * ("Someone else is already fighting your opponent."). The attack can only land
- * where the bot is not fighting, so the phase needs a tile with no monsters.
- *
- *   HEADED=1 bun tools/greendragon-pk-flee-test.ts
- */
+/** GreenDragon PK-threat behaviour, two accounts: a bystander idling 3 tiles away must not scatter the bot, and the same account attacking must produce `escaping (under attack)`.
+ *  Why: phase 2 runs at empty low wilderness — the zone is single-way, so while any npc is on the bot the engine refuses the PvP attack outright ("Someone else is already fighting your opponent."). */
+
+//   HEADED=1 bun tools/greendragon-pk-flee-test.ts
 import type { Page } from 'playwright-core';
 import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, setSettings } from './lib/harness.js';
 
@@ -25,11 +11,8 @@ const BOT_USER = process.env.BOT_NAME || `pkb${stamp}`;
 const FOE_USER = process.env.FOE_NAME || `pkf${stamp}`;
 
 const DRAGON_FIELD = { x: 3096, z: 3814 };
-/**
- * Just north of the Edgeville ditch. 3096,3560 looks quiet but has monsters the
- * bot kills — and while an NPC is on it, single-way combat refuses the PvP
- * attack outright, so the flee can never arm there.
- */
+/** North of the Edgeville ditch.
+ *  Why: 3096,3560 looks quiet but has monsters the bot kills, and single-way combat refuses the PvP attack while an NPC is on it, so the flee can never arm there. */
 const LOW_WILDY = { x: 3100, z: 3525 };
 const SCIMITAR = 1333;
 const SHIELD = 1540;
@@ -231,9 +214,7 @@ try {
         foodReserve: 4,
         anchorTile: `${LOW_WILDY.x},${LOW_WILDY.z},0`
     });
-    // NOT ~maxme: that maxes every stat and pushes the bot's combat level far
-    // above the foe's, and low wilderness refuses attacks across a level gap
-    // ("Your level difference is too great!"). Re-setting hp heals without it.
+    // Why: ~maxme pushes the bot's combat level far above the foe's and low wilderness refuses attacks across a level gap ("Your level difference is too great!"); re-setting hp heals without it.
     await cheatQuiet(bot, 'setstat hitpoints 99', 1200);
     if (!(await teleArrive(bot, LOW_WILDY))) {
         fail('bot never reached the low wilderness tile');

@@ -6,17 +6,10 @@ import { BotDiag } from './diag/BotDiag.js';
 import { paintNavPathInGame } from '../nav/pathScenePaint.js';
 import { RenderGate } from './RenderGate.js';
 
-// The era client runs its logic loop at 50/sec so a human sees smooth animation and
-// instant input. The server ticks every 600ms and a bot reads state, not pixels, so 20/sec
-// is still 12 logic ticks per server tick -- and on a wall, every iframe is spending that
-// budget on one shared main thread.
-//
-// deltime also gates frameDelay, so it caps the draw rate: at 20Hz the focused client
-// falls to ~13 FPS and walk animations visibly crawl. Exactly one client is ever being
-// looked at, so that one keeps the era rate and the rest stay cheap.
-//
-// Title / logged-out backgrounds have no world simulation that scripts care about;
-// 10 Hz is enough for AutoRelogin + UI and halves steady-state CPU on a login wall.
+// Why: the era client runs its logic loop at 50/sec for smooth animation and instant input, but the server ticks every 600ms and a bot reads state rather than pixels, so 20/sec is still 12 logic ticks per server tick.
+// Why: on a wall, every iframe spends that budget on one shared main thread.
+// Why: deltime also gates frameDelay and so caps the draw rate — at 20Hz the focused client falls to ~13 FPS and walk animations visibly crawl, so the one client being looked at keeps the era rate and the rest stay cheap.
+// Why: title and logged-out backgrounds have no world simulation that scripts care about, so 10 Hz covers AutoRelogin plus UI and halves steady-state CPU on a login wall.
 const FOCUSED_LOGIC_HZ = 50;
 const BACKGROUND_INGAME_LOGIC_HZ = 20;
 const BACKGROUND_TITLE_LOGIC_HZ = 10;
@@ -51,9 +44,8 @@ export default class BotClient extends Client {
     override async mainloop(): Promise<void> {
         this.syncLogicRate();
         await super.mainloop();
-        // Only the host frame is timed: it is synchronous, and it is where the cost
-        // lives (script + producer work dwarfs the client's own loop). super.mainloop()
-        // is async, so timing it would measure yields to other bots, not occupancy.
+        // Why: only the host frame is timed — it is synchronous and it is where the cost lives, since script plus producer work dwarfs the client's own loop.
+        // Why: super.mainloop() is async, so timing it would measure yields to other bots rather than occupancy.
         BotDiag.measure('logic', () => BotHost.onFrame());
     }
 

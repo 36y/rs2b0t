@@ -1,14 +1,6 @@
-/**
- * Live proof for #432 — AIOQuester "Skip quest".
- *
- * Queue two short quests. Start AIOQuester, wait until the first is RUNNING,
- * call requestSkip() on the bot, and assert:
- *   1. engine logs a session block for the skipped quest
- *   2. the next quest becomes the running target
- *   3. the skipped quest is never re-selected this session
- *
- *   bun tools/aio-skip-quest-432-live.ts [http://127.0.0.1:8888]
- */
+// Live proof for #432 — AIOQuester "Skip quest": [base].
+
+//   bun tools/aio-skip-quest-432-live.ts [http://127.0.0.1:8888]
 import type { Page } from 'playwright-core';
 import { launchBrowser, positionalArgs } from './lib/harness.js';
 import { cheatQuiet, mainlandAccount, startScript, teleTo } from './tutorial/harness.js';

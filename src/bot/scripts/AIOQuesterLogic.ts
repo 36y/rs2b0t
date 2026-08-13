@@ -28,11 +28,9 @@ export function resolveConsumeAction(actions: readonly string[]): string | null 
     return null;
 }
 
-/**
- * Select one eligible item and its exact consume operation. A fitting heal wins
- * across the whole pack before the low-HP safety floor is considered, so a
- * large food in an earlier slot cannot veto a later Cake bite that fits.
- */
+// Why: a fitting heal wins across the whole pack before the low-HP safety floor is considered, so a large food in an earlier slot cannot veto a later Cake bite that fits.
+
+/** Selects one eligible item and its consume operation. */
 export function selectSustainConsumable<T extends SustainInventoryItem>(
     items: readonly T[],
     foods: readonly string[],
@@ -67,11 +65,10 @@ export function selectSustainConsumable<T extends SustainInventoryItem>(
     return selected ? { item: selected.item, action: selected.action } : null;
 }
 
-/**
- * Merge the user's general food choice with the active quest's survival policy.
- * Each food expands to every form it is eaten down through, so a bitten cake is
- * still recognised as food. Eat threshold is food-heal based (see food.ts #465).
- */
+// Why: each food expands to every form it is eaten down through, so a bitten cake is still recognised as food.
+// Why: the eat threshold is food-heal based (see food.ts, #465).
+
+/** Merges the user's general food choice with the active quest's survival policy. */
 export function resolveSustainPolicy(
     configuredFood: string | null,
     quest?: QuestSustain

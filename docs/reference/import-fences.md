@@ -67,14 +67,13 @@ breaks every exemption rather than failing loudly.
 
 Every pattern began with `#` (`#/client/*`, `#3rdparty/*`, …), and ESLint compiles
 `no-restricted-imports` group patterns with gitignore semantics, where a leading `#`
-marks a comment line. The whole group was discarded at config load, so the fence never
+marks a comment line. The group was discarded at config load, so the fence never
 fired once. The patterns are escaped (`'\\#/client/*'`) and it now errors.
 
 Two bypasses survive the escape:
 
 - `patterns` does not cover dynamic `import()`.
-- The DOM fence's `no-restricted-globals` is laundered by
-  `(globalThis as {document?: Document}).document`.
+- The DOM fence's `no-restricted-globals` is laundered by `(globalThis as {document?: Document}).document`.
 
 ## Prove a fence fires before trusting it
 

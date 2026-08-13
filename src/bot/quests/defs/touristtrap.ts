@@ -21,11 +21,10 @@ import type { QuestModule, QuestSnapshot, QuestStep } from '../engine/types.js';
 import { earnQuestCoinsStep } from '../exec/fundCoins.js';
 import { QuestFood } from '../food.js';
 
-/**
- * The client-visible Tourist Trap oracle.  The journal deliberately collapses the hidden
- * transport stages 19..26 and reward choices 27..29, so those ranges are resolved through
- * authoritative world/inventory probes below rather than guessed varps.
- */
+// Why: the journal deliberately collapses the hidden transport stages 19..26 and reward choices 27..29.
+// Why: those ranges are resolved through authoritative world and inventory probes below rather than guessed varps.
+
+// The client-visible Tourist Trap oracle.
 export const TOURIST_TRAP_STAGE = {
     NOT_STARTED: 0,
     STARTED: 1,
@@ -178,9 +177,8 @@ const MINE_ENTRANCE = new Tile(3301, 3036, 0);
 // (3279, 9420) tile is visually plausible but belongs to a sealed collision component.
 const CAVE_GUARD = new Tile(3278, 9415, 0);
 const AL_SHABIM = new Tile(3171, 3025, 0);
-// Interior tent tiles (e.g. 3169,3046) are a sealed collision component — walk
-// stops as "unreachable" from Shantay/Irena with best≈135. Approach one tile
-// south of the door, then Walk-through into the tent for the anvil.
+// Why: interior tent tiles such as (3169,3046) are a sealed collision component, and a walk stops as "unreachable" from Shantay or Irena with best about 135.
+// Why: the approach is one tile south of the door, then Walk-through into the tent for the anvil.
 const BEDABIN_TENT_APPROACH = new Tile(3169, 3045, 0);
 const EXPERIMENTAL_ANVIL = new Tile(3171, 3048, 0);
 const CAMP_LADDER = new Tile(3290, 3036, 0);
@@ -828,9 +826,8 @@ async function waitOutCombat(timeoutMs: number): Promise<boolean> {
 }
 
 async function crossShantayPass(log: (m: string) => void): Promise<boolean> {
-    // The pass loc is on the south side of its own closed collision barrier. Walking to that
-    // loc from the mainland asks the web walker for an impossible pre-interaction route, so
-    // approach it from the side the player is actually on before dispatching Go-through.
+    // Why: the pass loc is on the south side of its own closed collision barrier, so walking to it from the mainland asks the web walker for an impossible pre-interaction route.
+    // Why: the approach is therefore made from the side the player is on before dispatching Go-through.
     if (!(await walk(SHANTAY_NORTH_APPROACH, 1, log))) return false;
     const pass = locAt([LOC.SHANTAY_PASS], 'Go-through', SHANTAY_PASS, 6);
     if (!pass || !(await pass.interact('Go-through'))) return false;
@@ -884,9 +881,8 @@ async function enterCamp(log: (m: string) => void): Promise<boolean> {
 }
 
 async function leaveCamp(log: (m: string) => void): Promise<boolean> {
-    // The outer gate only rejects slave clothing; it does not require a complete desert outfit.
-    // Prefer an atomic swap when the full outfit survived, but still allow recovery after a
-    // missing desert piece by stripping the slave disguise before leaving.
+    // Why: the outer gate only rejects slave clothing and does not require a complete desert outfit.
+    // Why: an atomic swap is preferred when the full outfit survived, with recovery after a missing desert piece by stripping the slave disguise before leaving.
     const hasFullDesertOutfit = DESERT_OUTFIT.every(item => Equipment.contains(item) || Inventory.contains(item));
     const safelyDressed = hasFullDesertOutfit
         ? await ensureEquipment(DESERT_OUTFIT, [...DESERT_OUTFIT, ITEM.PICKAXE], log)
@@ -1120,9 +1116,8 @@ function liveHasSlaveOutfit(): boolean {
 async function recoverSlaveOutfitFromRowdy(log: (m: string) => void): Promise<boolean> {
     if (liveHasSlaveOutfit()) return true;
 
-    // The live Rowdy-slave death script checks the backpack only. Move every surviving worn
-    // piece into the pack before the first kill so its deterministic shirt -> robe -> boots
-    // sequence cannot repeat an earlier piece.
+    // Why: the live Rowdy-slave death script checks the backpack only.
+    // Why: every surviving worn piece moves into the pack before the first kill, so its deterministic shirt, robe, boots sequence cannot repeat an earlier piece.
     const requiredSlots = SLAVE_OUTFIT.filter(item => !Inventory.contains(item)).length;
     if (Inventory.free() < requiredSlots && !(await dropPunishmentJunkUntil(requiredSlots, log))) {
         return false;
@@ -1203,10 +1198,8 @@ async function escapeUndergroundJail(log: (m: string) => void): Promise<boolean>
     }
     while (punishmentRockCount() < 15) {
         const before = punishmentRockCount();
-        // There are identically named punishment rocks across the closed gate. Once the nearby
-        // veins are depleted, a distance-only query otherwise clicks one in the other component
-        // forever. Keep the interaction on a rock whose tile (or cardinal interaction edge) is
-        // reachable from the live jail component and wait for a local vein to respawn if needed.
+        // Why: identically named punishment rocks stand across the closed gate, so once the nearby veins are depleted a distance-only query clicks one in the other component forever.
+        // Why: the interaction stays on a rock whose tile or cardinal interaction edge is reachable from the live jail component, waiting for a local vein to respawn if needed.
         const rock = Locs.query()
             .where(loc => loc.id === LOC.PUNISHMENT_ROCK
                 && Reachability.canReach(loc.tile(), { adjacentOk: true }))
@@ -1379,9 +1372,8 @@ async function returnToPunishmentMineForOutfit(log: (m: string) => void): Promis
         area = touristTrapArea(Game.tile());
     }
     if (area === 'mineLower' && Inventory.contains(ITEM.ANA_BARREL)) {
-        // A guard capture would delete Ana's barrel without establishing a recovery transport
-        // bit. Put her on the source-authored lift first so the collapsed-stage probe can safely
-        // retrieve her after the disguise has been restored.
+        // Why: a guard capture deletes Ana's barrel without establishing a recovery transport bit.
+        // Why: she goes on the source-authored lift first, so the collapsed-stage probe can retrieve her after the disguise has been restored.
         if (!(await useItemOnLoc(ITEM.ANA_BARREL, [LOC.LIFT_BUCKET], LIFT_BUCKET, log, LIFT_GUARD_DIALOG))) return false;
         if (!(await Execution.delayUntil(() => !Inventory.contains(ITEM.ANA_BARREL), 8000))) return false;
     }

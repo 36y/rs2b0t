@@ -202,12 +202,10 @@ export default class CoalTrucks extends LoopingBot {
             await Execution.delayTicks(2);
             return;
         }
-        // A rock yields one coal and depletes, so return on the gain and let the next
-        // loop pick a live rock. Waiting out the stall on a spent rock was costing the
-        // whole 20s: measured 1 coal / 20s, against ~1 coal / 2s once this returns early.
-        // A swing that stops is the other way out: a stolen rock or a manual click ends
-        // it with no coal, and no gain condition ever fires. Two stages because the swing
-        // has not begun yet — a bare `!animating` would be true at once and re-click forever.
+        // Why: a rock yields one coal and depletes, so this returns on the gain and lets the next loop pick a live rock.
+        // Why: waiting out the stall on a spent rock costs the whole 20s — measured 1 coal / 20s, against ~1 coal / 2s once this returns early.
+        // Why: a swing that stops is the other way out, since a stolen rock or a manual click ends it with no coal and no gain condition fires.
+        // Why: two stages, because the swing has not begun yet and a bare `!animating` would be true at once and re-click forever.
         const view = (): MineView => ({
             gained: Inventory.count(COAL) > before,
             packFull: Inventory.isFull(),
@@ -307,9 +305,8 @@ export default class CoalTrucks extends LoopingBot {
         this.bankFails = 0;
         try {
             const held = Inventory.count(COAL);
-            // Everything but the pickaxe. Random events leave coins and junk that the
-            // truck will not take, and anything kept squats a coal slot on every future
-            // load — so the keep-list is exactly the one pickaxe in use, spares included.
+            // Why: random events leave coins and junk the truck will not take, and anything kept squats a coal slot on every future load.
+            // Why: the keep-list is the one pickaxe in use, spares included.
             const keep = this.heldPickaxe();
             await Bank.depositAllMatching(depositAllExcept(keep ? [keep] : []));
             await Execution.delayTicks(1);

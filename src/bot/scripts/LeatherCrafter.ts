@@ -41,8 +41,8 @@ interface LeatherKind {
     recipes: Recipe[];
 }
 
-// levels/quantities are the engine's craft_leather_table; chaps deliberately has
-// no make10 because all three of its buttons make one (engine-side)
+// Why: the levels and quantities are the engine's craft_leather_table.
+// Why: chaps deliberately has no make10, since all three of its buttons make one engine-side.
 const LEATHERS: Record<string, LeatherKind> = {
     Leather: {
         leatherId: 1741,

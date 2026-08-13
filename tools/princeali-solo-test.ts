@@ -1,14 +1,9 @@
-// docs/how-to/write-a-harness.md
-//
-// Prince Ali Rescue, one quest at a time.
-//
+// Prince Ali Rescue, one quest at a time: --stage 30 --give beer:3 --keystatus 1.
+// Why: the bank is seeded with coins alone — seeding a stage with the tools that stage needs is what let every Watch Tower stage-10 test pass while the quest could not mine.
+
 //   bun tools/princeali-solo-test.ts                          uncheated 0 -> 110
 //   bun tools/princeali-solo-test.ts --stage 30 --give beer:3  from a jumped stage
 //   bun tools/princeali-solo-test.ts --stage 20 --keystatus 1  the already-forged wedge
-//
-// The bank is seeded with coins and nothing else. Seeding a stage with the tools that
-// stage needs is what let every Watch Tower stage-10 test pass while the quest could
-// not actually mine.
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 
@@ -49,9 +44,7 @@ interface SeedResult {
     banked: number;
 }
 
-// The page loads the BUILT bundle, so a source edit is invisible until it is rebuilt
-// and copied into the engine's public/bot/. Skipping this silently tests the old code —
-// it cost several runs to notice, so it is no longer optional.
+// Why: the page loads the built bundle, so a source edit is invisible until it is rebuilt and copied into the engine's public/bot/ — skipping this silently tests the old code.
 if (!argv.includes('--no-deploy')) {
     deployBundle();
 }

@@ -3,12 +3,8 @@ import { bankDistance } from '../geometry/distance.js';
 import Tile from '../geometry/Tile.js';
 
 /**
- * Shared gather camp: home pin + bank stand for Fisher / Miner / Woodcutter.
- *
- * Membership (ReturnToAnchor / soft wander bound) uses {@link campRadius}; fishing
- * hop chase while in camp uses {@link chaseRadius} measured from the player.
- * `verified` marks camps confirmed via live pathability + resource checks
- * (`bun tools/verify-gathering-locations.ts` + visual stand polish).
+ * Shared gather camp: home pin + bank stand for Fisher / Miner / Woodcutter. Membership (ReturnToAnchor / soft wander bound) uses {@link campRadius}, while fishing hop chase inside camp uses {@link chaseRadius} measured from the player.
+ * `verified` marks camps confirmed via live pathability and resource checks (`bun tools/verify-gathering-locations.ts` plus visual stand polish).
  */
 export interface GatheringLocation {
     name: string;
@@ -41,9 +37,8 @@ export const DEFAULT_BOOTH_OP = 'Use-quickly';
 export const DEFAULT_CAMP_RADIUS = 64;
 
 /**
- * Soft prefer-near-player radius for named camps (not a hard exclusion).
- * Any matching spot inside camp membership is still valid; this only ranks
- * nearby hops first when both exist.
+ * Soft prefer-near-player radius for named camps, not a hard exclusion.
+ * Any matching spot inside camp membership stays valid; this only ranks nearby hops first when both exist.
  */
 export const DEFAULT_CHASE_RADIUS = 40;
 
@@ -58,9 +53,8 @@ export function resolveChaseRadius(chaseRadius: number | null | undefined, fallb
 }
 
 /**
- * Engine map-square edge length. Auto only snaps to a preset when the start
- * tile shares this 64×64 chunk with the camp spot — otherwise freeform
- * (location null, nearest bank, start-tile leash).
+ * Engine map-square edge length.
+ * Auto snaps to a preset only when the start tile shares this 64×64 chunk with the camp spot; otherwise freeform (location null, nearest bank, start-tile leash).
  */
 export const MAP_SQUARE = 64;
 
@@ -90,12 +84,8 @@ export function boothFields(loc: GatheringLocation | null | undefined): {
 }
 
 /**
- * Resolve a location setting against a skill table.
- * - None → null (power / drop mode)
- * - named → case-insensitive match
- * - Auto → nearest preset whose spot shares the start tile's 64×64 map square
- *   (prefer same level). Outside every preset chunk → null (freeform: start-tile
- *   leash + nearest bank). None is the only power/drop mode.
+ * Resolve a location setting against a skill table: None → null (the only power/drop mode), a name → case-insensitive match, Auto → nearest preset whose spot shares the start tile's 64×64 map square, preferring the same level.
+ * Auto outside every preset chunk also returns null (freeform: start-tile leash + nearest bank).
  */
 export function resolveGatheringLocation<T extends GatheringLocation>(
     setting: string,

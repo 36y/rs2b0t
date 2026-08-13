@@ -38,8 +38,7 @@ export function pickByLine(lines: string[], options: string[], rules: readonly L
     if (said.length === 0) {
         return null;
     }
-    // Longest first: overlapping phrases like "cur tanath" and "ar cur" must not
-    // let the shorter rule win on a line that contains both.
+    // Why: longest-first matching, so an overlapping shorter phrase such as "ar cur" cannot win on a line that also contains "cur tanath".
     const hit = [...rules]
         .sort((a, b) => b.whenLine.length - a.whenLine.length)
         .find(rule => said.includes(rule.whenLine.toLowerCase()));
@@ -223,8 +222,7 @@ export async function openDialogue(npcName: string, log: (m: string) => void): P
         log(`no '${npcName}' nearby to talk to`);
         return false;
     }
-    // An NPC who wandered behind a shut door is in the scene and inside the leash,
-    // yet unreachable — Reach opens the door rather than waiting out the talk.
+    // Why: an NPC who wandered behind a shut door is in the scene and inside the leash yet unreachable, so Reach opens the door rather than waiting out the talk.
     const status = await Reach.entityOp({
         find,
         op: talkOp(npc.actions())!,
@@ -248,10 +246,10 @@ export async function talkThrough(npcName: string, prefer: string[], log: (m: st
     return driveDialog(prefer, log);
 }
 
+// Why: guessing is harmful wherever the unmatched option bites — several ogres offer "I have come to kill you" as the alternative.
+
 /**
- * Like `talkThrough`, but abandons the dialogue instead of guessing when no
- * preferred option matches. Use it wherever the unmatched option is harmful —
- * several ogres offer "I have come to kill you" as the alternative.
+ * Like `talkThrough`, but abandons the dialogue instead of guessing when no preferred option matches.
  * @see docs/reference/quest-primitives.md
  */
 export function talkStrict(npcName: string, prefer: string[], log: (m: string) => void): Promise<boolean> {
@@ -277,9 +275,7 @@ export async function talkChoosingBy(
             return false;
         }
         const opts = ChatDialog.options();
-        // Capture the NPC's line only while no option list is up: the options page
-        // is itself made of text components, and would otherwise overwrite the very
-        // phrase the rules match against.
+        // Why: the options page is itself made of text components, so capturing the NPC's line while an option list is up would overwrite the phrase the rules match against.
         if (opts.length === 0 && ChatDialog.isOpen()) {
             const texts = ChatDialog.texts();
             if (texts.length > 0) {

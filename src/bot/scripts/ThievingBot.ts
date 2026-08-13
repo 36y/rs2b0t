@@ -113,9 +113,9 @@ export default class ThievingBot extends TaskBot {
             }
         });
 
-        // Eat before Steal so low-HP bites happen during stun downtime (can't
-        // pickpocket anyway). Steal before Loot so coins don't pull us off a guard.
-        // Loot also refuses while stunned and only takes adjacent drops.
+        // Why: Eat sits before Steal so low-HP bites happen during stun downtime, when pickpocketing is impossible anyway.
+        // Why: Steal sits before Loot so coins do not pull the bot off a guard.
+        // Why: Loot refuses while stunned and only takes adjacent drops.
         this.add(
             new ContinueDialog(),
             new EatFood(this),

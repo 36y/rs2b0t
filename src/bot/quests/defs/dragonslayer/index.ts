@@ -22,7 +22,7 @@ const GUILDMASTER: NpcStop = {
     npc: 'Guild master', anchor: DS_NPC.GUILDMASTER, leash: 8,
     prefer: ['Do you know where I could get a Rune Plate mail body?']
 };
-/** Only the walk; the goal loop below decides what he is actually asked. */
+/** Only the walk — the goal loop below decides what he is asked. */
 const OZIACH: NpcStop = { npc: 'Oziach', anchor: DS_NPC.OZIACH, leash: 6, prefer: [] };
 
 const DUKE: NpcStop = {
@@ -52,25 +52,10 @@ const NED_ABOARD: NpcStop = {
 
 const ORACLE_DOOR_ITEMS = [DS_ID.MIND_BOMB, DS_ID.UNFIRED_BOWL, DS_ID.LOBSTER_POT, DS_ID.SILK];
 
-/**
- * Everything Oziach has to be asked, and how to tell he has answered.
- *
- * Exactly four branches move this quest on, and each one does it in a different
- * way — `oziach.rs2` lines 100/107/124/131/138:
- *
- *   the rune-plate chain   -> %dragonquest = spoken_to_oziach
- *   first piece            -> hands over melzarkey
- *   second piece           -> %dragon_oracle
- *   third piece            -> %dragon_goblin
- *   antidragon shield      -> %dragon_shield
- *
- * None of those varps are readable from the client, and the quest journal — the
- * one thing that reflects them — cannot be read while a dialogue is open. So the
- * goals are judged on what he SAYS, which is distinctive per branch and arrives
- * in the same tick as the varp. Tracking which options were clicked instead is
- * what looped: his menus re-offer questions already answered, so the first and
- * second map piece trade places forever and the conversation never ends.
- */
+// Why: four branches move this quest on, each differently, at `oziach.rs2` lines 100/107/124/131/138 — the rune-plate chain sets %dragonquest = spoken_to_oziach, the first piece hands over melzarkey, the second sets %dragon_oracle, the third sets %dragon_goblin, and the antidragon shield sets %dragon_shield.
+// Why: none of those varps are readable from the client, and the quest journal that reflects them cannot be read while a dialogue is open.
+// Why: the goals are judged on what he says, which is distinctive per branch and arrives in the same tick as the varp.
+// Why: tracking which options were clicked instead looped, as his menus re-offer questions already answered and the first and second map piece trade places forever.
 const OZIACH_OPENING: readonly string[] = [
     'Can you sell me some Rune plate mail?',
     "The guildmaster of the Champions' Guild told me.",
@@ -269,11 +254,10 @@ async function combineMap(log: (m: string) => void): Promise<boolean> {
 const inShipHold = (t: { x: number; z: number } | null | undefined): boolean =>
     !!t && t.x >= 3040 && t.x <= 3055 && t.z >= 9630 && t.z <= 9650;
 
-/**
- * Boards the ship and drops into the hold. Both hops are scripted teleports, so
- * neither is on the navigation graph; the gangplank only reaches the deck, and
- * the caller wants the hold, so boarding falls straight through to the ladder.
- */
+// Why: both hops are scripted teleports, so neither is on the navigation graph.
+// Why: the gangplank only reaches the deck and the caller wants the hold, so boarding falls straight through to the ladder.
+
+/** Board the ship and drop into the hold. */
 async function goBelowDecks(log: (m: string) => void, boarded = false): Promise<boolean> {
     const here = Game.tile();
     if (inShipHold(here)) {
@@ -320,9 +304,8 @@ async function repairShip(log: (m: string) => void): Promise<boolean> {
     }
     await mazeSceneLoaded();
     const findHole = () => Locs.query().name('Hole').within(8).nearest();
-    // The hold is reached by a scripted teleport, and locs read blank for about
-    // a tick after any level change. Walking is not an option down here — none
-    // of the ship is on the navigation graph — so wait the snapshot out.
+    // Why: the hold is reached by a scripted teleport, and locs read blank for about a tick after any level change.
+    // Why: walking is unavailable down here, as none of the ship is on the navigation graph, so the snapshot is waited out.
     let hole = findHole();
     if (!hole) {
         await Execution.delayTicks(2);
@@ -411,14 +394,10 @@ const onCrandor = (t: { x: number; z: number } | null | undefined): boolean =>
 /** Set once the wall has been through-and-back, in case the journal read lags. */
 let shortcutOpened = false;
 
-/**
- * Clicks the secret wall, from whichever side the bot is standing on.
- *
- * There is one loc and it sits on the Crandor row; the Karamja side is a stand,
- * not a second door. Both directions therefore address the same tile — and it
- * has to be addressed by tile, because every other wall down here is called
- * "Wall" too.
- */
+// Why: there is one loc and it sits on the Crandor row, where the Karamja side is a stand rather than a second door.
+// Why: both directions therefore address the same tile, and by tile rather than by name, as every other wall down here is called "Wall" too.
+
+/** Click the secret wall, from whichever side the bot is standing on. */
 async function openWall(log: (m: string) => void): Promise<boolean> {
     const at = DS_LOC.CRANDOR_SECRET_DOOR;
     const leaf = Locs.query().name('Wall').action('Open').where(l => {
@@ -432,11 +411,9 @@ async function openWall(log: (m: string) => void): Promise<boolean> {
     return leaf.interact('Open');
 }
 
-/**
- * Back into Crandor from the Karamja side. `$entering` is false from this row,
- * so the server teleports the player onto the wall's own tile rather than one
- * past it.
- */
+// Why: `$entering` is false from this row, so the server teleports the player onto the wall's own tile rather than one past it.
+
+/** Cross back into Crandor from the Karamja side. */
 async function crossSecretWall(log: (m: string) => void): Promise<boolean> {
     if (!(await walk(DS_LOC.SECRET_WALL_KARAMJA_STAND, log, 0)) || !(await mazeSceneLoaded())) {
         return false;
@@ -454,13 +431,10 @@ async function crossSecretWall(log: (m: string) => void): Promise<boolean> {
     return false;
 }
 
-/**
- * Every way into Crandor's dungeon, by where the bot is standing.
- *
- * None of these hops are on the navigation graph — the rock opening, the pot
- * hole and the wall are all scripted teleports — but everything between them is,
- * so each leg is a walk the pathfinder can do plus one interaction.
- */
+// Why: none of these hops are on the navigation graph, as the rock opening, the pot hole and the wall are all scripted teleports.
+// Why: everything between them is on the graph, so each leg is a walk the pathfinder can do plus one interaction.
+
+/** Every way into Crandor's dungeon, by where the bot is standing. */
 async function descendCrandor(log: (m: string) => void): Promise<boolean> {
     const here = Game.tile();
     if (!here) {
@@ -487,26 +461,18 @@ async function descendCrandor(log: (m: string) => void): Promise<boolean> {
         }
         return mazeSceneLoaded();
     }
-    // Everywhere else, including the Lumbridge respawn after a death. The ship
-    // crash-landed and is not coming back, so the only way in is the wall — and
-    // the walk to the far side of it is now one leg, because Karamja's volcano
-    // pot hole and rope are both on the navigation graph.
+    // Why: from everywhere else, including the Lumbridge respawn after a death, the ship has crash-landed and is not coming back, so the wall is the only way in.
+    // Why: the walk to the far side of it is one leg, as Karamja's volcano pot hole and rope are both on the navigation graph.
     return crossSecretWall(log);
 }
 
-/**
- * Opens the Karamja wall from the Crandor side, and comes straight back.
- *
- * This is the only second crossing that exists. Ned's ship crash-lands here, so
- * a death against Elvarg with the wall still shut leaves the quest at a stage it
- * can never advance — the lair is on an island with no boat.
- *
- * The spawn is angle 3, south (m44_150.jm2), so `check_axis_locactive` reads
- * "entering" as z == 9600 — the Crandor row. That is the side allowed to open it
- * before the quest completes; from the Karamja row it answers "nothing
- * interesting happens" until %dragon_wall is already set. Opening it teleports
- * the player through, which is why coming back is half of this leg.
- */
+// Why: this is the only second crossing that exists, and Ned's ship crash-lands here.
+// Why: a death against Elvarg with the wall still shut leaves the quest at a stage it can never advance, as the lair is on an island with no boat.
+// Why: the spawn is angle 3, south (m44_150.jm2), so `check_axis_locactive` reads "entering" as z == 9600 — the Crandor row.
+// Why: that row is the side allowed to open it before the quest completes; from the Karamja row it answers "nothing interesting happens" until %dragon_wall is already set.
+// Why: opening it teleports the player through, which is why coming back is half of this leg.
+
+/** Open the Karamja wall from the Crandor side and come straight back. */
 async function unlockShortcut(log: (m: string) => void): Promise<boolean> {
     const wall = DS_LOC.CRANDOR_SECRET_DOOR;
     const here = Game.tile();
@@ -590,16 +556,12 @@ async function killElvarg(log: (m: string) => void): Promise<boolean> {
     return false;
 }
 
-/**
- * Off the island once Elvarg is dead.
- *
- * Crandor has no bank, and after the kill it has no boat either — Ned's ship
- * crash-landed getting here. A run that simply stopped would leave the character
- * standing in the lair of the thing it just killed, on an island, until
- * something wandered in. The gate always opens from the inside (both leaves are
- * angle 0, so `check_axis_locactive` reads the lair's own column as "entering",
- * and the lock only guards the way in), and the wall is the way home.
- */
+// Why: Crandor has no bank, and after the kill no boat either, as Ned's ship crash-landed getting here.
+// Why: a run that stopped here would leave the character standing in the lair of the thing it just killed, on an island, until something wandered in.
+// Why: the gate always opens from the inside — both leaves are angle 0, so `check_axis_locactive` reads the lair's own column as "entering" and the lock only guards the way in.
+// Why: the wall is the way home.
+
+/** Get off the island once Elvarg is dead. */
 async function leaveCrandor(log: (m: string) => void): Promise<boolean> {
     const here = Game.tile();
     if (!here || !onCrandor(here)) {
@@ -653,11 +615,10 @@ function anywhere(snap: QuestSnapshot, id: number): boolean {
 
 const MAP_PIECES = [DS_ID.MAP_MELZAR, DS_ID.MAP_WORMBRAIN, DS_ID.MAP_ORACLE];
 
-/**
- * The two big spends are Wormbrain's 10k and Klarense's 2k, and both must be in
- * the pack before the dialogue opens. Fetching them here, once each, is what
- * lets the record ask for a single coin — see the comment on that requirement.
- */
+// Why: the two big spends are Wormbrain's 10k and Klarense's 2k, and both have to be in the pack before the dialogue opens.
+// Why: fetching them here, once each, is what lets the record ask for a single coin.
+
+/** A step that fetches the coins one leg is about to spend, or null. */
 function coinsShort(snap: QuestSnapshot, price: number): QuestStep | null {
     const held = snap.inv.get('coins') ?? 0;
     if (held >= price) {
@@ -673,22 +634,17 @@ function bankedPieces(snap: QuestSnapshot): { name: string; qty: number; id: num
     return want.map(id => ({ name: id === DS_ID.MAP ? DS_ITEM.MAP : DS_ITEM.MAP_PART, qty: 1, id }));
 }
 
-/**
- * How much food sails to Crandor. Elvarg is level 83 and there is no bank on the
- * island; the shield is worn by the time this is drawn and the shopping has all
- * been spent, so a pack this full still has slots to spare.
- */
+// Why: Elvarg is level 83 and there is no bank on the island.
+// Why: the shield is worn by the time this is drawn and the shopping is all spent, so a pack this full still has slots to spare.
 const ELVARG_FOOD = 18;
 
 /** Port Sarim to Karamja is 30gp each way; this covers the round trip and slack. */
 const KARAMJA_FARE = 100;
 
-/**
- * The last thing done ashore. Crandor is one-way: whatever is not aboard when
- * the ship sails is an ocean away for the rest of the quest, and `killElvarg`
- * cannot fetch a shield out of a bank in Falador — it can only keep reporting it
- * missing, on an island with no way back.
- */
+// Why: Crandor is one-way, so whatever is not aboard when the ship sails is an ocean away for the rest of the quest.
+// Why: `killElvarg` cannot fetch a shield out of a bank in Falador — it can only keep reporting it missing, on an island with no way back.
+
+/** The last preparation done ashore, or null when the pack is ready. */
 function gearUp(snap: QuestSnapshot): QuestStep | null {
     if (!snap.wornIds?.has(DS_ID.SHIELD)) {
         if ((snap.invIds?.get(DS_ID.SHIELD) ?? 0) > 0) {
@@ -699,9 +655,8 @@ function gearUp(snap: QuestSnapshot): QuestStep | null {
         }
         return { kind: 'talk', stop: DUKE };
     }
-    // Worn, so the slot it was taking is free: fill the pack with lunch. The
-    // three-fish provisioning float is sized for walking between banks, and
-    // there is no bank on Crandor.
+    // Why: the shield is worn, so the slot it was taking is free for lunch.
+    // Why: the three-fish provisioning float is sized for walking between banks, and there is no bank on Crandor.
     const food = QuestFood.name;
     if (food) {
         const want = Math.min(ELVARG_FOOD - (snap.inv.get(food.toLowerCase()) ?? 0), snap.bank?.get(food.toLowerCase()) ?? 0);
@@ -736,10 +691,8 @@ export function decide(snap: QuestSnapshot): QuestStep {
         if (inMaze(snap.tile) && anywhere(snap, DS_ID.MAP_MELZAR)) {
             return custom("walk out of Melzar's Maze", leaveMaze);
         }
-        // Oziach sets the three briefing flags and hands over the maze key across
-        // several dialogue branches, so keep returning until they are all set.
-        // #379: a banked (or unseen-bank) key must not thrash Oziach — he will not
-        // re-issue it. Scan/withdraw first; only treat truly missing as nowhere.
+        // Why: Oziach sets the three briefing flags and hands over the maze key across several dialogue branches, so this keeps returning until they are all set.
+        // Why: a banked or unseen-bank key must not thrash Oziach, as he will not re-issue it — scan and withdraw first, and treat only an absent key as nowhere (#379).
         const key = where(snap, DS_ID.MAZE_KEY);
         if (hasFlag(snap.progress, 'needs-briefing')) {
             return custom(`get the briefing from Oziach — ${describeJournal()} mazekey=${key}`, talkOziach);
@@ -756,10 +709,8 @@ export function decide(snap: QuestSnapshot): QuestStep {
         if (key === 'nowhere') {
             return custom(`get the briefing from Oziach — ${describeJournal()} mazekey=${key}`, talkOziach);
         }
-        // The map comes first and in one pass. Each piece sits behind a one-way
-        // trip, and it was the errands in between — the Duke upstairs in
-        // Lumbridge, the anvil at the bottom of the Dwarven Mine — that left the
-        // maze half-run and the route reading from the wrong dungeon.
+        // Why: the map comes first and in one pass, as each piece sits behind a one-way trip.
+        // Why: the errands in between — the Duke upstairs in Lumbridge, the anvil at the bottom of the Dwarven Mine — left the maze half-run and the route reading from the wrong dungeon.
         const banked = bankedPieces(snap);
         if (banked.length > 0 && !heldById(DS_ID.MAP)) {
             return { kind: 'withdraw', items: banked };
@@ -769,11 +720,9 @@ export function decide(snap: QuestSnapshot): QuestStep {
                 return custom("Melzar's Maze", log => maze.step(log));
             }
             if (!anywhere(snap, DS_ID.MAP_ORACLE)) {
-                // Asking her sets dragon_oracle to 2, which is what prints the
-                // rhyme; going through her door sets it to 3, which stops
-                // printing it. The journal flag therefore goes out again the
-                // moment the door is used, and cannot gate this on its own.
-                // Holding all four charms is the honest test: the door eats them.
+                // Why: asking her sets dragon_oracle to 2, which is what prints the rhyme, and going through her door sets it to 3, which stops printing it.
+                // Why: the journal flag therefore goes out again the moment the door is used and cannot gate this on its own.
+                // Why: holding all four charms is the honest test, as the door eats them.
                 const holdsCharms = ORACLE_DOOR_ITEMS.every(id => (snap.invIds?.get(id) ?? 0) > 0);
                 if (holdsCharms && !hasFlag(snap.progress, 'asked-oracle')) {
                     return { kind: 'talk', stop: ORACLE };
@@ -801,15 +750,9 @@ export function decide(snap: QuestSnapshot): QuestStep {
     }
 
     if (stage === DRAGON_STAGE.BOUGHT_SHIP) {
-        // A hole takes one plank and four nails together — lady_lumbridge.rs2
-        // inv_dels both — so what is owed is four nails per plank still to be
-        // placed, and never the twelve the whole hull costs. Measured against the
-        // total, the first patched hole reads as eight missing nails and the bot
-        // walks back to the Dwarven Mine with the hull still open.
-        //
-        // The pack is the ruler, not the bank: once a plank is carried it is one
-        // hole's worth of work, and a spare left in the bank must not inflate the
-        // count back to a full hull.
+        // Why: a hole takes one plank and four nails together, as lady_lumbridge.rs2 inv_dels both, so what is owed is four nails per plank still to be placed and never the twelve the whole hull costs.
+        // Why: measured against the total, the first patched hole reads as eight missing nails and the bot walks back to the Dwarven Mine with the hull still open.
+        // Why: the pack is the ruler and the bank is not — once a plank is carried it is one hole's worth of work, and a spare left in the bank must not inflate the count back to a full hull.
         const planksHeld = snap.invIds?.get(DS_ID.PLANK) ?? 0;
         const planksWanted = planksHeld > 0 ? planksHeld : SHIP_REPAIR.planks;
         const nailsNeeded = planksWanted * SHIP_REPAIR.nailsPerPlank;
@@ -822,9 +765,7 @@ export function decide(snap: QuestSnapshot): QuestStep {
         if ((nails < nailsNeeded || short.length > 0) && aboard(snap.tile)) {
             return custom('go ashore', leaveShip);
         }
-        // Smithing belongs to the boat, not to the shopping: it is eighteen slots
-        // of ore, and it wants the pack the map pieces and the Oracle's four
-        // charms were using.
+        // Why: smithing belongs to the boat leg rather than the shopping, as it is eighteen slots of ore and wants the pack the map pieces and the Oracle's four charms were using.
         if (nails < nailsNeeded) {
             const have = `${snap.invIds?.get(DS_ID.NAILS) ?? 0} carried / ${snap.bankIds?.get(DS_ID.NAILS) ?? 0} banked`;
             return custom(`smith ${nailsNeeded - nails} nails for ${planksWanted} plank${planksWanted === 1 ? '' : 's'}`
@@ -834,8 +775,7 @@ export function decide(snap: QuestSnapshot): QuestStep {
         if (short.length > 0) {
             return { kind: 'withdraw', items: short.map(w => ({ name: w.name, qty: w.qty, id: w.id })) };
         }
-        // Hiring Ned leaves no journal trace, so it is done first and the repair
-        // is what the journal can actually confirm.
+        // Why: hiring Ned leaves no journal trace, so it is done first and the repair is what the journal can confirm.
         if (!hasFlag(snap.progress, 'ship-repaired')) {
             return custom('patch the Lady Lumbridge', repairShip);
         }
@@ -864,10 +804,8 @@ export function decide(snap: QuestSnapshot): QuestStep {
         }
         return custom('board the Lady Lumbridge', boardForCrandor);
     }
-    // Off the island at this stage means one thing: she killed us, and the kit
-    // is on the floor of her lair. Re-equip and re-stock at the bank before
-    // walking back, including the boat fare — the navigator prunes Pay-fare
-    // crossings it cannot afford and then calls Karamja unreachable.
+    // Why: being off the island at this stage means she killed us and the kit is on the floor of her lair.
+    // Why: the re-stock includes the boat fare, as the navigator prunes Pay-fare crossings it cannot afford and then calls Karamja unreachable.
     if (!onCrandor(snap.tile)) {
         const gear = gearUp(snap);
         if (gear) {
@@ -892,10 +830,8 @@ export const dragonslayer: QuestModule = {
     // enough to this quest to be worth walking back to.
     bank: 'nearest',
     grind: ['Giant rat', 'Ghost', 'Skeleton', 'Zombie', 'Melzar the mad', 'Lesser demon', 'Elvarg'],
-    // Three, because the nails leg is the tightest the pack ever gets: it keeps
-    // coins, pickaxe, hammer and the maze key, then mines eighteen slots of ore
-    // on top. Six lunches made that exactly twenty-eight, and at exactly
-    // twenty-eight every pickup and every purchase fails silently.
+    // Why: the nails leg is the tightest the pack ever gets — it keeps coins, pickaxe, hammer and the maze key, then mines eighteen slots of ore on top.
+    // Why: six lunches made that exactly twenty-eight, and at twenty-eight every pickup and every purchase fails silently.
     food: 3,
     tools: [
         'coins', 'maze key', 'key', 'map part', 'crandor map', 'plank', 'nails', 'hammer',

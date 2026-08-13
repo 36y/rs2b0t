@@ -1,12 +1,8 @@
-/**
- * Pack-level regression over curated mainland legs only.
- *
- * Thin filter over the shared path corpus (same builder + path dedupe as
- * script-route-corpus). Prefer that tool for the full mesh / hardest precalc.
- *
- *   bun --preload ./test/setup-dom.ts tools/nav/mainland-corpus.ts
- *   bun --preload ./test/setup-dom.ts tools/nav/mainland-corpus.ts --explain
- */
+/** Pack-level regression over curated mainland legs only: bun --preload ./test/setup-dom.ts tools/nav/mainland-corpus.ts [--explain].
+ *  A thin filter over the shared path corpus (same builder and path dedupe as script-route-corpus, which is the tool for the full mesh / hardest precalc). */
+
+//   bun --preload ./test/setup-dom.ts tools/nav/mainland-corpus.ts
+//   bun --preload ./test/setup-dom.ts tools/nav/mainland-corpus.ts --explain
 import fs from 'node:fs';
 
 import { gunzipSync } from 'fflate';

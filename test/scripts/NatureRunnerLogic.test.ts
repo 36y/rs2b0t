@@ -78,7 +78,7 @@ describe('shortRouteWithdraw (air: one trade window per trip, never a leftover)'
     });
 
     test('a withdrawEss carried over from the noting route must not fill the pack', () => {
-        // the live bug: 28 withdrawn -> trade 25 -> a second altar trip for the leftover 3
+        // Why: 28 withdrawn against a 25 trade cap leaves 3 behind and costs a second altar trip.
         expect(shortRouteWithdraw(28, 1000, 28)).toBe(TRADE_CAP);
         expect(shortRouteWithdraw(1000, 1000, 28)).toBe(TRADE_CAP);
     });

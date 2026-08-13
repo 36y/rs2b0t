@@ -1,15 +1,8 @@
-/**
- * Real Chrome + local LostCity proof for issue #188.
- *
- * The fixture starts at the Wizards' Tower with the two non-Traiborn keys.
- * Fixed code must leave the natural Wizards and collect a guaranteed Bones
- * drop from the natural level-2 Goblins west of Lumbridge.  Run the identical
- * fixture from a clean-upstream worktree with --expect-wizards to reproduce
- * the old behavior.
- *
- *   bun tools/demon-slayer-goblins-test.ts http://127.0.0.1:8990 6
- *   bun tools/demon-slayer-goblins-test.ts http://127.0.0.1:8990 6 --expect-wizards
- */
+/** Chrome + local LostCity proof for #188: [base] [minutes] [--expect-wizards].
+ *  The fixture starts at the Wizards' Tower with the two non-Traiborn keys; fixed code leaves the Wizards and takes a guaranteed Bones drop from the level-2 Goblins west of Lumbridge. */
+
+//   bun tools/demon-slayer-goblins-test.ts http://127.0.0.1:8990 6
+//   bun tools/demon-slayer-goblins-test.ts http://127.0.0.1:8990 6 --expect-wizards
 import { createHash } from 'node:crypto';
 import { chromium, type Page } from 'playwright-core';
 

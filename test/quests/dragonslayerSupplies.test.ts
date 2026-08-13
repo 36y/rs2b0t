@@ -26,10 +26,7 @@ const ORE_LOAD = new Map([
 
 describe('Dragon Slayer supply gathers', () => {
     test('a full pack banks before it shops', () => {
-        // A purchase into a full pack is not refused: inv_add drops the overflow
-        // at the bot's feet, the coins go anyway, and the leg's own "did it
-        // arrive" check can never pass. It bought mind bombs onto the floor of
-        // the Rising Sun until the run was killed.
+        // Why: a purchase into a full pack is not refused — inv_add drops the overflow at the bot's feet and the coins go anyway.
         for (const name of Object.keys(SUPPLY_GATHERS)) {
             const step = SUPPLY_GATHERS[name](snapshot({ inv: ORE_LOAD, freeSlots: 0 }), 1);
             expect({ name, kind: step.kind }).toEqual({ name, kind: 'deposit' });

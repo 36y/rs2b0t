@@ -1,4 +1,3 @@
-// docs/how-to/write-a-harness.md
 import { fail, launchBrowser } from './lib/harness.js';
 import { cheat, cheatQuiet, mainlandAccount, relog, startScript } from './tutorial/harness.js';
 
@@ -40,11 +39,8 @@ const GEAR: readonly (readonly [string, string])[] = [
 const minutes = Number(opt('--minutes') ?? 30);
 // The issue asks for 2x ticks; 300ms is half of the engine's 600.
 const speed = opt('--speed') ?? '300';
-// Shilo is gated on Jungle Potion, which is gated on Druidic Ritual. A solo Shilo
-// run cheats past both rather than replaying forty minutes of prerequisite.
-// `start_junglepotion` tests `%druidquest = ^druid_complete` for *equality*, so 4
-// exactly — a higher value reads as "requirements not met" and the quest silently
-// refuses to start.
+// Shilo is gated on Jungle Potion, which is gated on Druidic Ritual; a solo run cheats past both rather than replaying forty minutes of prerequisite.
+// Why: `start_junglepotion` tests `%druidquest = ^druid_complete` for equality, so it must be 4 — a higher value reads as "requirements not met" and the quest silently refuses to start.
 const prereqs = flag('--no-prereqs') ? [] : which === 'shilo' ? ['junglepotion 12', 'druidquest 4'] : ['druidquest 4'];
 
 interface SoloSnapshot {
@@ -107,9 +103,7 @@ try {
         }
         console.log(`gave ${pair}`);
     }
-    // Coins and bones are the only things this quest cannot buy on Karamja, and
-    // `::give` is the engine's only seeding cheat — it reaches the inventory, not
-    // the bank, so the withdraw path stays a unit-test concern.
+    // Why: coins and bones are the only things this quest cannot buy on Karamja, and `::give` reaches the inventory rather than the bank, so the withdraw path stays a unit-test concern.
     const carried = purse || (which === 'shilo' ? 'coins:20000,bones:3' : 'coins:20000');
     for (const pair of carried.split(',').map(s => s.trim()).filter(Boolean)) {
         const [obj, n] = pair.split(':');
@@ -119,9 +113,7 @@ try {
         console.log(`carrying ${pair}`);
     }
 
-    // `~maxme` grants stats, never gear, and Nazastarool has three forms totalling
-    // 220 hitpoints. A maxed account fighting bare-handed is not the account the
-    // issue means, so the test dresses one.
+    // Why: `~maxme` grants stats and never gear, and Nazastarool has three forms totalling 220 hitpoints, so a bare-handed maxed account is not the account the issue means.
     if (gear) {
         const held = (n: string): Promise<number> =>
             page.evaluate(x => (globalThis as never as { __rs2b0t: { Inventory: { count(n: string): number } } }).__rs2b0t.Inventory.count(x), n);
@@ -134,9 +126,7 @@ try {
             if (!ok) {
                 fail(`could not seed ${item}`);
             }
-            // Equipment.equip() awaits Execution.delayUntil, which needs a running
-            // script context and throws from page.evaluate. The direct driver's
-            // held-op is synchronous, so drive the Wield/Wear op itself.
+            // Why: Equipment.equip() awaits Execution.delayUntil, which needs a running script context and throws from page.evaluate — the direct driver's held-op is synchronous.
             await page.evaluate(x => {
                 const inv = (globalThis as never as {
                     __rs2b0t: { Inventory: { first(n: string): { actions(): string[]; interact(a: string): unknown } | null } };

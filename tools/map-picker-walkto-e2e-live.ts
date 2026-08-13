@@ -1,24 +1,11 @@
-/**
- * Live smoke B for basemap + walkable map picker: login → pick tile → WalkTo arrives.
- *
- *   HEADED=1 BOT_USER=harness1 BOT_PASS=test \
- *     bun tools/map-picker-walkto-e2e-live.ts [http://localhost:8890]
- *
- * Or auto-mint a name (local engine with cheats):
- *   HEADED=1 bun tools/map-picker-walkto-e2e-live.ts http://localhost:8890
- *
- * Flow:
- *   1. boot + login
- *   2. tele near Varrock (cheat) for a short deterministic hop
- *   3. set WalkTo customTile via map picker UI (or API fallback after UI pick)
- *   4. start WalkTo; poll until within arrive radius
- *
- * Needs: botclient with picker, collision pack, basemap preferred, cheats if tele used.
- *
- * Proof:
- *   out/issue0-map-picker-walkto-e2e-proof.json
- *   screenshots/issue0-map-picker-walkto-e2e-success.png
- */
+/** Live smoke B for the basemap + walkable map picker: login → tele near Varrock → pick a tile through the picker UI → WalkTo arrives inside the radius. BOT_USER/BOT_PASS, or a name is auto-minted.
+ *  Needs a botclient with the picker and the collision pack, a basemap preferred, and cheats if tele is used. Proof: out/issue0-map-picker-walkto-e2e-proof.json, screenshots/issue0-map-picker-walkto-e2e-success.png */
+
+//   HEADED=1 BOT_USER=harness1 BOT_PASS=test \
+//     bun tools/map-picker-walkto-e2e-live.ts [http://localhost:8890]
+
+// Or auto-mint a name (local engine with cheats):
+//   HEADED=1 bun tools/map-picker-walkto-e2e-live.ts http://localhost:8890
 import { boot, cheatQuiet, fail, launchBrowser, login, positionalArgs, setSettings, stopScript } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';
 

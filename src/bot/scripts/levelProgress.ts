@@ -1,10 +1,6 @@
-/**
- * RuneScape experience curve, for "how far to the next level" readouts.
- *
- * The table is generated once rather than written out: the curve is the classic
- * sum of `floor(l + 300 * 2^(l/7)) / 4`, so a literal table would just be a
- * transcription waiting to drift.
- */
+// RuneScape experience curve, for "how far to the next level" readouts.
+
+// Why: the curve is the classic sum of `floor(l + 300 * 2^(l/7)) / 4`, so the table is built once rather than transcribed and left to drift.
 const MAX_LEVEL = 99;
 
 const XP_AT_LEVEL: number[] = (() => {

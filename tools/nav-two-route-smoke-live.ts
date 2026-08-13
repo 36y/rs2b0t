@@ -1,25 +1,8 @@
-/**
- * Custom pure-walk / escort smoke (teleports off).
- *
- *   1. Yanille bank → Yanille dungeon warrior field (chaos druid camp)
- *   2. TGV centre → outside maze ~2493,3187 (pure walk; no spirit tree / no Elkoy)
- *   3. Elkoy maze shortcut (separate): outside near entrance → village centre
- *      with Tree Gnome Village *started* (content escort dialogue)
- *
- * Content coords (Server/content):
- *   bank 2612,3092 · warrior field 2580,9501 (ChaosDruidLogic)
- *   Bolren 2542,3169 (0_39_49_46_33)
- *   outside maze ~2493,3187 · elkoy entrance 0_39_49_8_56 · maze land 0_39_49_19_23
- *   balancing ledge 2580,9520 / 2580,9512 · web needs plain Knife
- *
- * Path paint + camera (same as nav-script-routes-live / nav-path-paint-live):
- *   PATH_PAINT=1 (default) → showNavPath + navCameraFollow + red pack / cyan client
- *   PATH_PAINT=0 to disable
- *
- *   ~/redeploy.sh
- *   HEADED=1 bun tools/nav-two-route-smoke-live.ts [http://localhost:8890]
- * Shared harness: tools/lib/navLiveHarness.ts
- */
+/** Custom pure-walk / escort smoke (teleports off): Yanille bank 2612,3092 → dungeon warrior field 2580,9501; TGV centre 2542,3169 → outside maze ~2493,3187; then the Elkoy maze shortcut with Tree Gnome Village started.
+ *  Content coords: elkoy entrance 0_39_49_8_56, maze land 0_39_49_19_23, balancing ledge 2580,9520 / 2580,9512; the web needs a plain Knife. PATH_PAINT=1 (default) → showNavPath + navCameraFollow + red pack / cyan client. */
+
+//   ~/redeploy.sh
+//   HEADED=1 bun tools/nav-two-route-smoke-live.ts [http://localhost:8890]
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';
@@ -67,9 +50,7 @@ const ROUTES: Route[] = [
         id: 'yanille-bank-dungeon-end',
         note: 'Yanille bank → chaos druid warrior field (web + stairs + ledge + walk in)',
         from: { x: 2612, z: 3092, level: 0 },
-        // ChaosDruidLogic Yanille Dungeon field centre. Ledge south stand is
-        // 2580,9512 — must NOT use radius ≥10 or walkTo "arrives" on the ledge.
-        // radius 3 forces walking into the warrior cluster (script camp).
+        // Why: the ledge south stand is 2580,9512, so radius ≥10 lets walkTo "arrive" on the ledge — radius 3 forces walking into the warrior cluster.
         to: { x: 2580, z: 9501, level: 0 },
         radius: 3,
         validate: ({ me, walkOk, dist, logs, hops }) => {
@@ -134,10 +115,7 @@ const ROUTES: Route[] = [
         to: { x: 2542, z: 3169, level: 0 },
         radius: 6,
         setup: async (page, user) => {
-            // Elkoy escort needs Tree Gnome Village ≥ started. Journal colour is
-            // client-only: setvar alone does not recolour until relog. Use complete
-            // (^tree_complete=9) so the list is reliably green; minStatus started
-            // still passes, and postquest Elkoy still offers "Yes please."
+            // Why: journal colour is client-only and a setvar alone does not recolour until relog; ^tree_complete=9 makes the list reliably green, minStatus started still passes, and postquest Elkoy still offers "Yes please."
             await cheatQuiet(page, 'setvar treequest 9', 800);
             await relog(page, user);
             // Relog drops Global settings — re-enable paint + camera like other smokes.

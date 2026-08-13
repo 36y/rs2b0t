@@ -138,7 +138,6 @@ describe('crossingEligible', () => {
     });
 
     test('does NOT fire on proximity to the far tile alone (no opportunistic snap)', () => {
-        // Approach is far away; only the landing is nearby — old code snapped on far-side.
         const farApproach = t(0, 0);
         const nearLanding = t(20, 20);
         expect(crossingEligible(t(20, 21), farApproach, nearLanding, 4, () => true)).toBe(false);

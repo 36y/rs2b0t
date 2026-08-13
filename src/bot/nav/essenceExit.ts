@@ -1,10 +1,5 @@
-/**
- * Essence mine exit — session multiloc transport.
- *
- * Content (`essence_mine.rs2`): entry wizards set `%exit_essence_mine_coord`;
- * every `blankrunestone_exit_portal` placement telejumps to that varp (not a
- * per-placement fixed dest). Client varp pack id: 64.
- */
+// Why: the essence mine exit is a session multiloc transport — in `essence_mine.rs2` entry wizards set `%exit_essence_mine_coord`, and every `blankrunestone_exit_portal` placement telejumps to that varp rather than a per-placement fixed dest.
+// Why: the client varp pack id is 64.
 
 import type { TransportEdgeData } from './PathFinder.js';
 import { packNavPoint, parseLcCoord } from './geometry/lcCoord.js';
@@ -100,17 +95,12 @@ export function essenceReturnIdFromTile(tile: NavPoint): EssenceReturnId | null 
     return best;
 }
 
-/**
- * Plan-time edges: each portal placement × each known return.
- *
- * Content (`blankrunestone_exit_portal`): destination is `%exit_essence_mine_coord`
- * (set by the entry wizard) then `map_findsquare(..., 0, 2, lineofwalk)` — fully
- * determined by session return, not which of the four portal tiles you click.
- * That session is modelled via `requires.essenceExitReturn` + PathFinder path-state
- * (#377). **Not** blacklisted: the landing is fixed given entry wizard (wizard tile ±2).
- *
- * Entry *into* the mine remains blacklisted (#388) — random over 22 pads.
- */
+// Why: in `blankrunestone_exit_portal` the destination is `%exit_essence_mine_coord`, set by the entry wizard, then `map_findsquare(..., 0, 2, lineofwalk)` — determined by session return, not by which of the four portal tiles is clicked.
+// Why: that session is modelled via `requires.essenceExitReturn` plus PathFinder path-state (#377).
+// Why: these rows are not blacklisted, since the landing is fixed given the entry wizard (wizard tile ±2).
+// Why: entry into the mine stays blacklisted (#388) — random over 22 pads.
+
+/** Plan-time edges: each portal placement × each known return. */
 export function essenceExitEdges(): TransportEdgeData[] {
     const out: TransportEdgeData[] = [];
     for (const portal of ESSENCE_EXIT_PORTALS) {

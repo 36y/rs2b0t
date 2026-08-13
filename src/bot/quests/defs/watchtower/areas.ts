@@ -6,9 +6,8 @@ export interface WatchtowerItem {
     name: string;
 }
 
-// Names are the engine's, not the wiki's. Several collide — all four crystals are
-// "Crystal", both mid-brew vials are "Vial", the ogre potion is "Potion" — so every
-// lookup in this quest goes through the id, never the name.
+// Why: these are the engine's names, and several collide — all four crystals are "Crystal", both mid-brew vials are "Vial", and the ogre potion is "Potion".
+// Why: every lookup in this quest therefore goes through the id.
 export const WT_ITEM = {
     COINS: { id: 995, name: 'Coins' },
     ROPE: { id: 954, name: 'Rope' },
@@ -144,8 +143,9 @@ export const WT_TILE = {
 
 interface SkavidCave {
     index: number;
-    /** A walkable tile the mouth can actually be clicked from. The mouth loc itself
-     *  is a 4x2 blocker, and for cave 1 the only reachable side is the south. */
+    // Why: the mouth loc is a 4x2 blocker, and for cave 1 the only reachable side is the south.
+
+    /** A walkable tile the mouth can be clicked from. */
     stand: Tile;
     landing: Tile;
 }

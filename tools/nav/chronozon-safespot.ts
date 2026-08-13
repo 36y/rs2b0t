@@ -1,22 +1,7 @@
-/**
- * Derive Chronozon's safespots (Family Crest, #210).
- *
- *   bun tools/nav/chronozon-safespot.ts
- *
- * A safespot for a melee-only NPC of size N is a tile no legal N x N placement
- * of it can touch. So: BFS the placements it can slide between, take every tile
- * those placements cover or border, and the walkable remainder is the answer —
- * intersected with the chamber's own connected component, which is the step that
- * matters. Two traps this catches:
- *
- *  - "Walkable" is not "reachable". The west passage at x=3082 looks like a
- *    perfect safespot and is a sealed island with no exits.
- *  - `exitMask` does not cross door edges, so seeding the flood outside the gates
- *    stops at them and only ever finds the north corridor — which is behind a
- *    gate that blocks the cast (proven live: three casts from there never landed).
- *
- * The answer feeds `SAFESPOT` in defs/familycrest/chronozon.ts.
- */
+/** Derive Chronozon's safespots (Family Crest, #210) — the answer feeds `SAFESPOT` in defs/familycrest/chronozon.ts. BFS the placements a melee-only NPC of size N can slide between, take every tile they cover or border, and intersect the walkable remainder with the chamber's own connected component.
+ *  Why: walkable is not reachable — the west passage at x=3082 looks like a perfect safespot and is a sealed island — and `exitMask` does not cross door edges, so seeding the flood outside the gates stops at them and only ever finds the north corridor, which is behind a gate that blocks the cast (three live casts from there never landed). */
+
+//   bun tools/nav/chronozon-safespot.ts
 import fs from 'node:fs';
 import { gunzipSync } from 'fflate';
 import { PathFinder } from '#/bot/nav/PathFinder.js';

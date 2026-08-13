@@ -34,11 +34,10 @@ async function revealDoors(log: (m: string) => void): Promise<boolean> {
     );
 }
 
-/**
- * Searching the doors is what teaches the bone lock, and the engine only records it
- * while the stage is exactly `entered_tomb_bervirius` — so this runs after the
- * Bervirius dolmen and before the bone key is cut.
- */
+// Why: searching the doors is what teaches the bone lock, and the engine only records it while the stage is exactly `entered_tomb_bervirius`.
+// Why: this therefore runs after the Bervirius dolmen and before the bone key is cut.
+
+/** Search the carved doors to learn the bone lock. */
 export async function searchCarvedDoors(log: (m: string) => void): Promise<boolean> {
     if (!(await revealDoors(log))) {
         return false;
@@ -86,9 +85,8 @@ export async function enterRashTomb(log: (m: string) => void): Promise<boolean> 
     if (!(await revealDoors(log))) {
         return false;
     }
-    // Once the bone key has been used the doors answer a plain Open and become the
-    // Hillside entrance for good — but a restart finds them shut again behind the
-    // palms, and nothing named "Hillside entrance" exists to Enter yet.
+    // Why: once the bone key has been used the doors answer a plain Open and become the Hillside entrance for good.
+    // Why: a restart finds them shut again behind the palms, with nothing named "Hillside entrance" to Enter yet.
     if (!hillsideEntrance()) {
         const shut = locNear(SV_LOC.CARVED_DOORS, 'Open', 10);
         if (shut && (await shut.interact('Open'))) {
@@ -146,11 +144,10 @@ export async function leaveRashTomb(log: (m: string) => void): Promise<boolean> 
     return ok;
 }
 
-/**
- * The gate teleports across itself in whichever direction you came from, so both
- * crossings are the same click. Southbound it refuses anyone not wearing the Beads
- * of the Dead — and summons Rashiliyia instead of saying so.
- */
+// Why: the gate teleports across itself in whichever direction you came from, so both crossings are the same click.
+// Why: southbound it refuses anyone without the Beads of the Dead worn, and summons Rashiliyia instead of saying so.
+
+/** Cross the tomb gate in the named direction. */
 export async function passGate(dir: 'in' | 'out', log: (m: string) => void): Promise<boolean> {
     const want: ShiloArea = dir === 'in' ? 'rashLedge' : 'rashEntry';
     if (here() === want) {
@@ -227,12 +224,11 @@ export async function placeBone(log: (m: string) => void): Promise<boolean> {
     );
 }
 
-/**
- * The dolmen is on the far side of the skeletal doors, and the doors revert to
- * closed three ticks after any crossing — so every trip through them is another
- * `Open`, which teleports rather than walks. Nothing routes through them: they are
- * excluded from the door bake precisely because three bones is the only way in.
- */
+// Why: the dolmen is on the far side of the skeletal doors, and the doors revert to closed three ticks after any crossing.
+// Why: every trip through them is therefore another `Open`, which teleports rather than walks.
+// Why: nothing routes through them, as they are excluded from the door bake because three bones is the only way in.
+
+/** Cross the skeletal doors in the named direction. */
 async function crossTombDoors(dir: 'north' | 'south', log: (m: string) => void): Promise<boolean> {
     const want = dir === 'north';
     const there = (): boolean => inDolmenRoom(Game.tile()) === want;
@@ -259,11 +255,10 @@ async function crossTombDoors(dir: 'north' | 'south', log: (m: string) => void):
     return ok;
 }
 
-/**
- * Leaving the chamber is three moves, not one: back through the skeletal doors,
- * east to the foot of the climbing rocks, then up. Nothing but the doors connects
- * the dolmen room to the rest of the tomb.
- */
+// Why: leaving the chamber takes three moves — back through the skeletal doors, east to the foot of the climbing rocks, then up.
+// Why: nothing but the doors connects the dolmen room to the rest of the tomb.
+
+/** Walk out of the dolmen chamber. */
 export async function leaveTombChamber(log: (m: string) => void): Promise<boolean> {
     if (here() !== 'rashInner') {
         return true;
@@ -279,11 +274,10 @@ export async function leaveTombChamber(log: (m: string) => void): Promise<boolea
 
 const FIGHT_MS = 240_000;
 
-/**
- * Searching the dolmen either summons the next Nazastarool or, once all three are
- * down, yields the remains. Driving both from one step keeps the state machine
- * honest when the journal still claims kills the engine has already reset.
- */
+// Why: searching the dolmen either summons the next Nazastarool or, once all three are down, yields the remains.
+// Why: driving both from one step keeps the state machine honest when the journal still claims kills the engine has already reset.
+
+/** Search the dolmen, fighting whatever it summons. */
 export async function workTheDolmen(log: (m: string) => void): Promise<boolean> {
     if (heldId(SV_ITEM.RASH_CORPSE.id) > 0) {
         return true;

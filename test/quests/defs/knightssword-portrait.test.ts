@@ -24,9 +24,7 @@ describe('Sir Vyvin proximity guard', () => {
     });
 
     test('the guard is a square, not a circle', () => {
-        // npc_find takes a square radius, so a diagonal neighbour is as close as
-        // an orthogonal one. Euclidean distance would call (1,1) 1.41 and let it
-        // through.
+        // Why: npc_find takes a square radius, so a diagonal neighbour is as close as an orthogonal one and Euclidean distance would let (1,1) through.
         const diagonal = { x: CUPBOARD_STAND.x + 1, z: CUPBOARD_STAND.z + 1, level: 2 };
         expect(vyvinTooClose(CUPBOARD_STAND, diagonal)).toBe(true);
     });
@@ -50,9 +48,7 @@ describe('the guard is a hint, not a gate', () => {
     });
 
     test('but searches anyway once the skips run out', () => {
-        // Sir Vyvin has wanderrange=8 in a room barely wider than that, so he is
-        // adjacent most of the time. Treating proximity as a blocker spun every
-        // pass without ever clicking, and the quest parked without one attempt.
+        // Why: Sir Vyvin has wanderrange=8 in a room barely wider than that, so treating proximity as a hard blocker never clicks at all.
         const forced = Array.from({ length: 40 }, (_, i) => shouldWaitOut(i, CUPBOARD_STAND, adjacent));
         expect(forced.some(wait => !wait)).toBe(true);
     });

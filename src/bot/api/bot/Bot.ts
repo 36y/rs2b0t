@@ -3,19 +3,12 @@ import { SettingsBag } from '../../runtime/Settings.js';
 import { Game } from '../game/Game.js';
 import type Tile from '../../geometry/Tile.js';
 
-/**
- * Base class for every bot.
- * @see docs/reference/api-bots.md
- */
-/**
- * How the runner schedules the next `loop()` after one finishes.
- * - `server-tick` (default): wait for N observed `Game.tick()` / PLAYER_INFO advances
- * - `frame`: eligible on the next client frame (~20 ms) — use for hot TaskBots that
- *   already guard against double-dispatch
- * - `time`: deliberate wall-clock pacing (dashboards, humanisation)
- *
- * Numeric `loopDelay` is still accepted for compatibility; see {@link resolveLoopCadence}.
- */
+// Why: `server-tick` (the default) waits for N observed `Game.tick()` / PLAYER_INFO advances.
+// Why: `frame` is eligible on the next client frame (~20 ms), for hot TaskBots that already guard against double-dispatch.
+// Why: `time` is deliberate wall-clock pacing, for dashboards and humanisation.
+// Why: numeric `loopDelay` is still accepted for compatibility, via {@link resolveLoopCadence}.
+
+/** How the runner schedules the next `loop()` after one finishes. */
 export type LoopCadence =
     | { kind: 'frame' }
     | { kind: 'server-tick'; ticks?: number }
@@ -23,9 +16,7 @@ export type LoopCadence =
 
 /**
  * Map legacy `loopDelay` ms to an explicit cadence.
- * - `0` → next client frame
- * - `600` (historical "one tick" default and most overrides) → next server tick
- * - any other value → wall-clock ms
+ * Why: `0` means the next client frame, `600` (the historical "one tick" default and most overrides) means the next server tick, and any other value is wall-clock ms.
  */
 export function resolveLoopCadence(loopDelayMs: number, override?: LoopCadence | null): LoopCadence {
     if (override) {
@@ -42,13 +33,15 @@ export function resolveLoopCadence(loopDelayMs: number, override?: LoopCadence |
     return { kind: 'time', ms: loopDelayMs };
 }
 
+/**
+ * Base class for every bot.
+ * @see docs/reference/api-bots.md
+ */
 export abstract class AbstractBot {
-    /**
-     * Legacy wall-clock-ish pacing between `loop()` calls.
-     * Prefer {@link loopCadence}. The value `600` is interpreted as **one server tick**
-     * (see {@link resolveLoopCadence}); use an explicit `loopCadence: { kind: 'time', ms }`
-     * if you truly need wall-clock 600 ms.
-     */
+    // Why: prefer {@link loopCadence} — `600` here is read as one server tick (see {@link resolveLoopCadence}).
+    // Why: pass an explicit `loopCadence: { kind: 'time', ms }` when wall-clock 600 ms is what is wanted.
+
+    /** Legacy wall-clock-ish pacing between `loop()` calls. */
     loopDelay = 600;
 
     /** When set, overrides the cadence derived from {@link loopDelay}. */

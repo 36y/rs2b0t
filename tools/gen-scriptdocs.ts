@@ -41,11 +41,9 @@ export function renderScriptDocs(metas: ScriptMeta[]): string {
         '',
         '# Bundled scripts',
         '',
-        `The client ships **${metas.length} scripts** across ${categories.length} categories. They double as worked`,
-        'examples of the [scripting API](API.md) — the source for each is under',
-        '[`src/bot/scripts/`](../src/bot/scripts/).',
-        '',
-        'Settings listed here are the parameters the panel exposes before you start a script.',
+        `- Scripts: ${metas.length}. Categories: ${categories.length}.`,
+        '- Source: [`src/bot/scripts/`](../src/bot/scripts/). API: [scripting API](API.md).',
+        '- Settings are the parameters the panel exposes before a script starts.',
         '',
         '## Contents',
         '',
@@ -58,7 +56,7 @@ export function renderScriptDocs(metas: ScriptMeta[]): string {
         for (const meta of byCategory.get(category)!) {
             lines.push(`### ${meta.name}`, '', meta.description, '');
             if (meta.tags?.length) {
-                lines.push(`Tags: ${meta.tags.map(tag => `\`${tag}\``).join(', ')}`, '');
+                lines.push(`- Tags: ${meta.tags.map(tag => `\`${tag}\``).join(', ')}`, '');
             }
             const schema = meta.settingsSchema;
             if (schema && Object.keys(schema).length > 0) {

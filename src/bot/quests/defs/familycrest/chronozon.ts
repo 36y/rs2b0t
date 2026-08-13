@@ -14,56 +14,28 @@ import { ANTIPOISON_IDS, FC_ID, FC_ITEM, FC_NPC, inChronozonLair } from './areas
 const WEAKENS = /chronozon weakens/i;
 const POISONED = /you have been poisoned/i;
 
-/**
- * The south end of the chamber, two tiles clear of the furthest south the
- * demon's 3x3 body can stand, on an open x=3089 column that keeps line of sight
- * north to it.
- *
- * The east alcove at (3092,9940) is an equally good safespot *from the demon* —
- * and a bad one in practice. The poison spiders spawn at z 9943-9945 with
- * `wanderrange=10`, `maxrange=12`, which puts that alcove three to five tiles
- * inside their roam: they sit on you the whole fight. Down here the nearest
- * spawn is eleven to thirteen away, at or past their limit.
- *
- * Derived by `tools/nav/chronozon-safespot.ts`: every 3x3 placement the demon
- * can slide between, every tile those placements touch, and the walkable
- * remainder — intersected with the chamber's own component, because the west
- * passage that looks ideal on the map is a sealed island and the corridor north
- * of the gates is behind a gate that blocks the cast (proven live: three casts
- * from there never landed).
- *
- * The runtime check below stays regardless. A safespot that stops working is a
- * quest that never finishes, and fighting in the open is the proven path.
- */
+// Why: this is the south end of the chamber, two tiles clear of the furthest south the demon's 3x3 body can stand, on an open x=3089 column that keeps line of sight north to it.
+// Why: the east alcove at (3092,9940) is an equally good safespot from the demon and a bad one in practice — the poison spiders spawn at z 9943-9945 with `wanderrange=10`, `maxrange=12`, which puts that alcove three to five tiles inside their roam.
+// Why: down here the nearest spider spawn is eleven to thirteen away, at or past their limit.
+// Why: derived by `tools/nav/chronozon-safespot.ts` over every 3x3 placement the demon can slide between, every tile those placements touch, and the walkable remainder.
+// Why: that remainder is intersected with the chamber's own component, as the west passage that looks ideal on the map is a sealed island and the corridor north of the gates is behind a gate that blocks the cast (three live casts from there never landed).
+// Why: the runtime check below stays regardless, as a safespot that stops working is a quest that never finishes and fighting in the open is the proven path.
 export const SAFESPOT = new Tile(3089, 9932, 0);
 
 /** How many casts to spend proving the safespot before giving up on it. */
 const SAFESPOT_PROBE_CASTS = 3;
 
-/**
- * The four spells that unlock the kill, in casting order.
- *
- * `~chronozon_spell` runs inside `pvm_spell_success`, so a splash sets nothing —
- * only a landed cast counts, and the "Chronozon weakens..." line is emitted at
- * exactly the moment the bit is set. Casting is therefore retried per spell
- * until that line appears, rather than counted.
- */
+// Why: `~chronozon_spell` runs inside `pvm_spell_success`, so a splash sets nothing and only a landed cast counts.
+// Why: the "Chronozon weakens..." line is emitted at the moment the bit is set, so casting is retried per spell until that line appears rather than counted.
+
+// The four spells that unlock the kill, in casting order.
 export const BLASTS = ['Wind blast', 'Water blast', 'Earth blast', 'Fire blast'] as const;
 
-/**
- * Drink antipoison — on the way *out*, not on arrival.
- *
- * A dose does set `%poison = min(%poison, -5)`, which is a cure plus a short
- * immunity window, but spending it on arrival spends it on the fight, and the
- * safespot is eleven tiles clear of the spiders' roam. The poison is taken
- * crossing the gate tiles, and what it actually threatens is the long walk home
- * on whatever food the demon left — which is where a run died.
- *
- * `%poison` is `scope=perm` with no transmit, so the bot cannot read whether it
- * is poisoned; the tell is the server's "You have been poisoned!" line.
- *
- * Rate-limited so a retried step does not drink the potion dry.
- */
+// Why: the antipoison is drunk on the way out rather than on arrival.
+// Why: a dose sets `%poison = min(%poison, -5)`, a cure plus a short immunity window, so spending it on arrival spends it on the fight — and the safespot is eleven tiles clear of the spiders' roam.
+// Why: the poison is taken crossing the gate tiles, and what it threatens is the long walk home on whatever food the demon left, which is where a run died.
+// Why: `%poison` is `scope=perm` with no transmit, so the bot cannot read whether it is poisoned and the tell is the server's "You have been poisoned!" line.
+// Why: the drink is rate-limited so a retried step does not drink the potion dry.
 const IMMUNITY_MS = 80_000;
 let lastDrink = 0;
 
@@ -84,15 +56,10 @@ async function drinkAntipoison(log: (m: string) => void): Promise<boolean> {
     return true;
 }
 
-/**
- * Is the demon's body actually touching us?
- *
- * This replaces "did my hitpoints drop", which cannot tell the demon apart from
- * poison or from the spiders — those are size 1 and follow into the alcove
- * quite happily, so HP loss there is expected and says nothing about whether
- * the safespot holds. The reported tile is the middle of a 3x3, so anything
- * within two is in melee reach.
- */
+// Why: "did my hitpoints drop" cannot tell the demon apart from poison or from the spiders, which are size 1 and follow into the alcove, so HP loss there is expected and says nothing about whether the safespot holds.
+// Why: the reported tile is the middle of a 3x3, so anything within two is in melee reach.
+
+/** Whether the demon's body is touching us. */
 function demonInReach(): boolean {
     const target = chronozon();
     const me = Game.tile();
@@ -108,10 +75,9 @@ function onSafespot(): boolean {
     return here !== null && here.level === 0 && here.x === SAFESPOT.x && here.z === SAFESPOT.z;
 }
 
-/**
- * Try to stand on the safespot. Returns whether we are on it — a false here
- * simply means the fight happens in the open, which is the proven path.
- */
+// Why: a false here means the fight happens in the open, which is the proven path.
+
+/** Try to stand on the safespot; returns whether we are on it. */
 async function takeSafespot(log: (m: string) => void): Promise<boolean> {
     if (onSafespot()) {
         return true;
@@ -129,11 +95,9 @@ function chronozon(): Npc | null {
     return Npcs.query().where(n => n.id === FC_NPC.CHRONOZON_NPC_ID).within(16).nearest();
 }
 
-/**
- * Chronozon respawns 60 ticks after a kill, and this fight kills it repeatedly
- * on the way to arming all four bits — so "not in the scene" almost always means
- * "not back yet", not "we are in the wrong place".
- */
+// Why: Chronozon respawns 60 ticks after a kill and this fight kills it repeatedly on the way to arming all four bits, so "not in the scene" almost always means "not back yet" rather than a wrong position.
+
+/** Walk to Chronozon's chamber, waiting out a respawn. */
 async function walkToChronozon(log: (m: string) => void): Promise<boolean> {
     if (inChronozonLair(Game.tile()) && chronozon()) {
         return true;
@@ -150,13 +114,10 @@ async function walkToChronozon(log: (m: string) => void): Promise<boolean> {
     return Execution.delayUntil(() => chronozon() !== null, 60_000);
 }
 
-/**
- * Land one of each elemental blast, then finish the demon.
- *
- * Killing it before all four have landed is harmless: `ai_queue3` heals it to
- * full and sets it back on the player instead of letting it die, which is also
- * why the loop below never has to protect its damage output.
- */
+// Why: killing it before all four blasts have landed is harmless — `ai_queue3` heals it to full and sets it back on the player instead of letting it die.
+// Why: that is also why the loop below never has to protect its damage output.
+
+/** Land one of each elemental blast, then finish the demon. */
 export async function fightChronozon(log: (m: string) => void): Promise<boolean> {
     try {
         return await runFight(log);
@@ -166,14 +127,11 @@ export async function fightChronozon(log: (m: string) => void): Promise<boolean>
 }
 
 async function runFight(log: (m: string) => void): Promise<boolean> {
-    // Auto-retaliate is what breaks a safespot: the spiders on the gate tiles
-    // attack, the bot swings back, and walks itself off the alcove into the
-    // demon's reach. Nothing in this fight wants a reflex.
+    // Why: auto-retaliate breaks a safespot — the spiders on the gate tiles attack, the bot swings back, and walks itself off the alcove into the demon's reach.
     Game.setAutoRetaliate(false);
 
-    // Walk to the safespot rather than to the demon: `walkToChronozon` closes to
-    // within four tiles, which is inside its reach, and the whole point is never
-    // to stand there. The walker handles the trapdoor and gates on the way.
+    // Why: the walk targets the safespot rather than the demon, as `walkToChronozon` closes to within four tiles, which is inside its reach.
+    // Why: the walker handles the trapdoor and gates on the way.
     let safespot = await takeSafespot(log);
     if (!safespot && !(await walkToChronozon(log))) {
         log('could not reach Chronozon');
@@ -213,9 +171,8 @@ async function runFight(log: (m: string) => void): Promise<boolean> {
                 continue;
             }
             landed = result === 'landed';
-            // The safespot only counts if it is one: a cast that never lands, or
-            // damage taken while standing on it, means the gate is in the way or
-            // the demon can reach after all. Fighting in the open is proven.
+            // Why: a cast that never lands, or damage taken while standing on the safespot, means the gate is in the way or the demon can reach after all.
+            // Why: fighting in the open is the proven fallback.
             if (safespot && attempt + 1 >= SAFESPOT_PROBE_CASTS && !landed) {
                 log('safespot casts are not landing — fighting in the open instead');
                 safespot = false;
@@ -224,8 +181,7 @@ async function runFight(log: (m: string) => void): Promise<boolean> {
                 safespot = false;
             }
             if (!safespot && !onSafespot() && !landed) {
-                // Abandoning the spot has to actually move: whatever stopped the
-                // casts landing (a gate in the way) still stops them from here.
+                // Why: abandoning the spot has to move, as whatever stopped the casts landing — a gate in the way — still stops them from here.
                 await walkToChronozon(log);
             }
         }
@@ -275,10 +231,8 @@ async function runFight(log: (m: string) => void): Promise<boolean> {
             }
             continue;
         }
-        // Finish it the way it was weakened. A rune scimitar against defence 173
-        // is slow enough that the loop ran out before the demon did; the blasts
-        // demonstrably land, and from the safespot casting is also the only
-        // option that does not give away the reason for standing there.
+        // Why: a rune scimitar against defence 173 is slow enough that the loop ran out before the demon did, where the blasts land.
+        // Why: from the safespot casting is also the only option that keeps the distance the safespot exists for.
         if (safespot && !onSafespot()) {
             safespot = await takeSafespot(log);
         }

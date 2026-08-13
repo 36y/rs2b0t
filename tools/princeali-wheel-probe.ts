@@ -1,13 +1,5 @@
-// docs/how-to/write-a-harness.md
-//
-// Settles one question and nothing else: does the Lumbridge castle spinning wheel at
-// 3209,3212,1 actually spin wool? sheepshearer avoids it on the strength of commit
-// 3a8c3a9 (2026-07-16), which predates the multi-level loc-snapshot settle fix in
-// e146904 (2026-07-22) by six days — and a level-1 loc queried in the tick after a
-// staircase climb reads back empty. Prince Ali's whole wool leg depends on the answer.
-//
-// Drives the wheel directly rather than through AIOQuester: at stage 0 the quest routes
-// to Hassan and would never reach the wool leg at all.
+// Settles one question: does the Lumbridge castle spinning wheel at 3209,3212,1 spin wool? Prince Ali's wool leg depends on the answer.
+// Why: sheepshearer avoids the wheel on the strength of commit 3a8c3a9 (2026-07-16), which predates the multi-level loc-snapshot settle fix in e146904 (2026-07-22) by six days, and a level-1 loc queried in the tick after a staircase climb reads back empty. The wheel is driven directly rather than through AIOQuester, which at stage 0 routes to Hassan and never reaches the wool leg.
 import { fail, launchBrowser } from './lib/harness.js';
 import { cheat, cheatQuiet, mainlandAccount } from './tutorial/harness.js';
 

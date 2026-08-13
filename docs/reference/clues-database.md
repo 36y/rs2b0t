@@ -65,7 +65,7 @@ export type ClueStep = ClueRow | { type: 'open-casket'; casketObj: string; caske
 [a quest's `decide()`](../reference/quest-engine.md#quest-state) — the solver is restartable and holds
 no hidden position.
 
-**Talk steps must chase.** The NPC may patrol a whole building, so talk steps ride
+**Talk steps must chase.** The NPC may patrol a building, so talk steps ride
 [`Reach.npcDialog`](../reference/nav-walker.md#the-reach-primitive), which searches the scene and lets the
 server walk the player. A leash-camped approach abandons the clue when the NPC laps
 away.

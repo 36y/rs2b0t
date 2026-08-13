@@ -9,14 +9,9 @@ import { selectRoute } from './selectRoute.js';
 /** Region 45,71 — content mapzone `0_45_71` / enum macro_maze_teleports. */
 export const MAZE_SQUARE = { mx: 45, mz: 71 };
 
-/**
- * Content pack (loc.pack + all.loc + macro_event_maze.rs2):
- *   3628–3632  macro_maze_walllow*  op Open  (category macro_maze_wall_door)
- *   3634        macro_maze_complete  "Strange shrine" 3×3 op Touch → end_macro_maze
- *
- * Finish is NOT the south tile of the SW corner (walled). Last door is the west
- * chamber door at MAZE_SHRINE_DOOR (2910,4576); then Touch from an open face.
- */
+// Why: content pack (loc.pack + all.loc + macro_event_maze.rs2) gives 3628–3632 macro_maze_walllow* op Open, category macro_maze_wall_door.
+// Why: the same pack gives 3634 macro_maze_complete, "Strange shrine", 3×3, op Touch, which calls end_macro_maze.
+// Why: the finish is not the south tile of the SW corner, which is walled — the last door is the west chamber door at MAZE_SHRINE_DOOR (2910,4576), then Touch from an open face.
 const MAZE_DOOR_IDS = new Set([3628, 3629, 3630, 3631, 3632]);
 const MAZE_SHRINE_LOC = 3634; // macro_maze_complete
 /** Step-backs allowed before giving up on this pass and restarting the route. */
@@ -83,7 +78,7 @@ export async function solveMaze(log: (msg: string) => void): Promise<boolean> {
             }, 4_000);
         }
     };
-    /** True when the walk actually got next to `d` — a false means it is walled off. */
+    /** True when the walk got next to `d`; false means it is walled off. */
     const walkAdjacent = async (d: { x: number; z: number }): Promise<boolean> => {
         await walkTowards(d, false);
         const t = reader.worldTile();
@@ -114,12 +109,9 @@ export async function solveMaze(log: (msg: string) => void): Promise<boolean> {
         }
     };
 
-    // The door list is a route through cells: each door is only reachable from the
-    // cell the previous one opens into, and only opens from that side. Anything
-    // that leaves the player out of step with it — a relogin inside the maze, or a
-    // door step that bounced them back — walls the next door off. When that
-    // happens, step back through the previous door to re-enter the right cell
-    // instead of clicking a door on the far side of a wall for a minute.
+    // Why: the door list is a route through cells — each door is reachable only from the cell the previous one opens into, and opens only from that side.
+    // Why: anything that leaves the player out of step with it (a relogin inside the maze, or a door step that bounced them back) walls the next door off.
+    // Why: stepping back through the previous door re-enters the right cell instead of clicking a door on the far side of a wall for a minute.
     for (let i = 0; i < route.doors.length && inMaze(); ) {
         const door = route.doors[i];
         if (await walkAdjacent(door)) {
@@ -160,9 +152,8 @@ export async function solveMaze(log: (msg: string) => void): Promise<boolean> {
         await openDoorAt(MAZE_SHRINE_DOOR);
     }
 
-    // Content finish: [oploc1,macro_maze_complete] if_close; ~end_macro_maze;
-    // After the chamber door, prefer Touch immediately from current tile (often
-    // 2911,4576 through the door). Fallback stands are the west open face.
+    // Why: the content finish is [oploc1,macro_maze_complete] if_close; ~end_macro_maze.
+    // Why: after the chamber door, Touch lands from the current tile (often 2911,4576 through the door), with the west open face as the fallback stand.
     const touchStands = [
         MAZE_SHRINE_DOOR,
         { x: MAZE_SHRINE.x, z: MAZE_SHRINE.z + 1 }, // (2911,4576) — post-door tile

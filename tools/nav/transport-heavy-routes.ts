@@ -1,15 +1,8 @@
-/**
- * Build ~10 transport-heavy OD pairs from curated 2004 travel + known hubs,
- * pack-probe with full WorldState, write a live-friendly JSON list.
- *
- *   bun tools/nav/transport-heavy-routes.ts
- *   bun tools/nav/transport-heavy-routes.ts --write --n=12 --explain
- *
- * Output: tools/nav/transport-heavy.routes.json (gitignored optional — not in .gitignore by default)
- *
- * Live (after redeploy): HEADED=1 can walk these by feeding the JSON into a harness,
- * or copy ids into nav-script-routes-live LIMIT list manually.
- */
+/** Build ~10 transport-heavy OD pairs from curated 2004 travel plus known hubs, pack-probe them with full WorldState, and write a live-friendly JSON list: --write --n=12 --explain.
+ *  Output: tools/nav/transport-heavy.routes.json — feed it to a harness or copy ids into the nav-script-routes-live LIMIT list. */
+
+//   bun tools/nav/transport-heavy-routes.ts
+//   bun tools/nav/transport-heavy-routes.ts --write --n=12 --explain
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -54,11 +47,8 @@ interface Seed {
     note: string;
     from: NavPoint;
     to: NavPoint;
-    /**
-     * Live round-trip: tele to wizard → walk into mine (sets EssenceSession) →
-     * walk out via portal to surface. No setvar / harness override.
-     * Pack probe: entry from→mine + exit mine→to with matching session state.
-     */
+    /** Live round-trip: tele to the wizard → walk into the mine (sets EssenceSession) → walk out through the portal. No setvar or harness override.
+     *  Pack probe: entry from→mine plus exit mine→to with matching session state. */
     essenceRoundtrip?: EssenceReturnId;
     /** Always keep in written list (essence enter/exit should not be ranked out). */
     pin?: boolean;

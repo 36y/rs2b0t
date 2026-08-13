@@ -1,13 +1,8 @@
-/**
- * Live smoke for fix/random-event-handler-crash:
- *   deltime=0 mid-maze teleport must not crash ScriptRunner.
- *
- * Repro path: running script → maze tele (scene rebuild, deltime briefly 0) →
- * Supervisor/RandomEvents.detect → reader.npcs → combatShowing/deltimeNow.
- *
- *   ~/redeploy.sh
- *   bun tools/random-event-deltime-smoke.ts [http://localhost:8890]
- */
+/** Live smoke for fix/random-event-handler-crash — a deltime=0 mid-maze teleport must not crash ScriptRunner: [base].
+ *  Repro path: running script → maze tele (scene rebuild, deltime briefly 0) → Supervisor/RandomEvents.detect → reader.npcs → combatShowing/deltimeNow. */
+
+//   ~/redeploy.sh
+//   bun tools/random-event-deltime-smoke.ts [http://localhost:8890]
 import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login } from './lib/harness.js';
 
 const base = process.argv[2] ?? 'http://localhost:8890';

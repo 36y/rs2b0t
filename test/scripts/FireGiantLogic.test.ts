@@ -39,10 +39,7 @@ describe('legFor', () => {
     });
 });
 
-// the landing tile satisfies the engine's inzone check but sits 13 tiles from the
-// rock, past the aplocu range, and the rock is across water — the server answers
-// "I can't reach that!" and the player never moves. The throw stand must satisfy
-// BOTH the zone check and op reachability.
+// Why: the landing tile passes the engine's inzone check but sits 13 tiles from the rock, past aplocu range, so the throw stand must satisfy both zone and op reachability.
 describe('ROPE_THROW_STAND', () => {
     test('is inside the engine throw zone', () => {
         expect(ROPE_THROW_STAND.x).toBeGreaterThanOrEqual(THROW_ZONE.minX);
@@ -66,9 +63,7 @@ describe('ROPE_THROW_STAND', () => {
     });
 });
 
-// From the safespot, 8 of the 10 spawns fall inside FIELD_RADIUS and the nearest
-// EAST-room giant (2573,9895, d=5) is closer than two of the three WEST-room ones,
-// so distance alone cannot keep the bot in its own room.
+// Why: the nearest EAST-room giant (2573,9895, d=5) outranks two of the three WEST-room ones, so distance alone cannot keep the bot in its own room.
 describe('roomOf', () => {
     const WEST_SPAWNS = [[2562, 9886], [2565, 9887], [2568, 9889]] as const;
     const EAST_SPAWNS = [[2573, 9895], [2575, 9891], [2577, 9890], [2577, 9897], [2578, 9895], [2580, 9890], [2581, 9895]] as const;
@@ -102,10 +97,7 @@ describe('roomOf', () => {
     });
 });
 
-// Two-tier: hold the forward tile for the extra giant, drop to the melee-proof nook
-// whenever one actually reaches us.
-// Loot from another player's kills in the next chamber is not ours, and crossing for
-// it abandons the safespot for the whole round trip.
+// Why: crossing to the next chamber for another player's drop abandons the safespot for the round trip.
 describe('sameRoom', () => {
     const westSpot = { x: 2568, z: 9892, level: 0 };
     const centreAnchor = { x: 2575, z: 9893, level: 0 };
@@ -131,6 +123,7 @@ describe('sameRoom', () => {
     });
 });
 
+// Why: 2568,9893 is melee-proof, so it is the tile to drop back to whenever a giant reaches the forward spot.
 describe('safespot tiers', () => {
     test('the forward spot is 2568,9892 and the fallback is 2568,9893', () => {
         expect([DEFAULT_SAFESPOT.x, DEFAULT_SAFESPOT.z, DEFAULT_SAFESPOT.level]).toEqual([2568, 9892, 0]);
@@ -150,9 +143,7 @@ describe('safespot tiers', () => {
     });
 });
 
-// Clicking a giant beyond weapon range makes the server walk you into range, which
-// steps off the safespot; ReturnToSafespot then drags you back before the shot
-// leaves, and the bot ping-pongs without ever attacking. Engage only within range.
+// Why: a click beyond weapon range makes the server walk you off the safespot, and ReturnToSafespot drags you back before the shot leaves.
 describe('attackRangeFor', () => {
     test('bow reaches 7, magic 10, melee 1', () => {
         expect(attackRangeFor('range')).toBe(7);
@@ -234,9 +225,7 @@ describe('EXIT_OPTIONS', () => {
     });
 });
 
-// The Take walks to the drop first, so a flat short wait reported failure while the
-// pickup was in flight; the safespot walk-back then cancelled it and the bot traded
-// places with the loot forever.
+// Why: Take walks to the drop first, so a flat short wait reports failure while the pickup is still in flight.
 describe('lootWaitMs', () => {
     test('an adjacent drop still gets a usable minimum', () => {
         expect(lootWaitMs(0)).toBeGreaterThanOrEqual(1000);

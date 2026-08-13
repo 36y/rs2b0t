@@ -41,7 +41,7 @@ Measured end to end at `--tick 200`: **68 minutes walking, 45 with `--teleports`
 **Pin `--tick` when you are comparing two runs.** The default is 300ms and the
 end-to-end baseline was measured at `--tick 200`; a run at the default is 1.5×
 slower per tick, so any wall-clock comparison against it measures the flag. Two
-runs at 300ms also wedged on the very first step, with Larrissa one tile away
+runs at 300ms also wedged on the first step, with Larrissa one tile away
 and every `Talk-to` refused in silence — the nav probe rules out geometry (all
 the tiles around her are mutually reachable at cost 1) and the engine's own
 recovery named a leftover **main** modal, which refuses dialogue exactly like
@@ -71,8 +71,7 @@ death recovery re-enters with **Push** (no key) and re-withdraws bank tools.
 
 **Recipe for future quest harnesses:**
 
-1. Prefer `bank:obj:qty` / `givebank` / `~bankitem` — not invent give→deposit for
-   unstackable food.
+1. Prefer `bank:obj:qty` / `givebank` / `~bankitem` over give→deposit loops for unstackable food.
 2. Ideal smoke → realistic bank-seed → **lower non-required stats until red**;
    keep proven floor + failed floor + next probe in the module; `warnReadiness`.
 3. Leave the pack empty after bank seed so provisioning runs.
@@ -82,7 +81,7 @@ death recovery re-enters with **Push** (no key) and re-withdraws bank tools.
 
 - **`::death` is a clean kill** (`~damage_self(999)`): respawn is Lumbridge `(3221,3218)`,
   and `move_priciest_item_on_hero_to_death` keeps *one* of each of the three priciest items
-  — so a coin stack comes back as a single coin. Use it to test death recovery for real
+  — so a coin stack comes back as a single coin. Use it to drive death recovery through a death
   rather than seeding a post-death pose.
 - **A stage test seeds only what that stage produces, never its tools.** See
   [Quests](../how-to/add-a-quest.md) — every Watch Tower stage-10 test handed the bot

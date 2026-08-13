@@ -82,9 +82,9 @@ function sameName(a: string, b: string): boolean {
 function playerNamed(name: string, range: number): Player | null {
     return Players.query().where(p => p.name !== null && sameName(p.name, name)).within(range).nearest();
 }
-// A runner's pack for one run: the talisman that opens the altar plus exactly one
-// recipient load. A short/over load is what makes a runner deliver 1 essence and
-// waste a trade slot the recipient could have spent on a full delivery.
+// Why: a short or over load makes a runner deliver 1 essence and waste a trade slot the recipient could have spent on a full delivery.
+
+/** True when the pack holds the altar talisman plus one recipient load. */
 function runnerLoaded(bot: RuneCrafter): boolean {
     return Inventory.contains(bot.talismanName()) && essCount() === TRADE_LOAD
         && packJunk([bot.talismanName(), ESSENCE]).length === 0;
@@ -283,9 +283,8 @@ class Craft implements Task {
         this.bot.countCraft(made);
         this.bot.log(`crafted ${made} ${this.bot.runeName()}s`);
         if (!this.thenExit) { return; } // the recipient lives here — it stays parked at the altar
-        // The craft locks the player (p_delay 3) and pops a level-up. Leave straight
-        // away: in a tight loop, close any dialog and re-click the portal every tick
-        // so the Use fires the instant the lock clears, instead of standing there.
+        // Why: the craft locks the player (p_delay 3) and pops a level-up.
+        // Why: a tight loop closes any dialog and re-clicks the portal every tick, so the Use fires the instant the lock clears.
         this.bot.setStatus('taking the portal out');
         this.bot.log('taking the portal back to the ruins');
         for (let i = 0; i < 15 && inTemple(); i++) {
@@ -443,9 +442,8 @@ class RunnerRestock implements Task {
     async execute(): Promise<void> {
         this.bot.setStatus('restocking essence');
         if (!(await openBank(this.bot))) { return; }
-        // the talisman is the only thing that stays: junk, the noted essence the bank hands
-        // back, and any leftover from the last delivery all go, so the run starts on exactly
-        // one full load instead of dribbling 1-2 essence into a trade the recipient waited for
+        // Why: the talisman is the only thing that stays — junk, the noted essence the bank hands back, and leftovers from the last delivery all go.
+        // Why: the run then starts on one full load instead of dribbling 1-2 essence into a trade the recipient waited for.
         if (!(await cleanPack(this.bot, [this.bot.talismanName()]))) { return; }
         if (!(await ensureTalisman(this.bot))) { return; }
 
@@ -542,9 +540,10 @@ class MuleAnswerRequest implements Task {
     }
 }
 
-// A random event hands the recipient an item, and that one slot is the difference
-// between a 26-essence delivery fitting and every trade being declined. It goes on
-// the floor: leaving for a bank strands every runner queued at the altar.
+// Why: a random event hands the recipient an item, and that one slot decides whether a 26-essence delivery fits or every trade is declined.
+// Why: the junk goes on the floor, since leaving for a bank strands every runner queued at the altar.
+
+/** Drops recipient-side junk that would block a full delivery. */
 class MuleDropJunk implements Task {
     constructor(private bot: RuneCrafter) {}
     // essence is the payload, never junk — a delivery can land between two loops

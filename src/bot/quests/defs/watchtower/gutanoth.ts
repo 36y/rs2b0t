@@ -21,11 +21,10 @@ function locNear(id: number, op: string, within = 8): Loc | null {
     return Locs.query().where(loc => loc.id === id).action(op).within(within).nearest();
 }
 
-/**
- * An op that opens a dialogue does so a tick later. Without this wait the driver
- * sees no dialogue, starts a fresh conversation with the nearest NPC instead, and
- * lands in whatever dead-end line that NPC offers.
- */
+// Why: an op that opens a dialogue does so a tick later.
+// Why: without this wait the driver sees no dialogue, starts a fresh conversation with the nearest NPC, and lands in whatever dead-end line that NPC offers.
+
+/** Wait for the dialogue an op just opened. */
 async function awaitDialogue(what: string, log: (m: string) => void): Promise<boolean> {
     if (await Execution.delayUntil(() => ChatDialog.isOpen() || ChatDialog.canContinue(), 8000)) {
         return true;
@@ -113,9 +112,8 @@ export async function crossBattlement(log: (m: string) => void): Promise<boolean
         log('no battlement guard in range');
         return false;
     }
-    // He ignores the cake until he has asked for a gift — opnpcu only accepts it
-    // once the market bits are 1 — so talk first. Talking while already holding the
-    // cake completes the whole exchange in one go.
+    // Why: he ignores the cake until he has asked for a gift, as opnpcu only accepts it once the market bits are 1, so the talk comes first.
+    // Why: talking while already holding the cake completes the whole exchange in one go.
     if (await guard.interact('Talk-to')) {
         if (await awaitDialogue('the battlement guard', log)) {
             // The unmatched option here is "Not if I can help it."
@@ -257,14 +255,11 @@ export async function answerRiddle(log: (m: string) => void): Promise<boolean> {
     return Execution.delayUntil(() => heldId(WT_ITEM.SKAVID_MAP.id) > 0, 10_000);
 }
 
-/**
- * The east gate is the only way to cave 6's side of the city, and its guard wants
- * a bar of gold. Like the relic gate he refuses first contact and throws you down
- * the hill, so the crossing takes two approaches.
- *
- * The region beyond overlaps the battlement side geographically, so membership is
- * decided by asking the pathfinder rather than by a bounding box.
- */
+// Why: the east gate is the only way to cave 6's side of the city, and its guard wants a bar of gold.
+// Why: like the relic gate he refuses first contact and throws you down the hill, so the crossing takes two approaches.
+// Why: the region beyond overlaps the battlement side geographically, so membership is decided by asking the pathfinder rather than by a bounding box.
+
+/** True once past the east gate. */
 async function pastEastGate(): Promise<boolean> {
     const here = Game.tile();
     if (!here) {

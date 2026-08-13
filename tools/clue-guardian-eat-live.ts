@@ -1,20 +1,7 @@
-/**
- * Live proof: a hard-clue dig guardian is fought *while eating*.
- *
- * A whole trail runs inside one SolveClue task call, so a host bot's own Eat
- * task never gets a turn between legs. GreenDragon also installed no Sustain
- * hook at all, so every `Sustain.run()` the executor and fightGuardian pump was
- * a no-op: the bot fought a level-65 mage on a full pack of lobsters without
- * touching one. SolveClue now owns trail upkeep for every host.
- *
- * The account is deliberately 70 across the board with **prayer left at 1**, so
- * Protect from Magic is unavailable and the wizard's damage lands in full —
- * eating is the only thing keeping the bot alive.
- *
- *   HEADED=1 bun tools/clue-guardian-eat-live.ts
- *
- * Proof: out/clue-guardian-eat-proof.json
- */
+// Live proof: a hard-clue dig guardian is fought while eating. Proof: out/clue-guardian-eat-proof.json
+// Why: one SolveClue call spans a full trail, so a host's own Eat task never gets a turn between legs; prayer stays at 1 so Protect from Magic cannot blunt the wizard.
+
+//   HEADED=1 bun tools/clue-guardian-eat-live.ts
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import type { Page } from 'playwright-core';
 import { HARNESS_VIEWPORT, boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, parseArgs, setSettings } from './lib/harness.js';
@@ -86,7 +73,7 @@ const chatLines = (page: Page): Promise<string[]> =>
 const guardianUp = (page: Page): Promise<boolean> =>
     page.evaluate(n => (globalThis as never as Api).__rs2b0t.Npcs.all().some(x => x.name === n), GUARDIAN);
 
-/** Its health bar is the only honest answer to "is the bot actually hitting it?". */
+/** Its health bar is the only honest answer to whether the bot is hitting it. */
 const guardianState = (page: Page): Promise<{ hp: number; dist: number; tile: unknown } | null> =>
     page.evaluate(n => {
         const g = (globalThis as never as Api).__rs2b0t.Npcs.all().find(x => x.name === n) as
@@ -174,11 +161,7 @@ async function main(): Promise<void> {
         for (const [debugName, id] of TRIO) {
             await give(page, debugName, id, 1);
         }
-        // No lobsters in the pack on purpose. `~bank_f2p` stocks a *max-int*
-        // lobster stack, and a maxed stack refuses further deposits — the trail
-        // prep does not keep food, so seeded lobsters get offered to that stack
-        // and the bank stop spends 64s failing to hand them over. The prep
-        // withdraws its own food anyway ("taking 10 Lobster for the trail").
+        // Why: `~bank_f2p` stocks a max-int lobster stack that refuses further deposits, so seeded food costs the bank stop 64s of failed hand-over; the prep withdraws its own.
         await give(page, CLUE_OBJ, CLUE_ID, 1);
 
         await setSettings(page, 'ClueSolver', {
@@ -303,10 +286,7 @@ async function main(): Promise<void> {
         if (!engaged) {
             fail('never engaged the guardian — the dig did not spawn it');
         }
-        // Each bite logs the hp it was taken at, which is the only reliable record:
-        // the fight resolves in ~6s with huge swings, so a 1Hz poll routinely misses
-        // the trough. A bite at all means shouldEatToUseFood said the bot was hurt.
-        // Only when it never ate does the sampled hp decide bug-vs-lucky-splash.
+        // Why: the fight resolves in ~6s with huge swings, so a 1Hz poll misses the trough — a bite at all means shouldEatToUseFood fired, and only a run with no bite lets the sampled hp decide.
         const LOBSTER_HEAL = 12;
         if (ate.length === 0) {
             if (minHp > LEVEL - LOBSTER_HEAL) {

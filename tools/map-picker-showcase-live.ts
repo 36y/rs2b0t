@@ -1,17 +1,7 @@
-/**
- * Live showcase: login → open map picker → capture screenshots for each
- * basemap mode / Worldmap layer combo (for PR proof).
- *
- *   HEADED=0 bun tools/map-picker-showcase-live.ts [http://localhost:8890]
- *
- * Writes under screenshots/:
- *   issue0-map-picker-showcase-terrain.png
- *   issue0-map-picker-showcase-labels.png
- *   issue0-map-picker-showcase-key-bank.png
- *   issue0-map-picker-showcase-full.png
- *   issue0-map-picker-showcase-dots.png
- *   issue0-map-picker-showcase-proof.json
- */
+/** Live showcase: login → open the map picker → capture a screenshot for each basemap mode / Worldmap layer combo: [base].
+ *  Writes screenshots/issue0-map-picker-showcase-{terrain,labels,key-bank,full,dots}.png and -proof.json. */
+
+//   HEADED=0 bun tools/map-picker-showcase-live.ts [http://localhost:8890]
 import { mkdir } from 'node:fs/promises';
 import { writeFileSync } from 'node:fs';
 import { boot, fail, launchBrowser, login, positionalArgs } from './lib/harness.js';

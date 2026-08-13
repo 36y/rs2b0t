@@ -1,9 +1,6 @@
-// Scene readiness memoization — correctness proof against a local engine.
-// checkLocations now answers from a cached set of outstanding models instead of
-// re-decoding the loc stream every tick, so the risk is a scene that reports
-// ready too early (empty/broken) or never at all (stuck on "Loading - please
-// wait"). Teleport across regions and require a real, populated scene each time.
-//
+// Scene readiness memoization — correctness proof against a local engine: [base].
+// Why: checkLocations answers from a cached set of outstanding models rather than re-decoding the loc stream every tick, so the risk is a scene reporting ready too early (empty or broken) or never at all ("Loading - please wait") — teleport across regions and require a populated scene each time.
+
 //   bun tools/scene-rebuild-test.ts [http://localhost:8888]
 import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, positionalArgs } from './lib/harness.js';
 

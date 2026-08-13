@@ -80,9 +80,8 @@ export function foodCount(items: readonly { name: string | null | undefined }[],
 }
 
 /**
- * Heal amount for one consume of `foodName`. Resolves partial cake/pizza/pie
- * forms and common aliases. Unknown names fall back to {@link DEFAULT_FOOD_HEAL}
- * so smart-eat still has a usable room size rather than only the 5 HP floor.
+ * Heal amount for one consume of `foodName`, resolving partial cake/pizza/pie forms and common aliases.
+ * Why: unknown names fall back to {@link DEFAULT_FOOD_HEAL} so smart-eat still has a usable room size rather than only the 5 HP floor.
  */
 export function foodHealAmount(foodName: string): number {
     const key = foodName.trim().toLowerCase();

@@ -24,12 +24,10 @@ const LEVER_LOC = {
 
 type MineRegion = 'main' | 'south' | 'northRoom' | 'gold' | 'outside';
 
-/**
- * The four components the lever doors cut the mine into, from a flood over the
- * baked collision pack with all four doors removed. Their z-ranges are disjoint
- * and the gold room is the only thing east of x=2727, so a tile alone names the
- * region.
- */
+// Why: these are the four components the lever doors cut the mine into, from a flood over the baked collision pack with all four doors removed.
+// Why: their z-ranges are disjoint and the gold room is the only thing east of x=2727, so a tile alone names the region.
+
+/** Which of the mine's four lever-door regions a tile is in. */
 export function mineRegion(tile: { x: number; z: number; level: number } | null | undefined): MineRegion {
     if (!tile || tile.level !== 0 || tile.x < 2688 || tile.x > 2751 || tile.z < 9664 || tile.z > 9727) {
         return 'outside';
@@ -107,14 +105,10 @@ function here(): { x: number; z: number; level: number } | null {
     return Game.tile();
 }
 
-/**
- * Pull a lever until the server confirms the state we want.
- *
- * The loc model is not a reliable read: `loc_change(..., 500)` reverts the lever
- * to its down model after five minutes while leaving the varp bit set, so a
- * lever that *looks* down may well be up. The chat line the pull emits is
- * emitted exactly when the bit changes, so it is the oracle.
- */
+// Why: the loc model is an unreliable read — `loc_change(..., 500)` reverts the lever to its down model after five minutes while leaving the varp bit set, so a lever that looks down may be up.
+// Why: the chat line the pull emits is emitted exactly when the bit changes, so it is the oracle.
+
+/** Pull a lever until the server confirms the wanted state. */
 async function setLever(
     key: 'north' | 'south' | 'northRoom',
     want: 'up' | 'down',
@@ -158,14 +152,10 @@ async function setLever(
     return false;
 }
 
-/**
- * Open one of the mine's doors and confirm the crossing. `open_and_close_door2`
- * teleports the player through and shuts the door behind them, so the tell is
- * the region change, never the door's own state.
- *
- * Returns `'locked'` when the server refused — the lever combination is not the
- * one this door wants, which is information the caller uses to re-plan.
- */
+// Why: `open_and_close_door2` teleports the player through and shuts the door behind them, so the tell is the region change rather than the door's own state.
+// Why: `'locked'` means the server refused because the lever combination is not the one this door wants, which the caller uses to re-plan.
+
+/** Open one of the mine's doors and confirm the crossing. */
 async function crossDoor(
     door: DoorSpot,
     from: MineRegion,
@@ -203,15 +193,11 @@ async function crossDoor(
     return 'failed';
 }
 
-/**
- * Walk the levers-and-doors chain from wherever we are to the gold room.
- *
- * The plan is fixed — it is the shortest chain a BFS over the collision pack
- * found — but each leg is written so a restart anywhere in the mine converges:
- * levers are *set* rather than read, and the only regions the bot can be
- * stranded in are ones it can only have entered with the lever state that opens
- * the way back.
- */
+// Why: the plan is fixed, being the shortest chain a BFS over the collision pack found.
+// Why: each leg is written so a restart anywhere in the mine converges — levers are set rather than read.
+// Why: the only regions the bot can be stranded in are ones it can only have entered with the lever state that opens the way back.
+
+/** Walk the levers-and-doors chain from wherever we are to the gold room. */
 async function reachPerfectGold(log: (m: string) => void): Promise<boolean> {
     for (let pass = 0; pass < 3; pass++) {
         // Ogres line the lever route and hellhounds guard the rocks; a custom
@@ -243,9 +229,7 @@ async function reachPerfectGold(log: (m: string) => void): Promise<boolean> {
             region = 'main';
         }
 
-        // 1. north lever up, then south into the south room. Which of the two
-        //    doors opens depends on the south lever we cannot see from here —
-        //    trying both is what tells us where it stands.
+        // Why: which of the two doors opens depends on the south lever, which cannot be seen from here, so trying both is what tells us where it stands.
         if (!(await setLever('north', 'up', log))) {
             return false;
         }
@@ -359,11 +343,9 @@ export async function leaveGoldMine(log: (m: string) => void): Promise<boolean> 
 
 export const PERFECT_ORE_NEEDED = 2;
 
-/**
- * Mine perfect gold. `inzone` tests the **player's** tile, so the stand matters
- * as much as the rock: mining a boundary rock from outside the box hands out
- * ordinary gold ore and the smelt downstream silently makes the wrong bar.
- */
+// Why: `inzone` tests the player's tile, so the stand matters as much as the rock — mining a boundary rock from outside the box hands out ordinary gold ore and the smelt downstream silently makes the wrong bar.
+
+/** Mine perfect gold. */
 export async function minePerfectGold(log: (m: string) => void): Promise<boolean> {
     if (heldId(FC_ID.PERFECT_GOLD_ORE) >= PERFECT_ORE_NEEDED) {
         return true;
@@ -400,24 +382,17 @@ export async function minePerfectGold(log: (m: string) => void): Promise<boolean
     return heldId(FC_ID.PERFECT_GOLD_ORE) >= PERFECT_ORE_NEEDED;
 }
 
-/**
- * Al Kharid. East Ardougne's furnace is far closer to the mine, but the moulds
- * are Dommik's and the jewellery goes to Avan, both of which are here — smelting
- * at Ardougne would mean walking the same 600 tiles twice.
- *
- * South side: `furnace1` is `forceapproach=east`, so the east stand never routes.
- */
+// Why: East Ardougne's furnace is closer to the mine, but the moulds are Dommik's and the jewellery goes to Avan, both in Al Kharid, so smelting at Ardougne would walk the same 600 tiles twice.
+// Why: this is the south side, as `furnace1` is `forceapproach=east` and the east stand never routes.
 export const FURNACE_STAND = new Tile(3272, 3183, 0);
 
 async function atFurnace(log: (m: string) => void): Promise<boolean> {
     return Traversal.walkResilient(FURNACE_STAND, { radius: 2, attempts: 4, timeoutMs: 180_000, log });
 }
 
-/**
- * Using an ore on a furnace smelts one bar outright — no interface — and
- * `perfect_gold_ore` carries `smeltsto=perfect_gold_bar`, so the ordinary
- * gold-bar path never gets a chance to pick the wrong metal.
- */
+// Why: using an ore on a furnace smelts one bar outright with no interface, and `perfect_gold_ore` carries `smeltsto=perfect_gold_bar`, so the ordinary gold-bar path never gets a chance to pick the wrong metal.
+
+/** Smelt the perfect gold ore into bars. */
 export async function smeltPerfectBars(log: (m: string) => void): Promise<boolean> {
     if (heldId(FC_ID.PERFECT_GOLD_ORE) === 0) {
         return heldId(FC_ID.PERFECT_GOLD_BAR) > 0;
@@ -443,14 +418,10 @@ export async function smeltPerfectBars(log: (m: string) => void): Promise<boolea
     return heldId(FC_ID.PERFECT_GOLD_ORE) === 0;
 }
 
-/**
- * Craft the jewellery Avan asked for.
- *
- * The panel lists a placeholder object per gem, and each placeholder carries the
- * *real* product's display name, so "Ruby ring" matches. `crafting_gold`
- * substitutes the perfect bar for the ordinary one whenever a perfect bar is
- * held, which is why the ordinary ruby ring is the thing to click.
- */
+// Why: the panel lists a placeholder object per gem, and each placeholder carries the real product's display name, so "Ruby ring" matches.
+// Why: `crafting_gold` substitutes the perfect bar for the ordinary one whenever a perfect bar is held, which is why the ordinary ruby ring is the thing to click.
+
+/** Craft the jewellery Avan asked for. */
 export async function craftPerfectJewellery(log: (m: string) => void): Promise<boolean> {
     const wants: { product: string; id: number }[] = [
         { product: 'Ruby ring', id: FC_ID.PERFECT_RUBY_RING },

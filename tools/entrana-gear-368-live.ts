@@ -1,13 +1,7 @@
-/**
- * Live proof for #368 — Entrana ferry + gangplank + no weapons/armour.
- *
- * Sequence (no tele onto the island):
- *   strip gear, tele to Port Sarim monk stand (3048,3236)
- *   walkResilient to drawers stand near (2818,3351)
- *   must: Monk Talk-to → deck → Cross gangplank → island walk
- *
- *   ~/redeploy.sh && HEADED=1 bun tools/entrana-gear-368-live.ts
- */
+/** Live proof for #368 — Entrana ferry, gangplank and the no-weapons/armour gate.
+ *  Nothing teleports onto the island: strip gear → Port Sarim monk stand (3048,3236) → walk to (2818,3351) → Monk Talk-to → deck → Cross gangplank. */
+
+//   ~/redeploy.sh && HEADED=1 bun tools/entrana-gear-368-live.ts
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';

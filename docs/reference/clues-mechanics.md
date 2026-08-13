@@ -10,7 +10,7 @@ and takes it, trying the next spawn if it is not there.
 
 Coordinate clues need the full trio — sextant, watch, and chart — obtained through a
 four-NPC chain, driven by [`data/toolAcquire.ts`](../../src/bot/clues/data/toolAcquire.ts).
-`hasAllTrio()` and `hasCoordClueHeld()` gate it, and the whole chain is deadlined
+`hasAllTrio()` and `hasCoordClueHeld()` gate it, and the chain is deadlined
 (`CHAIN_DEADLINE_MS`) so a broken link cannot hang a bot indefinitely.
 
 ### Crossing tolls
@@ -41,8 +41,7 @@ Some clues do not resolve to a location:
 - **Challenge scrolls** ask a question. Answers live in
   [`data/challengeAnswers.ts`](../../src/bot/clues/data/challengeAnswers.ts), and numeric
   ones are submitted through the count dialog.
-- **Key-from-kill** clues (`keyFrom`) require killing a specific NPC for a key; the
-  anchors are in [`data/killAnchors.ts`](../../src/bot/clues/data/killAnchors.ts).
+- **Key-from-kill** clues (`keyFrom`) require killing a specific NPC for a key; the anchors are in [`data/killAnchors.ts`](../../src/bot/clues/data/killAnchors.ts).
 - **Talk anchors** in [`data/talkAnchors.ts`](../../src/bot/clues/data/talkAnchors.ts)
   give a starting point for NPCs that move.
 
@@ -69,7 +68,7 @@ not after you...") belongs to another player, so the fight skips it.
 
 The fight waits on the tick through `sustainUntil`, which pumps `Sustain` on every
 pass. This is load-bearing: the loop used to park in a single `delayUntil` for the
-whole fight, so upkeep never ran and the bot traded blows with a level-108 mage
+fight, so upkeep never ran and the bot traded blows with a level-108 mage
 without ever eating — dying with a full pack of food. Any wait inside a fight has
 to pump, not park.
 
@@ -123,17 +122,17 @@ catalog rather than restating them, so a new destination cannot leave its runes
 being banked. Jewellery is kept if the account carries it but never withdrawn —
 charges make the names inexact ("Amulet of glory(4)").
 
-The kit is gated on what the account can actually reach: `teleportKitFor(state)`
+The kit is gated on what the account can reach: `teleportKitFor(state)`
 keeps a destination only when everything in its `requires` except the runes
 themselves is satisfied — magic level, members, quest unlocks. So a magic-1 bot
 carries no runes at all instead of five dead slots, and the per-cast counts
 narrow with the spellbook (Camelot's 5 air runes do not size the load until
 Camelot is castable). The router already refused those spells; the bank stop was
 provisioning for them anyway. Unusable runes are no longer kit, so the deposit
-sweeps them, and the pack log names the destinations it can really cast.
+sweeps them, and the pack log names the destinations it can cast.
 
-Missing runes are not an error: the router walks instead. Turn the whole
-thing off with the `useTeleports` setting.
+Missing runes are not an error: the router walks instead. The `useTeleports` setting
+turns teleports off.
 
 ## See also
 

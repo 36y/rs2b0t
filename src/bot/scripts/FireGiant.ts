@@ -175,9 +175,10 @@ function activeSafespot(): Tile {
 function anchor(): Tile {
     return usesSafespot() ? activeSafespot() : MELEE_TILE;
 }
-// The forward spot trades safety for a second giant in view, so taking a hit there is
-// expected rather than a fault. Damage is the honest trigger — a giant walking past
-// is harmless, and only something actually connecting means the tile has failed.
+// Why: the forward spot trades safety for a second giant in view, so taking a hit there is expected rather than a fault.
+// Why: damage is the trigger — a giant walking past is harmless, and only a connecting hit means the tile has failed.
+
+/** True when the forward safespot tier has to be given up. */
 function checkRetreat(bot: FireGiant): boolean {
     const hp = Skills.effective('hitpoints');
     const hurt = lastHp >= 0 && hp < lastHp;
@@ -216,9 +217,10 @@ function hasRope(): boolean {
     return Inventory.count(ROPE) > 0;
 }
 
-// Safespotting only ever engages giants sharing the anchor's chamber: the rooms
-// overlap inside FIELD_RADIUS, and the nearest east giant is closer to the west
-// safespot than two of the west ones, so a radius alone drags the bot next door.
+// Why: the rooms overlap inside FIELD_RADIUS, and the nearest east giant is closer to the west safespot than two of the west ones.
+// Why: a radius alone drags the bot next door, so safespotting only engages giants sharing the anchor's chamber.
+
+/** True when the tile is in the same chamber as the anchor. */
 function sameRoomAsAnchor(tile: Tile): boolean {
     return sameRoom(anchor(), tile);
 }
@@ -259,10 +261,10 @@ function findLoot() {
         .nearest();
 }
 
-// Everything the next trip does not need goes in the bank. Looted runes and coins
-// would otherwise pile up in the pack forever, and the spell/escape runes are
-// deliberately NOT kept — the withdrawals put back exactly the configured amount,
-// so a trip always leaves with a known quantity instead of a growing heap.
+// Why: everything the next trip does not need goes in the bank, or looted runes and coins pile up in the pack.
+// Why: the spell and escape runes are deliberately not kept, since the withdrawals put back the configured amount and a trip leaves with a known quantity.
+
+/** Inventory names held back from the deposit. */
 function keepNames(): string[] {
     return combatKeepNames({ food: FOOD_NAME, style: STYLE, ammo: AMMO, weapon: WEAPON, extra: [AMULET, ROPE] });
 }
@@ -304,9 +306,7 @@ async function lootOnce(bot: FireGiant): Promise<boolean> {
     if (!(await drop.interact('Take'))) {
         return false;
     }
-    // a stackable drop merges into an existing slot, so used() alone never moves for
-    // coins, runes or arrows — the bulk of this table — and every one of them would
-    // burn the full timeout and report failure
+    // Why: a stackable drop merges into an existing slot, so used() alone never moves for coins, runes or arrows — the bulk of this table — and each would burn the full timeout and report failure.
     const took = await Execution.delayUntil(
         () => Inventory.used() > usedBefore || Inventory.count(name) > countBefore,
         lootWaitMs(drop.distance())
@@ -320,9 +320,10 @@ async function lootOnce(bot: FireGiant): Promise<boolean> {
     return false;
 }
 
-// Loot lands on the corpse tile, so collecting it means leaving the safespot and
-// tanking. Drain the pile in one pass instead of one item per task hop, and break
-// off to eat rather than finishing the pile at low HP.
+// Why: loot lands on the corpse tile, so collecting it means leaving the safespot and tanking.
+// Why: the pile drains in one pass rather than one item per task hop, breaking off to eat rather than finishing at low HP.
+
+/** Clears the drop pile in a single pass. */
 async function lootBurst(bot: FireGiant): Promise<void> {
     for (let i = 0; i < LOOT_BURST_MAX; i++) {
         if (EventSignal.pending() || bot.died || Inventory.isFull()) {
@@ -498,9 +499,10 @@ async function castEscape(bot: FireGiant): Promise<boolean> {
     return Execution.delayUntil(() => !inDungeon(), 8000);
 }
 
-// Walk out: the exit door sits on the dungeon entry tile and drops us on the ledge,
-// where the barrel washes us to 2527,3413. Free, and the only route that works with
-// no runes at all. The teleport modes skip the walk back to the door.
+// Why: the exit door sits on the dungeon entry tile and drops us on the ledge, where the barrel washes us to 2527,3413.
+// Why: the route is free and the only one that works with no runes at all, and the teleport modes skip the walk back to the door.
+
+/** Walks out of the dungeon and rides the barrel to the mainland. */
 async function exitViaBarrel(bot: FireGiant): Promise<boolean> {
     if (inDungeon()) {
         bot.setStatus('walking to the dungeon door');
@@ -587,9 +589,8 @@ async function bankRoutine(bot: FireGiant, withdrawFood: boolean): Promise<void>
 
     await ensureEscapeRunes(bot);
 
-    // Heal at the booth, not on the way in — the trip back is long and the first
-    // giant should not meet a half-health bot. Top the food back up afterwards so
-    // eating here does not come out of the trip's supplies.
+    // Why: the trip back is long, so healing happens at the booth and the first giant never meets a half-health bot.
+    // Why: the food is topped back up afterwards, so eating here does not come out of the trip's supplies.
     if (await healUp(bot) && withdrawFood) {
         await withdrawFoodTo(bot);
     }
@@ -688,11 +689,9 @@ async function withdrawStyleSupplies(bot: FireGiant): Promise<void> {
     }
     if (STYLE === 'mage') {
         bot.setStatus('withdrawing runes');
-        // Looted runes let the trip outrun its cast budget — fire giants drop chaos,
-        // so the spell keeps firing until the scarcest rune runs dry. When that rune
-        // is also the escape teleport's (Camelot burns air, so does most of the
-        // standard book) the bot ends up unable to leave. Runes stack, so a spare
-        // few hundred costs one slot.
+        // Why: fire giants drop chaos runes, so looted runes let the trip outrun its cast budget and the spell fires until the scarcest rune runs dry.
+        // Why: when that rune is also the escape teleport's — Camelot burns air, as does most of the standard book — the bot ends up unable to leave.
+        // Why: runes stack, so a spare few hundred costs one slot.
         for (const { rune, count } of runeWithdrawList(SPELL, wieldedNames(), RUNES_WITHDRAW)) {
             const target = count + RUNE_BUFFER;
             if (Inventory.count(rune) < target) {
@@ -806,9 +805,7 @@ class LootCorpse implements Task {
     }
     async execute(): Promise<void> {
         await lootBurst(this.bot);
-        // End the excursion where it started. Leaving the walk back to
-        // ReturnToSafespot lets it cancel a pickup still in flight, the loot stays on
-        // the floor, and the two tasks trade places forever.
+        // Why: leaving the walk back to ReturnToSafespot lets it cancel a pickup still in flight, so the loot stays on the floor and the two tasks trade places.
         if (usesSafespot() && !atSafespot() && hpFrac() >= PANIC_HP) {
             await quickReturnToSafespot(this.bot);
         }
@@ -1011,12 +1008,9 @@ class Fight implements Task {
                 continue;
             }
 
-            // You stay in combat with a giant until one of you dies, so re-clicking a
-            // live target is pure noise. Game.inCombat() reads our OWN combat bar,
-            // which never lights up while safespotting, so it is useless here — hold
-            // the target instead. The hold breaks early on anything that means the
-            // situation moved: a random event, a hit landing on us, or the giant's
-            // health changing (which proves we are connecting and resets the clock).
+            // Why: you stay in combat with a giant until one of you dies, so re-clicking a live target is noise.
+            // Why: Game.inCombat() reads our own combat bar, which never lights up while safespotting, so the target is held instead.
+            // Why: the hold breaks early on a random event, a hit landing on us, or the giant's health changing, which proves we are connecting and resets the clock.
             const live = this.targetIdx === null ? undefined : giants.find(g => g.index === this.targetIdx);
             if (live && live.targetsAnotherPlayer()) {
                 this.bot.log(`giant ${live.index} was taken by another player — finding another`);
@@ -1032,10 +1026,8 @@ class Fight implements Task {
                     this.engagedAt = performance.now();
                 }
                 if (performance.now() - this.engagedAt < RE_ENGAGE_MS) {
-                    // Inline, not the sibling task: this loop owns the bot for the
-                    // whole fight, so BuryBones above it only ran in whatever gaps
-                    // the loop happened to leave. This hold is the idle stretch
-                    // while the giant is being worn down — the tick is free here.
+                    // Why: this loop owns the bot for the whole fight, so a sibling BuryBones task only runs in whatever gaps the loop leaves.
+                    // Why: this hold is the idle stretch while the giant is worn down, so the tick is free here.
                     if (BURY_BONES && (await buryOneInFight('Big bones'))) {
                         this.bot.countBurial();
                         continue;
@@ -1076,9 +1068,7 @@ class Fight implements Task {
             this.engagedHealth = -1;
             await Execution.delayUntil(() => (usesSafespot() && !atSafespot()) || fieldGiants().length === 0, 1200);
             if (usesSafespot() && !atSafespot()) {
-                // A tier switch moves us one tile on purpose; that is not the giant
-                // dragging us, and dropping the target here is what looked like the
-                // bot losing aggro and running mid-fight.
+                // Why: a tier switch moves us one tile on purpose, so it is not the giant dragging us and the target is kept.
                 if (retreated !== tierBefore) {
                     this.bot.log(`safespot tier changed mid-fight — keeping giant ${target.index}`);
                     continue;
@@ -1093,9 +1083,10 @@ class Fight implements Task {
         }
     }
 
-    // Hold the tile while the giant closes. Clicking it from here would make the
-    // server walk us into range and ReturnToSafespot would drag us back before the
-    // shot leaves, which is the back-and-forth this replaces. False = it never came.
+    // Why: clicking the giant from here makes the server walk us into range, and ReturnToSafespot drags us back before the shot leaves.
+    // Why: false means the giant never closed.
+
+    /** Holds the tile while the giant closes. */
     private async leash(idx: number): Promise<boolean> {
         this.bot.setStatus('leashing fire giant');
         this.bot.targetIdx = idx;

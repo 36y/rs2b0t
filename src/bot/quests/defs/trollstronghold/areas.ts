@@ -66,11 +66,9 @@ export const TILE = {
     EADGAR_CELL: new Tile(2833, 10082, 0)
 } as const;
 
-/**
- * Where the character is, in the only terms `decide()` cares about: whether a
- * bank trip is still cheap. Everything past the stile is committed ground —
- * re-provisioning from up there means climbing back down the secret way.
- */
+// Why: everything past the stile is committed ground, and re-provisioning from up there means climbing back down the secret way.
+
+/** Where the character is, in the terms `decide()` cares about: whether a bank trip is still cheap. */
 export type TrollZone = 'stronghold' | 'trollPass' | 'mountain' | 'arena' | 'secretWay' | 'mainland' | 'unknown';
 
 export function trollZone(tile: QuestSnapshot['tile']): TrollZone {
@@ -126,13 +124,8 @@ export const DUNSTAN_FINISH: NpcStop = {
     prefer: ['Nothing, thanks.']
 };
 
-/**
- * Tenzing's post-quest shop is a dialogue, not a shop interface, and it loops:
- * after every purchase he asks "Was there anything else?" and re-offers the
- * same five options. A plain preference list matches "Can I buy some Climbing
- * boots?" again and buys until the pack is full, so the exit is driven off what
- * he just said rather than off the options.
- */
+// Why: Tenzing's post-quest shop is a dialogue rather than a shop interface, and it loops — after every purchase he asks "Was there anything else?" and re-offers the same five options.
+// Why: a plain preference list matches "Can I buy some Climbing boots?" again and buys until the pack is full, so the exit is driven off what he just said rather than off the options.
 export const TENZING_BOOTS: NpcStop = {
     npc: 'Tenzing',
     anchor: TILE.TENZING,

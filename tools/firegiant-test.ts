@@ -1,20 +1,6 @@
-// Live smoke for FireGiant. Mainland account -> start the Waterfall Quest ->
-// bank Glarial's amulet, a rope, food and teleport runes -> run FireGiant ->
-// watch it walk to Almera's raft, board, rope the rock, rope the dead tree,
-// open the ledge door, and fight. PASS when it reaches the dungeon (z > 9000)
-// and lands a kill (combat XP gained).
-//
-// Seeding notes, all learned the hard way:
-//   - `~completequests` is useless here: complete_all_quests opens two blocking
-//     p_choice2 dialogs and waits, so nothing completes and the pending modal
-//     swallows the cheats that follow. Set the varp directly instead.
-//   - the client never receives varp 65, and the quest journal colour (what
-//     Quests.status reads) is only pushed at login — so the setvar MUST be
-//     followed by a relog or the bot correctly reports "quest not started".
-//   - `~item`/`~bankitem` guard on p_finduid and return SILENTLY when the player
-//     is busy. `~maxme` locks the player through a flood of level-ups, so any seed
-//     sent after it is dropped at random. Seed first, max last, verify.
-//
+// Live smoke for FireGiant: [base] [user] [budget-min] [style]. PASS on reaching the dungeon (z > 9000) and landing a kill.
+// Why: `~completequests` opens two blocking p_choice2 dialogs and completes nothing; varp 65 never reaches the client so the setvar needs a relog; `~item`/`~bankitem` guard on p_finduid and return silently while busy, and `~maxme` locks the player through a flood of level-ups — seed first, max last, verify.
+
 // Usage: bun tools/firegiant-test.ts [base] [user] [budget-min] [style]
 
 import { launchBrowser, positionalArgs } from './lib/harness.js';
@@ -61,16 +47,11 @@ try {
     if (qs === 'notStarted') { fail('quest journal still reports notStarted after setvar + relog'); }
     console.log(`waterfall quest seeded (server=10, journal=${qs})`);
 
-    // Seed only after the final relog — a pre-relog seed is rolled back. Order
-    // matters: ~item/~bankitem both guard on p_finduid and SILENTLY return when the
-    // player is busy, and ~maxme's 23 stat_advance calls keep them locked through a
-    // flood of level-ups. Seed everything first, max the account last.
+    // Why: a pre-relog seed is rolled back, and ~item/~bankitem return silently while ~maxme's 23 stat_advance calls keep the player busy — seed everything first, max last.
     const held = (n: string) => page.evaluate(x => (globalThis as never as R).__rs2b0t.Inventory.count(x), n);
 
-    // Everything that fits in a stack goes to the inventory, where the count is
-    // readable and the seed can be retried until it sticks. ~bankitem drops are
-    // silent AND unverifiable from outside a script context, so only bulk food
-    // (200 slots) relies on it.
+    // Stackables go to the inventory, where the count is readable and the seed can be retried until it sticks.
+    // Why: ~bankitem drops are silent and unverifiable outside a script context, so only bulk food (200 slots) relies on it.
     for (const [cmd, item] of [
         ['~item glarials_amulet_waterfall_quest 1', "Glarial's amulet"],
         ['~item rope 1', 'Rope'],

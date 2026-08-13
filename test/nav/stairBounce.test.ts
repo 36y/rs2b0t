@@ -9,10 +9,7 @@ import stairs from '#/bot/nav/data/stairEdges.json';
 import transports from '#/bot/nav/data/transports.json';
 import { PathFinder, type DoorEdgeData, type NavPoint, type TransportEdgeData } from '#/bot/nav/PathFinder.js';
 
-// The pack is a build artifact, not a committed file, so CI runs without it.
-// Read at import and unguarded this threw before any test ran — an "unhandled
-// error between tests" that failed the job while every other pack-gated suite
-// skipped cleanly.
+// Why: the pack is a build artifact, so CI runs without it and an unguarded read at import throws before any test runs.
 const PACK_PATH = path.join(process.cwd(), 'out/collision.lcnav.gz');
 const HAS_COLLISION_PACK = fs.existsSync(PACK_PATH);
 
@@ -30,15 +27,7 @@ const finder = HAS_COLLISION_PACK ? loadFinder() : (null as unknown as PathFinde
 
 const RELDO: NavPoint = { x: 3209, z: 3495, level: 0 };
 
-/**
- * A staircase with two ground-floor stand tiles is baked as an edge per
- * combination, so climbing up and straight back down composes into a same-level
- * teleport across whatever wall separates them. The server lands you on one tile
- * only, so the walker comes down on the wrong side and bounces up and down
- * forever. Varrock palace's spiral staircase (loc 1738/1740, stands 3217,3496
- * and 3220,3496) sits between the kitchen and the library and wedged the
- * Knight's Sword walk to Reldo.
- */
+// Why: a staircase with two ground-floor stands is baked as an edge per combination, so up-then-down composes into a same-level teleport the server will not honour.
 describe.skipIf(!HAS_COLLISION_PACK)('stair hops never compose into a same-level teleport', () => {
     const kitchenTiles: NavPoint[] = [
         { x: 3222, z: 3492, level: 0 },

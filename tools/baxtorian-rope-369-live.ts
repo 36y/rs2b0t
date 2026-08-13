@@ -1,16 +1,7 @@
-/**
- * Live proof for #369 / #320 — full baked FireGiant Baxtorian sequence, no mid-path cheats:
- *
- *   Board Log raft (2510,3493) → crash mound (2512,3481)
- *   walk south → throw stand (2512,3477)
- *   Rope on Rock → (2513,3468)
- *   walk south → Dead tree stand (2512,3466)
- *   Rope on Dead tree → ledge (2511,3463)
- *
- * Start only teleports to the raft board (sequence start). One Rope (not consumed).
- *
- *   ~/redeploy.sh && HEADED=1 bun tools/baxtorian-rope-369-live.ts
- */
+// Live proof for #369 / #320 — the baked FireGiant Baxtorian sequence with no mid-path cheats.
+// Why: only the raft board is teleported to, and every rope hop needs the south walk between it.
+
+//   ~/redeploy.sh && HEADED=1 bun tools/baxtorian-rope-369-live.ts
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';

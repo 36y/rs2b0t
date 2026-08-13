@@ -1,21 +1,8 @@
-/**
- * Bake full-world basemap assets from worldmap.jag (once per deploy / rev).
- *
- * Emits a **terrain-only** basemap plus pre-baked transparent overlays so the
- * map picker can toggle classic Key icons / multi / free without re-running MapView:
- *
- *   out/worldmap-basemap.<fp>.png          terrain (nothing else)
- *   out/worldmap-key.<fp>.png              all Key legend icons (transparent)
- *   out/worldmap-key-index.<fp>.json       per-type placements + names
- *   out/worldmap-multi.<fp>.png            multicombat tint (transparent)
- *   out/worldmap-free.<fp>.png             free-to-play tint (transparent)
- *   out/worldmap-basemap.manifest.json
- *
- * Usage:
- *   bun tools/map/build-basemap.ts [--engine DIR] [--jag PATH] [--out DIR] [--revision TAG]
- *
- * worldmap.jag resolution: --jag → $ENGINE/data/pack/mapview → out/ → download from 2004scape.
- */
+/** Bake full-world basemap assets from worldmap.jag: [--engine DIR] [--jag PATH] [--out DIR] [--revision TAG]. Emits a terrain-only basemap plus pre-baked transparent key / multi / free overlays so the picker can toggle layers without re-running MapView.
+ *  worldmap.jag resolution order: --jag → $ENGINE/data/pack/mapview → out/ → download from 2004scape. */
+
+// Usage:
+//   bun tools/map/build-basemap.ts [--engine DIR] [--jag PATH] [--out DIR] [--revision TAG]
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';

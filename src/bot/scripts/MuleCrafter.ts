@@ -28,29 +28,7 @@ import {
     type RuneRoute, 
 } from './MuleCrafterLogic.js';
 
-/*
- * MuleCrafter Flow:
- * 
- * CRAFTER:
- * 1. Start at bank and ensure talisman and unnoted essence
- * 2. Get Essence (withdraw from bank if bankFill)
- * 3. Walk to ruins
- * 4. Enter ruins (use talisman on ruins to enter altar)
- * 5. Craft runes
- * 6. Exit altar (take portal back to ruins)
- * 7. If mules untraded, trade a mule: give all runes, receive 27 essence
- * 8. Go to 4 (enter altar again)
- * 9. After ALL mules traded, walk back to bank
- * 10. Go to 1
- * 
- * MULE:
- * 1. Start at bank and ensure 27 unnoted essence
- * 2. Get essence (withdraw from bank)
- * 3. Walk to ruins
- * 4. Trade with crafter: give 27 essence, receive runes
- * 5. Walk to bank
- * 6. Go to 1
- */
+// Why: each crafter-mule trade gives all runes and receives 27 essence, after which the crafter enters the altar again; it walks back to the bank only after every mule has traded.
 
 const ESSENCE = 'Rune essence';
 const ESSENCE_ID = 1436; // blankrune (unnoted essence); the bank-note variant has a different id

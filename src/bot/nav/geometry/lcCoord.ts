@@ -1,9 +1,4 @@
-/**
- * LostCity / content-script coordinate helpers.
- *
- * Content uses `level_mx_mz_lx_lz` where map-square size is 64:
- *   worldX = mx * 64 + lx, worldZ = mz * 64 + lz
- */
+// Why: content uses `level_mx_mz_lx_lz` with a map-square size of 64, so worldX = mx * 64 + lx and worldZ = mz * 64 + lz.
 
 import type { NavPoint } from '../types.js';
 

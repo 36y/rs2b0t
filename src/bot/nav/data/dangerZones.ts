@@ -1,11 +1,5 @@
-/**
- * Pathfinder danger / no-go zones.
- *
- * Scripts (or Global settings later) can mark axis-aligned rects the walker
- * must not enter — e.g. White Wolf Mountain for low-level accounts.
- *
- * Idea credit: @lolwut (lolwut) — configurable danger zones for the pathfinder.
- */
+// Why: scripts, and later Global settings, mark axis-aligned rects the walker must not enter — e.g. White Wolf Mountain for low-level accounts.
+// Why: idea credit @lolwut — configurable danger zones for the pathfinder.
 
 export interface DangerZoneRect {
     minX: number;
@@ -27,11 +21,9 @@ interface KnownDangerZone {
     automatic?: boolean;
     /** Only avoid this zone while the player's combat level is at or below this value. */
     avoidAtOrBelowCombat?: number;
-    /**
-     * Do not apply the zone when either route endpoint is inside it. This makes
-     * the zone a transit exclusion while preserving intentional destinations
-     * and allowing a player already inside to leave.
-     */
+    // Why: this makes the zone a transit exclusion, preserving intentional destinations and letting a player already inside leave.
+
+    /** Skip the zone when either route endpoint is inside it. */
     allowWhenEndpointInside?: boolean;
     /** Operator-facing note (settings help / docs). */
     help?: string;
@@ -75,9 +67,8 @@ export const KNOWN_DANGER_ZONES: readonly KnownDangerZone[] = [
         help:
             'Four level-26 jail guards aggressively hunt players around the jail compound. '
             + 'Avoid as transit for combat 50 and below, but permit quest destinations inside.',
-        // Guard spawns expanded to their conservative max interaction tether
-        // (maxrange 12 + the engine's one-tile op allowance). Rectangles overlap
-        // intentionally; fencing restricts movement but does not block line of sight.
+        // Why: guard spawns are expanded to their maximum interaction tether — maxrange 12 plus the engine's one-tile op allowance.
+        // Why: the rectangles overlap on purpose, since fencing restricts movement but does not block line of sight.
         rects: [
             { minX: 3096, maxX: 3122, minZ: 3224, maxZ: 3250, level: 0 },
             { minX: 3107, maxX: 3133, minZ: 3225, maxZ: 3251, level: 0 },

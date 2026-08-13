@@ -84,8 +84,7 @@ withdrawOp(ops, amount: 'all' | '10' | '1' | 'any'): string | null
 - `withdraw`/`deposit`/`count` match names **exactly** (case-insensitive).
   `op` is the context-menu label; use `withdrawOp(item.ops, 'all')` rather than
   hard-coding `'Withdraw-All'`.
-- Prefer `countById` / `withdrawById` / `withdrawXById` when two objects share a
-  display name.
+- Prefer `countById` / `withdrawById` / `withdrawXById` when two objects share a display name.
 - Do **not** hand-roll walk + booth click in new scripts — use `Banking.open`.
 
 ```ts

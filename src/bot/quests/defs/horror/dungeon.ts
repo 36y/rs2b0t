@@ -31,11 +31,10 @@ function ladderAt(where: Tile) {
     return Locs.query().name(HD_LOC.LADDER).where(l => l.tile().distanceTo(where) <= 1).nearest();
 }
 
-/**
- * Load the strange wall: one of each elemental rune, a stab or slash weapon and
- * an arrow, all consumed. Only the south face has slots — from the north the
- * wall answers "You cannot see anything unusual about the wall from this side."
- */
+// Why: the load is one of each elemental rune, a stab or slash weapon and an arrow, all consumed.
+// Why: only the south face has slots — from the north the wall answers "You cannot see anything unusual about the wall from this side."
+
+/** Load the strange wall; returns the slots it could not fill. */
 async function loadWall(log: (m: string) => void): Promise<string[] | null> {
     if (!(await Traversal.walkResilient(HD_TILE.WALL_SOUTH, { radius: 1, attempts: 4, timeoutMs: 120_000, log }))) {
         log('could not reach the south face of the strange wall');
@@ -51,10 +50,8 @@ async function loadWall(log: (m: string) => void): Promise<string[] | null> {
         }
         const held = Inventory.first(slot.item);
         if (!held) {
-            // Every slot consumes its item, so an item that is gone is almost
-            // always one already in the wall. Treating that as fatal wedges the
-            // whole quest: the dagger is spent, the pass stops at its slot, and
-            // the arrow behind it is never placed. Note it and let the door judge.
+            // Why: every slot consumes its item, so an item that is gone is almost always one already in the wall.
+            // Why: treating that as fatal wedges the whole quest — the dagger is spent, the pass stops at its slot, and the arrow behind it is never placed, so it is noted and the door judges.
             missing.push(slot.item);
             continue;
         }
@@ -62,11 +59,9 @@ async function loadWall(log: (m: string) => void): Promise<string[] | null> {
         if (!(await held.useOn(wall))) {
             continue;
         }
-        // "I don't think I'll get that back if I put it in there." lands a tick
-        // *after* the use-on, and the Yes/No header a tick after that. Answering
-        // once and then waiting for the message leaves the choice on screen
-        // unanswered; `driveUntil` keeps answering until the goal actually lands.
-        // An already-filled slot skips both boxes and says so straight away.
+        // Why: "I don't think I'll get that back if I put it in there." lands a tick after the use-on, and the Yes/No header a tick after that.
+        // Why: answering once and then waiting for the message leaves the choice on screen unanswered, so `driveUntil` keeps answering until the goal lands.
+        // Why: an already-filled slot skips both boxes and says so straight away.
         const answered = await driveUntil(
             () => GameMessages.sawSince(mark, PLACED) || GameMessages.sawSince(mark, NO_SPACE),
             ['Yes'],
@@ -125,9 +120,7 @@ export async function openWallAndDescend(log: (m: string) => void): Promise<bool
             if (!GameMessages.sawSince(mark, CANNOT_MOVE)) {
                 log('the wall did not open');
             } else if (missing.length > 0) {
-                // The slots it could not fill are the ones whose item is gone,
-                // and the door is the only thing that can tell them apart from
-                // the ones already filled.
+                // Why: the slots it could not fill are the ones whose item is gone, and the door is the only thing that can tell them apart from the ones already filled.
                 log(`the wall still has empty slots — ${missing.join(', ')} must be re-sourced`);
             } else {
                 log('the wall still has empty slots');
@@ -156,15 +149,11 @@ export async function openWallAndDescend(log: (m: string) => void): Promise<bool
     return true;
 }
 
-/**
- * Leave the finished quest.
- *
- * Completing teleports the player into the post-quest dagannoth cavern under the
- * *real* lighthouse — a level-1 pocket of mapsquare 39_156 that nothing walks
- * out of. Its own iron ladder climbs to the lighthouse's ground floor, and from
- * there the causeway is an ordinary walk. Retaliation stays off: the level-100
- * dagannoths on the floor below are not a fight worth having on the way home.
- */
+// Why: completing teleports the player into the post-quest dagannoth cavern under the real lighthouse, a level-1 pocket of mapsquare 39_156 that nothing walks out of.
+// Why: its own iron ladder climbs to the lighthouse's ground floor, and from there the causeway is an ordinary walk.
+// Why: retaliation stays off, as the level-100 dagannoths on the floor below are not a fight worth having on the way home.
+
+/** Walk out of the finished quest's cavern. */
 export async function exitAfterQuest(log: (m: string) => void): Promise<boolean> {
     const here = Game.tile();
     if (!here) {

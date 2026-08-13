@@ -110,9 +110,8 @@ try {
     });
     if (waterfallStage !== 10) fail(`Waterfall completion did not stick (getvar=${waterfallStage})`);
 
-    // Reload the sidebar/journal after changing tutorial and quest varps, just
-    // as a real account does between finishing Waterfall and starting the next
-    // quest. The local-server login password is deliberately `test`.
+    // Reload the sidebar/journal after changing tutorial and quest varps, as an account does between finishing Waterfall and starting the next quest.
+    // The local-server login password is deliberately `test`.
     if (password !== 'test') fail('the isolated completion fixture requires the local test password');
     await relog(page, username);
     await page.waitForFunction(
@@ -138,9 +137,7 @@ try {
     // Seed the retained key after relogging and dismissing the legacy debug
     // overlay, so the refreshed backpack interface observes the inventory update.
     if (!(await cheatQuiet(page, 'give baxtorian_key_waterfall_quest 1'))) fail('could not seed the retained Baxtorian key');
-    // The fresh fixture has only 10 HP, unlike the quest bot's food-backed
-    // completion loadout. Raise survivability so dungeon NPCs cannot turn this
-    // navigation proof into an unrelated death-recovery test.
+    // Why: the fresh fixture has only 10 HP, unlike the quest bot's food-backed completion loadout, so raise survivability or dungeon NPCs turn this navigation proof into a death-recovery test.
     if (!(await cheatQuiet(page, 'setstat hitpoints 99'))) fail('could not protect the isolated fixture from dungeon combat');
     if (!(await cheatQuiet(page, 'setstat defence 99'))) fail('could not protect the isolated fixture from dungeon combat');
     await page.waitForFunction(

@@ -3,10 +3,7 @@ import { BotHost } from './BotHost.js';
 
 /**
  * Dismiss the post-login welcome modal once it appears.
- *
- * Previously called `closeMainModal(WELCOME_SCREEN)` on **every** client frame
- * while ingame — even long after the screen was gone. That is pure wasted work
- * on multi-bot walls (N iframes × 20–50 Hz).
+ * Why: calling `closeMainModal(WELCOME_SCREEN)` on every client frame while ingame is wasted work on multi-bot walls (N iframes × 20–50 Hz).
  */
 class WelcomeDismisserImpl {
     private enabled = false;

@@ -2,9 +2,6 @@
 
 # The shape of a quest module
 
-
-Three directories, three jobs:
-
 | Directory | Job |
 |---|---|
 | [`src/bot/quests/engine/`](../../src/bot/quests/engine/) | runs quests: queue, snapshot, provisioning, watchdog |

@@ -83,9 +83,7 @@ describe('Horror from the Deep decide()', () => {
     });
 
     test('gathers the bridge kit before starting the quest', () => {
-        // Larrissa is at the lighthouse and every tool for the bridge she asks
-        // about is in Varrock, so talking first buys a second crossing of the
-        // map for nothing. Nothing in the kit is quest-gated.
+        // Why: Larrissa is at the lighthouse and the whole bridge kit is in Varrock, so talking first buys a second crossing of the map.
         expect(step().kind).not.toBe('talk');
     });
 
@@ -244,9 +242,7 @@ describe('Horror from the Deep module', () => {
 
 describe('Dagannoth mother forms', () => {
     test('every form the npc can take is either answerable or named immune', () => {
-        // `npc_max_dealt` zeroes any hit that is not the one the current form is
-        // weak to, so a form missing from both tables is a form the fight stands
-        // still through — and the only symptom is a very slow loss.
+        // Why: `npc_max_dealt` zeroes any hit off the current form's weakness, so a form missing from both tables stalls the fight with no message.
         for (const id of MOTHER_IDS) {
             expect(FORM_ELEMENT[id] !== undefined || IMMUNE_FORMS.has(id)).toBe(true);
         }
@@ -309,8 +305,7 @@ describe('Horror from the Deep — teleport kit', () => {
 });
 
 describe('Horror from the Deep — teleport kit on a resumed run', () => {
-    // The barcrawl is the leg hops pay for, and a resume that starts past the
-    // bridge used to skip rune provisioning entirely and walk all ten bars.
+    // Why: the barcrawl is the leg the hops pay for, so a resume past the bridge still has to provision runes.
     const bridged = {
         stage: HD_STAGE.STARTED,
         flags: [HD_FLAG.BRIDGE],
@@ -334,9 +329,7 @@ describe('Horror from the Deep — teleport kit on a resumed run', () => {
 });
 
 describe('Horror from the Deep — an account that already owns the kit', () => {
-    // Most players will have sourced a hammer and eight nails long before this
-    // quest, so the prep branch has to read the bank rather than the shop —
-    // otherwise the common case pays for a second hammer and re-smiths nails.
+    // Why: the prep branch reads the bank before the shop, so an owned hammer is not bought twice.
     const banked: [number, number][] = [
         [HD_ID.HAMMER, 1], [HD_ID.NAILS, 50], [HD_ID.PLANK, 10]
     ];

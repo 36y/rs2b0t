@@ -1,15 +1,8 @@
 import Tile from '../geometry/Tile.js';
 
 /**
- * Cooking surface catalog for Fisher cook loops and CookBot.
- *
- * Server data: loc types in content `cooking_sources.loc` (category cooking_oven /
- * cooking_fire). World placements scanned from the local engine map pack
- * (`debugname=range` → {@link COOKING_RANGE_LOCS}).
- *
- * Fishing camps pin a preferred {@link CookingSurface} when one is within a
- * useful walk of the pier; otherwise GatheringBot falls back to live scene
- * Locs.query for Range/Fire.
+ * Cooking surface catalog for Fisher cook loops and CookBot: loc types from content `cooking_sources.loc` (category cooking_oven / cooking_fire), world placements scanned from the engine map pack (`debugname=range` → {@link COOKING_RANGE_LOCS}).
+ * Why: fishing camps pin a preferred {@link CookingSurface} only when one is within a useful walk of the pier, and GatheringBot otherwise falls back to live scene Locs.query for Range/Fire.
  */
 
 type CookSurfaceKind = 'range' | 'fire' | 'fireplace';
@@ -34,9 +27,9 @@ interface CookingSurface {
     notes?: string;
 }
 
-/** Auto-curated Range loc SW tiles from Server map pack (debugname=range).
- * Stand tile defaults to one step south (forceapproach=east ranges still path).
- * Regenerated via tools/nav map probe — do not hand-edit coords without re-scan.
+/**
+ * Auto-curated Range loc SW tiles from the Server map pack (debugname=range); the stand tile defaults to one step south, and forceapproach=east ranges still path.
+ * Why: regenerated via the tools/nav map probe — do not hand-edit coords without a re-scan.
  */
 export const COOKING_RANGE_LOCS: readonly { x: number; z: number; level: number }[] = [
     { x: 2445, z: 3188, level: 0 },
@@ -148,9 +141,8 @@ export function nearestCookingRange(
 }
 
 /**
- * Which surface to prefer for a cook mode:
- * - **pier** — cook-then-bank: cook near the fishing spot (full raw pack walk short)
- * - **bank** — bank-raw-then-cook: cook near the bank (withdraw → cook → re-bank)
+ * Which surface to prefer for a cook mode.
+ * `pier` is cook-then-bank near the fishing spot (the full raw pack walks short); `bank` is bank-raw-then-cook near the bank (withdraw → cook → re-bank).
  */
 export type CookSurfaceRole = 'pier' | 'bank';
 
@@ -172,10 +164,7 @@ const CATHERBY_RANGE: CookingSurface = {
 
 /**
  * Curated cook surfaces for fishing camps.
- *
- * Seers pier range uses a stand **outside the Sinclair Large door** so pathing
- * walks through the gate complex instead of aiming at the interior range tile
- * and getting stuck on the wrong side of doors.
+ * Why: the Seers pier range stands outside the Sinclair Large door so pathing walks the gate complex instead of aiming at the interior range tile and sticking on the wrong side of doors.
  */
 export const FISH_CAMP_COOK_PLANS: Readonly<Record<string, FishCampCookPlan>> = {
     Catherby: {

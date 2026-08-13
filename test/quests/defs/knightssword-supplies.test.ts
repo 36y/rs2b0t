@@ -102,9 +102,7 @@ describe('redberry pie chain', () => {
     });
 
     test('does the whole water leg before leaving for Port Sarim', () => {
-        // The bucket and the sink are Varrock errands and the flour, berries and
-        // range are Port Sarim ones. Interleaving them cost a 360-tile round
-        // trip back for the bucket between the berries and the cook.
+        // Why: the bucket and sink are Varrock errands while the flour, berries and range are Port Sarim ones, so interleaving costs a 360-tile round trip.
         const empty = pie(snap());
         expect(empty).toMatchObject({ kind: 'buy', item: 'Bucket' });
         const withBucket = pie(snap([[KS_ID.BUCKET, 1]]));

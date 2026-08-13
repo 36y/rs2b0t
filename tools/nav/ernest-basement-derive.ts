@@ -1,24 +1,7 @@
-/**
- * Derive the Ernest the Chicken basement route from the baked collision pack.
- *
- *   bun tools/nav/ernest-basement-derive.ts
- *
- * Two outputs, both of which defs/ernest/basement.ts is written against:
- *
- *  1. The shortest levers-and-doors chain from the ladder landing to the oil can,
- *     BFS'd over (tile, 6 lever bits). Six levers interlock nine doors and the
- *     combination that opens one shuts another, so the chain is not something a
- *     walkthrough gives you in a form the walker can use.
- *  2. The seven regions the doors cut the basement into, flooded with the doors
- *     closed. Their boxes are pairwise disjoint, which is what lets a tile alone
- *     name a room and every leg between two actions be a plain walk.
- *
- * A set bit means the lever is DOWN. The predicates below are transcribed from
- * [oploc1,_haunted_door], which tests the raw bits.
- *
- * The nine doors are in derive-doors.ts SCRIPT_REFUSED, so they are absent from
- * doors.json and the navigator never routes through one on its own.
- */
+/** Derive the Ernest the Chicken basement route from the baked collision pack. defs/ernest/basement.ts is written against both outputs: the shortest levers-and-doors chain from the ladder landing to the oil can, BFS'd over (tile, 6 lever bits), and the seven regions the doors cut the basement into.
+ *  Why: six levers interlock nine doors and the combination that opens one shuts another, so no walkthrough gives the chain in a form the walker can use; the region boxes are pairwise disjoint, which lets a tile alone name a room. A set bit means the lever is DOWN, transcribed from [oploc1,_haunted_door]; the nine doors sit in derive-doors.ts SCRIPT_REFUSED, so the navigator never routes through one. */
+
+//   bun tools/nav/ernest-basement-derive.ts
 import fs from 'node:fs';
 
 import { gunzipSync } from 'fflate';

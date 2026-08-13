@@ -1,18 +1,11 @@
-/**
- * Whole-map connectivity census: every region the walker cannot reach from the
- * mainland, and the loc most likely to be the missing edge.
- *
- * A clue, quest step or bot that "can't get there" is usually not a walker bug —
- * it is a region the baked graph never joined up. This finds all of them at once
- * rather than one destination at a time.
- *
- *   bun tools/nav/island-report.ts                    # islands >= 40 tiles
- *   bun tools/nav/island-report.ts --min 200 --top 30
- *   bun tools/nav/island-report.ts --json out/islands.json
- *
- * Flooding uses the pack's exit masks plus the baked door/transport/stair edges,
- * i.e. exactly what A* can traverse. Plain walkability over-connects and lies.
- */
+/** Whole-map connectivity census: every region the walker cannot reach from the mainland, and the loc most likely to be the missing edge. Default islands >= 40 tiles; --min 200 --top 30 --json out/islands.json.
+ *  Why: flooding uses the pack's exit masks plus the baked door / transport / stair edges, i.e. what A* can traverse — plain walkability over-connects and lies. */
+
+// Why: a clue, quest step or bot that "can't get there" is usually not a walker bug — it is a region the baked graph never joined up.
+
+//   bun tools/nav/island-report.ts                    # islands >= 40 tiles
+//   bun tools/nav/island-report.ts --min 200 --top 30
+//   bun tools/nav/island-report.ts --json out/islands.json
 import fs from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -39,9 +32,7 @@ const TOP = Number(arg('top', '40'));
 const JSON_OUT = args.includes('--json') ? arg('json', 'out/islands.json') : null;
 const PACK = arg('pack', 'out/collision.lcnav.gz');
 const ENGINE = arg('engine', join(homedir(), 'code', 'lostcity-dev', 'engine'));
-// Ops that move a player between regions, ranked above ops that merely clear
-// scenery (cutting jungle, slashing a web) — both can be the crossing, but a
-// door is a far likelier answer than the nearest tree.
+// Why: ops that move a player between regions outrank ops that merely clear scenery (cutting jungle, slashing a web) — either can be the crossing, but a door is a likelier answer than the nearest tree.
 const MOVEMENT_OP = /^(open|climb|enter|exit|pass|pay|cross|go|push|pull|squeeze|walk|jump|swing|board|travel|ride|balance|use)/i;
 const CLEARING_OP = /^(slash|chop|cut|mine)/i;
 const CROSSING_OP = new RegExp(`${MOVEMENT_OP.source}|${CLEARING_OP.source}`, 'i');
@@ -201,7 +192,7 @@ for (let id = 0; id < members.length; id++) {
         const x = kx(k);
         const z = kz(k);
         const level = klevel(k);
-        // Only look for seams where the mainland is genuinely close by.
+        // Only look for seams where the mainland is close by.
         let touchesMainland = false;
         for (let dx = -SEAM_RANGE; dx <= SEAM_RANGE && !touchesMainland; dx++) {
             for (let dz = -SEAM_RANGE; dz <= SEAM_RANGE; dz++) {

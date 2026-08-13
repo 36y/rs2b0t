@@ -279,9 +279,8 @@ async function fortress(log: (m: string) => void): Promise<boolean> {
         log(`fortress: crate Hide-in -> insideKeep=${boarded} (needs stage>=spoken_lancelot to teleport)`);
         return false;
     }
-    // #353: dialog / Morgan brief always outranks Attack — Mordred stays attackable after the
-    // fight ends, so re-Attack loops if we do not latch "briefed".
-    // "Yes." is last so crate Hide-in confirms never fall through to No.
+    // Why: the dialogue and the Morgan brief outrank Attack, as Mordred stays attackable after the fight ends and re-Attack loops without latching "briefed" (#353).
+    // Why: "Yes." is last so crate Hide-in confirms never fall through to No.
     const MORGAN_OR_CRATE = [
         'Tell me how to untrap Merlin and I might.',
         'OK I will go do all that.',
@@ -333,9 +332,8 @@ async function fortress(log: (m: string) => void): Promise<boolean> {
             await Traversal.walkResilient(mordred.tile(), { radius: 1, attempts: 2, timeoutMs: 20_000, log });
         }
         await mordred.interact('Attack');
-        // Wait for Morgan dialog OR combat end — do not re-Attack next tick if combat
-        // ended without dialog (flag still false; next call may re-engage once only if
-        // no dialog); prefer dialog detection every tick.
+        // Why: the wait covers the Morgan dialogue or combat ending, so a combat that ended without dialogue does not re-Attack next tick — the flag stays false and the next call may re-engage once.
+        // Why: dialogue detection is preferred on every tick.
         for (let i = 0; i < 40 && !mordredBriefed; i++) {
             if (ChatDialog.isOpen() || ChatDialog.canContinue()) {
                 await driveDialogue(MORGAN_OR_CRATE, log);

@@ -4,17 +4,11 @@ import { BotHost } from './BotHost.js';
 import { Scheduler } from './Scheduler.js';
 import { ScriptRunner } from './ScriptRunner.js';
 
-/**
- * Always-on random-event solver while the scene is live (`ingame` + sceneState 2),
- * **whether or not a script is running**.
- *
- * Scripted bots still yield via Supervisor / EventSignal; this covers AFK players,
- * paused scripts, and the gap between script loops.
- *
- * Waits go through {@link Scheduler.runHost} so they settle on hostWaiters even
- * when a script context is active (script waiters freeze while paused / not running).
- * Work is tick-gated and single-flight with Supervisor.
- */
+// Why: scripted bots still yield via Supervisor / EventSignal, so this covers AFK players, paused scripts, and the gap between script loops.
+// Why: waits go through Scheduler.runHost so they settle on hostWaiters even when a script context is active, because script waiters freeze while paused or not running.
+// Why: work is tick-gated and single-flight with Supervisor.
+
+/** Always-on random-event solver while the scene is live (`ingame` + sceneState 2), whether or not a script is running. */
 class RandomEventGuardianImpl {
     private enabled = false;
     private inFlight = false;
@@ -56,11 +50,9 @@ class RandomEventGuardianImpl {
         if (tick === this.lastKickTick) {
             return;
         }
-        // Stamp before detecting, not after: events only arrive on server packets,
-        // so one scan per tick is as responsive as one per frame. Stamping after a
-        // successful detect left the guard permanently disarmed for the common case
-        // (nothing found), and detectRaw() -- two NPC passes plus a full loc scan --
-        // then ran on every frame of all 27 bots.
+        // Why: events only arrive on server packets, so stamping before detecting makes one scan per tick as responsive as one per frame.
+        // Why: stamping after a successful detect left the guard permanently disarmed for the common case of nothing found.
+        // Why: detectRaw() is two NPC passes plus a full loc scan, and it then ran on every frame of all 27 bots.
         this.lastKickTick = tick;
         const event = RandomEvents.detect();
         if (!event) {

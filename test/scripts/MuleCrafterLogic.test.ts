@@ -12,8 +12,7 @@ import { type TradeItem } from '#/bot/api/trade/Trade.js';
 describe('MuleCrafterLogic', () => {
     describe('RUNES', () => {
         test('keys are singular rune names', () => {
-            // Asserting the full list would re-break every time an altar is added, which is
-            // how this test went stale at two runes. Pin the shape, not the census.
+            // Why: asserting the full list re-breaks whenever an altar is added, so pin the shape rather than the census.
             expect(Object.keys(RUNES).length).toBeGreaterThanOrEqual(2);
             for (const key of Object.keys(RUNES)) {
                 expect(key).toMatch(/^[A-Z][a-z]+ rune$/);

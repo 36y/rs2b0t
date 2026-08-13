@@ -58,13 +58,6 @@ export const KOJO: NpcStop = {
 };
 export const KOJO_EXIT = new Tile(2576, 3250, 0);
 
-/**
- * Shop counters for the extra items a clue row demands in `items`, so a trail
- * that rolls one is not abandoned for want of an 18gp purchase. Only rows that
- * carry `items` reach this: today that is `Rope` (2811, Baxtorian Falls), whose
- * nearest stocked counter is Aemad's in East Ardougne — the same stand the
- * Waterfall and Watch Tower quests already use.
- */
 interface ShopSource {
     npc: string;
     stand: Tile;
@@ -72,6 +65,10 @@ interface ShopSource {
     cost: number;
 }
 
+// Why: a trail that rolls an `items` row must not be abandoned for want of an 18gp purchase.
+// Why: only rows carrying `items` reach this — today `Rope` (2811, Baxtorian Falls), whose nearest stocked counter is Aemad's in East Ardougne, the same stand the Waterfall and Watch Tower quests use.
+
+/** Shop counters for the extra items a clue row demands in `items`. */
 const EXTRA_ITEM_SHOPS: Record<string, ShopSource> = {
     Rope: { npc: 'Aemad', stand: new Tile(2613, 3294, 0), cost: 18 }
 };
@@ -81,15 +78,10 @@ export function extraItemShop(name: string): ShopSource | null {
     return key ? EXTRA_ITEM_SHOPS[key]! : null;
 }
 
-/**
- * Counters that sell a crossing toll, for the case where the bank had none.
- *
- * The Kharidian desert has exactly one baked entrance and it eats a Shantay pass,
- * so a bot without one does not get a detour — the whole desert leaves the graph
- * and the leg reports `unreachable`. Shantay stocks the pass himself
- * (`shantaypass.inv` stock16, 5gp), and his counter is north of his own gate, so
- * the trip is always payable from the side the bot is stuck on.
- */
+// Why: the Kharidian desert has one baked entrance and it eats a Shantay pass, so a bot without one gets no detour — the desert leaves the graph and the leg reports `unreachable`.
+// Why: Shantay stocks the pass himself (`shantaypass.inv` stock16, 5gp) and his counter is north of his own gate, so the trip is payable from the side the bot is stuck on.
+
+/** Counters that sell a crossing toll, for the case where the bank had none. */
 const GATE_ITEM_SHOPS: Record<string, ShopSource> = {
     'Shantay pass': { npc: 'Shantay', stand: new Tile(3304, 3122, 0), cost: 5 }
 };

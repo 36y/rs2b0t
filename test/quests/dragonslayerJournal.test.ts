@@ -1,8 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { DRAGON_STAGE, parseDragonJournal } from '#/bot/quests/defs/dragonslayer/journal.js';
 
-// Lines are copied from content/scripts/quests/quest_dragon/scripts/dragon_journal.rs2
-// so the parser is tested against what the engine actually renders.
+// Why: lines are verbatim from `dragon_journal.rs2`, so the parser is tested against what the engine renders.
 const INTRO = '@str@The Guildmaster of the Champions\' Guild said his friend|@str@Oziach could help me with a Rune Plate mail body.|';
 const OZIACH_SELLS = '@dre@Oziach@dbl@ will sell me @dre@Rune Plate Mail@dbl@ if I can prove myself|worthy by killing the @dre@Dragon Elvarg@dbl@ who lives on @dre@Crandor@dbl@|';
 const NEEDS_BRIEFING = '@dbl@I should return to @dre@Oziach@dbl@ for more detailed instructions.';

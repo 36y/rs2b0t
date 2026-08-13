@@ -64,7 +64,7 @@ RANDOM_EVENT_CASKET_ID: number        // always treated as common loot
 > while each load quietly shrinks, so nothing fails and no test notices.
 >
 > Deny-listing inverts the failure. An unexpected item gets banked (harmless) instead of
-> hoarded (compounding). Keep the list to what the script genuinely needs to hold — and
+> hoarded (compounding). Keep the list to what the script needs to hold — and
 > keep the *specific* item, not the category: `CoalTrucks` keeps the one pickaxe
 > `bestPickaxe` selected, so a spare or an unusable tier is banked rather than squatting
 > a coal slot forever.

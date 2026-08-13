@@ -60,9 +60,8 @@ const RUNE_UNIT_BUDGET = 24;
 const BETTY_RETURN_FARE = 60;
 const EASTERN_SUPPLY_FARE = 60;
 const CASH_FLOAT = 500;
-// The forced entry -> crate -> south-door route is 80 physical tiles. At the
-// prepared pack's ~9 kg, 40% covers about 105 running tiles through the
-// fire-giant lane (nav cost is 89 because three door edges are weighted).
+// Why: the forced entry, crate, south-door route is 80 physical tiles, and at the prepared pack's roughly 9 kg 40% covers about 105 running tiles through the fire-giant lane.
+// Why: the nav cost reads 89 because three door edges are weighted.
 const DUNGEON_RUN_ENERGY = 40;
 
 const LOC = {
@@ -123,15 +122,13 @@ const GOLRIE_STAND = new Tile(2515, 9581, 0);
 const TOMBSTONE_STAND = new Tile(2558, 3444, 0);
 const CHEST_STAND = new Tile(2530, 9845, 0);
 const COFFIN_STAND = new Tile(2542, 9810, 0);
-// Directional ladder 1757 only accepts an approach from its east tile. Using
-// the exact stand keeps the hostile approach inside Traversal's sustain loop
-// instead of handing an opaque final route to the interaction itself.
+// Why: directional ladder 1757 only accepts an approach from its east tile.
+// Why: the exact stand keeps the hostile approach inside Traversal's sustain loop rather than handing an opaque final route to the interaction.
 const TOMB_LADDER_STAND = new Tile(2557, 9844, 0);
 const ROCK_STAND = new Tile(2512, 3477, 0);
 const ENTRY_DOOR_STAND = new Tile(2575, 9861, 0);
-// The crate's south interaction tile (2589,9887) is adjacent to the level-45
-// giant skeleton at (2589,9886). Its west tile remains search-capable while
-// sitting outside that NPC's one-tile aggression range.
+// Why: the crate's south interaction tile (2589,9887) is adjacent to the level-45 giant skeleton at (2589,9886).
+// Why: its west tile stays search-capable while sitting outside that NPC's one-tile aggression range.
 const BAXTORIAN_CRATE_STAND = new Tile(2588, 9888, 0);
 const SOUTH_DOOR_STAND = new Tile(2568, 9892, 0);
 const SOUTH_DOOR_NORTH_STAND = new Tile(2568, 9894, 0);
@@ -279,11 +276,8 @@ function coinsHeld(snap: QuestSnapshot): number {
 }
 
 function remainingWaterfallCash(snap: QuestSnapshot): number {
-    // A blank eastern account needs 1,472 gp at Varrock East:
-    //   500 retained float + 100 Tea + 300 Bread + 20 Rope + 432 runes
-    //   + 60 for the later Betty leg + 60 for the safe eastern supply leg.
-    // The last 60 is not theoretical headroom: the live level-3 route to the
-    // Baker crossed Port Sarim->Musa and Brimhaven->Ardougne at 30 gp each.
+    // Why: a blank eastern account needs 1,472 gp at Varrock East — 500 retained float, 100 Tea, 300 Bread, 20 Rope, 432 runes, 60 for the later Betty leg and 60 for the safe eastern supply leg.
+    // Why: that last 60 is not headroom, as the live level-3 route to the Baker crossed Port Sarim to Musa and Brimhaven to Ardougne at 30 gp each.
     const tea = needsEasternTravelBootstrap(snap)
         ? Math.max(0, TRAVEL_TEA_TARGET - owned(snap, ITEM.TEA)) * 10
         : 0;
@@ -294,8 +288,7 @@ function remainingWaterfallCash(snap: QuestSnapshot): number {
         0
     );
     const supplyFare = needsEasternTravelBootstrap(snap) ? EASTERN_SUPPLY_FARE : 0;
-    // Stage zero cannot buy runes yet. Even if a restart happens beside Betty,
-    // retain the later fare because the quest first leaves and returns west.
+    // Why: stage zero cannot buy runes yet, and even a restart beside Betty retains the later fare, as the quest first leaves and returns west.
     const runeFare = runes > 0 ? BETTY_RETURN_FARE : 0;
     return CASH_FLOAT + tea + bread + rope + runes + supplyFare + runeFare;
 }
@@ -537,9 +530,8 @@ function nearerSupplyBank(snap: QuestSnapshot): Tile {
 }
 
 function needsEasternTravelBootstrap(snap: QuestSnapshot): boolean {
-    // Lumbridge/Varrock/Al Kharid are far enough east that a fresh level-3
-    // account needs the extra Tea leg. Betty and Port Sarim are intentionally
-    // west of this boundary so rune shopping cannot restart the bootstrap.
+    // Why: Lumbridge, Varrock and Al Kharid are far enough east that a fresh level-3 account needs the extra Tea leg.
+    // Why: Betty and Port Sarim sit west of this boundary on purpose, so rune shopping cannot restart the bootstrap.
     return (snap.tile?.x ?? 0) >= 3100;
 }
 
@@ -587,10 +579,8 @@ function sourcePuzzleRunes(snap: QuestSnapshot): QuestStep | null {
         .filter(entry => entry.missing > 0);
     if (missingRunes.length === 0) return null;
 
-    // Betty's shared stock price rises as items are bought; 24 gp per rune is
-    // the server's hard upper bound. Retain the normal cash float after every
-    // purchase and, before departure, reserve both paid ship edges observed on
-    // the route so later per-stack decisions never bounce back to the bank.
+    // Why: Betty's shared stock price rises as items are bought, and 24 gp per rune is the server's hard upper bound.
+    // Why: the normal cash float is retained after every purchase, and before departure both paid ship edges observed on the route are reserved, so later per-stack decisions never bounce back to the bank.
     const purchaseBudget = missingRunes.reduce((total, entry) => total + entry.missing * RUNE_UNIT_BUDGET, 0);
     const reserve = CASH_FLOAT + (nearBetty(snap) ? 0 : BETTY_RETURN_FARE);
     const coins = ensureCoins(snap, reserve + purchaseBudget);
@@ -675,11 +665,8 @@ function normalizeLoadout(
     const hasExcess = inventoryHasExcessKeptIds(snap, keepIds);
     const hasEquipment = snap.worn.size > 0 || (snap.wornIds?.size ?? 0) > 0;
     if (!hasEquipment && !inventoryHasOutsideIds(snap, keepIds) && !hasExcess) return null;
-    // The bank API can keep an exact ID but not a partial quantity. If an
-    // otherwise valid item is over its phase limit, bank the whole pack and let
-    // the stage planner withdraw the precise quantities on its next snapshot.
-    // Equipment needs the same empty-pack treatment so every worn slot has room
-    // to unequip before the final deposit pass.
+    // Why: the bank API can keep an exact id but not a partial quantity, so an otherwise valid item over its phase limit means banking the whole pack and letting the stage planner withdraw the precise quantities on its next snapshot.
+    // Why: equipment needs the same empty-pack treatment, so every worn slot has room to unequip before the final deposit pass.
     const normalizedKeepIds = hasExcess || hasEquipment ? [] : keepIds;
     return { kind: 'custom', name, run: log => stripAndDeposit(normalizedKeepIds, log, bank) };
 }
@@ -723,9 +710,7 @@ async function boardRaft(log: (message: string) => void, driveHudon: boolean = f
     if (!raft || !(await raft.interact('Board'))) return false;
     if (driveHudon) {
         await Execution.delayUntil(() => ChatDialog.canContinue(), 12_000);
-        // Stage 2 is set partway through the forced Hudon conversation. Finish
-        // it here so a transient gap between pages cannot let the engine walk
-        // away while the server script is still suspended at stage 1.
+        // Why: stage 2 is set partway through the forced Hudon conversation, so it is finished here and a transient gap between pages cannot let the engine walk away while the server script is still suspended at stage 1.
         for (let page = 0; page < 14 && ChatDialog.canContinue(); page++) {
             await ChatDialog.continue();
             await Execution.delayTicks(1);
@@ -1005,10 +990,8 @@ async function solvePillars(log: (message: string) => void): Promise<boolean> {
         return false;
     }
 
-    // Varp 66 is server-only. A fresh trip starts with exactly six of each
-    // rune; after an interrupted trip the number still held equals the number
-    // of unset pillars. Replaying every possible placement is therefore
-    // idempotent: set bits consume nothing, unset bits consume one.
+    // Why: varp 66 is server-only, and a fresh trip starts with exactly six of each rune, so after an interrupted trip the number still held equals the number of unset pillars.
+    // Why: replaying every possible placement is therefore idempotent — set bits consume nothing and unset bits consume one.
     for (const pillar of pillars) {
         for (const rune of RUNES) {
             if (!(await placeRune(rune, pillar, log))) return false;
@@ -1093,8 +1076,7 @@ function prepareTombEntry(snap: QuestSnapshot): QuestStep {
     if (normalize) return normalize;
     const food = sourceTravelFood(snap, bank);
     if (food) return food;
-    // Bank surviving relics during the exposed Golrie leg, then bring them into
-    // the tomb so only the genuinely missing relic is recovered.
+    // Why: surviving relics are banked during the exposed Golrie leg and brought into the tomb, so only the missing relic is recovered.
     const survivingRelics = withdrawBankedRelics(snap, bank);
     if (survivingRelics) return survivingRelics;
     return { kind: 'custom', name: 'loot Glarial amulet and urn', run: tombLeg };
@@ -1125,9 +1107,7 @@ function prepareDungeon(snap: QuestSnapshot, finalTrip: boolean): QuestStep | nu
     if (!snap.bankKnown) return scanBank(bank);
     const relicRecovery = recoverRelics(snap);
     if (relicRecovery) return relicRecovery;
-    // Any Bread refill first narrows the pack to travel supplies. This prevents
-    // an arbitrary mainland restart with surviving relics/runes from filling
-    // the pack before all 15 Bread (and a missing Rope) can be assembled.
+    // Why: any Bread refill first narrows the pack to travel supplies, so an arbitrary mainland restart with surviving relics or runes cannot fill the pack before all 15 Bread and a missing Rope are assembled.
     const replenishingFood = heldCount(snap, ITEM.BREAD) < BREAD_TARGET
         || (needsEasternTravelBootstrap(snap) && heldCount(snap, ITEM.TEA) < TRAVEL_TEA_TARGET);
     const travelNormalize = normalizeLoadout(

@@ -1,9 +1,6 @@
 // docs/decisions/multibox-telemetry-honesty.md
-//
-// The wall half of diagnostics. Degradation is only visible against its own past,
-// so samples are retained on two tiers: a fine tier for the minutes around an
-// incident, and a coarse tier long enough to answer "what did it look like an hour
-// ago" -- the question this whole subsystem exists to answer.
+// Why: degradation is only visible against its own past, so a fine tier covers the minutes
+// around an incident and a coarse tier answers "what did it look like an hour ago".
 
 import { DiagRing } from '../runtime/diag/DiagRing.js';
 import type { FrameSample } from '../runtime/diag/BotDiag.js';
@@ -39,7 +36,7 @@ class Tier {
 
     /**
      * The coarse tier aggregates rather than decimates: dropping 29 of every 30
-     * samples would hide exactly the spikes worth keeping.
+     * samples would hide the spikes worth keeping.
      */
     push(at: number, values: number[]): void {
         this.hot.push(at, values);
@@ -191,9 +188,8 @@ export class DiagSampler {
     }
 
     /**
-     * Which bots were mid-phase during a stall. A stall is only detected once it
-     * ends, so the suspect is whoever's span overlapped the stall window -- not
-     * whoever happens to be running when the record is written.
+     * Which bots were mid-phase during a stall.
+     * Why: a stall is only detected once it ends, so the suspect is whoever's span overlapped the window, not whoever is running when the record is written.
      */
     blame(at: number, stallMs: number): { box: string; phase: string; overlapMs: number }[] {
         const from = at - stallMs;

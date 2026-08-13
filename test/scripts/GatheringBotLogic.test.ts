@@ -104,7 +104,7 @@ describe('resourceWithinCamp + chase (named camp hop fence)', () => {
         expect(resourceWithinCamp(0, NAMED_CAMP_LEASH_FLOOR)).toBe(true);
         expect(resourceWithinCamp(64, NAMED_CAMP_LEASH_FLOOR)).toBe(true);
         expect(resourceWithinCamp(65, NAMED_CAMP_LEASH_FLOOR)).toBe(false);
-        // Spot 72 from pin (old "leash+8" stuck) is outside default membership.
+        // Spot 72 from the pin is outside default membership.
         expect(resourceWithinCamp(72, NAMED_CAMP_LEASH_FLOOR)).toBe(false);
         // Wider per-camp membership covers long piers.
         expect(resourceWithinCamp(72, 80)).toBe(true);
@@ -116,7 +116,7 @@ describe('resourceWithinCamp + chase (named camp hop fence)', () => {
         expect(resourceWithinCamp(64, NAMED_CAMP_LEASH_FLOOR)).toBe(true);
         // Outside membership → wrong coastline / off-camp.
         expect(resourceWithinCamp(70, NAMED_CAMP_LEASH_FLOOR)).toBe(false);
-        // Wider per-camp membership covers long piers past the old ~72 stuck.
+        // Wider per-camp membership covers long piers.
         expect(resourceWithinCamp(72, 80)).toBe(true);
     });
 
@@ -127,7 +127,7 @@ describe('resourceWithinCamp + chase (named camp hop fence)', () => {
         expect(resolveCampRadius(48)).toBe(48);
         expect(resolveChaseRadius(undefined)).toBe(40);
         expect(resolveChaseRadius(30)).toBe(30);
-        // Freeform hunt: L+24 floor 48 — leash 28 → 52, not the old "40 of you" wall.
+        // Freeform hunt: L+24 with a floor of 48, so leash 28 → 52.
         expect(gatherHuntRadius(28)).toBe(52);
         expect(gatherHuntRadius(18)).toBe(48);
         expect(gatherHuntRadius(40)).toBe(64);

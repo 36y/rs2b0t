@@ -48,11 +48,10 @@ export async function leaveBerviriusTomb(log: (m: string) => void): Promise<bool
     return ok;
 }
 
-/**
- * One search hands over the sword pommel, the locating crystal and the notes. The
- * notes are what set `used_dolmen_paper`, which is the journal's own marker that
- * this leg is done — a second visit asks for papyrus and charcoal instead.
- */
+// Why: one search hands over the sword pommel, the locating crystal and the notes.
+// Why: the notes set `used_dolmen_paper`, the journal's own marker that this leg is done, and a second visit asks for papyrus and charcoal instead.
+
+/** Search the Bervirius dolmen. */
 export async function searchBerviriusDolmen(log: (m: string) => void): Promise<boolean> {
     if (heldId(SV_ITEM.SWORD_POMMEL.id) > 0 || heldId(SV_ITEM.BONE_BEADS.id) > 0 || heldId(SV_ITEM.DEAD_BEADS.id) > 0) {
         return true;

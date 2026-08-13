@@ -1,9 +1,7 @@
-/**
- * Live staged proof for Death Plateau (#237).
- *   bun tools/deathplateau-237-live.ts [base] [stage]
- * Stages (death_equiproom): 0 start, 10 Eohric, 20 Harold duty, 40 ale, 50 gamble,
- *   55 IOU, 60 combo, 70 unlocked door. Map track uses flags + inventory.
- */
+/** Live staged proof for Death Plateau (#237): [base] [stage].
+ *  Stages (death_equiproom): 0 start, 10 Eohric, 20 Harold duty, 40 ale, 50 gamble, 55 IOU, 60 combo, 70 unlocked door. */
+
+//   bun tools/deathplateau-237-live.ts [base] [stage]
 import { launchBrowser, positionalArgs } from './lib/harness.js';
 import { cheatQuiet, getServerVarQuiet, mainlandAccount, relog, startScript } from './tutorial/harness.js';
 
@@ -26,9 +24,7 @@ try {
                 : seedStage >= 10 ? 'tele 1,45,55,19,45' // Eohric area
                     : 'tele 0,45,55,16,8';
 
-    // Only seed bank-style supplies + stage varp. Do not give quest rewards
-    // (IOU, combination, boots, secret map) — those come from doing the steps.
-    // Mid-map Tenzing supplies (bread/trout/iron) are ordinary bank items.
+    // Seed bank-style supplies and the stage varp only — the IOU, combination, boots and secret map must come from doing the steps.
     const seed = [
         'speed 300',
         '~clearinv inv',

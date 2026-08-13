@@ -1,6 +1,6 @@
-// Issue #430 — live HerbloreSecondaries proof. Seeds each secondary's site and
-// asserts the bot loots / buys / grinds at least one unit.
-//
+// Issue #430 — live HerbloreSecondaries proof: [base] [secondary-name].
+// Seeds each secondary's site and asserts the bot loots, buys or grinds at least one unit.
+
 //   bun tools/herblore-secondaries-test.ts [http://localhost:8888] [secondary-name]
 import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, positionalArgs, setSettings } from './lib/harness.js';
 

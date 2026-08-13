@@ -1,23 +1,11 @@
-/**
- * Live verification for Thiever efficiency (GitHub #139).
- *
- * Boots a mainland account, seeds a short pack of cooked lobsters (no bank
- * seed — default ~720s budgets don't need it), starts Thiever on Ardougne
- * Guards with loot off, and asserts thieving XP/hr ≥ 25k after a warm-up.
- *
- * Item seed uses engine cheat `give <obj> <qty>` (not maintainer-content
- * `~item` / `~bankitem`).
- *
- * Requires a deployed bot client and a running engine (default http://localhost:8890).
- * Redeploy the bot client yourself when Thiever / Anchor / Bank change —
- * do not use tools/deploy-local.sh from this tree for live e2e.
- *
- * Usage:
- *   bun tools/thievingbot-test.ts
- *   bun tools/thievingbot-test.ts http://localhost:8888
- *   BASE=http://localhost:8890 BUDGET_S=900 bun tools/thievingbot-test.ts
- *   HEADED=1 SLOWMO=200 bun tools/thievingbot-test.ts
- */
+/** Live verification for Thiever efficiency (#139): [base], with BASE / BUDGET_S / HEADED / SLOWMO from the environment. Boots a mainland account, seeds a short pack of cooked lobsters, starts Thiever on Ardougne Guards with loot off, and asserts thieving XP/hr >= 25k after a warm-up.
+ *  Why: item seeds go through the engine cheat `give <obj> <qty>` rather than `~item`/`~bankitem`, and the bot client is redeployed by hand — tools/deploy-local.sh from this tree is not for live e2e. */
+
+// Usage:
+//   bun tools/thievingbot-test.ts
+//   bun tools/thievingbot-test.ts http://localhost:8888
+//   BASE=http://localhost:8890 BUDGET_S=900 bun tools/thievingbot-test.ts
+//   HEADED=1 SLOWMO=200 bun tools/thievingbot-test.ts
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs } from './lib/harness.js';
 import { cheatQuiet, mainlandAccount, startScript } from './tutorial/harness.js';

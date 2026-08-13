@@ -19,12 +19,12 @@ fall out of that, and both were found the hard way:
   [`tools/nav/probe-tile.ts`](../../tools/nav/probe-tile.ts) pathfinds to every tile a quest
   module names, from each of its regions, and is worth running before any live attempt.
   `findPath` snapping to within five tiles is a weaker claim than
-  `walkResilient(radius: 2)` actually arriving — a wide blocker whose only open side faces
+  `walkResilient(radius: 2)` arriving — a wide blocker whose only open side faces
   away satisfies the first and never the second.
-- **A flood over the baked graph merges components the player cannot really connect.**
+- **A flood over the baked graph merges components the player cannot connect.**
   Any door edge the walker can click but not *pay* — a guarded gate, a toll — makes two
   regions look like one. Watch Tower's design concluded a gold bar was unnecessary for
-  exactly this reason, and the opposite was true.
+  this reason, and the opposite was true.
 
 ## See also
 

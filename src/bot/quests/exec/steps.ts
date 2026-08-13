@@ -21,25 +21,18 @@ import { gotoNpc, talkThrough, type LadderHop } from './primitives.js';
 /** How deep into the straight-line shortlist to look before giving up. */
 const BANK_CANDIDATES = 6;
 
-/**
- * The nearest bank by the walk, not by the crow.
- *
- * From the Lumbridge respawn the three closest banks by air — Al Kharid, Shantay
- * Pass and the Duel Arena — are all behind the same 10gp toll gate, and the
- * navigator prunes a fare it cannot pay. So to a bot that has just died, every
- * bank it can see is one it cannot reach, and the first it can walk to is only
- * third on the list. Ask the navigator for real path costs instead.
- */
+// Why: from the Lumbridge respawn the three closest banks by air — Al Kharid, Shantay Pass and the Duel Arena — sit behind the same 10gp toll gate, and the navigator prunes a fare it cannot pay.
+// Why: to a bot that has just died every bank it can see is one it cannot reach, and the first it can walk to is only third on the list, so the navigator is asked for path costs.
+
+/** The nearest bank measured by walking cost. */
 async function reachableBank(from: WorldTile, log: (m: string) => void): Promise<Tile | undefined> {
     const candidates = nearestBanks(from).slice(0, BANK_CANDIDATES);
     let best: { tile: Tile; cost: number } | null = null;
     for (const bank of candidates) {
-        // Stop once a known route beats the next candidate's crow-flight. On open
-        // ground that is exact, since a walk is never shorter than the line it
-        // covers; a ladder or a ship can beat it, so this can settle for a bank
-        // that is not quite the cheapest. It can never settle for an unreachable
-        // one — nothing breaks the loop until a path has already been found — and
-        // it keeps the common case to one or two pathfinds instead of six.
+        // Why: stopping once a known route beats the next candidate's crow-flight is exact on open ground, as a walk is never shorter than the line it covers.
+        // Why: a ladder or a ship can beat that line, so this can settle for a bank short of the cheapest.
+        // Why: it can never settle for an unreachable bank, as nothing breaks the loop until a path has already been found.
+        // Why: the common case stays at one or two pathfinds instead of six.
         if (best !== null && bankDistance(from, bank.tile) >= best.cost) {
             break;
         }
@@ -62,8 +55,8 @@ export async function openBankLeg(noBankMsg: string, override: Tile | undefined,
         log(noBankMsg);
         return false;
     }
-    // Banking.open honours Shantay's Bank chest (+ continue) and other non-booth access.
-    // Hardcoding "Bank booth" / Use-quickly looped forever at Shantay during Tourist Trap buys.
+    // Why: Banking.open honours Shantay's Bank chest (plus its continue) and other non-booth access.
+    // Why: hardcoding "Bank booth" / Use-quickly looped forever at Shantay during Tourist Trap buys.
     return Banking.open({ stand: bankTile, log });
 }
 

@@ -1,17 +1,12 @@
-/**
- * Two-account Fisher mule e2e: Gatherer (raw haul) + Cooker at Catherby.
- *
- * Gatherer starts with a near-full raw lobster pack and hands off at the camp
- * meet. Cooker accepts raw, cooks at the camp Range, and banks cooked fish
- * (burntPolicy Drop).
- *
- * Usage:
- *   HEADED=1 bun tools/gatheringbot-cooker-pair-test.ts
- *   BASE=http://localhost:8890 BUDGET_S=240 bun tools/gatheringbot-cooker-pair-test.ts
- *
- * Redeploy first when GatheringBot / cook / mule code changes:
- *   ~/redeploy.sh
- */
+/** Two-account Fisher mule e2e at Catherby: the Gatherer hauls raw lobster to the camp meet, the Cooker cooks at the Range and banks (burntPolicy Drop).
+ *  BASE / BUDGET_S from the environment; redeploy first when GatheringBot / cook / mule code changes. */
+
+// Usage:
+//   HEADED=1 bun tools/gatheringbot-cooker-pair-test.ts
+//   BASE=http://localhost:8890 BUDGET_S=240 bun tools/gatheringbot-cooker-pair-test.ts
+
+// Redeploy first when GatheringBot / cook / mule code changes:
+//   ~/redeploy.sh
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs } from './lib/harness.js';
 import {
@@ -230,7 +225,7 @@ try {
                 `| g: ${g.lastLog.slice(0, 48)} | c: ${c.lastLog.slice(0, 48)}`
         );
 
-        // Full success: handoff + cooker actually cooked (XP or banked cooked).
+        // Full success: the handoff landed and the cooker cooked (XP or banked cooked).
         if (traded && cookerGotRaw && (c.cookXp > cookXp0 || logHas(c.logs, /bank:\s*deposited\s+\d+\s+cooked/i))) {
             passed = true;
             detail =

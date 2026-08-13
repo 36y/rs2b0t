@@ -23,10 +23,8 @@ export function shouldEnableRun(s: RunState): boolean {
     if (s.runOn) {
         return false;
     }
-    // Toggling run clicks a component in the controls tab, and the server closes the
-    // open modal to service it — enough to shut a bank mid-trip and leave the script
-    // reading an empty bank (#117). Nothing needs run while a modal is up, so wait
-    // for it to close. Being attacked still overrides: getting away beats the modal.
+    // Why: toggling run clicks a component in the controls tab and the server closes the open modal to service it, enough to shut a bank mid-trip and leave the script reading an empty bank (#117).
+    // Why: nothing needs run while a modal is up, and being attacked still overrides because getting away beats the modal.
     if (s.modalOpen && !s.inCombat) {
         return false;
     }

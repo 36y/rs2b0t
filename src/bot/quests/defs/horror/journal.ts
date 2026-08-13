@@ -21,13 +21,11 @@ function normalize(lines: readonly string[] | string): string {
         .toLowerCase();
 }
 
-/**
- * Everything stripped **except** `@str@`, which is the only oracle for the
- * bridge. `~quest_journal` runs the page through `split_init`, and the wrapper
- * re-emits the active tags at the head of every line it produces — the struck
- * bridge line arrives as `@str@@bla@I need to repair…`, so the strike marker is
- * not adjacent to its own words and cannot be matched with the tags left in.
- */
+// Why: `@str@` is the only oracle for the bridge, so everything else is stripped.
+// Why: `~quest_journal` runs the page through `split_init` and the wrapper re-emits the active tags at the head of every line it produces.
+// Why: the struck bridge line therefore arrives as `@str@@bla@I need to repair…`, so the strike marker is not adjacent to its own words and cannot be matched with the tags left in.
+
+/** Normalise journal lines, keeping only the `@str@` marker. */
 function struck(lines: readonly string[] | string): string {
     return (typeof lines === 'string' ? lines : lines.join(' '))
         .replace(/@(?!str@)[a-z0-9]{3}@/gi, '')
@@ -55,11 +53,10 @@ function readStage(text: string): number | undefined {
     return undefined;
 }
 
-/**
- * Both branches of the bridge line say the same words — only the colour tag
- * differs, `@str@` for done against `@dbl@` for outstanding — so that one flag
- * is read off the tagged text rather than the normalised text.
- */
+// Why: both branches of the bridge line say the same words and only the colour tag differs, `@str@` for done against `@dbl@` for outstanding.
+// Why: that one flag is therefore read off the tagged text rather than the normalised text.
+
+/** Read the journal's progress flags. */
 function readFlags(text: string, tagged: string): Set<string> {
     const flags = new Set<string>();
     if (BRIDGE_DONE.test(tagged)) {
@@ -87,9 +84,7 @@ export function parseHorrorJournal(lines: readonly string[] | string): QuestProg
         return undefined;
     }
     const flags = readFlags(text, struck(lines));
-    // Past the bridge stage the journal folds both errands into one struck-out
-    // line, so the flags have to be re-asserted or every later decide() reads
-    // the bridge as unbuilt.
+    // Why: past the bridge stage the journal folds both errands into one struck-out line, so the flags have to be re-asserted or every later decide() reads the bridge as unbuilt.
     if (stage >= HD_STAGE.ENTERED_LIGHTHOUSE) {
         flags.add(HD_FLAG.BRIDGE);
         flags.add(HD_FLAG.KEY);

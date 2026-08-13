@@ -253,9 +253,8 @@ export class ResourcePanel {
             return false;
         }
 
-        // An absent monitor is not a broken one: a wall served straight from an
-        // engine has no proxy behind this route, and traffic is still measurable
-        // in the browser.
+        // Why: a wall served straight from an engine has no proxy behind this route,
+        // and traffic stays measurable in the browser.
         if (response.status === 404) {
             this.hostTelemetry = false;
             this.previousTraffic = null;

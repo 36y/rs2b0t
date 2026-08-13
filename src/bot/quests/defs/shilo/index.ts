@@ -58,18 +58,14 @@ const TOMB_BONES = 3;
 /** Enough to survive a Nazastarool phase and the Undead Ones between them. */
 const TOMB_FOOD = 8;
 
-/**
- * Jiminua bakes ten loaves at a time and the stock drains, so insisting on the full
- * eight would send the bot back for the last two while the oven catches up. Below
- * this, though, the tomb is not worth entering.
- */
+// Why: Jiminua bakes ten loaves at a time and the stock drains, so insisting on the full eight would send the bot back for the last two while the oven catches up.
+// Why: below this the tomb is not worth entering.
 const TOMB_FOOD_MIN = 4;
 
-/**
- * The island, generously bounded. Everything the quest needs is on it except coins
- * and bones, and there is no bank here until the quest itself opens Shilo's — so
- * provisioning only runs while we are still on the mainland.
- */
+// Why: everything the quest needs is on the island except coins and bones, and there is no bank here until the quest itself opens Shilo's.
+// Why: provisioning therefore only runs while still on the mainland.
+
+/** True while on Karamja, generously bounded. */
 function onKaramja(tile: WorldTile | null | undefined): boolean {
     if (!tile) {
         return false;
@@ -81,11 +77,10 @@ function step(name: string, run: (log: (m: string) => void) => Promise<boolean>)
     return { kind: 'custom', name, run };
 }
 
-/**
- * Every sealed pocket is left the way it was entered before any step that assumes
- * open ground. A branch that skips this sends the walker at a tile on the wrong
- * side of a one-way crossing and spends three passes proving it unreachable.
- */
+// Why: every sealed pocket is left the way it was entered before any step that assumes open ground.
+// Why: a branch that skips this sends the walker at a tile on the wrong side of a one-way crossing and spends three passes proving it unreachable.
+
+/** A step out of the current sealed pocket, or null when on open ground. */
 function escapePocket(area: ShiloArea): QuestStep | null {
     switch (area) {
         case 'ahZaRhoonNorth':
@@ -117,11 +112,10 @@ function inTheOpenOrIn(area: ShiloArea, ownPocket: ShiloArea, stepIfOk: QuestSte
     return area === ownPocket ? stepIfOk : inTheOpen(area, stepIfOk);
 }
 
-/**
- * Coins and bones are the only things this quest cannot buy on Karamja, and the
- * nearest bank is an ocean away — so both are settled before the crossing and
- * never mid-quest, unless something is lost.
- */
+// Why: coins and bones are the only things this quest cannot buy on Karamja, and the nearest bank is an ocean away.
+// Why: both are therefore settled before the crossing and never mid-quest, unless something is lost.
+
+/** Provision coins and bones before the crossing, or null. */
 function provision(snap: QuestSnapshot, area: ShiloArea): QuestStep | null {
     if (area !== 'karamja' || onKaramja(snap.tile)) {
         return null;
@@ -175,18 +169,16 @@ function stageRope(snap: QuestSnapshot, area: ShiloArea): QuestStep {
     return kit ? inTheOpen(area, kit) : inTheOpen(area, step('tie the rope to the fissure', ropeFissure));
 }
 
-/**
- * Engine stages 7 to 9 all render the same journal block until the Bervirius dolmen
- * is searched, so this branch is driven by flags and by what is carried rather than
- * by the stage number.
- */
+// Why: engine stages 7 to 9 all render the same journal block until the Bervirius dolmen is searched.
+// Why: this branch is therefore driven by flags and by what is carried rather than by the stage number.
+
+/** The next step for the stage 7-9 block. */
 function stageMiddle(snap: QuestSnapshot, area: ShiloArea): QuestStep {
     const inCaves = area === 'ahZaRhoonNorth' || area === 'ahZaRhoonSouth';
 
     if (!hasFlag(snap.progress, 'pommel-taken')) {
-        // Both scroll bits are read off the journal only while this block renders;
-        // after the dolmen they vanish, and the necklace craft still needs one of
-        // them. Reading is idempotent, so it happens the moment a scroll is held.
+        // Why: both scroll bits are read off the journal only while this block renders, and after the dolmen they vanish while the necklace craft still needs one of them.
+        // Why: reading is idempotent, so it happens the moment a scroll is held.
         if (!hasFlag(snap.progress, 'read-tattered')) {
             if (held(snap, SV_ITEM.TATTERED_SCROLL.id) > 0) {
                 return step('read the tattered scroll', readScroll(SV_ITEM.TATTERED_SCROLL.id));
@@ -228,9 +220,8 @@ function stageMiddle(snap: QuestSnapshot, area: ShiloArea): QuestStep {
  * is set — the crumpled scroll for the beads, the searched door for the key.
  */
 function craftChain(snap: QuestSnapshot, area: ShiloArea, wantKey: boolean): QuestStep | null {
-    // Past the carved doors the key is optional — they stay unlocked, and the tomb
-    // exit actually refuses to open for anyone still carrying it. Demanding a
-    // replacement then would send the bot back to the gallows for nothing.
+    // Why: past the carved doors the key is optional, as they stay unlocked and the tomb exit refuses to open for anyone still carrying it.
+    // Why: demanding a replacement there would send the bot back to the gallows for nothing.
     const needKey = wantKey && held(snap, SV_ITEM.BONE_KEY.id) === 0;
     const needBeads = owned(snap, SV_ITEM.DEAD_BEADS.id) === 0 && !worn(snap, SV_ITEM.DEAD_BEADS.id);
     if (!needKey && !needBeads) {

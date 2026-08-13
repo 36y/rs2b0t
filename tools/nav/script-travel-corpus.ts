@@ -1,27 +1,9 @@
-/**
- * Scrape every travel endpoint scripts use and build directed legs for live nav.
- *
- * Sources (in-tree, not hand-maintained mega-JSON):
- *   - Clues: CLUE_DB coords + NAV_TARGETS ClueSolver stands
- *   - Gathering: FISHING / MINING / WOODCUTTING location spot↔bank (+ cook stands)
- *   - Firemaking: FIRE_SPOTS bank pins
- *   - Cooking: CookingRanges / fish-camp cook plans
- *   - Quests: every `new Tile(x, z, level)` in quest `areas.ts` files (ordered pairs)
- *   - NAV_TARGETS residual (fighters, shops, etc.) under gathering-all
- *
- * Segments (SEGMENT=… on the live harness):
- *   all | clues | quests | gathering-all | fishing | mining | woodcutting
- *   | firemaking | cooking
- *
- * How each segment picks OD ends + regenerate commands:
- *   docs/NAV.md § Script travel OD
- *
- *   bun --preload ./test/setup-dom.ts tools/nav/script-travel-corpus.ts --list
- *   bun --preload ./test/setup-dom.ts tools/nav/script-travel-corpus.ts --segment=fishing --write
- *   bun --preload ./test/setup-dom.ts tools/nav/script-travel-corpus.ts --segment=clues --stats
- *
- * Endpoints are snapped off solid locs via out/collision.lcnav.gz when present.
- */
+/** Scrape every travel endpoint scripts use and build directed legs for live nav: --list, --segment=fishing --write, --segment=clues --stats. Sources are in-tree — CLUE_DB coords plus NAV_TARGETS ClueSolver stands, FISHING/MINING/WOODCUTTING spot↔bank and cook stands, FIRE_SPOTS bank pins, CookingRanges fish-camp plans, every `new Tile(x, z, level)` in quest `areas.ts`, and the NAV_TARGETS residual under gathering-all.
+ *  Segments: all | clues | quests | gathering-all | fishing | mining | woodcutting | firemaking | cooking. Endpoints are snapped off solid locs via out/collision.lcnav.gz when present. */
+
+//   bun --preload ./test/setup-dom.ts tools/nav/script-travel-corpus.ts --list
+//   bun --preload ./test/setup-dom.ts tools/nav/script-travel-corpus.ts --segment=fishing --write
+//   bun --preload ./test/setup-dom.ts tools/nav/script-travel-corpus.ts --segment=clues --stats
 import fs from 'node:fs';
 import path from 'node:path';
 

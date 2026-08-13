@@ -1,15 +1,7 @@
-/**
- * Placement-identity for scenery-backed nav (multiloc model).
- *
- * Same raw loc type can exist at many tiles; identity is **placement**
- * (level + tile), not name alone. Optional closed/open ids describe the
- * raw/effective forms at that placement (trapdoor → open trapdoor).
- *
- * `valid()` answers: does the live scene still have this placement in a form
- * we can interact with (or already open for Open-actions)?
- *
- * Docs: docs/NAV.md (multiloc), docs/local/nav-multiloc-plan.md
- */
+// docs/NAV.md
+// Why: one raw loc type can exist at many tiles, so identity here is the placement (level + tile) rather than the name alone.
+// Why: the optional closed and open ids describe the raw and effective forms at that placement (trapdoor → open trapdoor).
+// Why: `valid()` answers whether the live scene still has this placement in an interactable form, or already open for Open-actions.
 
 import type { TransportInfo } from './PathFinder.js';
 
@@ -103,12 +95,9 @@ export function matchesLocRef(
     return near;
 }
 
-/**
- * Result of probing the live scene for a LocRef.
- * - matching: interactable form found (closed or open id)
- * - openLeaf: Open-action barrier already shows Close (treat as not shut)
- * - missing: nothing at placement — edge may be stale after map change
- */
+// Why: `matching` means an interactable form was found, closed or open id.
+// Why: `openLeaf` means an Open-action barrier already shows Close, so it counts as not shut.
+// Why: `missing` means nothing sits at the placement, so the edge may be stale after a map change.
 type LocRefProbe =
     | { status: 'matching' }
     | { status: 'openLeaf' }
@@ -180,11 +169,9 @@ export function locRefValid(ref: LocRef, scene: readonly LocSceneSnap[]): boolea
     return p.status === 'matching' || p.status === 'openLeaf';
 }
 
-/**
- * Stale when we expected a known id at the placement and the scene has neither
- * that id nor the open transform (map edit / wrong world). Name-only refs never
- * report stale (too ambiguous).
- */
+// Why: a name-only ref never reports stale, being too ambiguous to judge.
+
+/** Stale when a known id was expected at the placement and the scene has neither it nor the open transform (map edit, wrong world). */
 export function locRefStale(ref: LocRef, scene: readonly LocSceneSnap[]): boolean {
     if (ref.locId === undefined && ref.openLocId === undefined) {
         return false;

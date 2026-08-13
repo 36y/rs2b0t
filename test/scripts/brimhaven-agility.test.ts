@@ -387,8 +387,7 @@ describe('BrimhavenAgility restock verification', () => {
     });
 
     test('names the missing food instead of spinning the bank open and closed', () => {
-        // The reported bug: the bank had *some* lobsters, so the old
-        // "bank empty AND pack empty" guard never fired and the bot re-banked forever.
+        // Why: a bank holding some lobsters never trips a "bank empty and pack empty" guard.
         const partial = restockShortfall({ ...base, foodInPack: 3 });
         expect(partial).toContain('Lobster');
         expect(partial).toContain('only 3');

@@ -8,7 +8,7 @@ needs retained history.
 
 ## Read the retained series
 
-From the wall console:
+Run these calls from the wall console:
 
 | Call | Answers |
 |---|---|
@@ -27,7 +27,7 @@ The retained series stops at the bot. To go further:
 2. Wrap the suspect function and accumulate `performance.now()` deltas.
 3. Compare per-callee totals.
 
-Two fixes came out of exactly that:
+Two fixes came out of that:
 
 - `RandomEventGuardian` cost 1.5ms/frame — its tick guard was stamped only after a
   successful detect, so in the steady state it never armed and a full scene scan ran

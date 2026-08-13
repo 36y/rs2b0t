@@ -112,31 +112,22 @@ export interface WalkOptions {
     maxExpansions?: number;
     /** Path policy (tele toggles, distanceBeforeTeleport, deny lists, …). */
     policy?: PathPolicy;
-    /**
-     * Include spell/jewellery tele edges in A*.
-     * Default: Global `navTeleports` (off). Explicit true/false overrides Global;
-     * `policy.useTeleports: false` always forces off.
-     */
+    // Why: defaults to Global `navTeleports` (off); an explicit true/false overrides Global, and `policy.useTeleports: false` forces off regardless.
+
+    /** Include spell/jewellery tele edges in A*. */
     useTeleportCatalog?: boolean;
-    /**
-     * Optional known bank item counts for the bank planner
-     * (tests / when bank is not open). When omitted, planner uses open-bank
-     * counts only and never opens a bank just to probe.
-     */
+    // Why: when omitted the planner uses open-bank counts only and never opens a bank to probe.
+
+    /** Known bank item counts for the bank planner (tests, or when the bank is not open). */
     bankItemCounts?: Record<string, number>;
-    /**
-     * Danger / no-go zones the pathfinder must not enter.
-     * Pass known ids (`'white-wolf-mountain'`) and/or ad-hoc rects.
-     * Automatic catalog zones are also resolved from live player state.
-     * Idea credit: @lolwut.
-     * @see src/bot/nav/data/dangerZones.ts
-     */
+    // Why: entries are catalog ids (`'white-wolf-mountain'`) or ad-hoc rects, and automatic catalog zones are resolved from live player state on top of whatever is passed.
+
+    /** Danger / no-go zones the pathfinder must not enter (idea credit: @lolwut). */
     avoidZones?: readonly (string | import('./data/dangerZones.js').DangerZoneRect)[];
-    /**
-     * Path stickiness (stall / deviation). Defaults: Global `navPathStallTicks` (5)
-     * and `navPathDeviation` (10). Plan once at request; repath only on stall,
-     * deviation past this Chebyshev, or {@link WalkExecutor.requestRepath}.
-     */
+    // Why: defaults come from Global `navPathStallTicks` (5) and `navPathDeviation` (10).
+    // Why: the route is planned once at request and repathed only on stall, on deviation past this Chebyshev, or via {@link WalkExecutor.requestRepath}.
+
+    /** Path stickiness (stall / deviation). */
     pathFollow?: PathFollowOverrides;
     /** Force a full repath for this walk (scripts that know the route is stale). */
     forceRepath?: boolean;
@@ -187,11 +178,9 @@ class WalkExecutorImpl {
 
     lastOutcome: 'arrived' | 'closest' | 'blocked' | 'budget' | 'interrupted' | 'failed' | 'unreachable' | null = null;
 
-    /**
-     * Items that would have opened the last failed route. Non-empty means the
-     * destination is behind a toll the player cannot pay, not off the graph —
-     * a caller that can shop may buy them and walk again.
-     */
+    // Why: non-empty means the destination sits behind a toll the player cannot pay rather than off the graph, so a caller that can shop may buy them and walk again.
+
+    /** Items that would have opened the last failed route. */
     lastMissingGateItems: MissingItem[] = [];
 
     private avoidDoors: { x: number; z: number }[] = [];
@@ -225,10 +214,7 @@ class WalkExecutorImpl {
     /** Stickiness for the active walk (stall ticks / deviation Chebyshev). */
     private pathFollow = resolvePathFollowConfig();
 
-    /**
-     * Scripts call this to force a repath on the next followPath loop (or next walkTo).
-     * Always honored — does not wait for stall/deviation.
-     */
+    /** Set by {@link WalkExecutorImpl.requestRepath}; honored on the next followPath loop or walkTo without waiting for stall or deviation. */
     private forceRepathPending = false;
 
     requestRepath(_reason?: string): void {
@@ -481,16 +467,9 @@ class WalkExecutorImpl {
         PathCameraFollow.samplePathYaw(yaw);
     }
 
-    /**
-     * If bank items (open bank or opts.bankItemCounts) enable a cheaper tele/toll
-     * route, walk bank once, withdraw only path-scoped missing items, return true
-     * so walkTo repaths.
-     */
-    /**
-     * Turn a bare `unreachable` into the shopping list that would fix it. One extra
-     * path request, only on failure, and only for the verdict A* gives when a gated
-     * crossing was pruned — a budget or off-graph failure is not a shopping problem.
-     */
+    // Why: one extra path request, only on failure, and only for the verdict A* gives when a gated crossing was pruned — a budget or off-graph failure is not a shopping problem.
+
+    /** Turn a bare `unreachable` into the shopping list that would fix it. */
     private async explainUnreachablePath(
         from: WorldTile,
         dest: WorldTile,
@@ -514,6 +493,7 @@ class WalkExecutorImpl {
         return this.lastMissingGateItems;
     }
 
+    /** Walk to a bank once and withdraw only path-scoped missing items when bank stock unlocks a cheaper tele/toll route; true means walkTo should repath. */
     private async maybeBankForRoute(
         from: WorldTile,
         dest: WorldTile,
@@ -548,9 +528,8 @@ class WalkExecutorImpl {
             return false;
         }
 
-        // Virtual path must actually use something that needed those items.
         if (!pathHasTeleport(pathVirtual.waypoints) && missing.every(m => !/rune|coins/i.test(m.name))) {
-            // Still allow toll coins etc. if specials appear — already in missing via bankPlan.
+            // Why: deliberately empty — toll coins and other specials already reach `missing` via bankPlan, so nothing is filtered out here.
         }
 
         const bank = nearestBank(from);
@@ -584,7 +563,6 @@ class WalkExecutorImpl {
                 + `(est cost ${plan.estimatedCost} < direct ${directPath.cost})`
         );
 
-        // Walk to bank (classic path, no nested bank plan).
         this.bankLegDone = true; // prevent recursion while walking to bank
         const reached = await this.walkToBankOnly(stand, log);
         if (!reached) {
@@ -597,9 +575,7 @@ class WalkExecutorImpl {
             return false;
         }
 
-        // MissingItem.count is the shortage (required − held at plan time), not the
-        // total required amount. Withdraw that count directly — do not subtract
-        // inventory again (see #336).
+        // Why: `MissingItem.count` is the shortage (required − held at plan time), so it is withdrawn directly rather than having inventory subtracted from it again (#336).
         for (const item of plan.missing) {
             const take = item.count;
             if (take <= 0) {
@@ -616,9 +592,7 @@ class WalkExecutorImpl {
             await Bank.close().catch(() => undefined);
         }
         await Execution.delayTicks(1);
-        // Live avoid list was built pre-bank from empty inventory. Recompute
-        // special-crossing item/skill gates so the post-bank repath can use
-        // newly affordable tolls (#338).
+        // Why: the live avoid list was built pre-bank from an empty inventory, so the item/skill gates are recomputed and the post-bank repath can use newly affordable tolls (#338).
         this.refreshSpecialCrossingAvoids();
         return true;
     }
@@ -628,7 +602,6 @@ class WalkExecutorImpl {
         const saved = this.bankLegDone;
         this.bankLegDone = true;
         try {
-            // Use a nested walk with same engine but bank leg already "done".
             const radius = 4;
             const timeoutMs = 120_000;
             const deadline = performance.now() + timeoutMs;
@@ -685,9 +658,8 @@ class WalkExecutorImpl {
         stateOverride?: WorldStateData
     ): Promise<PathResult> {
         let result: PathResult | null = null;
-        // Virtual bank planning must recompute item-gated crossing avoids against
-        // the virtual inventory; live-item blacklists would hide the exact tolls
-        // banking is meant to unlock (#338). Session-failed doors and skill gates stay.
+        // Why: virtual bank planning recomputes item-gated crossing avoids against the virtual inventory — live-item blacklists would hide the tolls banking is meant to unlock (#338).
+        // Why: session-failed doors and skill gates stay in the avoid list either way.
         const avoid = stateOverride
             ? this.avoidListForState(stateOverride)
             : [
@@ -740,11 +712,9 @@ class WalkExecutorImpl {
         return settled && result ? result : { ok: false, reason: 'path request timed out', expanded: 0 };
     }
 
-    /**
-     * Avoid list for a virtual (or other) WorldState: keep session blacklists and
-     * skill-gated specials, but re-evaluate item requirements against `state.items`
-     * so bank-planned routes can use tolls the live inventory cannot.
-     */
+    // Why: item requirements are re-evaluated against `state.items` so bank-planned routes can use tolls the live inventory cannot.
+
+    /** Avoid list for a virtual WorldState; session blacklists and skill-gated specials are kept. */
     private avoidListForState(state: WorldStateData): { x: number; z: number }[] {
         const avoid: { x: number; z: number }[] = [];
         for (const sc of SPECIAL_CROSSINGS) {
@@ -764,8 +734,7 @@ class WalkExecutorImpl {
             const [x, z] = key.split('|').map(Number);
             avoid.push({ x: x!, z: z! });
         }
-        // Runtime door-failure strikes from this.avoidDoors that are not pure
-        // special-crossing prefilters — keep any extra entries already struck.
+        // Why: runtime door-failure strikes in `avoidDoors` that are not special-crossing prefilters stay struck.
         const specialKeys = new Set(SPECIAL_CROSSINGS.map(sc => `${sc.x}|${sc.z}`));
         for (const d of this.avoidDoors) {
             const k = `${d.x}|${d.z}`;
@@ -776,11 +745,7 @@ class WalkExecutorImpl {
         return avoid;
     }
 
-    /**
-     * Drop special-crossing prefilters and re-add only those still unmet from
-     * live inventory/skills. Preserves session blacklists and runtime door
-     * strikes (non-special avoid entries).
-     */
+    /** Re-derive special-crossing prefilters from live inventory/skills, keeping session blacklists and runtime door strikes. */
     private refreshSpecialCrossingAvoids(): void {
         const specialKeys = new Set(SPECIAL_CROSSINGS.map(sc => `${sc.x}|${sc.z}`));
         this.avoidDoors = this.avoidDoors.filter(d => !specialKeys.has(`${d.x}|${d.z}`));
@@ -812,12 +777,9 @@ class WalkExecutorImpl {
         this.avoidDoors.push({ x, z });
     }
 
-    /**
-     * A crossing was attempted and the player is still on the near side. Past
-     * {@link DOOR_SESSION_STRIKES} the placement is shut for good as far as this
-     * run is concerned — otherwise the next ladder pass plans straight back
-     * through it and the walk never terminates.
-     */
+    // Why: past {@link DOOR_SESSION_STRIKES} the placement is treated as shut for the rest of the run — otherwise the next ladder pass plans straight back through it and the walk never terminates.
+
+    /** Record that a crossing was attempted and the player is still on the near side. */
     private noteDoorRefusal(hop: PathStep, log: (msg: string) => void): void {
         const strikes = noteFailedDoor(hop, this.doorStrikes, this.avoidDoors);
         const t = hop.transport;
@@ -941,7 +903,6 @@ class WalkExecutorImpl {
                 pathIdx = found;
             }
 
-            // Deviation repath: farther than stickiness Chebyshev from published path.
             const pathDist = minChebyshevToPath(
                 tiles,
                 me,
@@ -1011,9 +972,7 @@ class WalkExecutorImpl {
                 }
             }
 
-            // Unreachable walk-click: re-pick only. Do NOT run stall recovery early —
-            // live smokes spammed "stall recovery (2 ticks idle)" when canReach failed
-            // on the mid-path click long before the stickiness stall.
+            // Why: an unreachable walk-click re-picks without running stall recovery — live smokes spammed "stall recovery (2 ticks idle)" when canReach failed on the mid-path click long before the stickiness stall.
             if (
                 clickIdx !== -1
                 && !moved
@@ -1040,9 +999,8 @@ class WalkExecutorImpl {
                             limitIdx: recoverLimit
                         })
                         : -1;
-                // No forward tile to click means we are already standing at the next
-                // hop's approach — the door/stair case. Escalate in this same pass
-                // rather than replanning the identical route until the walk fails.
+                // Why: no forward tile to click means we are already standing at the next hop's approach — the door/stair case.
+                // Why: escalating in this same pass avoids replanning the identical route until the walk fails.
                 const phase = stallPhase({ stallRetries, recoverIdx: recover, inCombat: reader.inCombat() });
                 if (phase === 'recover') {
                     const local = reader.toLocal(tiles[recover]!.x, tiles[recover]!.z);
@@ -1179,19 +1137,15 @@ class WalkExecutorImpl {
                 if (chosen !== -1) {
                     clickIdx = chosen;
                     clicks++;
-                    // Do NOT reset lastMoveTick on click — only real tile movement
-                    // (and hop landings / stall-recovery clicks) clear the stall clock.
-                    // Resetting here + unreach re-picks starved the 9-tick stall and
-                    // left walks thrashing until wall-clock "walk timed out".
+                    // Why: only tile movement — plus hop landings and stall-recovery clicks — clears the stall clock, so `lastMoveTick` is not reset on a click.
+                    // Why: resetting here alongside unreach re-picks starved the 9-tick stall and left walks thrashing until the wall-clock "walk timed out".
                     this.publishPath(tiles, pathIdx, clickIdx);
                 } else {
                     walkClickMark = null;
                     walkClickAt = null;
                     PathPublish.setClientSegment(null);
-                    // Client pathfind failed: if the next planned hop's approach is nearby,
-                    // execute that hop (doors/stairs/trees). Do not scan other transports.
-                    // Slightly looser than normal approachR — walk tiles before a door often
-                    // fail client tryMove while the approach stand is still a few tiles away.
+                    // Why: walk tiles before a door often fail client tryMove while the approach stand is still a few tiles away, so this radius is looser than approachR.
+                    // Why: only the next planned hop is executed — scanning other transports would take a crossing the route never planned.
                     if (nextCrossingIdx !== -1) {
                         const appr = tiles[nextCrossingIdx - 1]!;
                         const hop = tiles[nextCrossingIdx]!;
@@ -1347,12 +1301,8 @@ class WalkExecutorImpl {
                     && here.x === approach.x
                     && here.z === approach.z;
                 if (!atApproach && attempt === 0) {
-                    // The server ran its own path search and gave up from where we
-                    // stand. The planned approach is the tile the pack says this hop
-                    // works from, so stand on it and try once more — a stair fires
-                    // from up to the trigger radius away and clicks from wherever it
-                    // happens to be, which is how a staircase two tiles behind a wall
-                    // reads as an unreachable destination.
+                    // Why: the server ran its own path search and gave up from where we stand, and the planned approach is the tile the pack says this hop works from.
+                    // Why: a stair fires from up to the trigger radius away and clicks from wherever the player happens to be, which is how a staircase two tiles behind a wall reads as an unreachable destination.
                     log(
                         `server can't reach ${transport.locName} from (${here?.x},${here?.z}) — stepping onto the planned approach (${approach.x},${approach.z})`
                     );
@@ -1372,7 +1322,7 @@ class WalkExecutorImpl {
         }
 
         if (await this.runPostQuestTalk(transport, approach, log)) {
-            // The conversation is the whole unlock; one more attempt settles it.
+            // Why: the conversation is the unlock, so one more attempt settles it.
             const loc = findTransportLoc(transport);
             if (loc && (await loc.interact(transport.action))) {
                 const toLevel = transport.toLevel;
@@ -1391,12 +1341,10 @@ class WalkExecutorImpl {
         return false;
     }
 
-    /**
-     * Some crossings open only after a conversation the journal cannot show —
-     * the Salve barrier wants `%priestperil` one stage past complete. There is
-     * nothing to test beforehand, so this runs only once the crossing has already
-     * refused, and only once per placement per run.
-     */
+    // Why: some crossings open only after a conversation the journal cannot show — the Salve barrier wants `%priestperil` one stage past complete.
+    // Why: nothing is testable beforehand, so this runs only once the crossing has already refused, and only once per placement per run.
+
+    /** Talk an NPC through the conversation that unlocks a crossing which already refused. */
     private async runPostQuestTalk(
         transport: TransportInfo,
         approach: PathStep,
@@ -1427,8 +1375,7 @@ class WalkExecutorImpl {
                 log(`${talk.label}: '${talk.npc}' not talkable at the stand`);
                 return false;
             }
-            // The dialogue takes a tick to arrive. Breaking on the first closed
-            // frame reads as "he said nothing" and the unlock silently no-ops.
+            // Why: the dialogue takes a tick to arrive, and breaking on the first closed frame reads as "he said nothing" while the unlock silently no-ops.
             const dialogueUp = (): Promise<boolean> =>
                 Execution.delayUntil(() => ChatDialog.isOpen() || ChatDialog.canContinue(), TALK_OPEN_MS);
             if (!(await dialogueUp())) {
@@ -1452,11 +1399,9 @@ class WalkExecutorImpl {
         return this.walkTo(approach, { radius: 2, timeoutMs: 180_000, log: m => log(`  ${m}`) });
     }
 
-    /**
-     * Open a closed door/gate next to the player (walkResilient unstick ladder).
-     * Delegates to exec/doorCrossing — kept on the facade so Traversal callers
-     * do not import the split module.
-     */
+    // Why: kept on the facade so Traversal callers do not import exec/doorCrossing.
+
+    /** Open a closed door/gate next to the player (walkResilient unstick ladder). */
     tryNearbyDoor(log: (msg: string) => void): Promise<boolean> {
         return tryNearbyDoor(log, null, this.sessionBlacklistDoors);
     }

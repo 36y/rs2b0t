@@ -220,16 +220,9 @@ function normalizePack(snap: QuestSnapshot): QuestStep | null {
 
 // ─── custom runners ──────────────────────────────────────────────────────────
 
-/**
- * Burthorpe floor plan for Death Plateau:
- *   - Eohric: castle L1 via "Stairs" at ~ (2897,3566)
- *   - Harold: Toad & Chicken L1 via "Staircase" at ~ (2914,3539)
- *   - Tostig / Denulth / Dunstan: ground
- *
- * Castle L1 and inn L1 are NOT connected. Any L1→L1 hop between them must
- * Climb-down → ground walk → Climb-up the other building. walkResilient can
- * plan that multi-hop, but only if stair loc names match the scene.
- */
+// Why: Burthorpe floor plan — Eohric is castle L1 via "Stairs" at about (2897,3566), Harold is Toad & Chicken L1 via "Staircase" at about (2914,3539), and Tostig, Denulth and Dunstan are on the ground.
+// Why: castle L1 and inn L1 are unconnected, so any L1-to-L1 hop between them has to Climb-down, walk the ground, then Climb-up the other building.
+// Why: walkResilient can plan that multi-hop only while the stair loc names match the scene.
 
 /** Inn is south of z≈3552; castle courtyard/stairs are north. */
 function inInnBand(tile: { z: number }): boolean {
@@ -450,14 +443,11 @@ async function drainChat(log: (m: string) => void, maxSteps = 24): Promise<void>
     }
 }
 
-/**
- * Enter Harold's bedroom. Content (`death_harold_door`):
- *   entering → mesbox "You knock on the door." → Harold "Come in!" → door opens
- *   leaving  → free open
- *
- * Must stand outside and drive the knock dialogue. Do NOT early-return when
- * Harold is merely in the Locs/Npcs query range — he is visible through the door.
- */
+// Why: `death_harold_door` runs entering as mesbox "You knock on the door.", then Harold's "Come in!", then the door opens; leaving is a free open.
+// Why: the step has to stand outside and drive the knock dialogue.
+// Why: Harold being in Locs/Npcs query range is not arrival, as he is visible through the door.
+
+/** Enter Harold's bedroom. */
 async function openHaroldDoor(log: (m: string) => void): Promise<boolean> {
     if (insideHaroldRoom(Game.tile())) {
         return true;
@@ -589,11 +579,10 @@ async function giveAleToHarold(log: (m: string) => void): Promise<boolean> {
     return driveDialog(['Can I buy you a drink?', 'Would you like to gamble?'], log);
 }
 
-/**
- * One full dice round: pick gamble → enter bet → wait Harold roll → player roll → settle.
- * Harold starts with 100gp; a 100gp win bankrupts him and grants the IOU. Losses
- * require more rounds — keep calling until IOU / combination.
- */
+// Why: Harold starts with 100gp, and a 100gp win bankrupts him and grants the IOU.
+// Why: losses need more rounds, so the caller keeps calling until the IOU or the combination lands.
+
+/** One full dice round: pick gamble, enter bet, wait for Harold's roll, roll, settle. */
 async function gambleHaroldRound(log: (m: string) => void): Promise<boolean> {
     if (!(await openDialogue('Harold', log))) {
         return false;
@@ -627,9 +616,8 @@ async function gambleHaroldRound(log: (m: string) => void): Promise<boolean> {
     }
 
     if (reader.modals().main !== DEATH_DICE_MAIN) {
-        // Bet amount: p_countdialog after "How much do you want to offer?"
-        // Also keep draining chat — pages close briefly between lines and the
-        // count dialog can flash open for only a tick at 2× speed.
+        // Why: the bet amount arrives as p_countdialog after "How much do you want to offer?".
+        // Why: chat keeps draining alongside it, as pages close briefly between lines and the count dialog can flash open for only a tick at 2x speed.
         let betSent = false;
         const betDeadline = performance.now() + 12_000;
         while (performance.now() < betDeadline && reader.modals().main !== DEATH_DICE_MAIN) {
@@ -947,11 +935,10 @@ async function takeGroundBall(ballId: number, near: Tile, log: (m: string) => vo
     return Execution.delayUntil(() => liveId(ballId) > 0, 6000);
 }
 
-/**
- * Place the five coloured balls on the mechanism in the content order:
- *   blue (2894,3562), yellow (2895,3562), red (2894,3563), purple (2895,3563), green (2895,3564).
- * Does not require all five in pack at once — places one at a time from ground/inv.
- */
+// Why: the content order is blue (2894,3562), yellow (2895,3562), red (2894,3563), purple (2895,3563), green (2895,3564).
+// Why: all five are not needed in the pack at once, as they are placed one at a time from the ground or the inventory.
+
+/** Place the five coloured balls on the mechanism. */
 async function solveStoneMechanism(log: (m: string) => void): Promise<boolean> {
     if (allPedestalsCorrect()) {
         log('all stone balls already correctly placed');

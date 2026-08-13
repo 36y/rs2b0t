@@ -11,7 +11,7 @@ levels, prerequisite quests) and [`ItemChecker`](../../src/bot/quests/ItemChecke
 Items are `mustHave` or `acquirable` — the difference between "you cannot start this"
 and "the bot will go and get it". `AIOQuester` consumes eligibility to choose what to run.
 
-### Official reqs vs bot-proven floors (polish goal)
+### Bot-proven floors (polish goal)
 
 `data/quests.ts` lists **server / wiki gates** only (e.g. Elemental Workshop mining
 20). Many quests still need combat, food, or gear the server does not gate.

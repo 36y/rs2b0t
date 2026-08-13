@@ -45,12 +45,10 @@ export function matchesTransportLanding(
     );
 }
 
-/**
- * After acceptAnyLanding hops (essence exit, random mine entry pads), the live
- * tile can be far from the edge's planned `to`. Continue would walk a corridor
- * that no longer matches — force repath from the real landing instead.
- * Exact landings (within 3 of toTile) are fine.
- */
+// Why: after acceptAnyLanding hops (essence exit, random mine entry pads) the live tile can be far from the edge's planned `to`, and continuing would walk a corridor that no longer matches.
+// Why: landings within 3 of toTile count as on-plan.
+
+/** True when a multi-landing hop put the player where the published path no longer applies. */
 export function multiLandingNeedsRepath(
     transport: TransportInfo,
     plannedLevel: number,

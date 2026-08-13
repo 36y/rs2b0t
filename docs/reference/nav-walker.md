@@ -51,7 +51,7 @@ It walks to the caller's `near` stand, performs the action, and — when the *se
 replies that it cannot reach — opens the blocking door and retries. It does not try to
 race a door's re-shut. Status is explicit: `'done' | 'retry' | 'unreachable'`.
 
-For a **loc** that server verdict is the whole story, and Reach runs no client-side
+For a **loc** that server verdict decides it, and Reach runs no client-side
 search. An **NPC** is different: the server only says "I can't reach that!" once its
 own path search dead-ends, and a target that keeps wandering postpones that
 indefinitely — clicking a farmer shut in the next room walks you to the door and
@@ -72,7 +72,7 @@ patrolling NPC walks out of range and the interaction is abandoned.
 
 [`walkLadder.ts`](../../src/bot/nav/walkLadder.ts) is an escalation ladder rather than a
 retry count. It tracks progress, backs off, and after `UNREACHABLE_PASSES` concludes
-the destination is genuinely unreachable — reporting `'arrived' | 'closest' |
+the destination is unreachable — reporting `'arrived' | 'closest' |
 'budget' | 'failed' | 'interrupted'` rather than silently spinning.
 
 `classifyReason` separates "ran out of budget" from "failed", so a caller can tell a

@@ -88,11 +88,9 @@ export function nearestFireSpot(from: WorldTile): { name: string; plot: FirePlot
     return best ? { name: best.name, plot: best.plot } : null;
 }
 
-/**
- * Local burn plot around a start/anchor tile for Woodcutter Auto.
- * Chop-then-burn lights near where the script started until the area fills,
- * then repaths within this box (and can expand — see expandLocalFirePlot).
- */
+// Why: chop-then-burn lights near where the script started until the area fills, then repaths within this box and can expand (see expandLocalFirePlot).
+
+/** Half-width of the local burn plot around the start or anchor tile for Woodcutter Auto. */
 const LOCAL_FIRE_HALF = 8;
 
 export function localFirePlot(origin: WorldTile, half = LOCAL_FIRE_HALF): FirePlot {
@@ -125,11 +123,10 @@ export function tileKey(t: { x: number; z: number }): string {
 
 export type BurnDir = { dx: number; dz: number };
 
-/**
- * After a successful light the client always steps the player **one tile west**.
- * Multi-log lanes only chain cleanly west; other cardinals are single-tile fallbacks
- * for cramped Auto plots.
- */
+// Why: after a successful light the client always steps the player one tile west.
+// Why: multi-log lanes only chain cleanly west, and the other cardinals are single-tile fallbacks for cramped Auto plots.
+
+/** The lane direction a successful light steps into. */
 export const BURN_WEST: BurnDir = { dx: -1, dz: 0 };
 
 /** West first (real lanes), then other cardinals for light-wherever fallbacks. */
@@ -193,14 +190,11 @@ export function inFirePlot(t: WorldTile, plot: FirePlot): boolean {
     return t.x >= plot.x0 && t.x <= plot.x1 && t.z >= plot.z0 && t.z <= plot.z1 && t.level === plot.bank.level;
 }
 
-/**
- * Pick a lane start inside `plot`.
- *
- * Preference (successful lights always shove the player west):
- * 1. West-running lane that fits the full load (`run >= want`, want capped at 27)
- * 2. Longest west-running partial lane
- * 3. Any other free tile (run ≥ 1) as light-wherever fallback — closest wins
- */
+// Why: successful lights always shove the player west, so a west-running lane that fits the full load wins (`run >= want`, want capped at 27).
+// Why: the longest west-running partial lane comes next.
+// Why: any other free tile with a run of 1 or more is the light-wherever fallback, closest first.
+
+/** Picks a lane start inside `plot`. */
 export function findBurnLane(
     plot: FirePlot,
     here: WorldTile,

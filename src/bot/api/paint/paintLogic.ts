@@ -104,8 +104,7 @@ export class PaintState {
 
     /**
      * Route a wheel notch to whatever scrollable region is under the cursor.
-     * Returns true when it landed on one, so the canvas can swallow the event
-     * instead of letting the game zoom.
+     * Why: true means it landed on one, so the canvas can swallow the event instead of letting the game zoom.
      */
     wheel(x: number, y: number, delta: number): boolean {
         const hit = hitRegion(this.regions, x, y);

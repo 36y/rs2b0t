@@ -61,7 +61,7 @@ parseMuleMode(raw): 'off' | 'gatherer' | 'mule' | 'cooker' | 'supplier'
 muleGathererHandoffActive / muleReceiverActive / muleCookerActive / muleSupplierActive
 ```
 
-GatheringBot `muleMode` + `mulePartner`:
+GatheringBot pairs `muleMode` with `mulePartner`:
 
 | Mode | Role |
 | --- | --- |

@@ -2,14 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { findForwardRecoveryIndex, stallPhase } from '#/bot/nav/routeRecovery.js';
 import { PATH_CORRIDOR, resolvePathFollowConfig } from '#/bot/nav/pathFollowPolicy.js';
 
-/**
- * A stalled walk standing at a hop's approach tile has nothing forward to click:
- * the recovery window is capped at the tile *before* the hop. Repathing there
- * replans the identical route, so the walk burns its repath budget without
- * moving and `walkResilient` finally calls the destination unreachable. The
- * escalation ladder (open the route door, dismiss a quest lock, report blocked)
- * is the only thing that gets past a shut barrier.
- */
+// Why: the recovery window is capped at the tile before a hop, so a stall on the approach has nothing forward to click and repathing replans the same route.
 describe('stall at a hop approach', () => {
     // ... 8 9 [10 = approach] [11 = door landing] 12 ...
     const tiles = Array.from({ length: 14 }, (_, i) => ({ x: 3200, z: 3200 + i, level: 0 }));
@@ -46,11 +39,7 @@ describe('stall at a hop approach', () => {
     });
 });
 
-/**
- * `locateOnPath` counts a tile as reached from PATH_CORRIDOR away and the click
- * selector only targets indices strictly after `pathIdx`. A hop trigger below
- * the corridor therefore leaves a band with no clicks and no crossing.
- */
+// Why: `locateOnPath` counts a tile reached from PATH_CORRIDOR away while clicks target indices after `pathIdx`, so a tighter hop trigger leaves a band with no clicks.
 describe('hop trigger vs corridor snap', () => {
     test('the hop trigger is never tighter than the corridor snap', () => {
         expect(resolvePathFollowConfig().transportApproachChebyshev).toBeGreaterThanOrEqual(PATH_CORRIDOR);

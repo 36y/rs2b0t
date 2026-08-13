@@ -1,19 +1,8 @@
-/**
- * Live Knight's Sword harness (#228), stage-scoped or end-to-end.
- *
- *   HEADED=1 bun tools/knights-sword-228-live.ts --stage 0 --until 7 --minutes 120
- *   HEADED=1 bun tools/knights-sword-228-live.ts --stage 6 --until 7 --minutes 45
- *
- * `--stage N` sets `%squire` and relogs: `update_questlist` only recolours the
- * journal entry at login, and the module reads the tab rather than the varp.
- *
- * The bank is seeded with coins and food and nothing else — every quest item is
- * meant to be sourced by the bot. Seeding a stage with its *tools* would prove
- * nothing: a stage-6 run handed a pickaxe passes while the quest cannot mine.
- *
- * Base is :8890 (rs2b2t-engine). `~bankitem` only exists in rs2b2t-content, so
- * the :8888 sim silently seeds nothing.
- */
+/** Live Knight's Sword harness (#228): --stage N --until N --minutes N, base :8890.
+ *  Why: `--stage` sets `%squire` and relogs since update_questlist only recolours the journal entry at login; the bank holds coins and food alone, since a stage-6 run handed a pickaxe passes while the quest cannot mine, and `~bankitem` exists only in rs2b2t-content so the :8888 sim seeds nothing. */
+
+//   HEADED=1 bun tools/knights-sword-228-live.ts --stage 0 --until 7 --minutes 120
+//   HEADED=1 bun tools/knights-sword-228-live.ts --stage 6 --until 7 --minutes 45
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 

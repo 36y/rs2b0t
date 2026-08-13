@@ -1,10 +1,6 @@
-/**
- * Host-driven buy / repair / smith execution for gather scripts.
- *
- * Planning stays pure in {@link ToolAcquire}; this module owns the bank → walk →
- * shop/NPC/anvil choreography so GatheringBot (and future scripts) do not grow
- * another 400-line private method block.
- */
+// Host-driven buy / repair / smith execution for gather scripts.
+
+// Why: planning stays pure in {@link ToolAcquire}, and this module owns the bank → walk → shop/NPC/anvil choreography so GatheringBot does not grow another 400-line private method block.
 import { Execution } from '../api/execution/Execution.js';
 import { Game } from '../api/game/Game.js';
 import Tile from '../geometry/Tile.js';

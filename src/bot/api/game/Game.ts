@@ -54,9 +54,8 @@ export const Game = {
     },
 
     /**
-     * True when the client is logged in and the local scene is fully built
-     * (`sceneState === 2`) with a known world tile. Injecting menu/walk packets
-     * before this returns true soft-fails or thrash-retries (see #445).
+     * True when the client is logged in and the local scene is fully built (`sceneState === 2`) with a known world tile.
+     * Why: injecting menu or walk packets before this returns true soft-fails or thrash-retries (#445).
      */
     sceneReady(): boolean {
         return reader.ingame() && reader.sceneState() === 2 && reader.worldTile() !== null;
@@ -128,9 +127,8 @@ export const Game = {
     },
 
     /**
-     * The combat-tab style buttons this weapon offers, in on-screen order
-     * (top-to-bottom, left-to-right). Null until the combat tab has loaded.
-     * Index into this to pick a style without guessing what the weapon calls it.
+     * The combat-tab style buttons this weapon offers, in on-screen order (top-to-bottom, left-to-right); null until the combat tab has loaded.
+     * Why: index into this to pick a style without guessing what the weapon calls it.
      */
     combatStyles(): readonly CombatModeLabel[] | null {
         return offeredCombatModes();
@@ -196,9 +194,7 @@ export const Game = {
 
     /**
      * Cast a standard spellbook teleport by destination name.
-     * Uses the magic root for live name lookup when available without activating
-     * its side tab, then falls back to the 2004 component ID. Success confirms
-     * dispatch, not arrival.
+     * Why: the magic root is used for live name lookup without activating its side tab, falling back to the 2004 component ID; success confirms dispatch rather than arrival.
      */
     async teleport(name: string): Promise<boolean> {
         const teleport = resolveTeleport(name);

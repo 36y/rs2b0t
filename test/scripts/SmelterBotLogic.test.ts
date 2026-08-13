@@ -128,8 +128,7 @@ describe('countPrimary', () => {
     });
 });
 
-// Issue #117: the bot demanded a FULL trip's worth and stopped otherwise, so a bank
-// holding less than 28 slots of ore killed the run. It should smelt what it has.
+// Why: a bank holding less than a full trip of ore must still yield a partial trip, not a stop.
 describe('withdrawFor', () => {
     const steel = recipeForBar('Steel')!;
     const bronze = recipeForBar('Bronze')!;
@@ -155,8 +154,7 @@ describe('withdrawFor', () => {
     });
 });
 
-// Both trips gated on the PRIMARY ore alone, so a pack holding iron but no coal
-// never banked and the smelt trip span forever making nothing.
+// Why: gating both trips on the primary ore alone lets a pack with iron and no coal spin forever.
 describe('canSmelt', () => {
     const steel = recipeForBar('Steel')!;
     const iron = recipeForBar('Iron')!;

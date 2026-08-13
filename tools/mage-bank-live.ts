@@ -1,16 +1,7 @@
-/**
- * Live proof of the Mage Arena bank route, end to end and watchable.
- *
- * Ardougne -> pull the wilderness lever -> north-west across the Wilderness ->
- * slash both webs along z=3957 -> down magearena_ladder_to_cellar -> talk to
- * Gundai -> bank open. The only cheat after setup is the one that puts the
- * account outside Ardougne to begin with; every hop after that is the nav graph
- * and the bot's own APIs.
- *
- *   HEADED=1 SLOWMO=0 bun tools/mage-bank-live.ts
- *
- * Proof: out/mage-bank-proof.json
- */
+/** Live proof of the Mage Arena bank route: Ardougne → wilderness lever → north-west across the Wilderness → slash both webs along z=3957 → down magearena_ladder_to_cellar → Gundai → bank open.
+ *  Why: the only cheat after setup is the one that puts the account outside Ardougne; every hop after that is the nav graph and the bot's own APIs. Proof: out/mage-bank-proof.json */
+
+//   HEADED=1 SLOWMO=0 bun tools/mage-bank-live.ts
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import type { Page } from 'playwright-core';
 import { HARNESS_VIEWPORT, boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, parseArgs, setSettings } from './lib/harness.js';
@@ -105,10 +96,7 @@ async function main(): Promise<void> {
         }
         await cheatQuiet(page, `tele 0,${START.x >> 6},${START.z >> 6},${START.x & 63},${START.z & 63}`, 3500);
 
-        // The bank is opt-in; without this nothing may route through the Wilderness.
-        // navTeleports gates lever-kind edges too (teleportAllowedByPolicy refuses
-        // them with useTeleports=false), and the Ardougne lever is the whole point
-        // of this route — without it nav walks 1223 tiles overland through the gates.
+        // Why: navTeleports gates lever-kind edges too (teleportAllowedByPolicy refuses them with useTeleports=false), and without the Ardougne lever nav walks 1223 tiles overland through the gates.
         await setSettings(page, 'Global', {
             useMageBank: true,
             navTeleports: true,

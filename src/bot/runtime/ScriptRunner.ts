@@ -30,13 +30,10 @@ function scheduleNextLoop(ctx: ScriptContext, cadence: LoopCadence): void {
     ctx.nextLoopAt = performance.now() + Math.max(0, cadence.ms);
 }
 
-/**
- * Why the script loop must hold (adapter serves stale/empty state).
- * Null = safe to run. Detached (unit tests) has no client to protect.
- *
- * Scene state 2 is the live playable scene — mid-load (teleport, login rebuild,
- * hop) is not "logged out" even though we pause the loop the same way.
- */
+// Why: detached, as in unit tests, has no client to protect.
+// Why: scene state 2 is the live playable scene, and mid-load (teleport, login rebuild, hop) is not logged out even though the loop pauses the same way.
+
+/** Why the script loop must hold (the adapter serves stale or empty state); null means safe to run. */
 type LoopHoldReason = 'logged-out' | 'scene-load' | 'no-tile' | 'stats-load';
 
 function loopHoldReason(): LoopHoldReason | null {
@@ -90,10 +87,8 @@ function holdResumeMessage(reason: LoopHoldReason, heldMs: number): string {
 }
 
 /**
- * Never let a blank reason read as "the script just stopped for no reason".
- * A missing one is a caller bug, not grounds for throwing out of `stop()` and
- * leaving the run wedged in `running` forever (that broke every harness that
- * calls `runner.stop()` from page context).
+ * Never let a blank reason read as "the script stopped for no reason".
+ * Why: a missing reason is a caller bug, and throwing out of `stop()` would leave the run wedged in `running` forever, which broke every harness that calls `runner.stop()` from page context.
  */
 export function stopReasonOf(reason: string): string {
     return (reason ?? '').trim() || 'no reason given by the caller (bug — please report)';
@@ -176,9 +171,7 @@ class ScriptRunnerImpl {
         Scheduler.active = ctx;
 
 
-        // A restart (StallGuard) throws away the old context along with its log —
-        // the only place the reason the previous run ended was recorded, which is
-        // why a restarted script looked like it stopped for nothing. Carry it over.
+        // Why: a restart (StallGuard) throws away the old context along with its log, the only place the reason the previous run ended was recorded, so it is carried over.
         if (previous) {
             ctx.addLog('info', `previous run of '${previous.name}' ${previous.epitaph}`);
         }
@@ -255,11 +248,8 @@ class ScriptRunnerImpl {
 
         ctx.resume();
 
-        // If the previous loop() is still in-flight (e.g. blocked on a
-        // non-Execution promise that won't resolve while the scheduler was
-        // paused), clear the flag so the pump can launch a fresh iteration.
-        // The stale .then() handler will fire later — it only sets timing
-        // gates (scheduleNextLoop) and bumps loopCount, which is harmless.
+        // Why: a previous loop() can still be in flight, blocked on a non-Execution promise that will not resolve while the scheduler was paused, so the flag is cleared to let the pump launch a fresh iteration.
+        // Why: the stale .then() handler fires later but only sets timing gates (scheduleNextLoop) and bumps loopCount, which is harmless.
         ctx.loopInFlight = false;
 
         try {
@@ -272,9 +262,8 @@ class ScriptRunnerImpl {
     }
 
     /**
-     * `reason` is mandatory so no caller can end a run without leaving a starting
-     * point for debugging. It is echoed on both the stopping and stopped lines and
-     * carried into the next run's log by {@link start}.
+     * `reason` is mandatory so no caller can end a run without leaving a starting point for debugging.
+     * Why: it is echoed on both the stopping and stopped lines and carried into the next run's log by {@link start}.
      */
     stop(reason: string): void {
         const ctx = this.ctx;
@@ -350,9 +339,8 @@ class ScriptRunnerImpl {
                     return;
                 }
 
-                // Takeover / supervisor: one server tick between intercepts.
-                // Numeric return from loop() keeps legacy wall-clock meaning only when
-                // it is not the historical "600 = one tick" value (resolveLoopCadence).
+                // Why: takeover / supervisor allows one server tick between intercepts.
+                // Why: a numeric return from loop() keeps legacy wall-clock meaning only when it is not the historical "600 = one tick" value (resolveLoopCadence).
                 const cadence = takeover
                     ? ({ kind: 'server-tick', ticks: 1 } satisfies LoopCadence)
                     : typeof delay === 'number'

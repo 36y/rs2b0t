@@ -10,9 +10,10 @@ export interface Rect {
     maxZ: number;
 }
 
-// Six 25x15 fight pens from duel_arena_fight_zones and
-// duel_arena_obstacle_fight_zones. A player in one pen must only target the
-// other player in that same pen; other simultaneous duels share the scene.
+// Why: the six 25x15 fight pens come from duel_arena_fight_zones and duel_arena_obstacle_fight_zones.
+// Why: other simultaneous duels share the scene, so a player in one pen must only target the other player in that pen.
+
+/** The duel-arena fight pens. */
 export const DUEL_FIGHT_ARENAS: readonly Rect[] = [
     { minX: 3333, maxX: 3357, minZ: 3244, maxZ: 3258 },
     { minX: 3364, maxX: 3388, minZ: 3225, maxZ: 3239 },
@@ -216,9 +217,8 @@ export class ChallengeCadence {
     }
 
     record(result: ChallengeResult, sentAt: number): void {
-        // The server briefly closes one handshake screen before opening the
-        // next. Preserve the normal cadence after an interface opens so that
-        // transient gap cannot inject a fresh Challenge into the same duel.
+        // Why: the server briefly closes one handshake screen before opening the next.
+        // Why: keeping the normal cadence after an interface opens stops that gap injecting a fresh Challenge into the same duel.
         this.nextAt = result === 'sent' || result === 'interface'
             ? sentAt + CHALLENGE_INTERVAL_MS
             : 0;

@@ -12,9 +12,8 @@
 
 ## Changing them
 
-Configuration comes from a `.env` file resolved against the engine's working directory,
-**not** shell environment variables — `WEB_PORT=… npx tsx src/app.ts` is silently
-ignored.
+Configuration comes from a `.env` file resolved against the engine's working directory.
+Shell environment variables are ignored, so `WEB_PORT=… npx tsx src/app.ts` has no effect.
 
 ```sh
 cat > .env <<'ENVEOF'

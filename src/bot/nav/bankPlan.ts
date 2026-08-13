@@ -1,9 +1,4 @@
-/**
- * Path-scoped bank planner.
- *
- * Pathfind as if bank items were held, inspect **only** items required by
- * transports on the chosen route, withdraw only those — never random tele runes.
- */
+// Why: the path-scoped bank planner pathfinds as if bank items were held, inspects only items required by transports on the chosen route, and withdraws only those — never speculative tele runes.
 
 import type { Waypoint } from './PathFinder.js';
 import type { WorldStateData } from './worldStateData.js';
@@ -66,18 +61,13 @@ export function itemsRequiredByWaypoints(waypoints: Waypoint[]): Record<string, 
                     bump(it.name, it.count);
                 }
             }
-            // Jewellery: plan-time requires the ring/glory **in inventory**
-            // (PathFinder scans state.items via inventoryNameMatchesJewellery).
-            // We do **not** path-scoped bank-withdraw jewellery here (runes/tolls only).
-            // There is no bank-cache of jewellery for routing unless a caller passes
-            // bankItemCounts and PathFinder is given a virtualized state.
+            // Why: plan time requires the ring or glory in inventory — PathFinder scans state.items via inventoryNameMatchesJewellery.
+            // Why: jewellery is never withdrawn path-scoped here, only runes and tolls.
+            // Why: there is no bank cache of jewellery for routing unless a caller passes bankItemCounts and PathFinder is given a virtualized state.
             continue;
         }
-        // Door / special crossing tolls. Crossings are keyed at the approach stand,
-        // which is often not the loc tile — the Shantay pass stand is (3304,3118)
-        // while its loc is (3302,3116). Resolve the same way the executor does, or
-        // the toll is invisible to the planner and the region behind it reads as
-        // unreachable rather than unpaid.
+        // Why: door and special-crossing tolls are keyed at the approach stand, which is often not the loc tile — the Shantay pass stand is (3304,3118) while its loc is (3302,3116).
+        // Why: resolving the same way the executor does keeps the toll visible; otherwise the region behind it reads as unreachable rather than unpaid.
         const prev = waypoints[i - 1] ?? wp;
         const sc = specialCrossingForTransport(
             t,

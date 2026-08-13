@@ -32,7 +32,7 @@ export const COW_LOCATIONS: CowLocation[] = [
         name: 'East Ardougne cow field',
         anchor: new Tile(2664, 3347, 0),
         usesAlKharidToll: false,
-        // Ardougne West is nearer by straight line but farther through the real street/pen route.
+        // Ardougne West is nearer by straight line but farther through the street/pen route.
         bankDestination: { name: 'Ardougne East', tile: ARDOUGNE_EAST_BANK }
     }
 ];

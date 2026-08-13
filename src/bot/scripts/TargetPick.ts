@@ -1,8 +1,6 @@
-/**
- * Shared nearest-target selection for gather / combat-adjacent scripts.
- * Prefer a local cluster when any candidate is underfoot so membership-wide
- * nearest does not path across tunnels (Dwarven iron wings, multi-pad mines).
- */
+// Shared nearest-target selection for gather and combat-adjacent scripts.
+
+// Why: a local cluster wins when any candidate is underfoot, so membership-wide nearest does not path across tunnels such as the Dwarven iron wings or multi-pad mines.
 
 /**
  * Prefer rocks/trees within this Chebyshev of the player when any match.
@@ -42,11 +40,10 @@ export function pickNearestPreferLocal<T>(
     return best;
 }
 
-/**
- * Whether to soft-cooldown a mine/chop tile after a failed click.
- * Successful depletes must not cool the tile — empty/stump already drop out of
- * type filters, and iron respawns (~6t) faster than a typical 8t skip.
- */
+// Why: a successful deplete must not cool the tile — empty rocks and stumps already drop out of the type filters.
+// Why: iron respawns in about 6 ticks, faster than a typical 8-tick skip.
+
+/** Whether to soft-cooldown a mine or chop tile after a failed click. */
 export function shouldCooldownGatherTile(gotProduct: boolean, stillHasOtherTargets: boolean): boolean {
     return !gotProduct && stillHasOtherTargets;
 }

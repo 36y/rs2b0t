@@ -1,22 +1,8 @@
-/**
- * PvP combat-signal probe: what can the client actually see when another player
- * attacks us?
- *
- * Two accounts in the wilderness. The victim page samples every candidate raw
- * client field ~10x/sec while the attacker drives OP_PLAYER2 ("Attack"). Pure
- * observation — no bot code is touched and no script runs on either side, so
- * this measures the deployed client, not something we changed.
- *
- * Scenarios:
- *   A idle_attacked      victim idle, attacked            does self faceEntity get set at all
- *   B npcfight_attacked  victim mid-NPC-fight, attacked   THE question: does retaliate re-target
- *   C retaliate_off      retaliate off, attacked          confirms the dependency + varp 172 polarity
- *   D npcfight_clean     NPC fight, no attacker           negative control: self faceEntity must stay <32768
- *   E disengage          attacker leaves mid-fight        how fast the signal decays
- *
- *   HEADED=1 bun tools/pvp-signal-probe.ts
- *   BASE=http://localhost:8888 bun tools/pvp-signal-probe.ts
- */
+/** PvP combat-signal probe: what the client can see when another player attacks. Two accounts in the wilderness — the victim samples every candidate raw client field ~10x/sec while the attacker drives OP_PLAYER2 ("Attack"). No bot code is touched and no script runs on either side, so this measures the deployed client.
+ *  Scenarios: A idle_attacked (does self faceEntity get set), B npcfight_attacked (does retaliate re-target), C retaliate_off (the dependency plus varp 172 polarity), D npcfight_clean (negative control — self faceEntity stays <32768), E disengage (how fast the signal decays). */
+
+//   HEADED=1 bun tools/pvp-signal-probe.ts
+//   BASE=http://localhost:8888 bun tools/pvp-signal-probe.ts
 import { appendFileSync, writeFileSync } from 'node:fs';
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs } from './lib/harness.js';
@@ -230,11 +216,8 @@ async function attackNearestNpc(page: Page): Promise<string | null> {
     });
 }
 
-/**
- * The attacker's own chat is the decisive evidence for a refused attack —
- * pvp_in_combat_check mes()es the reason ("Someone else is already fighting
- * your opponent." / "I'm already under attack.") rather than failing silently.
- */
+/** The attacker's own chat, which is the decisive evidence for a refused attack.
+ *  Why: pvp_in_combat_check mes()es the reason ("Someone else is already fighting your opponent." / "I'm already under attack.") rather than failing silently. */
 async function chatOf(page: Page, n = 20): Promise<string[]> {
     return page.evaluate(
         c =>
@@ -254,7 +237,7 @@ function tileOf(page: Page): Promise<{ x: number; z: number; level: number } | n
     );
 }
 
-/** True once our own target is an NPC — i.e. we are genuinely mid-NPC-fight. */
+/** True once our own target is an NPC — i.e. we are mid-NPC-fight. */
 function inNpcFight(page: Page): Promise<boolean> {
     return page.evaluate(() => {
         const lp = (globalThis as never as { rs2b0t: { client: Record<string, never> } }).rs2b0t.client
@@ -276,7 +259,7 @@ async function sustainAttack(page: Page, targetName: string, ms: number): Promis
     return sent;
 }
 
-/** Keep the victim genuinely engaged with an NPC for the whole window. */
+/** Keep the victim engaged with an NPC for the full window. */
 async function sustainNpcFight(page: Page, ms: number): Promise<void> {
     const until = Date.now() + ms;
     while (Date.now() < until) {
@@ -294,10 +277,8 @@ function readVarp(page: Page, idx: number): Promise<number> {
     );
 }
 
-/**
- * Exercise the production toggle and report whether it actually moved the varp.
- * This is the mechanism the design depends on, so measure it rather than assume.
- */
+/** Exercise the production toggle and report whether it moved the varp.
+ *  Why: the design depends on this mechanism, so measure it rather than assume it. */
 async function tryProductionToggle(page: Page, on: boolean): Promise<{ returned: boolean; controls: boolean; varp: number }> {
     const before = await readVarp(page, RETALIATE_VARP);
     const r = await page.evaluate(v => {
@@ -472,8 +453,7 @@ try {
     console.log(`  attacker chat: ${JSON.stringify((await chatOf(attacker)).slice(0, 5))}`);
 
     // --- B: victim mid-NPC-fight, attacked ----------------------------------
-    // THE deciding scenario. Both sides are held engaged for the whole window:
-    // run 2's B was inconclusive because the attacker never sustained its attack.
+    // Why: both sides are held engaged for the full window — run 2's B was inconclusive when the attacker never sustained its attack.
     console.log(`${at()} B: victim mid-NPC-fight at the dragon field`);
     await stage(DRAGON_FIELD);
     const npc = await attackNearestNpc(victim);
@@ -526,8 +506,7 @@ try {
     await collect(victim, 'D NPC fight, no attacker (control)', 25_000, ATTACKER);
 
     // --- E: attacker disengages ---------------------------------------------
-    // Idle victim, so the signal is known to arm (per A) — then measure whether
-    // it ever clears once the attacker is gone.
+    // An idle victim, so the signal is known to arm (per A); the measurement is whether it ever clears once the attacker is gone.
     console.log(`${at()} E: attacked, then the attacker leaves`);
     await stage(QUIET_WILDY);
     await forceRetaliate(victim, true);

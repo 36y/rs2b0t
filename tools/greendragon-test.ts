@@ -1,15 +1,6 @@
-// Live GreenDragon proof against a local engine.
-//
-// Two independent cases, each on its own account:
-//   1. clue hand-over — a hard clue on the ground with a pack full of lobsters.
-//      The bot must spend food for the slot (not walk to Edgeville), take the
-//      clue by obj id, hand control to SolveClue, leave the wilderness and open
-//      a bank to start the trail.
-//   2. regain control — with clues off, teleported off the field, the bot must
-//      walk itself back. This is the task that returns control after a trail;
-//      it is proven on a short hop rather than a whole trail, which is slow and
-//      flakes on the known nav-island destinations.
-//
+// Live GreenDragon proof: [base]. Case 1 — a hard clue on the ground with a pack full of lobsters: spend food for the slot, take the clue by obj id, hand to SolveClue, leave the wilderness, open a bank.
+// Case 2 — clues off and teleported off the field: the bot walks itself back. Proven on a short hop rather than a full trail, which is slow and flakes on the known nav-island destinations.
+
 //   bun tools/greendragon-test.ts [http://localhost:8888]
 import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, positionalArgs, setSettings } from './lib/harness.js';
 import type { Page } from 'playwright-core';
@@ -18,13 +9,8 @@ const args = positionalArgs(process.argv.slice(2), 'http://localhost:8888');
 const base = args[0];
 
 const ANCHOR = { x: 3096, z: 3814 };
-/**
- * Quiet low wilderness for the slot-freeing case. Standing in the real dragon
- * field makes the run non-deterministic: dragon damage lets the hp-driven Eat
- * task (which outranks FreeSlot) free the slot incidentally, so FreeSlot never
- * gets to decide and the assertion flakes. Undamaged, the decision is always
- * 'drop', and every path under test still runs.
- */
+/** Quiet low wilderness for the slot-freeing case.
+ *  Why: in the dragon field, damage lets the hp-driven Eat task (which outranks FreeSlot) free the slot incidentally, so FreeSlot never decides and the assertion flakes. */
 const QUIET_FIELD = { x: 3096, z: 3560 };
 const WILDY_MIN_Z = 3520;
 const FIELD_RADIUS = 22;
@@ -100,7 +86,7 @@ async function dump(page: Page, label: string, tailCount = 20): Promise<void> {
     }
 }
 
-/** ::give, then confirm the item actually landed — only some debugnames work. */
+/** ::give, then confirm the item landed — only some debugnames work. */
 async function give(page: Page, debugName: string, id: number, count: number): Promise<void> {
     const before = (await invIds(page)).filter(i => i === id).length;
     await cheatQuiet(page, `give ${debugName} ${count}`, 1200);
@@ -298,8 +284,7 @@ async function caseClueHandover(page: Page, user: string): Promise<void> {
     }
     console.log(`PASS 3/4 — handed over to SolveClue and left the wilderness (at ${JSON.stringify(await tile(page))})`);
 
-    // 4. the trail pack is actually viable: runes aboard, food trimmed to trail
-    //    size, and no duplicate of the weapon already worn
+    // 4. the trail pack is viable: runes aboard, food trimmed to trail size, and no duplicate of the weapon already worn
     const prepped = await page
         .waitForFunction(
             () => ((globalThis as never as Api).rs2b0t.runner.ctx?.log ?? []).some(l => l.msg.includes('[clue] trail pack:')),
@@ -458,11 +443,8 @@ async function caseDepositControl(page: Page, user: string): Promise<void> {
 }
 
 
-/**
- * Fleeing used to WEDGE at the bank: low hp and no food stay true after
- * arriving, so Escape re-walked a zero-tile path and logged forever while
- * BankRun sat below it. It must now bank, restock, heal, and go back to work.
- */
+/** Fleeing must bank, restock, heal and go back to work.
+ *  Why: low hp and no food stay true after arriving, so Escape re-walks a zero-tile path and logs forever while BankRun sits below it. */
 async function caseFleeAndRecover(page: Page, user: string): Promise<void> {
     await prepare(page, user, ANCHOR);
     await setSettings(page, 'GreenDragon', { solveClues: false, logDetail: 'Verbose', foodWithdraw: 10 });
@@ -506,9 +488,7 @@ async function caseFleeAndRecover(page: Page, user: string): Promise<void> {
         return { hp: g.Skills.effective('hitpoints'), food: g.Inventory.count('Lobster') };
     });
     console.log(`PASS 1/2 — banked, withdrew ${heal.food} Lobster and healed to ${heal.hp}hp`);
-    // The heal must come from the bank run itself, not from the Eat task after
-    // the walk home has already begun at panic hp. Waited for, not sampled:
-    // hp hits full mid-loop, a beat before the line that reports it.
+    // Why: hp reaches full mid-loop a beat before the line that reports it, so the heal is waited for rather than sampled — and it must come from the bank run, not the Eat task after the walk home began at panic hp.
     const healedAtBank = await page
         .waitForFunction(
             () => ((globalThis as never as Api).rs2b0t.runner.ctx?.log ?? []).some(l => /healed to (9[0-9]|100)% hp/.test(l.msg)),

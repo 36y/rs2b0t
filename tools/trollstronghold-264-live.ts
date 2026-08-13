@@ -1,21 +1,10 @@
-/**
- * Live Troll Stronghold harness (#264), stage-scoped or end-to-end.
- *
- *   HEADED=1 bun tools/trollstronghold-264-live.ts --stage 0 --minutes 90
- *   HEADED=1 bun tools/trollstronghold-264-live.ts --stage 0 --paint    # draw the route
- *   HEADED=1 bun tools/trollstronghold-264-live.ts --stage 20 --until 30 --minutes 45
- *   HEADED=1 bun tools/trollstronghold-264-live.ts --stage 30 --at 2852,10105,0 --pack --minutes 25
- *
- * `--stage N` sets `%troll_quest` and relogs: `update_questlist` only recolours
- * the journal at login, and the module reads the tab rather than the varp.
- *
- * The bank is seeded with coins, food and a melee kit — supplies are bank-only
- * by design. Climbing boots are deliberately NOT seeded: sourcing them from
- * Tenzing for 12gp is part of what this run has to prove.
- *
- * Base is :8890 (rs2b2t-engine). `~bankitem` only exists in rs2b2t-content, so
- * the :8888 sim silently seeds nothing.
- */
+/** Live Troll Stronghold harness (#264): --stage N --until N --at x,z,level --pack --paint --minutes N, base :8890.
+ *  Why: `--stage` sets `%troll_quest` and relogs since update_questlist only recolours the journal at login; the bank holds coins, food and a melee kit but no climbing boots, since sourcing those from Tenzing for 12gp is part of what the run has to prove, and `~bankitem` exists only in rs2b2t-content so the :8888 sim seeds nothing. */
+
+//   HEADED=1 bun tools/trollstronghold-264-live.ts --stage 0 --minutes 90
+//   HEADED=1 bun tools/trollstronghold-264-live.ts --stage 0 --paint    # draw the route
+//   HEADED=1 bun tools/trollstronghold-264-live.ts --stage 20 --until 30 --minutes 45
+//   HEADED=1 bun tools/trollstronghold-264-live.ts --stage 30 --at 2852,10105,0 --pack --minutes 25
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 
@@ -113,19 +102,12 @@ const QUEST = 'Troll Stronghold';
 const FALADOR_BANK: Tile = { x: 2946, z: 3369, level: 0 };
 /** quest.constant ^death_complete — Troll Stronghold's only quest prerequisite. */
 const DEATH_PLATEAU_COMPLETE = 80;
-/**
- * %death_map bits 0-3 (^death_scouted_area). Completing Death Plateau leaves
- * this set, and Tenzing's front door reads it rather than the stage varp: with
- * the stage complete but the map bits clear, `death_sherpa_door` only ever
- * knocks and the boots are unreachable.
- */
+/** %death_map bits 0-3 (^death_scouted_area), which completing Death Plateau leaves set.
+ *  Why: Tenzing's front door reads these rather than the stage varp — with the stage complete and the map bits clear, `death_sherpa_door` only ever knocks and the boots are unreachable. */
 const DEATH_PLATEAU_MAP = 8;
 
-/**
- * Every skill the quest or the fights touch. `::setstat` writes the level
- * directly, so unlike `::advancestat` it pops no level-up dialog to swallow the
- * next typed command.
- */
+/** Every skill the quest or the fights touch.
+ *  Why: `::setstat` writes the level directly, so unlike `::advancestat` it pops no level-up dialog to swallow the next typed command. */
 const SKILLS = [
     'attack', 'strength', 'defence', 'hitpoints', 'ranged', 'prayer', 'magic',
     'agility', 'thieving', 'herblore', 'crafting', 'mining', 'smithing',
@@ -183,11 +165,8 @@ async function snapshot(page: Page): Promise<Snapshot> {
     }, QUEST);
 }
 
-/**
- * A live run loads the deployed bundle, never the working tree — and navworker
- * is a second artifact that embeds the transport graph, so a nav-data change is
- * invisible to pathfinding until it is copied across too.
- */
+/** A live run loads the deployed bundle, never the working tree.
+ *  Why: navworker is a second artifact embedding the transport graph, so a nav-data change is invisible to pathfinding until it is copied across too. */
 function deployBundle(): void {
     const engine = process.env.ENGINE_DIR ?? `${homedir()}/code/rs2b2t-engine`;
     const botDir = `${engine}/public/bot`;
@@ -333,7 +312,7 @@ try {
             + ` troll=${stage} journal=${last.status} qp=${last.qp} runner=${last.runner}`
         );
         for (const l of last.logs) {
-            // Relative stamps: the gaps are where the run actually spends time.
+            // Relative stamps: the gaps are where the run spends time.
             if (l.time > lastLogTime) {
                 const at = ((l.time - t0) / 1000).toFixed(1).padStart(6);
                 console.log(`      ·${at}s [${l.level}] ${l.msg}`);

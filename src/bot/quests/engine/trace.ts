@@ -1,12 +1,5 @@
-/**
- * Step tracing for the quest engine.
- *
- * A quest leg keeps the same description for its whole run — `smith 8 nails`
- * covers mining four iron, mining eight coal, two furnace trips and an anvil —
- * so a log that prints a step once and then suppresses the repeat shows one line
- * and goes silent for minutes. From the outside that is indistinguishable from a
- * hang. This module is what tells the two apart.
- */
+// Why: this module is step tracing for the quest engine, where a quest leg keeps the same description for its whole run — `smith 8 nails` covers mining four iron, mining eight coal, two furnace trips and an anvil.
+// Why: a log that prints a step once and then suppresses the repeat shows one line and goes silent for minutes, which from the outside is indistinguishable from a hang.
 
 /** Re-announce a repeating step after this many attempts, whichever comes first. */
 export const HEARTBEAT_ATTEMPTS = 5;
@@ -44,12 +37,9 @@ export function invDelta(before: Map<string, number>, after: Map<string, number>
     return parts.length > 0 ? parts.join(', ') : 'no inventory change';
 }
 
-/**
- * Attempt counting and elapsed time for the step currently being retried.
- *
- * Keyed on quest + step description: the engine re-decides from scratch every
- * tick, so "the same step" is only ever recognised by what it describes itself as.
- */
+// Why: this is keyed on quest plus step description, as the engine re-decides from scratch every tick and "the same step" is only ever recognised by what it describes itself as.
+
+/** Attempt counting and elapsed time for the step currently being retried. */
 export class StepTracker {
     private key = '';
     private attempt = 0;

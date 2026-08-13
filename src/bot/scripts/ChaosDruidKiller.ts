@@ -687,9 +687,8 @@ export default class ChaosDruidKiller extends TaskBot {
         }
 
         this.setStatus('banking loot');
-        // Normalize every trip instead of silently carrying leftovers above the
-        // configured amount. Equipment is not in the backpack, so depositing the
-        // whole pack banks the haul and gives the withdrawal an exact clean slate.
+        // Why: equipment is not in the backpack, so depositing the whole pack banks the haul and gives the withdrawal a clean slate.
+        // Why: every trip is normalised rather than carrying leftovers above the configured amount.
         await Bank.depositInventory();
         await Execution.delayTicks(1);
 
@@ -790,12 +789,10 @@ class Eat implements Task {
     }
 }
 
-/**
- * Select the configured combat-tab button. The style is picked by position rather
- * than by name because the Accurate/Aggressive/Controlled/Defensive set is not the
- * same on every weapon — a name-based pick silently lands on the wrong button.
- * com_mode is not persisted, so this re-asserts after every login.
- */
+// Why: the Accurate/Aggressive/Controlled/Defensive set differs by weapon, so the style is picked by position and a name-based pick lands on the wrong button.
+// Why: com_mode is not persisted, so this re-asserts after every login.
+
+/** Selects the configured combat-tab button. */
 class SetCombatStyle implements Task {
     private announced = false;
     private retryAt = 0;

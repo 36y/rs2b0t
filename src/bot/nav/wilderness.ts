@@ -1,14 +1,8 @@
-/**
- * Wilderness level from world coordinates — matches LostCity
- * `~wilderness_level` (wilderness_levels.rs2 + wilderness_zones.dbrow).
- *
- * Zones (coord pairs):
- * - Surface: 0_46_55_0_0 → 3_52_99_63_63  (x 2944–3391, z 3520–6399, levels 0–3)
- * - Underground: 0_46_155_0_0 → 0_52_199_63_63 (x 2944–3391, z 9920–12799, level 0)
- *
- * Level = floor((z − zoneSouthZ) / 8) + 1 when inside a zone, else 0.
- * Spell teleports block when level > 20; glory when level > 30.
- */
+// Why: wilderness level from world coordinates matches LostCity `~wilderness_level` (wilderness_levels.rs2 + wilderness_zones.dbrow).
+// Why: the surface zone runs 0_46_55_0_0 → 3_52_99_63_63 (x 2944–3391, z 3520–6399, levels 0–3).
+// Why: the underground zone runs 0_46_155_0_0 → 0_52_199_63_63 (x 2944–3391, z 9920–12799, level 0).
+// Why: level = floor((z − zoneSouthZ) / 8) + 1 inside a zone, else 0.
+// Why: spell teleports block above level 20 and glory above level 30.
 
 export interface WildTile {
     x: number;

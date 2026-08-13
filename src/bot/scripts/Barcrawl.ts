@@ -10,14 +10,10 @@ import { BARCRAWL_CARD, BARCRAWL_GP, BARS, COINS } from '../quests/barcrawl/Barc
 import { ensureBarcrawl, readCard } from '../quests/barcrawl/RunBarcrawl.js';
 import { Modals } from '../api/widgets/Modals.js';
 
-/**
- * Alfred Grimhand's Barcrawl, standalone.
- *
- * The tour is a miniquest of its own — it is what opens the Barbarian Outpost
- * gate and gates Barbarian Training — so it is runnable on its own as well as
- * from Horror from the Deep, which calls the same driver in
- * {@link ../quests/barcrawl/RunBarcrawl.js}.
- */
+// Why: the tour is a miniquest of its own — it opens the Barbarian Outpost gate and gates Barbarian Training.
+// Why: it is runnable on its own as well as from Horror from the Deep, which calls the same driver in {@link ../quests/barcrawl/RunBarcrawl.js}.
+
+/** Alfred Grimhand's Barcrawl, standalone. */
 export default class Barcrawl extends LoopingBot {
     override loopDelay = 600;
 
@@ -36,9 +32,7 @@ export default class Barcrawl extends LoopingBot {
         }
         await this.refreshSigned();
 
-        // Coins before the walk, not at the tenth bar: the tour crosses the
-        // whole map and the bars that cost the most are the ones furthest from
-        // a booth.
+        // Why: the tour crosses the map and the priciest bars are furthest from a booth, so the coins come before the walk.
         if (Inventory.count(COINS) < BARCRAWL_GP && !(await this.topUpCoins())) {
             this.status = 'out of coins';
             ScriptRunner.stop('not enough coins for the tour and none in the bank');
@@ -52,9 +46,7 @@ export default class Barcrawl extends LoopingBot {
             return;
         }
 
-        // `ensureBarcrawl` returns false for a cut-short conversation as well as
-        // a broken tour, and the first is ordinary — a random event is enough.
-        // Retry a few times before giving up on it.
+        // Why: `ensureBarcrawl` returns false for a cut-short conversation as well as a broken tour, and a random event is enough to cause the first.
         if (++this.failures >= 3) {
             this.status = 'gave up';
             ScriptRunner.stop('the barcrawl made no progress in three passes');

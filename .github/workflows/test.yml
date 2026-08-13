@@ -27,3 +27,9 @@ jobs:
 
       - name: lint
         run: bun run lint
+
+      - name: prose
+        run: bun run lint:prose
+
+      - name: prose extras
+        run: bun run lint:prose:extras

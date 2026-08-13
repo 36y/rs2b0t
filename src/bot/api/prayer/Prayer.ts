@@ -11,9 +11,8 @@ interface PrayerDef {
 }
 
 /**
- * The prayer overlay's toggle buttons and the varps that mirror them. Buttons
- * are tab-bound, and the engine treats any tab root as visible, so a prayer can
- * be toggled without switching to the prayer tab.
+ * The prayer overlay's toggle buttons and the varps that mirror them.
+ * Why: buttons are tab-bound and the engine treats any tab root as visible, so a prayer can be toggled without switching to the prayer tab.
  * @see docs/reference/api-skills.md#prayer
  */
 const PRAYERS: Record<string, PrayerDef> = {

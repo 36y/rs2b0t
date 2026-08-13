@@ -594,8 +594,7 @@ describe('Family Crest teleport kit', () => {
     });
 
     test('spell runes are bought from Aubury when the bank has none', () => {
-        // Only law actually has to be banked — Aubury stocks the rest and is
-        // twenty tiles from the booth this trip already visits.
+        // Why: only law has to be banked — Aubury stocks the rest, twenty tiles from the booth this trip already visits.
         const step = teleportKitPlan(snap({
             stage: FC_STAGE.SPOKEN_DIMINTHEIS,
             invIds: [[FC_ID.LAW_RUNE, 30]],

@@ -5,11 +5,7 @@ import { decide } from '#/bot/quests/defs/dragonslayer/index.js';
 import { DRAGON_STAGE } from '#/bot/quests/defs/dragonslayer/journal.js';
 import type { QuestSnapshot } from '#/bot/quests/engine/types.js';
 
-/**
- * `decide()` reads a snapshot and nothing else, so the whole routing table is
- * testable without a client. These cases are the ones that have actually gone
- * wrong in live runs — each names the symptom it prevents.
- */
+// Why: decide() reads only a snapshot, so the routing table is testable without a client.
 type Stack = number | [number, number];
 const counts = (stacks: Stack[]): Map<number, number> =>
     new Map(stacks.map(s => (Array.isArray(s) ? s : [s, 1])));
@@ -87,10 +83,7 @@ describe('Dragon Slayer decide()', () => {
     });
 
     test('the map is finished before anything else is fetched', () => {
-        // The errands between the pieces are what stranded the maze: the Duke is
-        // a floor up in Lumbridge and the anvil is at the bottom of the Dwarven
-        // Mine, and a run resumed from either read the route from the wrong
-        // dungeon. Nothing outranks the map but the briefing.
+        // Why: the Duke's floor and the Dwarven Mine anvil both read as "the maze", so a run resumed at either errand routed to the wrong dungeon.
         const cases = [
             { carried: [DS_ID.MAZE_KEY] },
             { carried: [DS_ID.MAZE_KEY], flags: ['has-shield'] },
@@ -124,10 +117,7 @@ describe('Dragon Slayer decide()', () => {
     });
 
     test('a patched hole is not a nail shortage', () => {
-        // One plank and four nails go into every hole together (lady_lumbridge.rs2
-        // inv_dels both). Read against the twelve the whole hull takes, the first
-        // patched hole looks like eight missing nails, and the bot walks back to
-        // the Dwarven Mine with the hull still open.
+        // Why: `lady_lumbridge.rs2` inv_dels one plank and four nails per hole, so counting nails against the hull's twelve reads a patched hole as a shortage.
         const patching = [
             { carried: [DS_ID.MAP, DS_ID.HAMMER, [DS_ID.PLANK, 2], [DS_ID.NAILS, 8]] as Stack[] },
             { carried: [DS_ID.MAP, DS_ID.HAMMER, [DS_ID.PLANK, 1], [DS_ID.NAILS, 4]] as Stack[] }
@@ -231,9 +221,7 @@ describe('Dragon Slayer decide()', () => {
     });
 
     test('a death on Crandor re-kits at the bank before walking back', () => {
-        // Off the island at this stage means she killed us and the kit is on her
-        // floor. The fare matters as much as the shield: the navigator prunes
-        // Pay-fare crossings it cannot afford and then calls Karamja unreachable.
+        // Why: the navigator prunes Pay-fare crossings it cannot afford, so a re-kit without coins calls Karamja unreachable.
         const dead = {
             progress: { stage: DRAGON_STAGE.SAILED_TO_CRANDOR, flags: new Set(['secret-passage']) },
             tile: { x: 3222, z: 3218, level: 0 }

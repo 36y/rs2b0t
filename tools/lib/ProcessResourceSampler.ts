@@ -442,8 +442,7 @@ export class LinuxProcCollector implements ProcessCollector {
                     reason: `root process ${rootPid} ${event} while reading memory`
                 };
             }
-            // Keep the original tree node so a vanished intermediate process
-            // cannot disconnect still-live descendants from the aggregate.
+            // Why: keeping the original tree node stops a vanished intermediate process disconnecting still-live descendants from the aggregate.
             // Its unknown memory makes RAM explicitly unavailable for this pass.
             return {
                 status: 'included',

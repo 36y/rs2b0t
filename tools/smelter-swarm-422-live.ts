@@ -1,13 +1,8 @@
-/**
- * Live proof #422 — Swarm is handled by Supervisor / RandomEvents (evade), not
- * by SmelterBot growing its own combat loop.
- *
- *   ENGINE_DIR=.../Server/engine sh tools/deploy-local.sh
- *   bun tools/smelter-swarm-422-live.ts [http://localhost:8890]
- *
- * Seeds ore at the Al Kharid furnace, spawns macro_swarm, starts SmelterBot,
- * asserts a random-event intercept + swarm despawn + smelt progress.
- */
+/** Live proof #422 — Swarm is handled by Supervisor / RandomEvents (evade) rather than by SmelterBot growing its own combat loop: [base].
+ *  Seeds ore at the Al Kharid furnace, spawns macro_swarm, starts SmelterBot, and asserts a random-event intercept plus swarm despawn plus smelt progress. */
+
+//   ENGINE_DIR=.../Server/engine sh tools/deploy-local.sh
+//   bun tools/smelter-swarm-422-live.ts [http://localhost:8890]
 import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, positionalArgs, setSettings } from './lib/harness.js';
 
 const args = positionalArgs(process.argv.slice(2), 'http://localhost:8890');

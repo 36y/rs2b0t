@@ -59,12 +59,7 @@ describe('log balance special crossings', () => {
         expect(sc?.action).toBe('Walk-across');
     });
 
-    // The executor resolves the loc within Chebyshev 3 of the chosen crossing's
-    // stand tile, so picking the far bank's entry sends the Walk-across at the
-    // opposite end of the log — five tiles away, across the river we are trying
-    // to cross. Both entries are nameless twins with no toTile, so before this
-    // was ranked the tie-break fell through to source-array order and the west
-    // entry won both directions.
+    // Why: the executor resolves the loc within Chebyshev 3 of the crossing's stand, so the far bank's entry aims the Walk-across at the wrong end of the log.
     describe('the crossing chosen is the bank we are standing on', () => {
         test('west → east uses the west stand', () => {
             const sc = specialCrossingForTransport(

@@ -1,11 +1,8 @@
-/**
- * Nav A/B: walk a fixed corpus of door / stair / transport-heavy ODs and report
- * outcome + the walker's own log for each. Deliberately dumb — one account, one
- * walk at a time, real ODs, so two builds can be diffed line for line.
- *
- *   bun tools/nav/route-walk-live.ts --base http://localhost:8890 --out out/routes-head.json
- *   ROUTES=1,4,7 bun tools/nav/route-walk-live.ts
- */
+/** Nav A/B: walk a fixed corpus of door / stair / transport-heavy ODs and report the outcome plus the walker's own log for each. --base, --out, ROUTES=1,4,7.
+ *  One account, one walk at a time, over live ODs, so two builds can be diffed line for line. */
+
+//   bun tools/nav/route-walk-live.ts --base http://localhost:8890 --out out/routes-head.json
+//   ROUTES=1,4,7 bun tools/nav/route-walk-live.ts
 import fs from 'node:fs';
 
 import type { Page } from 'playwright-core';
@@ -47,9 +44,7 @@ const ROUTES: Route[] = [
     { name: 'varrock→seers-bank', from: { x: 3185, z: 3436, level: 0 }, to: { x: 2725, z: 3491, level: 0 }, budgetMs: 400_000 },
     { name: 'portsarim→karamja(ship)', from: { x: 3027, z: 3222, level: 0 }, to: { x: 2925, z: 3176, level: 0 }, budgetMs: 240_000 },
     { name: 'varrock→barb-village-basement', from: { x: 3185, z: 3436, level: 0 }, to: { x: 3081, z: 9955, level: 0 } },
-    // Quest-gated: every route into Morytania crosses the Paterdomus tunnel and the
-    // Salve barrier. Without Priest in Peril this must fail fast; with it (CHEATS=~cq,
-    // which also takes barrier access) it must walk through.
+    // Why: every route into Morytania crosses the Paterdomus tunnel and the Salve barrier, so this must fail fast without Priest in Peril and walk through with it (CHEATS=~cq, which also takes barrier access).
     { name: 'varrock→canifis(priest-in-peril)', from: { x: 3253, z: 3420, level: 0 }, to: { x: 3499, z: 3506, level: 0 }, radius: 6, budgetMs: 420_000 }
 ];
 

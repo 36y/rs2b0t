@@ -5,12 +5,7 @@ import type { TransportEdgeData } from '#/bot/nav/PathFinder.js';
 
 const edges = transports as TransportEdgeData[];
 
-/**
- * Key order is not significant in this file, so compare on a canonical form.
- * `JSON.stringify(v, keys)` is not it — the array argument is a property
- * allowlist that recurses, so it strips `from.x`/`to.x` and collapses edges that
- * differ only in their coordinates.
- */
+// Why: `JSON.stringify(v, keys)` takes the array as a recursing property allowlist, so it strips `from.x`/`to.x` and collapses edges differing only in coordinates.
 function canonical(value: unknown): string {
     if (value === null || typeof value !== 'object') {
         return JSON.stringify(value) ?? 'null';
@@ -24,15 +19,8 @@ function canonical(value: unknown): string {
 
 describe('transports.json hygiene', () => {
     test('no entry is byte-identical to another', () => {
-        // The file is curated by hand and appended to from both sides of a merge,
-        // which is how two gnome_areagate edges arrived twice in #322. A duplicate
-        // is silently harmless — the pathfinder just adds the same edge again — so
-        // nothing catches it without this.
-        //
-        // Byte-identical only. Self-loops and repeated from/to pairs are both
-        // legitimate here: a `laddermiddle` entry points at its own tile and
-        // carries a `disabledReason`, which is how a known-but-unusable action is
-        // recorded.
+        // Byte-identical only: self-loops and repeated from/to pairs are legitimate, since a `laddermiddle` entry points at its own tile and carries a `disabledReason`.
+        // Why: the file is hand-curated and appended from both sides of a merge, and a duplicate edge is silent.
         const seen = new Map<string, { edge: TransportEdgeData; count: number }>();
         for (const edge of edges) {
             const id = canonical(edge);

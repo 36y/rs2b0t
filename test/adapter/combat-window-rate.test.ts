@@ -2,9 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { combatShowingThreshold } from '#/bot/adapter/ClientAdapter.js';
 
-// Client stamps combatCycle at loopCycle + 400, so a target reads as fighting while
-// (400 - threshold) cycles remain. That has to stay the same wall-clock span whatever
-// rate the client's logic loop runs at.
+// Why: the client stamps combatCycle at loopCycle + 400, so the fighting window is (400 - threshold) cycles and must hold the same wall-clock span at any loop rate.
 const STAMP_CYCLES = 400;
 const ERA_DELTIME_MS = 20;
 const ERA_WINDOW_MS = 6000;

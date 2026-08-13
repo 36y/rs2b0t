@@ -91,9 +91,8 @@ export const ChatDialog = {
     },
 
     /**
-     * Click Make-X for a product, type `count` into the amount dialog.
-     * Waits for the count dialog to open **and** close so callers do not race
-     * a still-open make-menu (BankFletcher thrash after #177).
+     * Click Make-X for a product and type `count` into the amount dialog.
+     * Why: waits for the count dialog to open and to close, so callers do not race a still-open make-menu (BankFletcher thrash after #177).
      */
     async makeX(match: string, count: number): Promise<boolean> {
         const products = reader.makeProducts();

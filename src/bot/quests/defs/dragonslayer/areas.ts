@@ -43,27 +43,17 @@ export const DS_LOC = {
     SHIP_LADDER: new Tile(3049, 3208, 1),
     SHIP_HOLE: new Tile(3047, 9639, 1),
     CRANDOR_ROCK: new Tile(2833, 3255, 0),
-    /**
-     * The secret wall itself: one loc, spawned at angle 3 (south) on this tile
-     * in m44_150.jm2. Both sides click THIS tile — a wall does not have a second
-     * loc on its far side — and the angle is what makes this row the one
-     * `check_axis_locactive` counts as "entering".
-     */
+    // Why: the secret wall is one loc, spawned at angle 3 (south) on this tile in m44_150.jm2.
+    // Why: both sides click this tile, as a wall has no second loc on its far side.
+    // Why: the angle is what makes this row the one `check_axis_locactive` counts as "entering".
     CRANDOR_SECRET_DOOR: new Tile(2836, 9600, 0),
-    /**
-     * Where to stand to take it from the Karamja dungeon. A stand, not a loc:
-     * the wall is still the tile above. Opening from here only works once it has
-     * been opened from the Crandor side, which is what sets %dragon_wall.
-     */
+    // Why: this is a stand and not a loc — the wall is still the tile above.
+    // Why: opening from here works only once it has been opened from the Crandor side, which is what sets %dragon_wall.
     SECRET_WALL_KARAMJA_STAND: new Tile(2836, 9599, 0),
     ELVARG_GATE: new Tile(2847, 9636, 0),
     ELVARG_GATE_STAND: new Tile(2846, 9637, 0),
-    /**
-     * The far side of the same gate. Both leaves spawn at angle 0 (west) on
-     * x=2847, so `check_axis_locactive` counts the lair's own column as
-     * "entering" — which is why the lock only ever guards the way in, and why
-     * standing here is what lets a finished run back out.
-     */
+    // Why: both leaves of this gate spawn at angle 0 (west) on x=2847, so `check_axis_locactive` counts the lair's own column as "entering".
+    // Why: the lock therefore only ever guards the way in, and standing here is what lets a finished run back out.
     ELVARG_GATE_INSIDE: new Tile(2847, 9637, 0)
 } as const;
 

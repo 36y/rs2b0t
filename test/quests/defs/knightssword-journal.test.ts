@@ -82,9 +82,7 @@ describe("The Knight's Sword journal", () => {
     });
 
     test('the appended prefix never outranks the newest marker', () => {
-        // Every stage from 3 on still carries the "found an Imcando dwarf" prose,
-        // and every stage from 1 on carries "I told the Squire". A needle that
-        // matched those would pin the whole quest at its earliest stage.
+        // Why: stages from 3 on keep the "found an Imcando dwarf" line and stages from 1 on keep "I told the Squire", so a needle matching either pins the quest at its earliest stage.
         for (const [, text, stage] of cases.filter(([, , s]) => s >= KS_STAGE.GIVEN_PIE)) {
             expect(parseKnightsSwordJournal(text)?.stage).toBeGreaterThanOrEqual(KS_STAGE.GIVEN_PIE);
             expect(parseKnightsSwordJournal(text)?.stage).toBe(stage);

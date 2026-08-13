@@ -143,11 +143,10 @@ export class TrimKnifeDelayLogs implements Task {
     }
 }
 
-/**
- * Tannerfishing sustain: eat cooked catch when low HP; cook raw on a nearby Fire/Range.
- * Runs above Gather so combat ticks can still heal without leaving the pier.
- * Yields to DropProduct when the pack is full and there is no oven in scene.
- */
+// Why: it runs above Gather so combat ticks can still heal without leaving the pier.
+// Why: it yields to DropProduct when the pack is full and no oven is in scene.
+
+/** Tannerfishing sustain: eats cooked catch at low HP and cooks raw on a nearby Fire or Range. */
 export class TannerfishSustain implements Task {
     constructor(private bot: GatheringBot) {}
 
@@ -288,16 +287,13 @@ export class WaitStickyCombat implements Task {
     }
 }
 
-/**
- * Break multi-combat pulls from aggressive NPCs (lava-maze spiders, dark wizards, etc.).
- * Not for random events — those are handled by Supervisor / RandomEvents first.
- * Auto Retaliate is off at start — walking away ends the fight instead of trading hits.
- * Always kite *away* from the attacker (never walk back onto the camp anchor while
- * spiders sit on it). Prefer east when the vector is ambiguous (Lava Maze exit).
- *
- * Sticky combatCycle with no face target: {@link WaitStickyCombat} — do not blind-kite east
- * (that used to freeze chop-then-burn / pier gather for 60–90s).
- */
+// Why: random events are handled by Supervisor and RandomEvents first, so this is not for them.
+// Why: Auto Retaliate is off at start, so walking away ends the fight instead of trading hits.
+// Why: the kite always heads away from the attacker, never back onto the camp anchor while spiders sit on it.
+// Why: east is preferred when the vector is ambiguous, which is the Lava Maze exit.
+// Why: a sticky combatCycle with no face target goes to {@link WaitStickyCombat}, since blind-kiting east freezes chop-then-burn and pier gather for 60–90s.
+
+/** Breaks multi-combat pulls from aggressive NPCs such as lava-maze spiders and dark wizards. */
 export class FleeCombat implements Task {
     constructor(private bot: GatheringBot) {}
 
@@ -673,14 +669,10 @@ export class MuleBankHaul implements Task {
     }
 }
 
-/**
- * Clear random-event leftovers that steal slots. Critical for chop-then-burn:
- * BankCatch is deferred while a log load is pending, so caskets/gems/fruit would
- * otherwise permanently shrink free space for logs on long AFK runs.
- *
- * Default is **bank** at the camp; **drop** remains for power/None or preference.
- * (Future: lift to api/ for other scripts — see plan docs.)
- */
+// Why: BankCatch is deferred while a log load is pending, so under chop-then-burn caskets, gems and fruit permanently shrink free space for logs on long AFK runs.
+// Why: the default is to bank at the camp, with drop kept for power/None or preference.
+
+/** Clears random-event leftovers that steal pack slots. */
 export class ClearPackJunk implements Task {
     constructor(private bot: GatheringBot) {}
 
@@ -965,9 +957,8 @@ export class BankCatch implements Task {
         if (Bank.isOpen()) {
             await this.bot.closeScriptBank(log);
         }
-        // Always leave the bank toward camp after a deposit (unless cook-batch stays).
-        // walkHomeIfNeeded short-circuits inside the soft arrive disk; long bank→mine
-        // legs (Varrock W → SW mine) need the full walkResilient budget.
+        // Why: the bot always leaves the bank toward camp after a deposit, unless a cook batch stays.
+        // Why: walkHomeIfNeeded short-circuits inside the soft arrive disk, and long bank→mine legs such as Varrock W → SW mine need the full walkResilient budget.
         if (!this.bot.isCookBatchReady()) {
             this.bot.setStatus('bank: returning to camp');
             const home = await this.bot.walkHomeIfNeeded(log);
@@ -1647,10 +1638,8 @@ export class RestockFishingGear implements Task {
         );
         const log = (m: string) => this.bot.log(`  ${m}`);
 
-        // Coins already cover the shop cart (seeded restock at a booth that isn't
-        // the camp bank) — skip bank entirely and walk straight to Gerrant/Harry.
-        // Prefer-nearby Banking still helps when we *do* need the bank, but held GP
-        // must not force Edgeville from Draynor just to glance at an empty booth.
+        // Why: when coins already cover the shop cart, the bank is skipped and the walk goes straight to Gerrant or Harry.
+        // Why: held GP must not force Edgeville from Draynor to glance at an empty booth, though prefer-nearby Banking still helps when the bank is needed.
         if (this.bot.toolAcquireEnabled() && this.bot.acquireReady() && missing.length > 0) {
             const preCart = fishingGearShopCart(
                 method,
@@ -1710,9 +1699,8 @@ export class RestockFishingGear implements Task {
                     );
                     if (cart.length > 0) {
                         const cartCost = buyPlansCost(cart);
-                        // Inv already covers the cart (coins kept through deposit) —
-                        // skip a second bank open and walk straight to Gerrant/Harry.
-                        // Otherwise executeBuyPlans funds at vendor.bankStand itself.
+                        // Why: coins kept through the deposit already cover the cart, so a second bank open is skipped and the walk goes straight to Gerrant or Harry.
+                        // Why: otherwise executeBuyPlans funds at vendor.bankStand itself.
                         const invFunded = Inventory.count(COINS) >= cartCost;
                         if (Bank.isOpen()) {
                             await this.bot.closeScriptBank(log, { allowForgetful: false });
@@ -1853,9 +1841,8 @@ export class RestockGatherTool implements Task {
         );
         const log = (m: string) => this.bot.log(`  ${m}`);
 
-        // Hammer+bar (or shop GP / broken tool) already in pack — skip the camp-bank
-        // hop entirely. Suite seeds materials at Varrock West; walking Draynor first
-        // burns the budget before the anvil walk even starts.
+        // Why: with hammer and bar — or shop GP, or a broken tool — already in the pack, the camp-bank hop is skipped.
+        // Why: the suite seeds materials at Varrock West, so walking Draynor first burns the budget before the anvil walk starts.
         if (this.bot.toolAcquireEnabled() && this.bot.acquireReady() && missing.length > 0) {
             const preBuy = planGatherToolAcquire(this.bot.toolReqsList(), this.bot.acquireWorldWithBank(), {
                 upgrade: false
@@ -1867,9 +1854,8 @@ export class RestockGatherTool implements Task {
                     await this.bot.walkHomeIfNeeded(log);
                     return;
                 }
-                // Path/RE fail with coins (or smith mats) still held — do not thrash the
-                // camp bank (buy-pick mid-random-event spent minutes on "no Bank booth").
-                // Stay off acquire backoff so the next Restock tick retries preBuy.
+                // Why: a path or random-event failure with coins or smith materials still held must not thrash the camp bank — buy-pick mid-random-event spends minutes on "no Bank booth".
+                // Why: acquire backoff stays off, so the next Restock tick retries preBuy.
                 this.bot.log(
                     `restock: ${preBuy.kind} failed with materials still held — retry without bank`
                 );
@@ -2012,16 +1998,12 @@ export class RestockGatherTool implements Task {
     }
 }
 
-/**
- * Optional bank/shop/smith upgrade when Acquire tools is on.
- *
- * - One-shot startup: walk bank once to withdraw a better banked tier (steel
- *   while bronze is equipped) even under chop-then-burn (no BankCatch).
- * - Ongoing: only when already at/near the script bank (or bank UI open).
- *   Never walks to bank solely for shop upgrades mid-run — that looked like a
- *   hang on cold start and yanked players off trees. BankCatch also calls
- *   tryUpgradeGatherToolAtBank after deposits.
- */
+// Why: the one-shot startup walks to the bank once to withdraw a better banked tier — steel while bronze is equipped — even under chop-then-burn, which has no BankCatch.
+// Why: ongoing upgrades only run when already at or near the script bank, or with the bank UI open.
+// Why: it never walks to the bank solely for a shop upgrade mid-run, which reads as a hang on cold start and yanks players off trees.
+// Why: BankCatch also calls tryUpgradeGatherToolAtBank after deposits.
+
+/** Optional bank, shop or smith upgrade when Acquire tools is on. */
 export class UpgradeGatherTool implements Task {
     constructor(private bot: GatheringBot) {}
 
@@ -2095,12 +2077,10 @@ export class Gather implements Task {
         );
     }
 
-    /**
-     * Whether a fishing spot is in range for this camp mode.
-     * - Named / Auto-snap: any spot inside camp membership (home pin). No player-distance wall.
-     * - Freeform: spot within hunt of the player, or still within hunt of the start-tile anchor
-     *   (so we can walk along a river hop without idling on "within 40 of you").
-     */
+    // Why: named and Auto-snap accept any spot inside camp membership from the home pin, with no player-distance wall.
+    // Why: freeform accepts a spot within hunt of the player, or still within hunt of the start-tile anchor, so a river hop can be walked without idling on "within 40 of you".
+
+    /** Whether a fishing spot is in range for this camp mode. */
     private fishSpotInRange(spotTile: Tile): boolean {
         if (this.bot.isNamedCamp()) {
             return resourceWithinCamp(this.bot.getAnchor().distanceTo(spotTile), this.bot.leashRadius());
@@ -2114,11 +2094,10 @@ export class Gather implements Task {
         return spotWithinGatherRange(this.bot.getAnchor().distanceTo(spotTile), hunt);
     }
 
-    /**
-     * Nearest matching fishing spot in scene for this mode.
-     * Named camps: entire membership disk (fixes "no spots within 40 of you" mid-pier).
-     * Freeform: player/start hunt disks (covers the old secondary hunt tier).
-     */
+    // Why: named camps search the entire membership disk, which fixes "no spots within 40 of you" mid-pier.
+    // Why: freeform searches the player and start hunt disks.
+
+    /** Nearest matching fishing spot in scene for this mode. */
     private findFishSpot() {
         return Npcs.query()
             .name(this.bot.targetName())
@@ -2127,9 +2106,8 @@ export class Gather implements Task {
     }
 
     private findRock() {
-        // Camp membership fence (anchor leash) + ore/tree type filters, then prefer
-        // rocks near the player so we do not path across Dwarven tunnels / SE Varrock
-        // while a matching ore is already underfoot.
+        // Why: the camp membership fence (anchor leash) and the ore or tree type filters come first.
+        // Why: rocks near the player are preferred, so the bot does not path across Dwarven tunnels or SE Varrock while a matching ore is underfoot.
         return Locs.query()
             .name(this.bot.targetName())
             .action(this.bot.actionName())
@@ -2186,9 +2164,8 @@ export class Gather implements Task {
             // to ReturnToAnchor when we've wandered off (e.g. after bank / whirlpool flee).
             return !beyondLeash(this.bot, Game.tile(), 4);
         }
-        // Loc gather (mine/chop): stay active while near the anchor so we log
-        // "no trees/rocks" instead of silent idle. Yield past leash+slack so
-        // ReturnToAnchor can pull us back (Draynor bank is only ~12 from willows).
+        // Why: loc gather stays active near the anchor, so it logs "no trees/rocks" instead of idling silently.
+        // Why: it yields past leash plus slack so ReturnToAnchor can pull the bot back — the Draynor bank is only ~12 from the willows.
         if (this.findRock() !== null) {
             return true;
         }
@@ -2228,11 +2205,9 @@ export class Gather implements Task {
         });
     }
 
-    /**
-     * Short-circuit cheap checks before scene queries.
-     * JS evaluates all call args eagerly, so shouldYieldGathering(... findRock() ...)
-     * used to rescan every Loc on every delayUntil poll even when pack was full.
-     */
+    // Why: JS evaluates call args eagerly, so shouldYieldGathering(... findRock() ...) rescans every Loc on every delayUntil poll even when the pack is full.
+
+    /** Short-circuits cheap checks before scene queries. */
     private shouldYieldMine(tile: Tile): boolean {
         if (EventSignal.pending() || Inventory.isFull() || ChatDialog.canContinue()) {
             return true;
@@ -2463,9 +2438,7 @@ export class Gather implements Task {
         const startTile = target.tile();
         const key = keyOf(startTile);
 
-        // Click immediately when idle OR when the target is a different spot than the
-        // active session. A fresh interact cancels leftover cast anim — no need to
-        // wait it out ("clearing cast before re-click").
+        // Why: a fresh interact cancels a leftover cast anim, so there is no need to wait it out before re-clicking.
         const needsClick = !Game.animating() || this.activeFishIndex !== index;
         if (needsClick) {
             this.bot.setStatus(`${this.bot.actionName()} ${this.bot.targetName()} at ${startTile}`);
@@ -2642,19 +2615,18 @@ export class Gather implements Task {
                 continue;
             }
             if (!Game.animating()) {
-                // Natural end (deplete / stop). Never soft-cooldown here — empty/stump
-                // already drops out of findRock, and iron respawns faster than the old
-                // 8t tile skip (nearby ore up while bot paths across the mine).
+                // Why: an empty rock or a stump already drops out of findRock, so a natural end needs no soft cooldown.
+                // Why: iron respawns faster than an 8-tick tile skip — nearby ore is back up while the bot paths across the mine.
                 return;
             }
         }
     }
 
-    /**
-     * Farmer willows 6-tick cycle (#160):
-     * t1 click tree · t2–t4 wait · t5 knife log · t6 drop log · repeat.
-     * Auto Retaliate stays ON (may die). Needs Knife + willow logs in pack.
-     */
+    // Why: the cycle is t1 click tree, t2–t4 wait, t5 knife log, t6 drop log, repeat (#160).
+    // Why: Auto Retaliate stays ON, so the bot may die.
+    // Why: it needs a Knife and willow logs in the pack.
+
+    /** Farmer willows 6-tick cycle. */
     private async executeFarmerWillow(): Promise<void> {
         if (EventSignal.pending() || Inventory.isFull() || ChatDialog.canContinue()) {
             return;

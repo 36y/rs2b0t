@@ -12,9 +12,8 @@ export const MAZE_SHRINE = { x: 2911, z: 4575 } as const; // local (31,31)
 /** Content pack: length=3 width=3 on macro_maze_complete. */
 const MAZE_SHRINE_SIZE = 3 as const;
 /**
- * West door into the shrine chamber (local 30,32). Routes must include this —
- * the south face of the shrine SW is a solid wall, so manhattan-adjacent south
- * is not operable.
+ * West door into the shrine chamber (local 30,32), which routes must include.
+ * Why: the south face of the shrine SW is a solid wall, so manhattan-adjacent south is not operable.
  */
 export const MAZE_SHRINE_DOOR = { x: 2910, z: 4576 } as const;
 export const MAZE_SPAWNS = [
@@ -114,14 +113,10 @@ export function doorPassable(door: DoorInfo, fromX: number, fromZ: number): bool
 
 const CARDINAL: [number, number][] = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
-/**
- * True when (x,z) is outside the shrine footprint and shares an **open**
- * (non-wall) edge with it — i.e. a tile from which OPLOC Touch can succeed.
- *
- * Shrine is 3×3 solid (content length/width=3). Goal must not be manhattan-1
- * of the SW corner alone: south/west of SW are walls, so that wrongly ends the
- * route one door short of the chamber.
- */
+// Why: the shrine is 3×3 solid (content length/width=3), so only an open shared edge is a tile from which OPLOC Touch can succeed.
+// Why: the goal must not be manhattan-1 of the SW corner alone — south and west of SW are walls, which wrongly ends the route one door short of the chamber.
+
+/** True when (x,z) is outside the shrine footprint and shares an open (non-wall) edge with it. */
 function isShrineTouchStand(
     g: MazeGraph,
     x: number,

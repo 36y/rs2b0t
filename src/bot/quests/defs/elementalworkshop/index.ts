@@ -67,16 +67,9 @@ function sourceKnife(snap: QuestSnapshot): QuestStep | null {
         ?? { kind: 'grabGround', item: EW_ITEM.KNIFE.name, anchor: KNIFE_SPAWN, waitIfMissing: true };
 }
 
-/**
- * Pure decide: journal stage + flags + held items. Never reads varps.
- *
- * Rough flow:
- *   not started → bookcase → read book
- *   read book → knife → slash for key
- *   surface loadout → enter workshop
- *   water valves/lever → crate supplies → fix bellows → light furnace
- *   mine ore → smelt (air lever + furnace) → smith shield
- */
+// Why: the flow runs not started → bookcase → read book → knife → slash for key → surface loadout → enter workshop → water valves and lever → crate supplies → fix bellows → light furnace → mine ore → smelt (air lever and furnace) → smith shield.
+
+/** Pure decide over journal stage, flags and held items; never reads varps. */
 export function decide(snap: QuestSnapshot): QuestStep {
     if (snap.journal === 'complete') {
         return { kind: 'done' };

@@ -6,9 +6,8 @@ export interface ShiloItem {
     name: string;
 }
 
-// Engine names, not wiki ones. Several are misspelled in the configs ("Rashiliya
-// corpse", "Stone-plaque") and the five Jungle Potion unids all render as
-// "Unidentified herb", so every lookup here goes through the id.
+// Why: these are the engine's names — several are misspelled in the configs ("Rashiliya corpse", "Stone-plaque").
+// Why: the five Jungle Potion unids all render as "Unidentified herb", so every lookup here goes through the id.
 export const SV_ITEM = {
     COINS: { id: 995, name: 'Coins' },
     ROPE: { id: 954, name: 'Rope' },
@@ -90,9 +89,8 @@ export const SV_TILE = {
     HANDHOLDS: new Tile(2764, 9376, 0),
 
     PALM_TREES: new Tile(2914, 3092, 0),
-    // West of the doors, cardinally adjacent. The pack was baked with the jungle
-    // plants that hide them, not with the doors, so nothing east of (2916,3090) is
-    // a stand the walker can actually reach.
+    // Why: this is west of the doors and cardinally adjacent.
+    // Why: the pack was baked with the jungle plants that hide the doors rather than with the doors, so nothing east of (2916,3090) is a stand the walker can reach.
     CARVED_DOORS: new Tile(2915, 3090, 0),
     TOMB_EXIT: new Tile(2928, 9526, 0),
     ANCIENT_GATE: new Tile(2929, 9517, 0),
@@ -138,12 +136,10 @@ export type ShiloArea =
 const RASH_GATE_Z = 9516;
 const RASH_ROCKS_BOTTOM_Z = 9511;
 
-/**
- * Every underground area here sits in its own mapsquare, and Rashiliyia's tomb has
- * three parts, not two: the corridor from the hillside doors, the ledge the gate
- * drops you onto, and the tomb below the climbing rocks. Collapsing the ledge into
- * either neighbour makes the gate open and re-open forever.
- */
+// Why: every underground area here sits in its own mapsquare, and Rashiliyia's tomb has three parts — the corridor from the hillside doors, the ledge the gate drops you onto, and the tomb below the climbing rocks.
+// Why: collapsing the ledge into either neighbour makes the gate open and re-open forever.
+
+/** Which Shilo area a tile is in. */
 export function shiloArea(tile: QuestSnapshot['tile']): ShiloArea {
     if (!tile) return 'unknown';
     const { x, z } = tile;

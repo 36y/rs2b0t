@@ -43,13 +43,11 @@ export function setsPerTrip(recipe: Recipe): number {
     return Math.floor(28 / slotsPerSet(recipe));
 }
 
-/**
- * What to withdraw given what the bank actually holds, capped at one trip.
- *
- * Returns an empty list only when not even a single bar can be made. Demanding a
- * full trip and giving up otherwise (issue #117) turned a nearly-empty bank into a
- * dead bot — a short trip still makes bars, and the next trip re-checks anyway.
- */
+// Why: an empty list comes back only when not even a single bar can be made.
+// Why: demanding a full trip and giving up otherwise turned a nearly-empty bank into a dead bot (#117).
+// Why: a short trip still makes bars, and the next trip re-checks anyway.
+
+/** What to withdraw given what the bank holds, capped at one trip. */
 export function withdrawFor(recipe: Recipe, stock: (ore: string) => number): { ore: string; count: number }[] {
     const sets = Math.min(setsPerTrip(recipe), ...recipe.ingredients.map(i => Math.floor(stock(i.ore) / i.perBar)));
     if (sets <= 0) {
@@ -67,13 +65,9 @@ function matches(name: string | null, pattern: string): boolean {
     return name !== null && name.toLowerCase().includes(pattern.trim().toLowerCase());
 }
 
-/**
- * Whether the pack holds enough of every ingredient to smelt at least one bar.
- *
- * Both trips used to gate on the primary ore alone, so a pack with iron but no coal
- * never triggered a bank run and the smelt trip span making nothing. Checking every
- * ingredient is what makes "no ore in the pack means go and get some" true.
- */
+// Why: gating on the primary ore alone lets a pack with iron but no coal skip the bank run, and the smelt trip then spins making nothing.
+
+/** Whether the pack holds enough of every ingredient to smelt at least one bar. */
 export function canSmelt(items: readonly PackItem[], recipe: Recipe): boolean {
     return recipe.ingredients.every(i => items.filter(it => matches(it.name, i.ore)).length >= i.perBar);
 }

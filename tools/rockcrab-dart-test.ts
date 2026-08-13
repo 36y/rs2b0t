@@ -1,13 +1,7 @@
-/**
- * Real Chrome + isolated LostCity proof for RockCrab dart support.
- *
- * The fresh account starts at Seers with an empty pack and empty equipment;
- * Bronze darts exist only in its bank. RockCrab must withdraw and wield that
- * stack, walk to the natural Rellekka field, kill a natural Rock Crab with
- * Ranged XP, and recover a naturally dropped dart.
- *
- *   bun tools/rockcrab-dart-test.ts --base http://127.0.0.1:8995 --minutes 12
- */
+/** Chrome + isolated LostCity proof for RockCrab dart support: --base --minutes.
+ *  The fresh account starts at Seers with empty pack and equipment and Bronze darts only in its bank, so RockCrab must withdraw and wield that stack, walk to the Rellekka field, kill a Rock Crab for Ranged XP, and recover a dropped dart. */
+
+//   bun tools/rockcrab-dart-test.ts --base http://127.0.0.1:8995 --minutes 12
 import { createHash } from 'node:crypto';
 import { mkdir } from 'node:fs/promises';
 

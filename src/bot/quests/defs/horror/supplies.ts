@@ -21,13 +21,9 @@ const COIN_LOW = 2_000;
 /** Comfortably over any single purchase here, comfortably under the float. */
 const SHOP_GP = 1_500;
 
-/**
- * The dungeon load is fifteen slots before a single fish — coins, hammer,
- * pickaxe, key, tinderbox, dagger, arrows, six rune stacks, tar and glass — and
- * the quest ends by pushing a casket into the pack, so the last slot is not ours
- * to fill. Ten sharks is still two hundred hitpoints, and the winning fight
- * spent none of them.
- */
+// Why: the dungeon load is fifteen slots before a single fish — coins, hammer, pickaxe, key, tinderbox, dagger, arrows, six rune stacks, tar and glass.
+// Why: the quest ends by pushing a casket into the pack, so the last slot is not ours to fill.
+// Why: ten sharks is still two hundred hitpoints, and the winning fight spent none of them.
 const FOOD_TARGET = 10;
 const FOOD_LOW = 4;
 /** What the errand legs carry: enough to survive a long walk, not a fight. */
@@ -37,16 +33,9 @@ export const PLANKS_NEEDED = 2;
 /** Four steel nails per plank — quest_horror.rs2 checks each half separately. */
 export const NAILS_NEEDED = 8;
 
-/**
- * The dungeon load: about sixty blasts' worth, which is three times what the
- * fight takes, plus the one of each element the strange wall swallows. Asking
- * for more is not free — a purchase larger than Aubury's stock is filled a rune
- * at a time as he restocks, and the bot stands at the counter for it.
- *
- * The air stack carries a second job when nav teleports are on: every standard
- * hop spends three of them and Camelot spends five, and this quest takes about
- * thirty hops. The headroom is there so routing never eats the fight's supply.
- */
+// Why: this is about sixty blasts' worth, three times what the fight takes, plus the one of each element the strange wall swallows.
+// Why: asking for more is not free — a purchase larger than Aubury's stock is filled a rune at a time as he restocks, and the bot stands at the counter for it.
+// Why: the air stack carries a second job when nav teleports are on, as every standard hop spends three and Camelot spends five over about thirty hops, so the headroom keeps routing out of the fight's supply.
 const RUNES: readonly { id: number; name: string; qty: number }[] = [
     { id: HD_ID.AIR_RUNE, name: HD_ITEM.AIR_RUNE, qty: 350 },
     { id: HD_ID.WATER_RUNE, name: HD_ITEM.WATER_RUNE, qty: 120 },
@@ -56,18 +45,10 @@ const RUNES: readonly { id: number; name: string; qty: number }[] = [
     { id: HD_ID.CHAOS_RUNE, name: HD_ITEM.CHAOS_RUNE, qty: 80 }
 ];
 
-/**
- * Law runes, and how many hops they buy.
- *
- * Law is the limiting rune at one or two a teleport; the elemental halves come
- * out of {@link RUNES}, which Aubury sells and this quest already buys. Sixty is
- * roughly double a full run's hop count.
- *
- * It is bank-only on purpose: the Magic Guild and the Mage Arena are the only
- * two shops that stock it, and the Guild wants 66 magic — seven above what this
- * quest proves. A bank without law is the ordinary case, not a fault, and the
- * answer to it is the walk the quest already did.
- */
+// Why: law is the limiting rune at one or two a teleport, and the elemental halves come out of {@link RUNES}, which Aubury sells and this quest already buys.
+// Why: sixty is roughly double a full run's hop count.
+// Why: it is bank-only on purpose, as the Magic Guild and the Mage Arena are the only two shops that stock it and the Guild wants 66 magic, seven above what this quest proves.
+// Why: a bank without law is the ordinary case rather than a fault, and the answer to it is the walk the quest already did.
 const LAW_RUNES = 60;
 
 /** Below this the kit is topped up, so a part-spent stack does not trigger a trip. */
@@ -89,11 +70,9 @@ const scanBank: QuestStep = { kind: 'scanBank' };
 const buy = (item: string, qty: number, shop: { npc: string; anchor: Tile }, estGp = SHOP_GP): QuestStep =>
     ({ kind: 'buy', item, qty, shop, estGp });
 
-/**
- * Bank first, shop second. `snap.bankIds` is empty until a booth has been
- * opened, so a bare `banked(...) > 0` test answers "no" on the first decide
- * tick and sends the bot shopping for something it already owns.
- */
+// Why: `snap.bankIds` is empty until a booth has been opened, so a bare `banked(...) > 0` test answers "no" on the first decide tick and sends the bot shopping for something it already owns.
+
+/** Withdraw from the bank when it can help, before any shop trip. */
 function fromBank(snap: QuestSnapshot, id: number, name: string, qty: number): QuestStep | null {
     if (!snap.bankKnown) {
         return scanBank;
@@ -123,13 +102,10 @@ export interface FoodWant {
     low: number;
 }
 
-/**
- * Nothing before the lighthouse is a fight, and the nails leg is the tightest
- * the pack ever gets: four iron and eight coal is twelve slots on top of the
- * coins, hammer and pickaxe. A full fifteen sharks leaves ten free and
- * `smithNails` stops dead on "pack is full — no room for Coal", with nothing it
- * is allowed to bank to make room.
- */
+// Why: nothing before the lighthouse is a fight, and the nails leg is the tightest the pack ever gets — four iron and eight coal is twelve slots on top of the coins, hammer and pickaxe.
+// Why: a full fifteen sharks leaves ten free and `smithNails` stops dead on "pack is full — no room for Coal", with nothing it is allowed to bank to make room.
+
+/** How much food this stage wants, or null. */
 export function foodWant(snap: QuestSnapshot, stage: number): FoodWant | null {
     const name = QuestFood.name?.trim();
     if (!name) {
@@ -144,12 +120,10 @@ export function foodWant(snap: QuestSnapshot, stage: number): FoodWant | null {
     };
 }
 
-/**
- * `ownsInventory` opts this quest out of the engine's coin and food withdrawal,
- * so the module draws both itself. The float is a threshold, not a target: a
- * `buy` step withdraws exactly `estGp` when short, so topping up to an exact
- * balance means a booth trip after every purchase.
- */
+// Why: `ownsInventory` opts this quest out of the engine's coin and food withdrawal, so the module draws both itself.
+// Why: the float is a threshold rather than a target, as a `buy` step withdraws exactly `estGp` when short, so topping up to an exact balance means a booth trip after every purchase.
+
+/** The module's own coin and food withdrawal, or null when the pack is ready. */
 export function kit(snap: QuestSnapshot, food?: FoodWant | null): QuestStep | null {
     const items: { name: string; qty: number; id?: number }[] = [];
     if (heldId(snap, HD_ID.COINS) < COIN_LOW) {
@@ -164,12 +138,9 @@ export function kit(snap: QuestSnapshot, food?: FoodWant | null): QuestStep | nu
     return snap.bankKnown ? withdraw(items) : scanBank;
 }
 
-/**
- * The bridge hammer — bank before shop, like everything else here.
- *
- * A hammer is the item an established account is most likely to already own,
- * and a bare `buy` walks past a bankful of them to pay for another.
- */
+// Why: a hammer is the item an established account is most likely to already own, and a bare `buy` walks past a bankful of them to pay for another.
+
+/** Source the bridge hammer, bank before shop. */
 export function hammer(snap: QuestSnapshot): QuestStep {
     return source(snap, HD_ID.HAMMER, HD_ITEM.HAMMER, 1, GENERAL_SHOP, 100);
 }
@@ -182,11 +153,10 @@ export function planks(snap: QuestSnapshot): QuestStep {
         ?? { kind: 'grabGround', item: HD_ITEM.PLANK, anchor: HD_TILE.PLANK_SPAWNS[0], waitIfMissing: true };
 }
 
-/**
- * Nothing in the game sells nails or the steel bars they come from, so they are
- * mined, smelted and hammered — the same chain Dragon Slayer's ship repair uses,
- * and reused rather than re-derived.
- */
+// Why: nothing in the game sells nails or the steel bars they come from, so they are mined, smelted and hammered.
+// Why: that is the same chain Dragon Slayer's ship repair uses, reused rather than re-derived.
+
+/** Source the eight steel nails. */
 export function nails(snap: QuestSnapshot): QuestStep {
     const held = heldId(snap, HD_ID.NAILS);
     const need = NAILS_NEEDED - held;
@@ -197,17 +167,12 @@ export function nails(snap: QuestSnapshot): QuestStep {
         ?? { kind: 'custom', name: `smith ${need} nails`, run: log => smithNails(need, log) };
 }
 
-/**
- * Use a held item on a loc from an **exact** tile.
- *
- * Both the Range and the Furnace carry `forceapproach=east`, which names the
- * only side that works and rotates with the placement — the Yanille range sits
- * at angle 0 so east really is east, the Ardougne furnace at angle 2 so its
- * "east" is west in world space. Standing anywhere else has the use-on silently
- * dropped: no refusal, no message, just a loc that never answers. A radius-2
- * walk is a coin flip between the legal side and a wedge, so this lands on the
- * tile and nowhere else.
- */
+// Why: both the Range and the Furnace carry `forceapproach=east`, which names the only side that works and rotates with the placement.
+// Why: the Yanille range sits at angle 0 so east is east, and the Ardougne furnace at angle 2 so its "east" is west in world space.
+// Why: standing anywhere else has the use-on silently dropped — no refusal, no message, just a loc that never answers.
+// Why: a radius-2 walk is a coin flip between the legal side and a wedge, so this lands on the tile and nowhere else.
+
+/** Use a held item on a loc from an exact tile. */
 async function useOnLocFrom(
     stand: Tile,
     itemId: number,
@@ -252,11 +217,8 @@ const fillSand = (log: (m: string) => void): Promise<boolean> => useOnLoc(
     log
 );
 
-/**
- * Sand and soda ash used on a furnace run `smelt_glass`. Rellekka's furnace is
- * nearer to everything else this quest does and refuses anyone who has not
- * finished The Fremennik Trials, so this is East Ardougne's.
- */
+// Why: sand and soda ash used on a furnace run `smelt_glass`.
+// Why: Rellekka's furnace is nearer to everything else this quest does and refuses anyone who has not finished The Fremennik Trials, so this is East Ardougne's.
 const smeltGlass = (log: (m: string) => void): Promise<boolean> => useOnLocFrom(
     HD_TILE.FURNACE,
     HD_ID.BUCKET_OF_SAND,
@@ -265,14 +227,12 @@ const smeltGlass = (log: (m: string) => void): Promise<boolean> => useOnLocFrom(
     log
 );
 
-/**
- * Backwards from the glass, so a part-built chain resumes at the right rung.
- *
- * Nothing sells molten glass, soda ash, sand or seaweed. Seaweed comes off the
- * Rellekka shore — a hundred tiles from the lighthouse, where Catherby's beach
- * spawns are on an islet nothing can walk to — and cooks down to soda ash on
- * the Yanille range, seven tiles from the sand pit the bucket is filled at.
- */
+// Why: the chain is read backwards from the glass, so a part-built chain resumes at the right rung.
+// Why: nothing sells molten glass, soda ash, sand or seaweed.
+// Why: seaweed comes off the Rellekka shore, a hundred tiles from the lighthouse, as Catherby's beach spawns are on an islet nothing can walk to.
+// Why: it cooks down to soda ash on the Yanille range, seven tiles from the sand pit the bucket is filled at.
+
+/** The next rung of the molten-glass chain. */
 function moltenGlass(snap: QuestSnapshot): QuestStep {
     if (heldId(snap, HD_ID.MOLTEN_GLASS) > 0) {
         return { kind: 'wait', reason: 'molten glass already held' };
@@ -309,26 +269,17 @@ function swampTar(snap: QuestSnapshot): QuestStep {
         ?? { kind: 'grabGround', item: HD_ITEM.SWAMP_TAR, anchor: HD_TILE.SWAMP_TAR, waitIfMissing: true };
 }
 
-/**
- * The whole rune kit — law from the bank, the elements from Aubury.
- *
- * Split out of {@link dungeonKit} because when nav teleports are on it is worth
- * a Varrock counter *before* the barcrawl rather than after it: the tour is a
- * ten-bar lap of the map, and a hop is only planned when the live pack can pay
- * for it. Same shop, same quantities, earlier.
- *
- * Law belongs here and emphatically **not** in {@link kit}, which runs on every
- * decide tick. `smithNails` banks the pack to make room for ore and law is not
- * on its keep-list, so a per-tick law top-up and the nails leg deposit each
- * other's work forever: `smith 8 nails` → `withdraw Law rune×60` → `smith 8
- * nails`, parked at the Varrock booth until the engine gives up. Drawing it
- * here means it is drawn once, after the last leg that empties the pack.
- */
+// Why: this is split out of {@link dungeonKit} because with nav teleports on it is worth a Varrock counter before the barcrawl rather than after — the tour is a ten-bar lap of the map and a hop is only planned when the live pack can pay for it.
+// Why: same shop, same quantities, earlier.
+// Why: law belongs here and not in {@link kit}, which runs on every decide tick.
+// Why: `smithNails` banks the pack to make room for ore and law is not on its keep-list, so a per-tick law top-up and the nails leg deposit each other's work forever — `smith 8 nails` → `withdraw Law rune×60` → `smith 8 nails`, parked at the Varrock booth until the engine gives up.
+// Why: drawing it here means it is drawn once, after the last leg that empties the pack.
+
+/** The whole rune kit — law from the bank, the elements from Aubury. */
 export function runeKit(snap: QuestSnapshot, teleports = Traversal.teleportsEnabled()): QuestStep | null {
     if (teleports && heldId(snap, HD_ID.LAW_RUNE) < LAW_LOW) {
-        // An unread bank is not an empty bank: `bankIds` is blank until a booth
-        // has been opened, so answering "no law banked" here would quietly leave
-        // the toggle doing nothing for the whole quest.
+        // Why: an unread bank is no evidence of an empty one, as `bankIds` is blank until a booth has been opened.
+        // Why: answering "no law banked" here would quietly leave the toggle doing nothing for the whole quest.
         if (!snap.bankKnown) {
             return scanBank;
         }
@@ -350,21 +301,15 @@ export function runeKit(snap: QuestSnapshot, teleports = Traversal.teleportsEnab
     return null;
 }
 
-/**
- * The one shortfall worth acting on, or null when the load is complete. Ordered
- * so the two Varrock shops and the two ground-spawn errands each happen once.
- *
- * `needLight` goes false once the lamp is lit: past that the tinderbox, tar and
- * glass are spent, and asking for them again is a trip to Lumbridge swamp and
- * the Rellekka shore for three items the quest will never use.
- */
+// Why: the order is what makes the two Varrock shops and the two ground-spawn errands each happen once.
+// Why: `needLight` goes false once the lamp is lit, past which the tinderbox, tar and glass are spent, and asking for them again is a trip to Lumbridge swamp and the Rellekka shore for three items the quest will never use.
+
+/** The one shortfall worth acting on, or null when the load is complete. */
 export function dungeonKit(snap: QuestSnapshot, needLight: boolean): QuestStep | null {
     if (needLight && heldId(snap, HD_ID.TINDERBOX) === 0) {
         return source(snap, HD_ID.TINDERBOX, HD_ITEM.TINDERBOX, 1, GENERAL_SHOP, 100);
     }
-    // The bucket rides the same counter as the tinderbox. Left to the glass chain
-    // it is asked for at the Yanille range, and the nearest general store to
-    // there is nine hundred tiles and two boat fares away in Varrock.
+    // Why: the bucket rides the same counter as the tinderbox, as left to the glass chain it is asked for at the Yanille range and the nearest general store to there is nine hundred tiles and two boat fares away in Varrock.
     if (needLight && glassWanted(snap) && heldId(snap, HD_ID.BUCKET) === 0
         && heldId(snap, HD_ID.BUCKET_OF_SAND) === 0) {
         return source(snap, HD_ID.BUCKET, HD_ITEM.BUCKET, 1, GENERAL_SHOP, 100);
@@ -392,14 +337,8 @@ export function dungeonKit(snap: QuestSnapshot, needLight: boolean): QuestStep |
     return null;
 }
 
-/**
- * The player's melee weapon: bank only, and optional.
- *
- * Nothing in the game sells a rune scimitar — Zeke's Superior Scimitars stops at
- * mithril — so this is whatever the player put in their loadout's weapon slot.
- * Absent, unwieldable or blank, the fights fall back to magic only, which still
- * wins; the melee form is prayed through instead of killed.
- */
+// Why: nothing in the game sells a rune scimitar, as Zeke's Superior Scimitars stops at mithril, so this is whatever the player put in their loadout's weapon slot.
+// Why: absent, unwieldable or blank, the fights fall back to magic only, which still wins — the melee form is prayed through instead of killed.
 let meleeGaveUp = false;
 
 const FALLBACK_WEAPON = 'Rune scimitar';
@@ -461,15 +400,9 @@ function meleeWeapon(snap: QuestSnapshot): QuestStep | null {
     return withdraw([{ name, qty: 1 }]);
 }
 
-/**
- * Skills the server does not gate but the quest cannot be done without.
- *
- * `smithing` is the nails (2 to a steel bar at 34), `crafting` is the glass,
- * `magic` is the whole mother fight — four elemental spells with the tier
- * chosen from this level — and `prayer` 43 covers both protections: melee for
- * the junior, which is a plain melee npc, and missiles for the mother, which
- * forces her off the ranged attack that hits for twenty-four.
- */
+// Why: these are skills the server does not gate but the quest cannot be done without.
+// Why: `smithing` is the nails (2 to a steel bar at 34), `crafting` is the glass, and `magic` is the whole mother fight — four elemental spells with the tier chosen from this level.
+// Why: `prayer` 43 covers both protections — melee for the junior, which is a plain melee npc, and missiles for the mother, which forces her off the ranged attack that hits for twenty-four.
 const HD_PROVEN_SKILLS = { smithing: 34, crafting: 1, magic: 59, prayer: 43 } as const;
 
 /** Below this the mother's forms cannot be answered at all. */

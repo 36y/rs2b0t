@@ -48,9 +48,8 @@ const FISHING_GEAR = [
     'feather'
 ];
 const GEAR_LOSS_WINDOW_MS = 90_000;
-/** Hostile fishing/mining randoms (river troll, rock golem, …) often open from a
- *  few tiles out. Detect by id within this range when they face/attack us, not
- *  only when already adjacent — fishers were dying before distance<=1 fired. */
+/** Hostile fishing/mining randoms (river troll, rock golem, …) often open from a few tiles out.
+ *  Why: detecting by id within this range when they face or attack us, rather than only when adjacent, stops fishers dying before distance<=1 fires. */
 const HOSTILE_ENGAGE_DISTANCE = 8;
 
 export function isHostileEventNpc(
@@ -69,10 +68,8 @@ export function isHostileEventNpc(
     if (npc.distance > HOSTILE_ENGAGE_DISTANCE) {
         return false;
     }
-    // These antimacro ids only exist as *your* random event — they are not world
-    // mobs you walk past. Soft flags (combatCycle / faceEntity) often lag or never
-    // set for 0-damage Swarm (#422), which left walks repathing until timeout while
-    // Supervisor never intercepted. Presence within engage range is enough.
+    // Why: these antimacro ids only exist as your own random event — they are not world mobs you walk past.
+    // Why: soft flags (combatCycle / faceEntity) often lag or never set for 0-damage Swarm (#422), which left walks repathing until timeout while Supervisor never intercepted, so presence within engage range is enough.
     return true;
 }
 
@@ -114,9 +111,8 @@ const GIVE_UP_COOLDOWN_MS = 45000; // then ignore that event for this long so th
 const PICK_WAIT_MS = 80_000;
 
 /**
- * Events that teleport the player into their own map square. Giving up on these
- * is never right: the script cannot walk out, so resuming it just makes the bot
- * fight the solver for the same tiles. Retry until solved.
+ * Events that teleport the player into their own map square, retried until solved.
+ * Why: the script cannot walk out, so resuming it makes the bot fight the solver for the same tiles.
  */
 const TRAPPED_KINDS: ReadonlySet<EventKind> = new Set(['maze', 'mime']);
 
@@ -174,8 +170,7 @@ class RandomEventsImpl {
 
     /**
      * True when a random is active and not currently being solved.
-     * Quiet while {@link handling} so the handler's own walks do not self-interrupt;
-     * Supervisor / EventSignal still gate scripts between loops via detect + handling.
+     * Why: quiet while {@link handling} so the handler's own walks do not self-interrupt, while Supervisor / EventSignal still gate scripts between loops via detect + handling.
      */
     pending(): boolean {
         if (this.handling) {
@@ -625,8 +620,8 @@ class RandomEventsImpl {
 }
 
 /**
- * Detects and resolves random events. Events are matched by NPC id rather than
- * name, because names collide with ordinary monsters.
+ * Detects and resolves random events.
+ * Why: events are matched by NPC id rather than name, because names collide with ordinary monsters.
  * @see docs/reference/api-events.md
  */
 export const RandomEvents = new RandomEventsImpl();

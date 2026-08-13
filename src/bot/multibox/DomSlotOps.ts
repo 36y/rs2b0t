@@ -10,9 +10,8 @@ const RAIL_W = 264;
 const TILE_W = 236;
 const TILE_H = 155;
 
-// bot.html geometry: #rs2b0t-root is a flex row [game-wrap | 8px gap | 330px panel];
-// #game-stage is the largest 765:503 box centered in game-wrap. We derive where the
-// game canvas sits inside the 1100x620 client so a thumbnail can crop to just the game.
+// bot.html geometry: #rs2b0t-root is a flex row [game-wrap | 8px gap | 330px panel], and
+// #game-stage is the largest 765:503 box centered in game-wrap inside the 1100x620 client.
 const PANEL_W = 330;
 const ROOT_GAP = 8;
 const STAGE_W = 765;
@@ -31,9 +30,8 @@ const CROP_TY = TILE_H / 2 - (GAME_Y + GAME_H / 2) * CROP_K;
 const CROP_TRANSFORM = `translate(${CROP_TX}px, ${CROP_TY}px) scale(${CROP_K})`;
 
 // docs/reference/multibox.md#slots
-// Rail (background) slots paint at ~1fps so many bots stay cheap on a laptop; the
-// focused slot ignores this and draws every frame. Set per-iframe at runtime — the
-// standalone single-instance client keeps its own RenderGate default.
+// Rail (background) slots paint at ~1fps while the focused slot draws every frame.
+// Why: many bots stay cheap on a laptop, and setting it per-iframe leaves the standalone client its own RenderGate default.
 const RAIL_BACKGROUND_INTERVAL_MS = 1000;
 
 function railWidth(): number {
@@ -215,9 +213,8 @@ class DomSlotHandle implements SlotHandle {
         const focused = this.mode === 'focused';
         this.el.classList.toggle('is-focused', focused);
         if (focused) {
-            // Fill the main pane (viewport minus the rail): contain-fit so the whole
-            // 1100×620 client stays visible (letterbox is empty space, not clipped UI).
-            // Map-picker chrome must fit *inside* the 620px client — see WorldMapPicker.
+            // Fill the main pane (viewport minus the rail): contain-fit keeps the 1100×620 client visible, letterboxing empty space.
+            // Why: map-picker chrome must fit inside the 620px client — see WorldMapPicker.
             const mainW = window.innerWidth - railWidth();
             const mainH = window.innerHeight;
             const k = Math.min(mainW / LOGICAL_W, mainH / LOGICAL_H);
@@ -226,7 +223,7 @@ class DomSlotHandle implements SlotHandle {
             this.scaler.style.transform = `translate(${dx}px, ${dy}px) scale(${k})`;
             window.addEventListener('resize', this.onResize);
         } else {
-            // rail thumbnail: crop the client to just the game viewport
+            // rail thumbnail: crop the client to the game viewport alone
             this.scaler.style.transform = CROP_TRANSFORM;
             window.removeEventListener('resize', this.onResize);
         }
@@ -239,9 +236,8 @@ function flexOrder(el: HTMLElement): number {
 }
 
 /**
- * Return rail slots in their visual flex order. Their DOM order deliberately
- * stays fixed because moving an iframe ancestor reloads its browsing context in
- * Firefox.
+ * Return rail slots in their visual flex order.
+ * Why: their DOM order stays fixed because moving an iframe ancestor reloads its browsing context in Firefox.
  */
 export function orderedSlotElements(root: ParentNode): HTMLElement[] {
     return Array.from(root.querySelectorAll<HTMLElement>('.mbx-slot')).sort((a, b) => flexOrder(a) - flexOrder(b));

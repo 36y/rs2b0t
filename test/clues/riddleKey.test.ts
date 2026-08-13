@@ -197,9 +197,7 @@ beforeEach(() => {
 });
 
 describe('riddle key hunt', () => {
-    // More refusals than the executor has step attempts: the retry has to live
-    // inside the hunt. The regression sent one fire-and-forget op per attempt
-    // and parked silently for 20s after each, so it ran out of attempts first.
+    // Why: more refusals than the executor has step attempts, so the retry has to live inside the hunt.
     test('a refused attack is re-sent within the same attempt', async () => {
         refusalsLeft = 6;
         await ClueExecutor.solveHeldClue(() => {});

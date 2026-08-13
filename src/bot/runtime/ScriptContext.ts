@@ -49,9 +49,8 @@ export class ScriptContext {
     activeEvent: string | null = null;
 
     /**
-     * Expected work outside this context's waiter queue. The always-on random
-     * event guardian uses host-scoped Execution waits, so an in-flight script
-     * can legitimately have no local waiter while it handles the event.
+     * Expected work outside this context's waiter queue.
+     * Why: the always-on random event guardian uses host-scoped Execution waits, so an in-flight script can legitimately have no local waiter while it handles the event.
      */
     watchdogHold: string | null = null;
 

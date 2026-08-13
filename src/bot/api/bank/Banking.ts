@@ -17,9 +17,8 @@ import { depositAllExcept, depositMatcher } from './bankRules.js';
 import { walkOpening } from '../../nav/walkOpening.js';
 
 /**
- * Snap radius for "I'm already at a bank" — booth underfoot / local stand.
- * Wider than a single booth tile so starting next to Draynor still counts when
- * the script's camp bank is Edgeville (Barb fly restock).
+ * Snap radius for "I'm already at a bank" — booth underfoot or local stand.
+ * Why: wider than a single booth tile so starting next to Draynor still counts when the script's camp bank is Edgeville (Barb fly restock).
  */
 export const NEARBY_BANK_RADIUS = 14;
 
@@ -58,12 +57,8 @@ function openAccess(
 }
 
 /**
- * Start-of-script pack cleanup (#170): if the inventory holds anything that is
- * not on the keep list, open a bank and deposit the rest so the bot can start
- * anywhere without a full junk pack.
- *
- * Returns true when nothing needed banking or the purge finished. False only
- * when junk remains and the bank could not be opened / deposited.
+ * Start-of-script pack cleanup (#170): deposit anything not on the keep list so the bot can start anywhere without a full junk pack.
+ * Why: true when nothing needed banking or the purge finished; false only when junk remains and the bank could not be opened or deposited.
  */
 export async function purgePackAtBank(opts: {
     /** Exact display names to keep (case-insensitive), e.g. pickaxe / rod. */
@@ -136,9 +131,8 @@ export interface OpenBankOpts {
     /** Optional forced destination when no booth is in scene and stand is unset. */
     destination?: BankDestination;
     /**
-     * Prefer a bank already underfoot / in the local scene over a distant preset
-     * stand. Default true — starting next to Draynor must not web-walk to Edgeville
-     * just because the camp table says Edgeville.
+     * Prefer a bank already underfoot or in the local scene over a distant preset stand; default true.
+     * Why: starting next to Draynor must not web-walk to Edgeville because the camp table says Edgeville.
      */
     preferNearby?: boolean;
     /** Chebyshev / booth distance for nearby snap. Default {@link NEARBY_BANK_RADIUS}. */
@@ -194,16 +188,8 @@ function asTile(t: WorldTile): Tile {
 
 export const Banking = {
     /**
-     * Open a bank for script work (deposit / withdraw / restock).
-     *
-     * Route (default {@link preferNearby} = true):
-     * 1. Bank already open → done
-     * 2. Usable booth within {@link nearbyRadius} → open it (ignore distant stand)
-     * 3. Known {@link nearestBank} within radius and stand is far → walk that bank
-     * 4. Preset `stand` → walkOpening / walkResilient → openBooth
-     * 5. Else booth in scene → openNearest; else web-walk nearestBank
-     *
-     * Does not deposit or return — callers own the bank session.
+     * Open a bank for script work (deposit, withdraw, restock).
+     * Why: this neither deposits nor returns — callers own the bank session.
      */
     async open(opts: OpenBankOpts = {}): Promise<boolean> {
         const boothName = opts.boothName ?? 'Bank booth';
@@ -308,8 +294,7 @@ export const Banking = {
 
 /**
  * Human-ish pause between bank UI actions (open→scan, withdraw, deposit).
- * Tick-based (1–2 ticks) so bank load is not raced by open→scan→close on the
- * same tick after the GatheringBot split.
+ * Why: tick-based at 1–2 ticks so bank load is not raced by open→scan→close on the same tick after the GatheringBot split.
  */
 export function bankPaceTicks(rand: () => number = Math.random): number {
     return rand() < 0.35 ? 2 : 1;

@@ -1,6 +1,6 @@
 [Manual](../README.md) › [Testing](../TESTING.md) › Seeding
 
-# Seeding inventory vs bank
+# Seeding test accounts
 
 A full AIOQuester pass must exercise **provisioning**: empty pack, tools in the bank,
 min skill levels, scanBank → withdraw → enter. Pre-loading the pack and `~maxme` only
@@ -10,7 +10,7 @@ Server debug cheats are fair game.
 | Goal | How (local Server) |
 |---|---|
 | Item in **inventory** | engine `give bronze_pickaxe 1` (prefer) or content `~item bronze_pickaxe 1` (needs `p_finduid` — silent no-op after long walks) |
-| Jewellery in live OD | `nav-script-routes-live` seeds charged duel/glory/games at **start** (+ top-up each leg) so real HARD paths may Rub; use `JEWELLERY_ONLY=1` for isolation legs |
+| Jewellery in live OD | `nav-script-routes-live` seeds charged duel/glory/games at **start** (+ top-up each leg) so HARD paths may Rub; use `JEWELLERY_ONLY=1` for isolation legs |
 | Item seed after long walks | Prefer engine **`give`** over `~item` (`~item` needs `p_finduid` and silent-no-ops when busy) |
 | Item in **bank** | engine `givebank bronze_pickaxe 1` (or content `~bankitem bronze_pickaxe 1`) |
 | Wipe pack | `~clearinv` / `clearinv inv` |
@@ -19,8 +19,7 @@ Server debug cheats are fair game.
 | Stats | `advancestat mining 20` (then clear level-up dialogs) or `statsCsv=max` |
 | Tick rate | `speed 300` (2×) in cheats |
 
-**Bank seed path** (`seedItemsToBank` in
-[`tools/tutorial/harness.ts`](../../tools/tutorial/harness.ts)):
+**Bank seed path** (`seedItemsToBank` in [`tools/tutorial/harness.ts`](../../tools/tutorial/harness.ts)):
 
 1. `givebank <obj> <qty>` for each item (engine `ClientCheatHandler` — no busy-guard).
 2. If verify fails, retry with `~bankitem` (content debugproc; needs `p_finduid`).

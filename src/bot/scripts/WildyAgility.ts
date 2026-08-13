@@ -50,7 +50,7 @@ import {
 import { scriptFood } from '../api/loadout/loadoutPlan.js';
 import { LOADOUT_SETTING } from '../api/loadout/loadoutSetting.js';
 
-// Lowered because the default wait is 24 ticks and obstacle clears can take ~20.
+// Why: the default wait is 24 ticks and obstacle clears can take ~20.
 const LAP_RETRY_LIMIT = 2;
 const RIDGE_TIMEOUT_MS = 10_000;
 const BANK_TILE: WorldTile = EDGEVILLE_BANK;
@@ -128,11 +128,9 @@ function findRidge(): Loc | null {
         .nearest();
 }
 
-/**
- * Walk to the south stand of the ridge Door without pathfinding through it.
- * Targeting a tile north of the door makes WalkExecutor Open the Door as a
- * multi-tile transport — that steals the ridge attempt from the script.
- */
+// Why: targeting a tile north of the door makes WalkExecutor Open the Door as a multi-tile transport, which steals the ridge attempt from the script.
+
+/** Walks to the south stand of the ridge Door without pathfinding through it. */
 async function walkToRidgeApproach(bot: WildyAgility, label: string, attempts = 4, timeoutMs = 60_000): Promise<void> {
     const here = Game.tile();
     if (here && atRidgeApproach(here)) {
@@ -147,16 +145,12 @@ async function walkToRidgeApproach(bot: WildyAgility, label: string, attempts = 
     });
 }
 
-/**
- * Cross the wilderness ridge into the course.
- *
- * Outcome is detected via GameMessages (MESSAGE_GAME type-0 lines) plus XP.
- * Success: "You skillfully balance across the ridge..."
- * Failure: "You lose your footing and fall into the wolf pit." (same scene —
- * NOT the high-z obstacle pit that PitEscape handles).
- *
- * Only ridge.interact may cross the Door — approach walks stay south of 3917.
- */
+// Why: the outcome is read from GameMessages (MESSAGE_GAME type-0 lines) plus XP.
+// Why: success is "You skillfully balance across the ridge...".
+// Why: failure is "You lose your footing and fall into the wolf pit." — the same scene, not the high-z obstacle pit that PitEscape handles.
+// Why: only ridge.interact may cross the Door, so approach walks stay south of 3917.
+
+/** Crosses the wilderness ridge into the course. */
 async function attemptRidgeCrossing(bot: WildyAgility, label: string): Promise<RidgeOutcome> {
     await walkToRidgeApproach(bot, label);
 
@@ -283,9 +277,8 @@ export default class WildyAgility extends TaskBot {
 
         await ensureRetaliateOff(m => this.log(m));
 
-        // Startup food check (EdgevilleMonkeyBars-style): bank before walking to wildy
-        // when inventory is below minFood. Skip if already on the course / in a pit —
-        // mid-session restock is death-only (no safe gate exit from the lap zone).
+        // Why: a startup below minFood banks before walking to the wilderness.
+        // Why: already on the course or in a pit skips it, since mid-session restock is death-only — there is no safe gate exit from the lap zone.
         const startingFood = foodCount();
         if (MIN_FOOD > 0 && startingFood < MIN_FOOD) {
             if (this.entered || inPit(here, COURSE_CENTRE, PIT_Z_GAP)) {
@@ -394,11 +387,9 @@ export default class WildyAgility extends TaskBot {
         });
     }
 
-    /**
-     * Walk to Edgeville bank, deposit inventory, withdraw FOOD_WITHDRAW of FOOD.
-     * Used at startup (when below minFood off-course) and after wilderness death.
-     * @returns false if the bank could not be opened
-     */
+    // Why: it runs at startup when below minFood off-course, and after a wilderness death.
+
+    /** Walks to Edgeville bank, deposits inventory and withdraws FOOD_WITHDRAW of FOOD; false when the bank could not be opened. */
     private async bankForFood(reason: 'startup' | 'death'): Promise<boolean> {
         this.setStatus(`${reason}: walking to the bank`);
         await Traversal.walkResilient(BANK_TILE, {
@@ -671,9 +662,8 @@ class RunLap implements Task {
         if (here === null || this.bot.courseNames().length === 0) {
             return false;
         }
-        // Lap zone is north of the Gate. entered flag covers brief post-ridge settle.
-        // Stay active after a pit climb so we can walk to the next start tile even
-        // if the ladder exit briefly reads outside onCourse.
+        // Why: the lap zone is north of the Gate, and the entered flag covers the brief post-ridge settle.
+        // Why: it stays active after a pit climb so the walk to the next start tile happens even when the ladder exit briefly reads outside onCourse.
         if (this.bot.justEscapedPit) {
             return true;
         }
@@ -694,19 +684,16 @@ class RunLap implements Task {
             this.loggedOutOfFood = false;
         }
 
-        // Approach BEFORE finding/clicking/timing. Pit ladder exits and lap wraps
-        // (rocks → pipe) are far from the next start tile; counting that walk against
-        // OBSTACLE_TIMEOUT_TICKS caused false "no progress" retries and inflated
-        // "cleared in N ticks" / gap logs mid-recovery.
+        // Why: the approach happens before finding, clicking and timing.
+        // Why: pit ladder exits and lap wraps (rocks → pipe) are far from the next start tile, and counting that walk against OBSTACLE_TIMEOUT_TICKS causes false "no progress" retries and inflates the "cleared in N ticks" and gap logs mid-recovery.
         const escapedPit = this.bot.justEscapedPit;
         if (escapedPit) {
             this.bot.clearEscapedPit();
             this.bot.log(`just escaped pit — walking to '${name}' starting side before clicking`);
         }
         if (escapedPit || !this.nearStart(name, 2)) {
-            // Mid-obstacle after an aborted wait (e.g. old low-HP yield) can leave us
-            // on an unpathable tile. If the loc is still interactable, click from here
-            // instead of spinning on walkTo(start) failures.
+            // Why: mid-obstacle after an aborted wait can leave the bot on an unpathable tile.
+            // Why: an interactable loc is clicked from here rather than spinning on walkTo(start) failures.
             const alreadyHere = !escapedPit && this.find(name);
             if (!alreadyHere) {
                 this.bot.log(`walking to '${name}' starting side`);
@@ -781,11 +768,9 @@ class RunLap implements Task {
             return;
         }
 
-        // Timeout starts at the click, not at task entry / approach.
-        // Hard wall-clock bound: idle-only counting can stall forever if the
-        // client keeps reporting animation/movement (combat, pathing jitter).
-        // waitedTicks is diagnostic / low-HP gate only — the wall clock already
-        // bounds total wait before a 2× tick counter could fire.
+        // Why: the timeout starts at the click, not at task entry or approach.
+        // Why: a hard wall-clock bound is needed because idle-only counting stalls forever when the client keeps reporting animation or movement from combat or pathing jitter.
+        // Why: waitedTicks is diagnostic and the low-HP gate only, since the wall clock already bounds total wait.
         const clickTick = Game.tick();
         const waitDeadline = performance.now() + OBSTACLE_TIMEOUT_TICKS * 600 + 3_000;
         let idleTicks = 0;
@@ -822,10 +807,9 @@ class RunLap implements Task {
                 settled = true;
                 break;
             }
-            // Yield so EatFood can run while skeletons near rocks hit us.
-            // Only after a few ticks so we don't abort the click on residual damage.
-            // Never yield when inventory is empty — EatFood won't validate, and
-            // aborting mid-obstacle leaves us on unpathable tiles (log/pipe).
+            // Why: yielding lets EatFood run while skeletons near the rocks hit us.
+            // Why: it waits a few ticks first, so residual damage does not abort the click.
+            // Why: it never yields on an empty inventory — EatFood will not validate, and aborting mid-obstacle leaves the bot on unpathable tiles such as the log or pipe.
             if (waitedTicks >= 3 && needEat()) {
                 lowHp = true;
                 settled = true;

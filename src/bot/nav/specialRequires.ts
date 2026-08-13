@@ -62,9 +62,8 @@ const TRANSPORT_SKILL_GATES: readonly {
     { x: 3019, z: 3339, level: 0, skill: 'mining', levelReq: 60 },
     { x: 3019, z: 3341, level: 0, skill: 'mining', levelReq: 60 },
     { x: 3020, z: 3340, level: 0, skill: 'mining', levelReq: 60 },
-    // skill_agility/shortcuts.rs2 _island_rope_swing — agility 10 on outer swings.
-    // tree_ropeswing2 (brim south, from 2705,3205) intentionally has NO level check
-    // so players cannot softlock on the island (content: loc_type ! tree_ropeswing2).
+    // Why: skill_agility/shortcuts.rs2 _island_rope_swing needs agility 10 on the outer swings.
+    // Why: tree_ropeswing2 (brim south, from 2705,3205) carries no level check on purpose so players cannot softlock on the island — content reads `loc_type ! tree_ropeswing2`.
     { x: 2709, z: 3209, level: 0, skill: 'agility', levelReq: 10 }, // tree_ropeswing1 north
     { x: 2511, z: 3091, level: 0, skill: 'agility', levelReq: 10 }, // tree_ropeswing3 ogre
     // ranging_guild_door diagonal stands (transports.json from-tiles; loc at 2658,3438)
@@ -72,22 +71,11 @@ const TRANSPORT_SKILL_GATES: readonly {
     { x: 2659, z: 3437, level: 0, skill: 'ranged', levelReq: 40 }
 ];
 
-/**
- * Crossings whose content handler checks a quest varp, keyed by the edge origin
- * (doors by loc tile, transports by `from` — the two ways `specialRequiresAt` is
- * called). Without these A\* plans a route the player can never walk, and the
- * walker only finds out standing at the barrier: seven Morytania clue
- * destinations spent their whole eight-minute budget at the Paterdomus gate
- * before this existed.
- *
- * The journal is the only quest state on the wire, so a stage check maps to
- * `started` or `complete` — never finer. A crossing that needs a *post*-quest
- * step (the Salve barrier wants stage 61, one Drezel conversation past
- * complete) is gated on complete here and unlocked at execute time.
- *
- * Offline probes carry no WorldState, so these fail **open** and pack-tool
- * parity is unchanged.
- */
+// Why: these are crossings whose content handler checks a quest varp, keyed by the edge origin — doors by loc tile, transports by `from`, the two ways `specialRequiresAt` is called.
+// Why: without them A* plans a route the player can never walk and the walker only finds out standing at the barrier; seven Morytania clue destinations spent their eight-minute budget at the Paterdomus gate before this existed.
+// Why: the journal is the only quest state on the wire, so a stage check maps to `started` or `complete` and never finer.
+// Why: a crossing needing a post-quest step — the Salve barrier wants stage 61, one Drezel conversation past complete — is gated on complete here and unlocked at execute time.
+// Why: offline probes carry no WorldState, so these fail open and pack-tool parity is unchanged.
 const CROSSING_QUEST_GATES: readonly {
     x: number;
     z: number;
@@ -115,14 +103,10 @@ const CROSSING_QUEST_GATES: readonly {
     }
 ];
 
-/**
- * Plan-time requires for an edge origin tile.
- * specialCrossings: prefer exact level, else same x/z (ships often key SC at
- * deck L1 while transports.json stand is pier L0).
- *
- * freeSlots on unlockQuest is **execute-only** (e.g. Drezel pies when starting
- * Nature Spirit) — never attach to plan requires or full packs fail the gate forever.
- */
+// Why: specialCrossings match on the same level first, then on x/z alone, because ships often key the crossing at deck L1 while the transports.json stand is the pier at L0.
+// Why: `freeSlots` on unlockQuest is execute-only (Drezel's pies when starting Nature Spirit) and must never reach plan requires, or a full pack fails the gate forever.
+
+/** Plan-time requires for an edge origin tile. */
 export function specialRequiresAt(x: number, z: number, level: number): TransportRequires | undefined {
     // A tile can carry more than one gate — the sewer pipe wants Plague City
     // *and* the gas mask worn — so collect rather than return on the first hit.

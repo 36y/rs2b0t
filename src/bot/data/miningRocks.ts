@@ -1,11 +1,6 @@
 /**
- * Ore rock loc type ids from Server content (`scripts/skill_mining/configs/rocks.loc`
- * + `pack/loc.pack`). All share in-game name "Rocks" + op Mine; ore is distinguished
- * only by id. Depleted stages become empty rocks1/rocks2 (ids 450/452) with
- * `mining_rock_empty` — those must stay out of this map so findRock ignores empties.
- *
- * Dwarven iron spans two clusters (~3032,9825 and ~3044,9770) — pick by player
- * distance + local prefer, not only camp-pin membership (see GatheringBot.findRock).
+ * Ore rock loc type ids from Server content (`scripts/skill_mining/configs/rocks.loc` + `pack/loc.pack`). All share in-game name "Rocks" + op Mine, so ore is distinguished only by id; depleted stages become empty rocks1/rocks2 (ids 450/452) with `mining_rock_empty` and must stay out of this map so findRock ignores empties.
+ * Why: Dwarven iron spans two clusters (~3032,9825 and ~3044,9770), so GatheringBot.findRock picks by player distance plus local prefer rather than camp-pin membership alone.
  */
 export const ROCK_TYPES: Record<string, number[]> = {
     Clay: [2108, 2109],
@@ -21,9 +16,8 @@ export const ROCK_TYPES: Record<string, number[]> = {
 };
 
 /**
- * Rocks outside the tradeable-ore block. Quest-only, and deliberately not part of
- * `ROCK_OPTIONS` — an empty GatheringBot ore selection falls back to every option,
- * and blurite is not something a mining bot should ever target.
+ * Rocks outside the tradeable-ore block. Quest-only, and deliberately absent from `ROCK_OPTIONS`.
+ * Why: an empty GatheringBot ore selection falls back to every option in `ROCK_OPTIONS`, and a mining bot should never target blurite.
  */
 export const QUEST_ROCK_TYPES: Record<string, number[]> = {
     Blurite: [2110]

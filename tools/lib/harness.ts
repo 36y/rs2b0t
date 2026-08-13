@@ -1,4 +1,3 @@
-// docs/how-to/write-a-harness.md
 import { chromium } from 'playwright-core';
 import type { Browser, Page } from 'playwright-core';
 
@@ -10,14 +9,8 @@ export function fail(msg: string): never {
 /** Flags that consume the argument after them. Their values are not positionals. */
 const VALUE_FLAGS = new Set(['--base', '--minutes', '--stage', '--engine']);
 
-/**
- * Positional argv for harnesses that index their arguments.
- *
- * The e2e runner appends global flags (`--no-deploy`) to every harness, so raw
- * `process.argv[2]` indexing reads a flag as the engine base. This strips flags
- * and guarantees index 0 is the base — `--base` first, then a positional URL,
- * then `fallbackBase` — so every later index keeps the argument it always had.
- */
+/** Positional argv for harnesses that index their arguments: `--base` first, then a positional URL, then `fallbackBase`.
+ *  Why: the e2e runner appends global flags (`--no-deploy`) to every harness, so raw `process.argv[2]` indexing reads a flag as the engine base. */
 export function positionalArgs(argv: string[], fallbackBase: string): string[] {
     let flagBase: string | undefined;
     const bare: string[] = [];
@@ -57,17 +50,8 @@ export function parseArgs(argv: string[], defaults?: { base?: string; minutes?: 
     };
 }
 
-/**
- * Preferred Playwright viewport for live harnesses (local operator preference).
- *
- * Matches Playwright's default and tools that call `browser.newPage()` with no
- * override (GatheringBot suite, verify-gather-locs, open-client, …).
- *
- * Do **not** force `{ width: 1500, height: 1000 }` — bot.html scales the 765×503
- * game stage to fill the page; a large viewport makes the client look blown up
- * relative to the smaller harnesses. Prefer omitting `setViewportSize` / `viewport`
- * so this default applies, or pass `HARNESS_VIEWPORT` explicitly.
- */
+/** Preferred Playwright viewport for live harnesses; matches Playwright's own default for `browser.newPage()`.
+ *  Why: bot.html scales the 765×503 game stage to fill the page, so forcing `{ width: 1500, height: 1000 }` blows the client up next to the smaller harnesses — omit `setViewportSize`/`viewport` or pass `HARNESS_VIEWPORT`. */
 export const HARNESS_VIEWPORT = { width: 1280, height: 720 } as const;
 
 export async function launchBrowser(opts?: { swiftshader?: boolean }): Promise<Browser> {
@@ -139,18 +123,12 @@ export async function cheatQuiet(page: Page, command: string, waitMs = 700): Pro
     return sent;
 }
 
-/**
- * logout:try_logout — if_button com 2458 → ClientProt.IF_BUTTON (opcode 9) → p_logout.
- * Tab-rooted, so the engine accepts it without the logout tab open.
- * Prefer this over socket drop / client.logout() for fast relog (~seconds, not 60s).
- */
+/** logout:try_logout — if_button com 2458 → ClientProt.IF_BUTTON (opcode 9) → p_logout.
+ *  Tab-rooted, so the engine accepts it without the logout tab open; ~seconds against 60s for a socket drop. */
 export const LOGOUT_BUTTON_COM = 2458;
 
-/**
- * Log out through the game's own button rather than by dropping the socket.
- * Reloading the page leaves the server holding the player online for its
- * disconnect grace period, which costs a relogin loop minutes of waiting.
- */
+/** Log out through the game's own button rather than by dropping the socket.
+ *  Why: reloading the page leaves the server holding the player online for its disconnect grace period, which costs a relogin loop minutes. */
 export async function logout(page: Page, waitMs = 8000): Promise<boolean> {
     const sent = await page.evaluate(com => {
         const a = (globalThis as never as { rs2b0t?: { actions?: { ifButton?(c: number): boolean } } }).rs2b0t?.actions;

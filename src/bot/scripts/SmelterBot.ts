@@ -27,9 +27,10 @@ import { fmtDuration } from '../api/paint/paintLogic.js';
 const DEFAULT_BANK_STAND = new Tile(3269, 3167, 0);
 const DEFAULT_FURNACE_STAND = new Tile(3275, 3185, 0);
 const BOOTH = { op: 'Use-quickly' };
-// A pack holds 28, so 30 always clears it in one go and the engine caps the rest.
-// Sending the measured ore count instead would make a momentarily stale pack read
-// smelt short.
+// Why: a pack holds 28, so 30 always clears it in one go and the engine caps the rest.
+// Why: sending the measured ore count instead makes a momentarily stale pack read smelt short.
+
+/** Smelt-X quantity. */
 const SMELT_X = 30;
 
 export const SETTINGS: SettingsSchema = {
@@ -121,12 +122,9 @@ class BankTrip implements Task {
         }
         await Bank.depositInventory();
 
-        // Two different empties look identical through Bank.count: the list refills
-        // asynchronously after a deposit, and the window can be closed outright (the run
-        // toggle clicks a controls-tab component and the server shuts the modal to serve
-        // it). Either way every ore reads 0, which is what produced "'Coal' vanished from
-        // the bank mid-trip" (#117). Ore does not vanish — so establish the window is
-        // open AND filled before believing anything it says, and say which one failed.
+        // Why: two empties look identical through Bank.count — the list refills asynchronously after a deposit, and the window can be closed outright when the run toggle clicks a controls-tab component and the server shuts the modal to serve it.
+        // Why: either way every ore reads 0, which produced "'Coal' vanished from the bank mid-trip" (#117).
+        // Why: ore does not vanish, so the window must be open and filled before anything it says is believed, and the log names which check failed.
         if (!(await Execution.delayUntil(() => Bank.isOpen() && Bank.loaded(), 5000))) {
             this.bot.log(Bank.isOpen()
                 ? 'the bank list has not filled in yet — retrying this trip'

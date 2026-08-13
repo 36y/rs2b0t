@@ -8,11 +8,8 @@ import { Locs } from '../../../api/locs/Locs.js';
 import type { QuestSnapshot, QuestStep } from '../../engine/types.js';
 import { BONE_SPAWNS, SV_ITEM, SV_NPC, SV_TILE, type ShiloItem } from './areas.js';
 
-/**
- * Jiminua stocks rope, spade, chisel, candle, tinderbox, hammer, a bronze bar and
- * food, thirty-five tiles from Trufitus. Karamja has no bank until this quest opens
- * Shilo's, so everything except coins and bones is bought here rather than carried.
- */
+// Why: Jiminua stocks rope, spade, chisel, candle, tinderbox, hammer, a bronze bar and food, thirty-five tiles from Trufitus.
+// Why: Karamja has no bank until this quest opens Shilo's, so everything except coins and bones is bought here rather than carried.
 const JIMINUA_SHOP = { npc: SV_NPC.JIMINUA, anchor: SV_TILE.JIMINUA };
 
 // Asking prices run well above obj cost and climb as stock drains; this leaves headroom.
@@ -47,11 +44,9 @@ export function withdrawFrom(items: { name: string; id: number; qty: number }[])
     return { kind: 'withdraw', items, bank: SV_TILE.ARDOUGNE_BANK };
 }
 
-/**
- * Jiminua is 35 tiles from Trufitus but the mound is 200 the other way, so buying
- * one item per trip costs six crossings of the island. Every tool the rest of the
- * quest still needs is bought in a single visit instead.
- */
+// Why: Jiminua is 35 tiles from Trufitus but the mound is 200 the other way, so buying one item per trip costs six crossings of the island.
+
+/** Buy every tool the rest of the quest still needs in one visit. */
 function stockUp(wanted: readonly { item: ShiloItem; qty: number }[]): QuestStep {
     const list = wanted.map(w => `${w.qty}× ${w.item.name}`).join(', ');
     return { kind: 'custom', name: `buy ${list} from Jiminua`, run: log => buyKit(wanted, log) };

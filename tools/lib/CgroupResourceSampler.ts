@@ -193,11 +193,8 @@ export async function resolveDedicatedCgroupDir(
     return { status: 'available', cgroupDir };
 }
 
-/**
- * Samples one dedicated cgroup-v2. Unlike /proc tree snapshots, cpu.stat is
- * cumulative across exited children, so ordinary browser process churn cannot
- * invalidate a CPU interval.
- */
+/** Samples one dedicated cgroup-v2.
+ *  Why: cpu.stat is cumulative across exited children, so ordinary browser process churn cannot invalidate a CPU interval the way a /proc tree snapshot can. */
 export class CgroupResourceSampler {
     private readonly cgroupDir: string;
     private readonly rootPid: number;

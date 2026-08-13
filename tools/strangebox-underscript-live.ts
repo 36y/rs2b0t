@@ -1,8 +1,6 @@
-// Live proof — Strange box ("Mysterious box") random event under a RUNNING script.
-// Seeds macro_cube mid-run and asserts the guardian/Supervisor solve it and the
-// script resumes, rather than the box replicating (engine replicates every ~90s
-// and on every wrong answer, up to a 28-slot pack).
-//
+// Live proof — Strange box ("Mysterious box") random event under a running script: [base].
+// Why: the engine replicates the box every ~90s and on every wrong answer, up to a 28-slot pack, so the guardian/Supervisor must solve it mid-run and let the script resume.
+
 //   bun tools/strangebox-underscript-live.ts [http://localhost:8888]
 import { launchBrowser, parseArgs } from './lib/harness.js';
 import { cheatQuiet, mainlandAccount, startScript } from './tutorial/harness.js';

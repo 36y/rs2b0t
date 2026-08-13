@@ -193,13 +193,11 @@ export const FOOD_HEAL: Record<string, number> = {
     shrimps: healOf('Shrimps')
 };
 
-/**
- * What to keep in the pack when banking — everything else is deposited, including
- * random-event loot (coins, runes, arrows) that would otherwise ride along forever.
- * Product + source (toad legs / swamp toads / eggs / …) are intentionally omitted —
- * those are the loot we deposit. Keeping them left a full pack after close and
- * spammed open/close forever.
- */
+// Why: everything not kept is deposited, including random-event loot such as coins, runes and arrows that would otherwise ride along.
+// Why: the product and source — toad legs, swamp toads, eggs and the rest — are deliberately omitted, since they are the loot being deposited.
+// Why: keeping them leaves a full pack after close and spams open/close.
+
+/** What to keep in the pack when banking. */
 export function keepOnDeposit(def: SecondaryDef, food: string): string[] {
     const keep: string[] = [];
     // Coins buy stock on shop routes; anywhere else they are random-event pickups.

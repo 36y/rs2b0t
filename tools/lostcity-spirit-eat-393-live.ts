@@ -1,7 +1,6 @@
-// Live proof #393 — Tree Spirit fight does not burn a full load of food.
-// Seeds spoken-to-Shamus stage, axe + 20 lobsters at the Dramen tree, runs AIO
-// through the spirit kill, asserts most food remains (eat only under 50% HP).
-//
+// Live proof #393 — the Tree Spirit fight does not burn a full load of food: [base].
+// Seeds the spoken-to-Shamus stage plus axe and 20 lobsters at the Dramen tree, runs AIO through the kill, asserts most food remains (eat only under 50% HP).
+
 //   bun tools/lostcity-spirit-eat-393-live.ts [http://localhost:8890]
 import { type Page } from 'playwright-core';
 import { launchBrowser, positionalArgs } from './lib/harness.js';

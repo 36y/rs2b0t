@@ -42,9 +42,8 @@ async function fillHopper(log: (m: string) => void): Promise<boolean> {
     if (!(await grain.useOn(hopper))) {
         return false;
     }
-    // The grain leaves the pack before the server walks us to the hopper, so
-    // only the closing message means the fill is really done. Acting on the
-    // pack instead sends the next op mid-walk and it is dropped.
+    // Why: the grain leaves the pack before the server walks us to the hopper, so only the closing message means the fill is done.
+    // Why: acting on the pack instead sends the next op mid-walk, where it is dropped.
     return Execution.delayUntil(() => GameMessages.sawSince(mark, GRAIN_LOADED), 20_000);
 }
 

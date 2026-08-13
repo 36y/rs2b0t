@@ -5,11 +5,9 @@ import type { QuestProgress } from '../../engine/types.js';
 
 export const ELEMENTAL_WORKSHOP_QUEST = 'Elemental Workshop';
 
-/**
- * Coarse stages from journal structure. Machinery sub-progress (water, bellows,
- * furnace) is carried as flags — the journal appends those paragraphs while the
- * entered branch is active.
- */
+// Why: machinery sub-progress (water, bellows, furnace) is carried as flags, as the journal appends those paragraphs while the entered branch is active.
+
+/** Coarse stages read off the journal's structure. */
 export const EW_STAGE = {
     NOT_STARTED: 0,
     READ_BOOK: 1,

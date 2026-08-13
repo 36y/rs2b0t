@@ -1,9 +1,8 @@
-/**
- * Pack walkability probe for curated 2004 travel edge endpoints.
- *
- *   bun tools/nav/curated-travel-probe.ts
- *   bun tools/nav/curated-travel-probe.ts --pack=out/collision.lcnav.gz
- */
+/** Pack walkability probe for curated 2004 travel edge endpoints.
+ *  --pack=out/collision.lcnav.gz */
+
+//   bun tools/nav/curated-travel-probe.ts
+//   bun tools/nav/curated-travel-probe.ts --pack=out/collision.lcnav.gz
 import fs from 'node:fs';
 import { gunzipSync } from 'fflate';
 

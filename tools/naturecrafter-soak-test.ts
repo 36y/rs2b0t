@@ -1,7 +1,5 @@
-// Soak: 1 master + N runners (default 8) for a full hour, streaming a live dashboard and then
-// asserting the fleet actually stayed healthy. Air by default (the short Falador loop); pass
-// "Nature runes" for the long Ardougne->Karamja route.
-// Usage: bun tools/naturecrafter-soak-test.ts [base] [budget-min] [num-runners] [rune]
+// Soak: 1 master + N runners (default 8) for an hour, streaming a live dashboard and then asserting the fleet stayed healthy.
+// Usage: bun tools/naturecrafter-soak-test.ts [base] [budget-min] [num-runners] [rune: Air by default (the short Falador loop), "Nature runes" for the long Ardougne→Karamja route]
 
 import type { Page } from 'playwright-core';
 import { boot, bringUpOffIsland, fail, launchBrowser, login, positionalArgs, type } from './lib/harness.js';

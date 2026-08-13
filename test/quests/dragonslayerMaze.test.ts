@@ -87,10 +87,7 @@ describe("Melzar's Maze route", () => {
         expect(MAZE_LEGS[legFromPosition({ x: 2929, z: 3250, level: 1 })]).toMatchObject({ kind: 'kill', npcId: MAZE_NPC.GHOST });
         expect(MAZE_LEGS[legFromPosition({ x: 2925, z: 3251, level: 2 })]).toMatchObject({ kind: 'kill', npcId: MAZE_NPC.SKELETON });
         expect(MAZE_LEGS[legFromPosition({ x: 2932, z: 9641, level: 0 })]).toMatchObject({ kind: 'kill', npcId: MAZE_NPC.ZOMBIE });
-        // Every floor and cellar test above only means anything inside the maze.
-        // The Dwarven Mine anvil, where the nails leg ends, is z=9813: read as
-        // "the maze basement" it sent the run to a zombie two dungeons away and
-        // the walker spent the rest of the run failing to path there.
+        // Why: the Dwarven Mine anvil where the nails leg ends is z=9813, which a bare cellar test reads as the maze basement.
         expect(legFromPosition({ x: 3012, z: 9813, level: 0 })).toBe(0);
         // Duke Horacio's floor of Lumbridge castle, where the shield leg ends.
         expect(legFromPosition({ x: 3212, z: 3220, level: 1 })).toBe(0);
@@ -104,9 +101,7 @@ describe("Melzar's Maze route", () => {
 describe('the Crandor secret wall', () => {
     test('is one loc, on the Crandor row, reached from a stand one tile south', () => {
         // m44_150.jm2 spawns it at (2836,9600) angle 3 (south) and nowhere else.
-        // A wall has no second loc on its far side, so both directions have to
-        // click this tile; addressing the Karamja stand as if it were the door
-        // finds nothing in the scene and the way back in never opens.
+        // Why: a wall has no second loc on its far side, so both directions click this tile and the Karamja stand is not the door.
         expect(DS_LOC.CRANDOR_SECRET_DOOR).toMatchObject({ x: 2836, z: 9600, level: 0 });
         expect(DS_LOC.SECRET_WALL_KARAMJA_STAND.x).toBe(DS_LOC.CRANDOR_SECRET_DOOR.x);
         expect(DS_LOC.SECRET_WALL_KARAMJA_STAND.level).toBe(DS_LOC.CRANDOR_SECRET_DOOR.level);
@@ -116,10 +111,7 @@ describe('the Crandor secret wall', () => {
     });
 
     test('the lair gate is taken from the lair column, which is the side that opens', () => {
-        // Both leaves spawn at angle 0 (west) on x=2847, so check_axis_locactive
-        // reads that column as "entering" and the lock — stage != sailed, not
-        // entering — only ever guards the way in. Standing a tile west of it is
-        // how a finished run would find itself shut in with the corpse.
+        // Why: both leaves spawn at angle 0 (west) on x=2847, so check_axis_locactive reads that column as entering and the lock only guards the way in.
         expect(DS_LOC.ELVARG_GATE_INSIDE.x).toBe(DS_LOC.ELVARG_GATE.x);
         expect(DS_LOC.ELVARG_GATE_STAND.x).toBe(DS_LOC.ELVARG_GATE.x - 1);
     });
@@ -127,9 +119,7 @@ describe('the Crandor secret wall', () => {
 
 describe('Oziach', () => {
     test('every goal is judged on a phrase his reply actually contains', () => {
-        // Straight out of area_edgeville/scripts/oziach.rs2. If a line is
-        // reworded upstream the goal silently never completes and the
-        // conversation loops, so the phrases are pinned here.
+        // Why: an upstream reword leaves the goal silently incomplete and loops the conversation, so oziach.rs2's phrases are pinned here.
         const REPLIES: Record<string, string> = {
             'Where is the first piece of the map?':
                 "Deep in a strange building known as Melzar's maze|located north west of Rimmington.",

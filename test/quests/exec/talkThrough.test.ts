@@ -26,7 +26,7 @@ let doorInteractOps: string[];
 
 const { GameMessages } = await import('#/bot/api/chatbox/gameMessages.js');
 
-// Mutate singletons — mock.module is permanent in Bun (docs/reference/test-suites.md).
+// Why: Bun's mock.module is permanent for the process, so stub the singleton instead.
 const restoreReader = stubProps(reader, { worldTile: () => ({ x: 0, z: 0, level: 0 }) });
 const restoreExec = stubProps(Execution, {
     delayUntil: async (cond: () => boolean) => cond(),
@@ -173,8 +173,7 @@ describe('talkThrough door handling', () => {
     });
 
     test('a distant target is never probed — out of BFS range reads as walled off', async () => {
-        // 400 expansions run out at ~11 tiles of open ground, so a patrolling NPC
-        // would otherwise have us opening doors it is simply too far to need.
+        // Why: 400 expansions run out at ~11 tiles of open ground, so a patrolling NPC would otherwise have us opening doors it is too far to need.
         npcReachable = false;
         sceneNpc = { name: 'Fred the Farmer', tile: { x: 40, z: 40, level: 0 }, ops: ['Talk-to'] };
         sceneDoor = { name: 'Door', ops: ['Open'], tile: { x: 1, z: 0, level: 0 }, distance: 1 };

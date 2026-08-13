@@ -18,12 +18,9 @@ export const FC_STAGE = {
     COMPLETE: 11
 } as const;
 
-/**
- * All three crest fragments render "Crest part", so every check goes through the
- * id. The names are also crossed over server-side: Caleb hands out `avan_crest`
- * and Avan hands out `caleb_crest` — the constants below are named for the
- * brother who gives them, which is what `decide()` reasons about.
- */
+// Why: all three crest fragments render "Crest part", so every check goes through the id.
+// Why: the names are crossed over server-side — Caleb hands out `avan_crest` and Avan hands out `caleb_crest`.
+// Why: the constants below are named for the brother who gives them, which is what `decide()` reasons about.
 export const FC_ID = {
     CREST_FROM_CALEB: 779,
     CREST_FROM_AVAN: 780,
@@ -84,11 +81,9 @@ export const FC_ITEM = {
     COINS: 'Coins'
 } as const;
 
-/**
- * Ring of dueling, all eight charge stages. The navigator rubs jewellery from
- * the **inventory only** — its bank planner never withdraws a ring — so the
- * quest has to carry one for the Duel Arena hop to be planned at all.
- */
+// Why: the navigator rubs jewellery from the inventory only and its bank planner never withdraws a ring, so the quest has to carry one for the Duel Arena hop to be planned at all.
+
+// Ring of dueling, all eight charge stages.
 export const DUEL_RING_IDS = [2552, 2554, 2556, 2558, 2560, 2562, 2564, 2566] as const;
 
 /** Antipoison in every dose; any of them cures Johnathon. */
@@ -154,11 +149,9 @@ export const FC_BANK = {
     EDGEVILLE: new Tile(3094, 3493, 0)
 } as const;
 
-/**
- * The perfect-gold zone from quest_crest.constant. `inzone` tests the **player's**
- * tile, not the rock's, so mining a boundary rock from outside the box yields
- * ordinary gold ore and the quest silently stalls.
- */
+// Why: `inzone` tests the player's tile rather than the rock's, so mining a boundary rock from outside the box yields ordinary gold ore and the quest silently stalls.
+
+// The perfect-gold zone from quest_crest.constant.
 const PERFECT_GOLD_ZONE = { minX: 2736, maxX: 2740, minZ: 9684, maxZ: 9693 } as const;
 
 export function inPerfectGoldZone(tile: { x: number; z: number; level: number } | null | undefined): boolean {

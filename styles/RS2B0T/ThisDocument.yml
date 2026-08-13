@@ -1,0 +1,7 @@
+extends: existence
+message: "Drop the self-reference: '%s'."
+level: error
+scope: sentence
+ignorecase: false
+tokens:
+  - '^This (document|guide|file|page|section)'

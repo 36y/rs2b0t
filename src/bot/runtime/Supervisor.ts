@@ -40,9 +40,8 @@ class SupervisorImpl {
     }
 
     intercept(ctx: ScriptContext, bot: AbstractBot): SupervisorIteration | null {
-        // RandomEventGuardian runs the solver whenever sceneState===2 (script or not).
-        // While an event is active or being handled, yield the script loop so bots
-        // do not walk/bank through it; do not double-enter handle() (single-flight).
+        // Why: RandomEventGuardian runs the solver whenever sceneState===2, script or not, so the script loop yields while an event is active or being handled and bots do not walk or bank through it.
+        // Why: handle() must not be double-entered (single-flight).
         const event = RandomEvents.detect();
         if (event || RandomEvents.handling) {
             const label = event ? `${event.kind}: ${event.name}` : (ctx.activeEvent ?? 'random event');

@@ -1,13 +1,6 @@
-/**
- * Web slash tool detection (Server content general_use/web.rs2 + slash_checker.rs2).
- *
- * - Menu Slash: worn weapon with a real slashattack_anim
- * - Use-on: plain `knife` OR any item with slashattack_anim
- *
- * We approximate slash-capable weapons by display name (same family as elemental
- * workshop / Entrana heuristics). Plain "Knife" is exact; bronze/iron throwing
- * knives are different objs and do not count as content `knife`.
- */
+// Why: in Server content general_use/web.rs2 and slash_checker.rs2 a menu Slash needs a worn weapon with a slashattack_anim, while use-on accepts a plain `knife` or any item with slashattack_anim.
+// Why: slash-capable weapons are approximated by display name, the same family as the elemental workshop and Entrana heuristics.
+// Why: plain "Knife" matches by name, while bronze and iron throwing knives are different objs and do not count as the content `knife`.
 
 const SLASH_NAME_RE =
     /\b(scimitar|longsword|sword|dagger|battleaxe|2h\b|two.handed|claws|whip|scythe|halberd|machete|abyssal|silverlight|excalibur|darklight)\b/i;

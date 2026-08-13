@@ -25,11 +25,10 @@ import {
     type BarcrawlProgress
 } from './BarcrawlLogic.js';
 
-/**
- * Read the card. The scroll is a **main** modal built with `if_settext`, so no
- * dialogue driver can see it and every other modal read comes back empty while
- * it is up — it has to be closed again, exactly like a quest journal.
- */
+// Why: the scroll is a main modal built with `if_settext`, so no dialogue driver can see it.
+// Why: every other modal read comes back empty while it is up, so it has to be closed again, exactly like a quest journal.
+
+/** Read the barcrawl card. */
 export async function readCard(log?: (m: string) => void): Promise<BarcrawlProgress | null> {
     const card = Inventory.first(BARCRAWL_CARD);
     if (!card) {
@@ -41,11 +40,9 @@ export async function readCard(log?: (m: string) => void): Promise<BarcrawlProgr
         log?.('the card refused its Read op');
         return null;
     }
-    // The modal id arrives in `if_openmain`; each line of the scroll arrives in
-    // its own `if_settext`, and component text persists in the interface list
-    // between modals. Sampling on the tick the id changes therefore reads an
-    // empty scroll — or the previous read's. Settle a tick, then wait for text
-    // that actually parses as the card rather than for the id alone.
+    // Why: the modal id arrives in `if_openmain`, each line of the scroll arrives in its own `if_settext`, and component text persists in the interface list between modals.
+    // Why: sampling on the tick the id changes therefore reads an empty scroll, or the previous read's.
+    // Why: settling a tick and waiting for text that parses as the card is what makes the read honest, where waiting on the id alone is not.
     const idChanged = await Execution.delayUntil(() => {
         const main = reader.modals().main;
         return main !== -1 && main !== before;
@@ -60,10 +57,8 @@ export async function readCard(log?: (m: string) => void): Promise<BarcrawlProgr
     if (parsed) {
         return parsed;
     }
-    // `opheld1,barcrawl_card` stops opening the scroll once every bar is
-    // signed — "You are too drunk to be able to read the barcrawl card" is
-    // the *finished* state, not a failed read, and taking it for a failure
-    // leaves the tour looping at the tenth bar forever.
+    // Why: `opheld1,barcrawl_card` stops opening the scroll once every bar is signed, and "You are too drunk to be able to read the barcrawl card" is the finished state.
+    // Why: taking that line for a failed read leaves the tour looping at the tenth bar forever.
     if (GameMessages.sawSince(mark, TOO_DRUNK)) {
         return { remaining: [], done: true };
     }
@@ -76,11 +71,10 @@ export async function readCard(log?: (m: string) => void): Promise<BarcrawlProgr
 /** Every bartender in the game renders "Bartender", so they are found by id. */
 const byId = (id: number): Npc | null => Npcs.query().where(n => n.id === id).nearest();
 
-/**
- * One bar. `[opnpcu,<bartender>]` takes the card straight to the barcrawl
- * branch, which skips the four-option menu the talk op puts up and behaves the
- * same at every one of the ten.
- */
+// Why: `[opnpcu,<bartender>]` takes the card straight to the barcrawl branch, skipping the four-option menu the talk op puts up.
+// Why: that branch behaves the same at every one of the ten bars.
+
+/** Drink at one bar. */
 async function drinkAt(bar: Bar, log: (m: string) => void): Promise<boolean> {
     if (!(await Traversal.walkResilient(bar.tile, { radius: 3, attempts: 3, timeoutMs: 300_000, log }))) {
         log(`could not reach the ${bar.line} bartender`);
@@ -97,13 +91,9 @@ async function drinkAt(bar: Bar, log: (m: string) => void): Promise<boolean> {
     if (!(await card.useOn(npc))) {
         return false;
     }
-    // Nine of the ten go straight into the drink; the Rising Sun's barmaid
-    // still offers her ale list first, so the barcrawl line has to be in the
-    // preference list or her menu sits unanswered and the card never signs.
-    //
-    // The coin deduction is what says the drink was actually bought — the card
-    // only turns green several `p_delay`s later, so the read is retried rather
-    // than taken once.
+    // Why: nine of the ten go straight into the drink, but the Rising Sun's barmaid offers her ale list first.
+    // Why: the barcrawl line therefore has to be in the preference list, or her menu sits unanswered and the card never signs.
+    // Why: the coin deduction is what says the drink was bought, as the card only turns green several `p_delay`s later, so the read is retried rather than taken once.
     await driveUntil(() => Inventory.count(COINS) < beforeCoins, BAR_PREFER, log, 20_000);
     for (let attempt = 0; attempt < 3; attempt++) {
         await Execution.delayTicks(5);
@@ -147,9 +137,7 @@ async function runBarcrawl(log: (m: string) => void, onProgress?: Progress): Pro
             return true;
         }
         log(`barcrawl: ${progress.remaining.length} bars left, heading for the ${next.line}`);
-        // One bar that will not answer is not a reason to walk the whole tour
-        // again from the top — the next pass re-reads the card and re-sorts, so
-        // the loop moves on and comes back to it.
+        // Why: the next pass re-reads the card and re-sorts, so the loop moves on past one bar that will not answer and comes back to it.
         missed = (await drinkAt(next, log)) ? 0 : missed + 1;
         if (missed >= GIVE_UP) {
             log(`${missed} bars in a row refused the card — stopping`);
@@ -165,9 +153,7 @@ async function talkToGuard(log: (m: string) => void): Promise<boolean> {
         return false;
     }
     await Execution.delayTicks(2);
-    // By id, not by display name: the outpost's other "Barbarian guard" is the
-    // attackable one, and the gate loc runs the same conversation, so a talk
-    // aimed by name can land on either.
+    // Why: the outpost's other "Barbarian guard" is the attackable one and the gate loc runs the same conversation, so a talk aimed by display name can land on either — hence the id.
     if (!byId(BARBARIAN_GUARD_ID)) {
         log('no barbarian guard at the outpost gate');
         return false;
@@ -182,10 +168,9 @@ async function talkToGuard(log: (m: string) => void): Promise<boolean> {
     return status === 'done';
 }
 
-/**
- * Give the signed card to the gate guard. `outpost_guard_progress` consumes it
- * and sets `%barcrawl` to complete, which is what actually opens the gate.
- */
+// Why: `outpost_guard_progress` consumes the card and sets `%barcrawl` to complete, which is what opens the gate.
+
+/** Give the signed card to the gate guard. */
 async function handInBarcrawl(log: (m: string) => void): Promise<boolean> {
     if (!(await talkToGuard(log))) {
         return false;
@@ -196,20 +181,12 @@ async function handInBarcrawl(log: (m: string) => void): Promise<boolean> {
 
 type GuardVerdict = 'complete' | 'issued' | 'retry';
 
-/**
- * Ask the gate guard where the crawl stands, which is the only oracle there is:
- * `%barcrawl` is not on the wire, and an empty pack looks the same before the
- * card is issued as after it is handed in.
- *
- * `outpost_guard_talk` branches on the varp — "Oi, whaddya want?" for not
- * started, "'Ello friend." for complete, "So, how's the Barcrawl coming along?"
- * for anything between, and that last branch re-issues a lost card.
- *
- * **The greeting is the verdict, not the empty pack.** A random event landing
- * mid-conversation abandons the option chain, and reading "no card came out" as
- * "already done" sends the bot at a gate that will not open, for good. Only
- * "'Ello friend." means finished.
- */
+// Why: the guard is the only oracle there is — `%barcrawl` is not on the wire, and an empty pack looks the same before the card is issued as after it is handed in.
+// Why: `outpost_guard_talk` branches on the varp — "Oi, whaddya want?" for not started, "'Ello friend." for complete, "So, how's the Barcrawl coming along?" for anything between, and that last branch re-issues a lost card.
+// Why: the greeting is the verdict and the empty pack is not, since a random event landing mid-conversation abandons the option chain.
+// Why: reading "no card came out" as "already done" sends the bot at a gate that will not open, for good, so only "'Ello friend." means finished.
+
+/** Ask the gate guard where the crawl stands. */
 async function askGuard(log: (m: string) => void): Promise<GuardVerdict> {
     if (!(await talkToGuard(log))) {
         log('the outpost guard never opened a dialogue');
@@ -220,20 +197,14 @@ async function askGuard(log: (m: string) => void): Promise<GuardVerdict> {
     if (GATE_IS_OPEN.test(greeting)) {
         return 'complete';
     }
-    // Drive to the card, not to the end of the conversation: the branch that
-    // issues one is three menus deep, and stopping at the first lull leaves the
-    // choice on screen with the tour un-started.
+    // Why: the branch that issues a card is three menus deep, so stopping at the first lull leaves the choice on screen with the tour un-started.
     await driveUntil(() => Inventory.count(BARCRAWL_CARD) > 0, GUARD_PREFER, log, 25_000);
     const held = Inventory.count(BARCRAWL_CARD);
     log(`guard done — card in pack: ${held}`);
     return held > 0 ? 'issued' : 'retry';
 }
 
-/**
- * Everything between "no barcrawl" and a gate that opens. Returns true when the
- * guard will let the character through, whether that took the whole tour or the
- * account had already done it.
- */
+/** Everything between "no barcrawl" and a gate that opens; true once the guard will let the character through. */
 export async function ensureBarcrawl(log: (m: string) => void, onProgress?: Progress): Promise<boolean> {
     if (Inventory.count(BARCRAWL_CARD) === 0) {
         const verdict = await askGuard(log);

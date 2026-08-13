@@ -64,12 +64,9 @@ class BotHostImpl {
         // (listener runs post-process). Frame pump rescans only dirty families.
         noteProducerPacket(ptype);
 
-        // Drop the locs() memo on anything that can move a loc. UPDATE_ZONE_PARTIAL_ENCLOSED
-        // wraps LOC_* opcodes that never surface here, so the enclosing types are listed
-        // too, and PLAYER_INFO backstops the whole set: enumerating zone opcodes is
-        // fragile, and a missed one would leave scripts acting on a stale scene. Bounding
-        // the memo to a single server tick keeps that impossible while still collapsing
-        // the ~24 per-frame rebuilds within each tick down to one.
+        // Why: UPDATE_ZONE_PARTIAL_ENCLOSED wraps LOC_* opcodes that never surface here, so the enclosing types are listed too and PLAYER_INFO backstops the set.
+        // Why: enumerating zone opcodes is fragile, and a missed one would leave scripts acting on a stale scene.
+        // Why: bounding the memo to a single server tick keeps that impossible while still collapsing the ~24 per-frame rebuilds within each tick down to one.
         if (
             ptype === ServerProt.PLAYER_INFO ||
             ptype === ServerProt.UPDATE_ZONE_PARTIAL_ENCLOSED ||

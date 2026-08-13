@@ -36,9 +36,7 @@ const SLOT_LABEL: Record<Slot, string> = {
 
 /**
  * Editor for the player's named loadouts.
- *
- * Every mutation goes through the store and re-renders, so there is no
- * in-memory copy that can drift from what is saved.
+ * Why: every mutation goes through the store and re-renders, so no in-memory copy can drift from what is saved.
  */
 export class LoadoutPanel {
     /** Full-screen backdrop; the window inside it is what the player sees. */
@@ -77,9 +75,8 @@ export class LoadoutPanel {
     }
 
     /**
-     * Never sit on nothing. Every slot and supply click needs a loadout to write
-     * into, and with none selected they were silent no-ops — the panel looked
-     * broken rather than empty.
+     * Never sit on nothing.
+     * Why: every slot and supply click needs a loadout to write into, and with none selected they are silent no-ops that make the panel look broken rather than empty.
      */
     private ensureLoadout(): void {
         if (Loadouts.names().length === 0) {
@@ -94,11 +91,8 @@ export class LoadoutPanel {
     }
 
     /**
-     * The client streams item models on demand, so `getSprite` returns null
-     * until the one you asked about has arrived — a freshly-logged-in client
-     * has no icon for anything it has not seen. Rather than re-render (which
-     * would blow away the search box mid-type), patch the icons in place, a
-     * few times, then give up and leave the names showing.
+     * The client streams item models on demand, so `getSprite` returns null until the one asked about arrives; a freshly-logged-in client has no icon for anything it has not seen.
+     * Why: re-rendering would blow away the search box mid-type, so icons are patched in place a few times before giving up and leaving the names showing.
      */
     private scheduleIconFill(): void {
         this.stopIconFill();
@@ -209,9 +203,7 @@ export class LoadoutPanel {
             if (!target) {
                 return;
             }
-            // Supplies are untouched: they are not on the character's back, and
-            // wiping them because someone wanted their armour copied would be a
-            // surprise.
+            // Why: supplies are not on the character's back, so wiping them because someone wanted their armour copied would be a surprise.
             this.commit({ ...target, worn: wornFromEquipment(Equipment.items()) });
         }));
         bar.appendChild(this.action('rename', 'rename', () => {
@@ -380,8 +372,7 @@ export class LoadoutPanel {
 
     /**
      * A supply row is keyed on the item it holds, not on a position in `carry`.
-     * Position cannot work: `carry` drops empty entries, so setting the second
-     * row while the first is empty would renumber it onto the first.
+     * Why: `carry` drops empty entries, so setting the second row while the first is empty would renumber it onto the first.
      */
     private supplyRow(row: SupplyRow, loadout: Loadout | null): HTMLElement {
         const line = el('div', 'rs2b0t-loadout-supply');

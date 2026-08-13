@@ -1,0 +1,14 @@
+extends: existence
+message: "Heading names its content; drop '%s'."
+level: error
+scope: heading
+ignorecase: true
+tokens:
+  - 'overview'
+  - 'introduction'
+  - 'intro'
+  - 'summary'
+  - 'background'
+  - 'genuinely|actually|concrete|compelling|crucial|notably|importantly|strikingly'
+  - '\w+, not \w+'
+  - '\w+ vs\.? \w+'

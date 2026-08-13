@@ -1,8 +1,5 @@
-/**
- * Path stickiness: plan once when the walk is requested; repath only on stall,
- * deviation, or an explicit script/API force. Defaults match observed client vs
- * baked-path slop.
- */
+// Why: path stickiness plans once when the walk is requested and repaths only on stall, on deviation, or on an explicit script/API force.
+// Why: the defaults match observed client versus baked-path slop.
 
 import { SettingsStore } from '../runtime/Settings.js';
 
@@ -14,24 +11,14 @@ export const DEFAULT_PATH_STALL_TICKS = 5;
  */
 export const DEFAULT_PATH_DEVIATION_CHEBYSHEV = 10;
 
-/**
- * The corridor-snap radius (`WalkExecutor.CORRIDOR`). Path progress counts a tile
- * as reached from this far away, so any trigger below it opens a band where the
- * walker believes it is at a hop and refuses to cross it.
- */
+// Why: path progress counts a tile as reached from this far away, so any trigger below it opens a band where the walker believes it is at a hop and refuses to cross it.
+
+/** The corridor-snap radius (`WalkExecutor.CORRIDOR`). */
 export const PATH_CORRIDOR = 3;
 
-/**
- * Engage a planned transport hop only when this close to its **approach** tile
- * (not the far landing, not “any nearby spirit tree”).
- *
- * **Must be ≥ {@link PATH_CORRIDOR}.** `locateOnPath` snaps `pathIdx` onto the
- * approach from up to `PATH_CORRIDOR` tiles away, and the click selector will
- * not target a tile at or before `pathIdx` — so between the trigger and the
- * corridor the walker emits zero clicks *and* skips the hop, and only a
- * `nearApproach` fallback saves the walk. Keeping the trigger at the arrival
- * radius closes that band.
- */
+// Why: a planned transport hop engages only this close to its approach tile — not the far landing, and not any nearby spirit tree.
+// Why: this must be ≥ {@link PATH_CORRIDOR}, since `locateOnPath` snaps `pathIdx` onto the approach from up to `PATH_CORRIDOR` tiles away and the click selector never targets a tile at or before `pathIdx`.
+// Why: between the trigger and the corridor the walker would emit zero clicks and skip the hop, with only a `nearApproach` fallback saving the walk, so keeping the trigger at the arrival radius closes that band.
 export const DEFAULT_TRANSPORT_APPROACH_CHEBYSHEV = 4;
 
 interface PathFollowConfig {

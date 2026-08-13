@@ -291,9 +291,8 @@ export class ProfileVault {
         this.active = activeTab;
         for (const p of all) {
             const next = tabByUser.get(p.username) ?? p.tab;
-            // a profile not loaded in this wall keeps its stored tab; if that tab
-            // was just deleted, it lands in Main — the deleting wall only knows
-            // prior-tab targets for the bots it has loaded
+            // a profile not loaded in this wall keeps its stored tab, landing in Main when that tab has been deleted
+            // Why: the deleting wall only knows prior-tab targets for the bots it has loaded
             if (next !== undefined && next !== MAIN_TAB && trimmed.includes(next)) {
                 p.tab = next;
             } else {

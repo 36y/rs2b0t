@@ -1,11 +1,6 @@
 /**
- * Persist the map picker's basemap across sessions.
- *
- * Invalidation uses the **same /crc table the client loads at login**
- * (`Client.getJagChecksums` → nine g4s + trailer) **and** the bake prefs
- * fingerprint. When either no longer matches, the local entry is treated as a
- * miss (deploy PNG is used instead). Opening the picker **never** runs MapView —
- * only **Rebuild map…** regenerates.
+ * Persist the map picker's basemap across sessions, invalidating on the same /crc table the client loads at login (`Client.getJagChecksums` → nine g4s + trailer) and on the bake prefs fingerprint; either mismatch is a miss and the deploy PNG is used.
+ * Why: opening the picker never runs MapView — only Rebuild map… regenerates.
  */
 import type { BasemapManifest } from './worldMapBasemap.js';
 import { prefsFingerprint, type BasemapBakePrefs } from './basemapRegen.js';

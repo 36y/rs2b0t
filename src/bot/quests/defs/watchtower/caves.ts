@@ -78,9 +78,8 @@ async function enterCave(index: number, log: (m: string) => void): Promise<boole
         return false;
     }
     await settleScene();
-    // p_teleport lands exactly on the landing tile, so anything further out means we
-    // were dumped in the dark cave. Cave 4's landing is only 9 tiles from it, so the
-    // tolerance has to be tight.
+    // Why: p_teleport lands exactly on the landing tile, so anything further out means the player was dumped in the dark cave.
+    // Why: cave 4's landing is only 9 tiles from it, so the tolerance has to be tight.
     const here = Game.tile();
     if (here && cave.landing.distanceTo(here) > 5) {
         log(`landed away from cave ${index} — the map or the lit light source is missing`);
@@ -184,9 +183,7 @@ export async function answerMadSkavid(log: (m: string) => void): Promise<boolean
         }
         await Execution.delayTicks(2);
     }
-    // Leave under our own steam even on failure: the region beyond the east gate
-    // overlaps the battlement side, so decide() cannot tell them apart and would
-    // send the escape at a battlement it has no path to.
+    // Why: the region beyond the east gate overlaps the battlement side, so decide() cannot tell them apart and would send the escape at a battlement it has no path to — hence leaving under our own steam even on failure.
     log('the mad skavid did not hand over a crystal in five attempts');
     await leaveCave(log);
     await leaveEastGate(log);

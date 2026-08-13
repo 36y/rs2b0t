@@ -1,20 +1,8 @@
-/**
- * Run N complete treasure trails back to back and score the result.
- *
- * One trail per round: seed a clue of the chosen tier, let ClueSolver run the
- * whole natural chain to the casket and bank the loot, then start the next. A
- * death ends the round too — it is counted, not hidden, and the next trail
- * starts from wherever the bot respawned.
- *
- *   HEADED=1 SLOWMO=0 bun tools/clue-trails-live.ts
- *   TIER=medium TRAILS=5 bun tools/clue-trails-live.ts
- *
- * The bank is stocked with a few loads of food and some coins — deliberately
- * NOT `~bank_f2p`, whose max-int stacks refuse further deposits and hang the
- * trail's own bank stop on a deposit that can never land.
- *
- * Proof: out/clue-trails.json, rewritten after every trail.
- */
+// Run N complete treasure trails back to back and score them (TIER=medium TRAILS=5). Proof: out/clue-trails.json
+// Why: the bank is stocked by hand rather than with `~bank_f2p`, whose max-int stacks refuse further deposits and hang the trail's own bank stop on a deposit that can never land.
+
+//   HEADED=1 SLOWMO=0 bun tools/clue-trails-live.ts
+//   TIER=medium TRAILS=5 bun tools/clue-trails-live.ts
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import type { Page } from 'playwright-core';
 import { CASKET_IDS, CLUE_DB } from '#/bot/clues/data/cluedb.js';
@@ -49,13 +37,8 @@ const STATS = [
 const LEVEL = 70;
 const SEED_BATCHES = 6;
 const SEED_COINS = 50_000;
-/**
- * Spell-teleport runes (SPELL_TELEPORTS: Air x5, Fire/Law/Earth/Water x2 per
- * cast, stocked at TELEPORT_CASTS=4). Stackable, so one bank slot each. Without
- * these the prep finds nothing to withdraw and every leg walks regardless of the
- * setting. Jewellery is deliberately absent: the trail keeps a glory/ring it
- * already carries but never withdraws one, so banking it would do nothing.
- */
+/** Spell-teleport runes (Air x5, Fire/Law/Earth/Water x2 per cast at TELEPORT_CASTS=4); without them the prep withdraws nothing and every leg walks.
+ *  Why: jewellery is absent — the trail keeps a glory/ring it already carries but never withdraws one. */
 const SEED_RUNES: [string, number][] = [
     ['airrune', 1000],
     ['firerune', 500],
@@ -141,13 +124,8 @@ const holdsTrailItem = (page: Page): Promise<boolean> =>
         [...CLUE_IDS, ...CASKETS]
     );
 
-/**
- * Empty the pack of clues and caskets before seeding the next trail.
- *
- * The engine allows only one clue scroll at a time, so `::give` on top of a clue
- * the last round left behind (a death drops some items, a timeout drops none)
- * either no-ops or leaves a state the solver cannot read. Drop first, then seed.
- */
+/** Empty the pack of clues and caskets before seeding the next trail.
+ *  Why: the engine allows one clue scroll at a time, so `::give` on top of a leftover either no-ops or leaves a state the solver cannot read. */
 async function clearTrailItems(page: Page): Promise<void> {
     for (let guard = 0; guard < 30; guard++) {
         const dropped = await page.evaluate(
@@ -392,9 +370,7 @@ async function main(): Promise<void> {
                     if (l.startsWith('[clue] leg ')) {
                         legs++;
                     }
-                    // The solver gives up but leaves the clue in the pack, so the
-                    // "no trail item held" test never fires — without this the round
-                    // sits out its whole budget for a decision already made.
+                    // Why: the solver leaves the clue in the pack when it gives up, so the "no trail item held" test never fires and the round sits out its budget.
                     const m = /\[clue\] abandoning [^:]*: (.+)$/.exec(l);
                     if (m && reason === null) {
                         reason = m[1];
@@ -430,9 +406,7 @@ async function main(): Promise<void> {
                 }
             }
 
-            // The trail is not finished until the loot is in the bank: ClueSolver
-            // walks back on its own after a solve, so wait for that trip rather
-            // than seeding the next clue on top of a full pack of reward.
+            // Why: ClueSolver walks back and banks the casket on its own after a solve, so the trail is unfinished until the loot lands.
             if (ended === 'solved') {
                 const bankedAt = Date.now();
                 let banked = false;

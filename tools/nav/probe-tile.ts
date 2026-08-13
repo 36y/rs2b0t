@@ -70,9 +70,7 @@ for (const [key, shop] of Object.entries(SHOPS)) {
     stands.push([`shop.${key}(${shop.npc})`, shop.anchor as NavPoint]);
 }
 
-// An unwalkable loc tile is fine to target — the walker snaps to a neighbour — but
-// only if some region can actually path to it. Toban's cave mouth could not, because
-// its one cardinal neighbour sits in a cut-off component.
+// Why: the walker snaps to a neighbour, so an unwalkable loc tile is a fine target only where some region can path to it — Toban's cave mouth could not, its one cardinal neighbour sitting in a cut-off component.
 let bad = 0;
 for (const [label, tile] of stands) {
     const walkable = finder.walkable(tile.x, tile.z, tile.level);

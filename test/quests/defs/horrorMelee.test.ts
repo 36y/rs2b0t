@@ -2,13 +2,8 @@ import { describe, expect, test } from 'bun:test';
 
 import { FORM_ELEMENT, IMMUNE_FORMS, MELEE_FORM, MOTHER_IDS, RANGED_FORM } from '#/bot/quests/defs/horror/fight.js';
 
-/**
- * The mother's form ids come from `npc.dat`, where the block is contiguous:
- * horror_dagannoth_jr4 (1347) then aira/airb/airc/air, water, fire, earth,
- * ranged, melee. Getting the last two the wrong way round means swinging a
- * scimitar at the form that only ranged can hurt — no message, no damage, just
- * thirty wasted ticks a cycle.
- */
+// `npc.dat` runs the block contiguously from horror_dagannoth_jr4 (1347): aira/airb/airc/air, water, fire, earth, ranged, melee.
+// Why: swapping the last two swings a scimitar at the ranged-only form, with no message and no damage.
 describe('Dagannoth mother forms', () => {
     test('the melee-weak form is 1356, the ranged-weak form 1355', () => {
         expect(MELEE_FORM).toBe(1356);

@@ -1,13 +1,5 @@
-/**
- * Shared helpers for operator nav live harnesses (tools/nav-*-live.ts, nav-*-smoke.ts).
- * Test/tooling only — not product runtime.
- *
- * Covers: cheat tele placement, energy/HP sustain, tick rate, path paint settings,
- * inventory seed (runes/jewellery), and a generic walkTo probe loop.
- *
- * **Pacing (multi-suite MacBook):** prefer shared defaults below — outer walk polls
- * are multi-second, sustain is throttled, cheats settle without sub-100ms spins.
- */
+/** Shared helpers for operator nav live harnesses (tools/nav-*-live.ts, nav-*-smoke.ts): cheat tele placement, energy/HP sustain, tick rate, path paint settings, inventory seed and a generic walkTo probe loop.
+ *  Why: the pacing defaults below keep outer walk polls multi-second and sustain throttled, so cheats settle without sub-100ms spins. */
 import type { Page } from 'playwright-core';
 
 import { setSettings } from './harness.js';
@@ -281,11 +273,8 @@ export async function readHp(page: Page): Promise<{ effective: number; base: num
     });
 }
 
-/**
- * Full energy + run on via content debugproc `[debugproc,energy]` → `~energy`.
- * Plain `energy` is not an engine cheat and is silently ignored.
- * One cheat + short confirm (no tight poll storm).
- */
+/** Full energy + run on via the content debugproc `~energy`.
+ *  Why: plain `energy` is not an engine cheat and is silently ignored. */
 export async function restoreRunEnergy(page: Page): Promise<boolean> {
     if (!(await cheatQuiet(page, '~energy', DEFAULT_SETTLE_MS + 100))) {
         return false;
@@ -624,11 +613,8 @@ export async function dropUnchargedJewellery(page: Page, specs: readonly SeedSpe
     return total;
 }
 
-/**
- * Seed inventory via engine `give` (no p_finduid busy-guard).
- * Content `~item` silently no-ops while mid-script after long walks.
- * `debugOrCmd` accepts bare debug name, "name qty", or legacy "~item name qty".
- */
+/** Seed inventory via engine `give`; `debugOrCmd` takes a bare debug name, "name qty", or legacy "~item name qty".
+ *  Why: content `~item` silently no-ops mid-script after long walks, where `give` has no p_finduid busy-guard. */
 export async function seedItem(
     page: Page,
     debugOrCmd: string,
@@ -690,11 +676,8 @@ export async function seedRunes(page: Page): Promise<void> {
 
 // ── 377-style prep helpers (tools-only; condition → seed/fix) ───────────────
 
-/**
- * Wait until client is ingame with scene fully built (`sceneState === 2`).
- * Backport of LC-rs2-r377 `waitSceneReady` — seeds while scene≠2 thrash.
- * Polls at {@link DEFAULT_STOP_POLL_MS}, not sub-100ms.
- */
+/** Wait until the client is ingame with the scene fully built (`sceneState === 2`).
+ *  Why: seeding while sceneState ≠ 2 thrashes; polls at {@link DEFAULT_STOP_POLL_MS} rather than sub-100ms. */
 export async function waitSceneReady(page: Page, timeoutMs = 45_000): Promise<boolean> {
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
@@ -801,11 +784,8 @@ export async function ensureInvItem(
     }
 }
 
-/**
- * Ensure one charged copy of each jewellery seed is present.
- * Drops depleted (no charge-paren) copies first so a full pack of uncharged
- * glories cannot block `give amulet_of_glory_4` (#555 / P10).
- */
+/** Ensure one charged copy of each jewellery seed is present.
+ *  Why: depleted copies are dropped first, or a full pack of uncharged glories blocks `give amulet_of_glory_4` (#555 / P10). */
 export async function ensureJewellery(
     page: Page,
     opts?: { useTeleports?: boolean }
@@ -859,11 +839,8 @@ export async function seedTeleKit(
 
 // ── stuck / harness-abort helpers ───────────────────────────────────────────
 
-/**
- * Convert planner path cost (run-tile units, see edgeCosts.ts) to optimistic
- * wall-clock seconds at the live tick rate.
- * ticks ≈ cost / 2; wall ≈ ticks * tickMs.
- */
+/** Convert planner path cost (run-tile units, see edgeCosts.ts) to optimistic wall-clock seconds at the live tick rate.
+ *  ticks ≈ cost / 2; wall ≈ ticks * tickMs. */
 export function pathCostToEstSec(cost: number, tickMs: number): number {
     if (!(cost > 0) || !(tickMs > 0)) {
         return 0;
@@ -1017,17 +994,8 @@ export async function ensureRunnerStopped(
     }
 }
 
-/**
- * Start a one-shot LoopingBot that calls Traversal.walkTo, poll until done.
- * Uses a configurable globalThis result slot so concurrent harnesses stay isolated.
- *
- * Always stops the runner before return (including poll timeout) so multi-leg
- * suites never cascade with `'Nav…' is still running`.
- *
- * Optional {@link RunNavWalkOpts.stuckAbort}: stop this leg early when wall time
- * far exceeds the planner path-cost estimate and the character has not moved
- * (door thrash / pathfind loop). Product FAIL for that leg only — not suite abort.
- */
+/** Start a one-shot LoopingBot that calls Traversal.walkTo and poll until done; the result slot is configurable so concurrent harnesses stay isolated.
+ *  Why: the runner is always stopped before return, including on poll timeout, or multi-leg suites cascade with `'Nav…' is still running`; {@link RunNavWalkOpts.stuckAbort} ends a leg whose wall time far exceeds the planner estimate with no movement (door thrash), failing that leg alone. */
 export async function runNavWalk(page: Page, opts: RunNavWalkOpts): Promise<NavWalkResult> {
     const resultKey = opts.resultKey ?? '__navLiveWalk';
     const midKey = `${resultKey}__mid`;

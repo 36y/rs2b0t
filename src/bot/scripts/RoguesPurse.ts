@@ -46,11 +46,10 @@ const ANCHOR_SLACK = 3;
 /** Consecutive searches that yielded no unid before we accept the wall is dead to us. */
 const DEAD_SEARCHES = 30;
 
-/**
- * How many banks to try before giving up on the fare. Candidates are ranked by detour cost and
- * then probed, because ranking alone is affordability-blind: dying on Karamja would rank
- * Ardougne cheapest, across a 30gp ferry the empty pack cannot pay for.
- */
+// Why: ranking alone is affordability-blind, so candidates are ranked by detour cost and then probed.
+// Why: dying on Karamja ranks Ardougne cheapest, across a 30gp ferry the empty pack cannot pay for.
+
+/** How many banks to try before giving up on the fare. */
 const BANK_TRIES = 4;
 const BANK_PROBE_EXPANSIONS = 300_000;
 const BOOTH = { name: 'Bank booth', op: 'Use-quickly' };
@@ -92,9 +91,8 @@ export default class RoguesPurse extends LoopingBot {
             }
         });
 
-        // Death respawns at Lumbridge and keeps only 1 of each of the three priciest items
-        // (`move_priciest_item_on_hero_to_death`), so a 100gp stack survives as a single coin —
-        // the fare always has to be re-withdrawn before the walk back.
+        // Why: death respawns at Lumbridge and keeps one of each of the three priciest items (`move_priciest_item_on_hero_to_death`), so a 100gp stack survives as a single coin.
+        // Why: the fare always has to be re-withdrawn before the walk back.
         this.recovery = new DeathRecovery(this, {
             anchor: WALL.stand,
             radius: ANCHOR_SLACK,
@@ -144,11 +142,10 @@ export default class RoguesPurse extends LoopingBot {
         await Execution.delayTicks(1);
     }
 
-    /**
-     * One tick of packets. Both `opheld`s run inline as the server decodes them while the
-     * search resolves in the movement phase, so this pipelines: identify and drop clear
-     * what the last tick produced and the search stocks the next.
-     */
+    // Why: both `opheld`s run inline as the server decodes them, while the search resolves in the movement phase.
+    // Why: the burst pipelines — identify and drop clear what the last tick produced, and the search stocks the next.
+
+    /** One tick of packets. */
     private async cycle(wall: Loc): Promise<void> {
         const unid = Inventory.items().find(item => item.id === PURSE.unidId) ?? null;
         const herb = Inventory.items().find(item => item.id === PURSE.id) ?? null;
@@ -159,9 +156,8 @@ export default class RoguesPurse extends LoopingBot {
             freeSlots: Inventory.free()
         });
 
-        // Either form in the pack proves the wall is still handing herbs over. Read the pack
-        // rather than the inventory.changed stream — a slot that fills and empties inside one
-        // tick can diff to no change at all.
+        // Why: either form in the pack proves the wall is still handing herbs over.
+        // Why: the pack is read rather than the inventory.changed stream, since a slot that fills and empties inside one tick can diff to no change at all.
         if (unid || herb) {
             this.deadSearches = 0;
         }
@@ -184,11 +180,10 @@ export default class RoguesPurse extends LoopingBot {
         }
     }
 
-    /**
-     * Identifying is the only thing here that grants xp, so the xp counter is the honest
-     * count — a sent `Identify` packet is not proof the engine accepted it. The client is
-     * told xp/10 truncated, so this is off by at most one herb.
-     */
+    // Why: identifying is the only thing here that grants xp, and a sent `Identify` packet is no proof the engine accepted it.
+    // Why: the client is told xp/10 truncated, so the count is off by at most one herb.
+
+    /** Herbs identified so far, read off herblore xp. */
     private identifiedCount(): number {
         return Math.round((Skills.xp('herblore') - this.xpStart) / IDENTIFY_XP);
     }
@@ -241,11 +236,9 @@ export default class RoguesPurse extends LoopingBot {
         }
     }
 
-    /**
-     * Nearest bank the navigator can actually reach with what we are carrying. Probing applies
-     * the same fare pruning as a real walk, so an unaffordable toll gate rules a bank out
-     * before we spend minutes walking at it.
-     */
+    // Why: probing applies the same fare pruning as a walk, so an unaffordable toll gate rules a bank out before minutes are spent walking at it.
+
+    /** Nearest bank the navigator can reach with what we are carrying. */
     private async reachableBank(log: (m: string) => void): Promise<BankLocation | null> {
         const here = Game.tile();
         if (!here) {

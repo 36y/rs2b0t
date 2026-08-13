@@ -38,8 +38,7 @@ export async function enterEnclave(log: (m: string) => void): Promise<boolean> {
         log('could not use Nightshade on the enclave guard');
         return false;
     }
-    // Drive the dialogue the nightshade opened; never start a fresh one, because
-    // both of this guard's own conversation options make him attack.
+    // Why: the dialogue the nightshade opened is driven and no fresh one is started, as both of this guard's own conversation options make him attack.
     if (await Execution.delayUntil(() => ChatDialog.isOpen() || ChatDialog.canContinue(), 8000)) {
         await driveDialog([], log);
     }
@@ -75,9 +74,8 @@ export async function dissolveShamans(log: (m: string) => void): Promise<boolean
     }
     for (const spot of WT_TILE.SHAMANS) {
         if (heldId(WT_ITEM.MAGIC_OGRE_POTION.id) === 0) {
-            // Spent on the sixth shaman, or lost. Either way stay put and let
-            // decide() choose: the rock is mined from in here, and a brewing trip
-            // leaves through the ordinary escape.
+            // Why: the potion is spent on the sixth shaman or lost, and either way staying put lets decide() choose.
+            // Why: the rock is mined from in here, and a brewing trip leaves through the ordinary escape.
             log('the magic ogre potion is spent');
             return true;
         }

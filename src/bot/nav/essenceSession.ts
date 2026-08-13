@@ -1,11 +1,5 @@
-/**
- * Bot-side essence-mine session return (server varp is not client-transmitted).
- *
- * Content sets `%exit_essence_mine_coord` (pack id 64) on wizard entry, but that
- * varp has no `transmit=yes` — see docs/local/varp-transmit-inventory.md.
- * We mirror the dest when we successfully take an entry hop (specialCrossing /
- * catalog edge), and feed it into WorldState.essenceExitReturn for plan filters.
- */
+// Why: content sets `%exit_essence_mine_coord` (pack id 64) on wizard entry, but that varp has no `transmit=yes` — see docs/local/varp-transmit-inventory.md.
+// Why: the dest is mirrored bot-side when an entry hop is taken (specialCrossing or catalog edge) and fed into WorldState.essenceExitReturn for plan filters.
 
 import type { EssenceReturnId } from './essenceExit.js';
 import { essenceReturnIdFromTile } from './essenceExit.js';

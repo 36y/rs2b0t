@@ -73,9 +73,8 @@ export default class VialFiller extends LoopingBot {
         this.log(`VialFiller — ${this.bankLabel} bank -> Falador fountain${this.buyVials ? `, Jatix restock every ${this.buyEvery} trips` : ''}`);
     }
 
-    // A restock buys the vials the fill leg is about to fill, so it runs while
-    // the pack is still empty — vials do not stack and would have nowhere to go
-    // once the pack is full of water vials.
+    // Why: vials do not stack and have nowhere to go once the pack is full of water vials.
+    // Why: the restock buys what the fill leg is about to fill, so it runs while the pack is still empty.
     async loop(): Promise<void> {
         const shopRun = isShopRun(this.runs, this.buyVials, this.buyEvery);
 

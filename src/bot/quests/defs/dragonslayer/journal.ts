@@ -70,19 +70,13 @@ export function parseDragonJournal(lines: readonly string[] | string): QuestProg
     return stage === undefined ? undefined : { stage, flags: readFlags(text) };
 }
 
-/**
- * The journal modal does not always open — a leftover dialogue, a level change,
- * a tick where the tab has not refreshed. A failed read is not evidence the
- * quest went backwards, so the last good one stands in until the next success.
- */
+// Why: the journal modal does not always open — a leftover dialogue, a level change, a tick where the tab has not refreshed.
+// Why: a failed read is no evidence the quest went backwards, so the last good one stands in until the next success.
 let lastGood: QuestProgress | undefined;
 
-/**
- * What the last journal read actually saw. `decide()` branches entirely on this,
- * so when the bot goes somewhere unexpected this is the first thing to look at:
- * a flag that flaps between loops means the read is failing, not that the quest
- * moved backwards.
- */
+// Why: `decide()` branches entirely on this, so a flag that flaps between loops means the read is failing rather than the quest moving backwards.
+
+/** What the last journal read saw. */
 export interface JournalRead {
     reads: number;
     failures: number;

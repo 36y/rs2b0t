@@ -1,0 +1,13 @@
+extends: existence
+message: "State the fact; drop '%s'."
+level: error
+ignorecase: true
+tokens:
+  - 'worth your attention'
+  - 'the thing to notice'
+  - 'the part worth'
+  - 'what matters most'
+  - 'it.?s worth mentioning'
+  - 'as you can see'
+  - 'note that'
+  - 'it.?s important to'

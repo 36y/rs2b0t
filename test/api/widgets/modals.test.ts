@@ -7,11 +7,7 @@ import { actions, reader } from '#/bot/adapter/ClientAdapter.js';
 import { Execution } from '#/bot/api/execution/Execution.js';
 import { Modals } from '#/bot/api/widgets/Modals.js';
 
-/**
- * `Modals.close()` exists because `actions.closeModal()` only *sends* the close —
- * the modal stays up until the server answers. These cover the contract callers
- * depend on: never claim closed while it is still up, never send a redundant close.
- */
+// Why: `actions.closeModal()` only sends the close, so the modal stays up until the server answers.
 
 const originals = {
     closeModal: actions.closeModal,

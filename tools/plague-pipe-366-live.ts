@@ -1,13 +1,7 @@
-/**
- * Live proof for #366 — Plague City sewer pipe into West Ardougne.
- *
- *   setvar elenaquest 30 (complete + scroll stage)
- *   give Spade + Gas mask; equip mask
- *   tele garden stand (2566,3330) — no tele into West Ardougne
- *   walkResilient dig (2488,3308): mud dig → sewer → pipe → manhole → dig
- *
- *   ~/redeploy.sh && HEADED=1 bun tools/plague-pipe-366-live.ts
- */
+/** Live proof for #366 — the Plague City sewer pipe into West Ardougne.
+ *  setvar elenaquest 30, give Spade + Gas mask and equip the mask, tele to the garden stand (2566,3330) — nothing teleports into West Ardougne — then walkResilient to the dig (2488,3308) through mud dig → sewer → pipe → manhole. */
+
+//   ~/redeploy.sh && HEADED=1 bun tools/plague-pipe-366-live.ts
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';

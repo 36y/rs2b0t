@@ -7,13 +7,8 @@ import {
 } from './gatheringLocations.js';
 
 /**
- * Mining camps for GatheringBot / Miner.
- *
- * Catalog from rs2b2tgathering.csv, polished via live verify + visual stand checks.
- * All entries ship `verified: true` after pathability/resource confirmation.
- *
- * `recommendedCombat` is 2× highest auto-aggressive NPC combat level + 1
- * (e.g. King Scorpion 32 → 65). Omitted when no resident aggro is expected.
+ * Mining camps for GatheringBot / Miner, catalogued from rs2b2tgathering.csv and polished via live verify and visual stand checks.
+ * `recommendedCombat` is 2× the highest auto-aggressive NPC combat level + 1 (King Scorpion 32 → 65), omitted when no resident aggro is expected.
  */
 export type MiningLocation = GatheringLocation & {
     /** Combat level at which resident aggressive NPCs stop auto-attacking (2×L+1). */
@@ -101,8 +96,7 @@ export const MINING_LOCATIONS: MiningLocation[] = [
     mine(
         'Edgeville Dungeon Mine',
         // Clear west-side stand beside the 3134–3143,9868–9880 mixed-rock field.
-        // Navigation enters through the public Edgeville trapdoor when no Brass key
-        // is held, opens the two dungeon gates, and returns by the exit ladder.
+        // Navigation enters through the public Edgeville trapdoor when no Brass key is held, opens the two dungeon gates, and returns by the exit ladder.
         new Tile(3132, 9874, 0),
         BANK.edgeville,
         ['copper', 'tin', 'iron', 'coal', 'silver', 'mithril', 'adamantite'],
@@ -113,14 +107,14 @@ export const MINING_LOCATIONS: MiningLocation[] = [
     ),
     mine(
         'Fight Arena Mine',
-        // Adjacent stand — previous 2630,3145 was inside a rock loc.
+        // Adjacent stand: 2630,3145 is inside a rock loc.
         new Tile(2631, 3146, 0),
         BANK.ardougneEast,
         ['iron', 'mithril']
     ),
     mine(
         'Al Kharid Mine',
-        // Prior 3299,3297 sat inside a scenery object — stand 2N.
+        // 3299,3297 sits inside a scenery object, so stand 2N.
         new Tile(3299, 3299, 0),
         BANK.alKharid,
         ['iron', 'silver', 'mithril', 'adamantite'],
@@ -165,7 +159,7 @@ export const MINING_LOCATIONS: MiningLocation[] = [
     ),
     mine(
         'North Brimhaven Mine',
-        // Adjacent stand — previous 2732,3223 was inside a rock loc.
+        // Adjacent stand: 2732,3223 is inside a rock loc.
         new Tile(2733, 3224, 0),
         BANK.ardougneEast,
         ['gold'],
@@ -180,9 +174,8 @@ export const MINING_LOCATIONS: MiningLocation[] = [
     ),
     mine(
         'West Lumbridge Swamp Mine',
-        // Classic west-coast seed is blue void on this engine. Live mineable cluster is
-        // the east-swamp rocks near Urhney (~3233–3243, 3157–3167). Stand a couple
-        // tiles south of the rock tile so we are not inside a loc.
+        // Why: the classic west-coast seed is blue void on this engine, so the live mineable cluster is the east-swamp rocks near Urhney (~3233–3243, 3157–3167).
+        // Stand a couple of tiles south of the rock tile to stay outside the loc.
         new Tile(3235, 3163, 0),
         BANK.draynor,
         ['mithril', 'adamantite'],
@@ -190,7 +183,7 @@ export const MINING_LOCATIONS: MiningLocation[] = [
     ),
     mine(
         'Grand Tree Mine',
-        // Rocks at ~2472,9905; stand a few tiles north of prior 2465,9905 seed.
+        // Rocks at ~2472,9905; stand a few tiles north of 2465,9905.
         new Tile(2465, 9909, 0),
         BANK.grandTree,
         ['adamantite'],
@@ -198,9 +191,8 @@ export const MINING_LOCATIONS: MiningLocation[] = [
     ),
     mine(
         'Desert Mining Camp',
-        // NE mithril/addy pocket past the wrought-iron gate (doors 3322–3323,9448).
-        // 3325,9456 was almost on the rocks — small W/N stand nudge.
-        // Surface door 3301,3036 — gather bot does not auto-enter.
+        // NE mithril/addy pocket past the wrought-iron gate (doors 3322–3323,9448); 3325,9456 sits almost on the rocks, so the stand nudges W/N.
+        // Surface door 3301,3036 — the gather bot does not auto-enter.
         new Tile(3323, 9458, 0),
         BANK.shantay,
         ['mithril', 'adamantite'],
@@ -261,7 +253,7 @@ export const MINING_LOCATIONS: MiningLocation[] = [
         'Members; Monastery mine, iron + coal; seed unverified.',
         false
     ),
-    // #160 tick-manip iron camps — verified:false until live polish.
+    // Tick-manip iron camps, unpolished until live checks (#160).
     mine(
         'Legends Guild Iron (west)',
         // Iron cluster west of Legends Guild ~2691–2697, 3328–3334.

@@ -1,12 +1,10 @@
-// docs/how-to/write-a-harness.md
-// Live RoguesPurse run against a local engine.
+// Live RoguesPurse run: --base --minutes --at mainland --fare 100 --speed 100 --bank-coins --die-after 60 --stage 0 --no-maxme.
+// Why: herbs/tick is the metric that matters — it is immune to `::speed`, and 1.0 is the pipelined ceiling (one search + identify + drop per game tick).
+
 //   bun tools/roguespurse-test.ts --base http://localhost:8888 --minutes 4
 //   bun tools/roguespurse-test.ts --at mainland --fare 100 --minutes 25 --speed 100
 //   bun tools/roguespurse-test.ts --bank-coins --die-after 60 --minutes 30   # deathwalk
 //   bun tools/roguespurse-test.ts --stage 0 --no-maxme --minutes 2   # gate rejection
-//
-// herbs/tick is the metric that matters: it is immune to `::speed`, and 1.0 is the
-// pipelined ceiling (one search + identify + drop per game tick).
 import { fail, launchBrowser } from './lib/harness.js';
 import { cheatQuiet, mainlandAccount, relog, startScript } from './tutorial/harness.js';
 
@@ -66,10 +64,8 @@ try {
     await relog(page, user);
     console.log(`junglepotion=${stage}, relogged`);
 
-    // The Karamja ship is a Pay-fare crossing; without coins the navigator prunes it and
-    // the whole island reads as unreachable. `::give` reaches the pack, never the bank —
-    // `::~bank_f2p` is the one that stocks the bank (with coins) and raises no confirm dialog,
-    // unlike `::~bank_preset`. Debugprocs need the `~` prefix or the handler silently drops them.
+    // Why: the Karamja ship is a Pay-fare crossing, so without coins the navigator prunes it and the island reads as unreachable.
+    // `::give` reaches the pack, never the bank; `::~bank_f2p` stocks the bank with coins and raises no confirm dialog, unlike `::~bank_preset`. Debugprocs need the `~` prefix or the handler drops them silently.
     const fare = opt('--fare');
     if (fare && !(await cheatQuiet(page, `give coins ${Number(fare) || 100}`))) {
         fail('could not give coins');
@@ -130,7 +126,7 @@ try {
     const dieAfter = opt('--die-after') ? Number(opt('--die-after')) * 1000 : null;
     const dieAt = dieAfter === null ? null : Date.now() + dieAfter;
     let killed = false;
-    /** Seen out of the caves after the kill — the only proof `~death` actually landed. */
+    /** Seen out of the caves after the kill — the only proof `~death` landed. */
     let deathSeen = false;
     let recovered = false;
     /** Herblore xp at the moment of death — xp past this proves the walk back worked. */
@@ -159,7 +155,7 @@ try {
         if (!grindStart && gained > 0) {
             grindStart = last;
         }
-        // Only kill once it is actually grinding, so the deathwalk starts from the wall.
+        // Only kill once it is grinding, so the deathwalk starts from the wall.
         if (dieAt !== null && !killed && grindStart && Date.now() >= dieAt) {
             if (!(await cheatQuiet(page, '~death'))) {
                 fail('could not kill the account');

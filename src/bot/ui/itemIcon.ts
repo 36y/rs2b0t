@@ -1,20 +1,15 @@
 import { reader } from '../adapter/ClientAdapter.js';
 
 /**
- * Item icon as a data URL. Null when the cache is not loaded or the id has no
- * sprite, so callers fall back to the item's name.
- *
- * The adapter hands over raw pixels rather than a canvas: DOM is fenced to this
- * directory, and the client stores icons as an `Int32Array` of 0xRRGGBB with 0
- * meaning transparent.
- */
-/**
- * Encoded icons by id — `toDataURL` is a ~1ms PNG encode and the picker
- * re-renders up to 200 rows a click. Failures are not cached: a sprite the
- * client has not streamed yet must be retried.
+ * Encoded icons by id.
+ * Why: `toDataURL` is a ~1ms PNG encode and the picker re-renders up to 200 rows a click; failures stay uncached because a sprite the client has not streamed yet must be retried.
  */
 const encoded = new Map<number, string>();
 
+/**
+ * Item icon as a data URL. Null when the cache is not loaded or the id has no sprite, so callers fall back to the item's name.
+ * Why: DOM is fenced to this directory, so the adapter hands over raw pixels — an `Int32Array` of 0xRRGGBB with 0 meaning transparent.
+ */
 export function itemIconDataUrl(id: number): string | null {
     const hit = encoded.get(id);
     if (hit !== undefined) {

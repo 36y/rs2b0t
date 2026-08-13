@@ -78,8 +78,7 @@ export async function ensureSpade(log: (m: string) => void): Promise<boolean> {
 
 /**
  * Buy the extra items a clue row lists in `items` (today: the Baxtorian Rope).
- * The bank prep already withdraws them when the bank has one; this is the case
- * where it does not, which otherwise abandons the trail over 18gp.
+ * Why: bank prep withdraws them when the bank has one, and without this path the trail abandons over 18gp.
  */
 export async function ensureExtraItems(names: readonly string[], log: (m: string) => void): Promise<boolean> {
     let bought = false;
@@ -122,14 +121,10 @@ export async function ensureExtraItems(names: readonly string[], log: (m: string
     return bought;
 }
 
-/**
- * Buy the crossing tolls the navigator says a route is short of.
- *
- * `missing` comes from the walker's own diagnosis, so this only ever fires for a
- * crossing the bot actually planned to use — no speculative shopping trips.
- * Coins are skipped: no counter sells them, and a broke bot has a different
- * problem than an unstocked one.
- */
+// Why: `missing` comes from the walker's own diagnosis, so this fires only for a crossing the bot planned to use — no speculative shopping trips.
+// Why: coins are skipped because no counter sells them.
+
+/** Buy the crossing tolls the navigator says a route is short of. */
 export async function ensureGateItems(
     missing: readonly { name: string; count: number }[],
     log: (m: string) => void

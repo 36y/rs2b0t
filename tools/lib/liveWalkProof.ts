@@ -1,11 +1,5 @@
-/**
- * Start a one-shot walkResilient probe and wait until it finishes **or** the
- * player is already within chebyshev radius of dest.
- *
- * Live harnesses used to only poll `runner.state === 'idle'`. That hangs when
- * walkResilient sits on/near the target forever because isArrived fails
- * (walkable dest, canReach false, dist>0) — common for digs / blocked tiles.
- */
+/** Start a one-shot walkResilient probe and wait until it finishes or the player is already within chebyshev radius of dest.
+ *  Why: polling `runner.state === 'idle'` alone hangs when walkResilient sits on the target forever because isArrived fails (walkable dest, canReach false, dist>0) — common for digs and blocked tiles. */
 import type { Page } from 'playwright-core';
 
 export type LiveTile = { x: number; z: number; level: number };

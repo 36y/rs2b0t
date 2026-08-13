@@ -1,12 +1,7 @@
-/**
- * Quest gates for curated 2004 travel — journal display names + engine varps.
- *
- * Display names must match the quest-list row text (questlist.if) so live
- * `Quests.status` / worldStateLive snapshots open the same edges as pack probes.
- *
- * Complete values from content `general/configs/quest.constant`.
- * After setvar, live harnesses must relog so `~update_questlist` recolours the tab.
- */
+// Why: quest gates for curated 2004 travel pair journal display names with engine varps.
+// Why: display names must match the quest-list row text (questlist.if) so live `Quests.status` and worldStateLive snapshots open the same edges as pack probes.
+// Why: the complete values come from content `general/configs/quest.constant`.
+// Why: after a setvar, live harnesses must relog so `~update_questlist` recolours the tab.
 
 import type { QuestProgress, TransportRequires } from './types.js';
 
@@ -61,9 +56,8 @@ export const TRANSPORT_QUEST_SEEDS: readonly QuestVarSeed[] = [
     {
         journal: 'Priest in Peril',
         varp: 'priestperil',
-        // ^priestperil_complete = 60. The Salve barrier wants 61
-        // (^priestperil_access_holy_barrier) — one Drezel talk past complete,
-        // which the quest bot now takes and the walker unlocks on refusal.
+        // Why: ^priestperil_complete = 60, but the Salve barrier wants 61 (^priestperil_access_holy_barrier), one Drezel talk past complete.
+        // Why: the quest bot takes that talk and the walker unlocks it on refusal.
         complete: 60,
         usedBy: [
             'paterdomus tunnel gates (pip_underground_door1/2)',

@@ -1,19 +1,9 @@
-/**
- * Live Family Crest harness (#210), stage-scoped or end-to-end.
- *
- *   HEADED=1 bun tools/family-crest-210-live.ts --stage 7 --minutes 25
- *   HEADED=1 bun tools/family-crest-210-live.ts --stage 0 --minutes 90     # full run
- *   HEADED=1 bun tools/family-crest-210-live.ts --stage 0 --teleports       # + tele kit
- *
- * `--stage N` sets `%crestquest` and relogs so `update_questlist` recolours the
- * journal entry — a `setvar` alone leaves the quest tab red and the module
- * reads the tab, never the varp.
- *
- * The run passes when the journal reaches `--until` (default: complete).
- *
- * Family Crest is members-only (`map_members`), so this needs the members world
- * on :8890, not the :8888 sim.
- */
+/** Live Family Crest harness (#210): --stage N --until N --minutes N --teleports. Members-only, so the :8890 world, not the :8888 sim.
+ *  Why: `--stage` sets `%crestquest` and relogs — update_questlist only recolours the journal entry at login, and the module reads the tab rather than the varp. */
+
+//   HEADED=1 bun tools/family-crest-210-live.ts --stage 7 --minutes 25
+//   HEADED=1 bun tools/family-crest-210-live.ts --stage 0 --minutes 90     # full run
+//   HEADED=1 bun tools/family-crest-210-live.ts --stage 0 --teleports       # + tele kit
 import type { Page } from 'playwright-core';
 import { launchBrowser } from './lib/harness.js';
 import {
@@ -74,12 +64,8 @@ function fail(msg: string): never {
 
 const VARROCK_EAST_BANK = { x: 3253, z: 3420, level: 0 };
 
-/**
- * Everything the quest needs that no shop can sell, plus a comfortable float.
- * Caleb's five fish and the two rubies are bank-sourced by design: no shop in
- * the game stocks cooked bass or shrimp, and the Ardougne gem merchant carries
- * exactly one ruby.
- */
+/** Everything the quest needs that no shop sells, plus a comfortable float.
+ *  Why: nothing in the game stocks cooked bass or shrimp for Caleb's five fish, and the Ardougne gem merchant carries one ruby. */
 const BANK_SEED: BankSeedItem[] = [
     { debugName: 'swordfish', displayName: 'Swordfish', qty: 2 },
     { debugName: 'bass', displayName: 'Bass', qty: 2 },
@@ -87,9 +73,7 @@ const BANK_SEED: BankSeedItem[] = [
     { debugName: 'salmon', displayName: 'Salmon', qty: 2 },
     { debugName: 'shrimp', displayName: 'Shrimps', qty: 2 },
     { debugName: 'ruby', displayName: 'Ruby', qty: 2 },
-    // Jiminua's Jungle Store is the only shop in the game that sells this, and
-    // Tai Bwo Wannai is a very long round trip from the Jolly Boar Inn. The bot
-    // will still walk it when the bank is empty; banking it is the realistic case.
+    // Why: Jiminua's Jungle Store is the only shop that sells this and Tai Bwo Wannai is a long round trip; the bot still walks it when the bank is empty.
     { debugName: '3doseantipoison', displayName: 'Antipoison(3)', qty: 2 },
     { debugName: 'coins', displayName: 'Coins', qty: 2_000_000 },
     { debugName: 'shark', displayName: 'Shark', qty: 60 },
@@ -97,12 +81,8 @@ const BANK_SEED: BankSeedItem[] = [
     { debugName: 'steel_pickaxe', displayName: 'Steel pickaxe', qty: 1 }
 ];
 
-/**
- * Only added with `--teleports`. Law runes are Magic Guild / Mage Arena stock
- * only, and nothing in the game sells a ring of dueling, so both are bank items
- * in practice — which is also all the navigator needs: it rubs jewellery from
- * the inventory and never withdraws it itself.
- */
+/** Only added with `--teleports`.
+ *  Why: law runes are Magic Guild / Mage Arena stock and nothing sells a ring of dueling, so both are bank items — which is all the navigator needs, since it rubs jewellery from the inventory and never withdraws it. */
 const TELEPORT_SEED: BankSeedItem[] = [
     { debugName: 'lawrune', displayName: 'Law rune', qty: 200 },
     { debugName: 'ring_of_dueling_8', displayName: 'Ring of dueling(8)', qty: 2 }
@@ -227,11 +207,7 @@ try {
         }
         if (last.logs.length > 0) { lastLogTime = Math.max(lastLogTime, ...last.logs.map(l => l.time)); }
 
-        // A full run has to see the *journal* go green, not just the varp: the
-        // quest-complete recolour and the QP award land a tick behind
-        // `%crestquest`, and passing on the varp alone reported success while
-        // the tab still read in-progress. Stage-scoped runs have no journal
-        // transition to wait for, so they still pass on the stage.
+        // Why: the quest-complete recolour and the QP award land a tick behind `%crestquest`, so a full run waits on the journal; a stage-scoped run has no journal transition and passes on the stage.
         const done = args.until >= 11 ? last.status === 'complete' : stage >= args.until;
         if (done) {
             console.log(`PASS (crestquest=${stage}, journal=${last.status}, QP=${last.qp})`);

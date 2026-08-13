@@ -1,10 +1,7 @@
-/**
- * Pure data and decisions for the PotionMaker script.
- * Each batch is made bank-standing: clean herb + vial of water -> "Unfinished
- * potion", then a secondary + the unfinished potion -> finished potion. Every
- * herb's unfinished potion renders with the same display name ("Unfinished
- * potion"), so the make step is detected by numeric id, never by name.
- */
+// Pure data and decisions for the PotionMaker script.
+
+// Why: a batch is made bank-standing — clean herb plus vial of water gives an "Unfinished potion", then a secondary plus that gives the finished potion.
+// Why: every herb's unfinished potion renders with the same display name, so the make step is detected by numeric id, never by name.
 
 /** What the bot withdraws to pair with the herb in the first step. */
 export const VIAL_OF_WATER_ID = 227;

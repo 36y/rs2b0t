@@ -7,9 +7,8 @@ interface QueryableEntity extends Locatable {
 }
 
 /**
- * Minimal fields shared by Loc/Npc/GroundItem snapshots (and adapted players)
- * so name / action / distance filters can run before allocating entity wrappers.
- * Matches ClientAdapter snapshot shapes (`ops`, not `actions()`).
+ * Minimal fields shared by Loc/Npc/GroundItem snapshots and adapted players.
+ * Why: name, action and distance filters can run before allocating entity wrappers, matching ClientAdapter snapshot shapes, which expose `ops` rather than `actions()`.
  */
 interface EntitySnapView {
     name: string | null;
@@ -24,13 +23,8 @@ export function matchesEntityName(actual: string | null, configured: string): bo
 }
 
 /**
- * Chainable filter over scene entities; a terminal evaluates it against the
- * current scene.
- *
- * Built via {@link EntityQuery.fromSnapshots} so name/action/within/withinOf
- * filters run on raw snapshots and only matching rows are wrapped into Loc/Npc
- * objects (hot gather loops used to allocate a Loc for every scenery tile).
- *
+ * Chainable filter over scene entities; a terminal evaluates it against the current scene.
+ * Why: built via {@link EntityQuery.fromSnapshots} so name/action/within/withinOf filters run on raw snapshots and only matching rows become Loc/Npc objects, since a hot gather loop otherwise allocates a Loc per scenery tile.
  * @see docs/reference/api-entities.md#entityquery
  */
 export default class EntityQuery<E extends QueryableEntity> {
@@ -131,9 +125,8 @@ export default class EntityQuery<E extends QueryableEntity> {
     }
 
     /**
-     * Nearest to the player among results; when any result is within
-     * {@link preferRadius} of the player, only that local set is considered.
-     * @see pickNearestPreferLocal in TargetPick.ts
+     * Nearest to the player among results.
+     * Why: when any result is within {@link preferRadius} of the player, only that local set is considered (see pickNearestPreferLocal in TargetPick.ts).
      */
     nearestPreferLocal(preferRadius: number): E | null {
         const r = Math.max(0, Math.floor(preferRadius));

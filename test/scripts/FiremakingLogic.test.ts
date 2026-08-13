@@ -65,9 +65,8 @@ describe('FiremakingLogic', () => {
     });
 
     test('findBurnLane prefers a full-load west lane over a longer partial elsewhere', () => {
-        // Narrow plot so geometry is exact:
-        // z=5: free tiles x=11..14 only → max west run 4 (partial for want=5), closer to player.
-        // z=6: free tiles x=11..15 → max west run 5 (full load), farther.
+        // z=5: free x=11..14 → max west run 4 (partial for want=5), closer to the player.
+        // z=6: free x=11..15 → max west run 5 (full load), farther.
         const plot = { bank: new Tile(0, 0, 0), x0: 10, x1: 15, z0: 5, z1: 6 };
         const here = { x: 14, z: 5, level: 0 };
         const occ = new Set([

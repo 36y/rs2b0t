@@ -9,12 +9,7 @@ const { default: LocType } = await import('#/client/config/LocType.js');
 // LocType reads the game config cache, which a unit test has no reason to load.
 LocType.list = ((id: number) => ({ name: `loc${id}`, op: ['Mine'] })) as unknown as typeof LocType.list;
 
-/**
- * locs() sweeps 104x104 tiles x 4 typecodes and allocates a snapshot per hit --
- * measured 1.4-1.7ms and up to 2289 objects per call, from script predicates that
- * run at frame rate. The memo must survive repeat calls on an unchanged scene and
- * must not survive anything the server says changed.
- */
+// Why: locs() sweeps 104x104 tiles x 4 typecodes per call (1.4-1.7ms, up to 2289 objects) from predicates that run at frame rate.
 let sceneReads = 0;
 
 function fakeClient(overrides: Record<string, unknown> = {}) {
@@ -43,9 +38,7 @@ describe('locs() snapshot memo', () => {
         invalidateLocSnapshots();
     });
 
-    // `raw` is module-global and shared with every other test file in the run. A
-    // half-populated fake left attached makes unrelated adapter reads dereference
-    // undefined, so this file must hand the adapter back the way it found it.
+    // Why: `raw` is module-global, so a half-populated fake left attached makes unrelated adapter reads dereference undefined.
     afterAll(() => {
         detach();
     });

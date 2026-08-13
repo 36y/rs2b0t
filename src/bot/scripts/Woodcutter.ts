@@ -5,14 +5,10 @@ import { TICK_MANIP_UNSHIPPED_HELP, WC_TICK_MANIP_OPTIONS, tickManipUiOptions } 
 import { FORGETFUL_BANK_SETTING, TOOL_ACQUIRE_SETTING } from '../api/acquisition/ToolAcquire.js';
 import { WOODCUTTING_LOCATION_OPTIONS } from '../data/woodcuttingLocations.js';
 
-/**
- * Woodcutter — GatheringBot preset for trees + optional chop-then-burn.
- *
- * Skill mode is still selected by the presence of `treeName` / `burnMode` /
- * `fireSpot` in the settings schema (see GatheringBot.onStart). This class is
- * the dedicated script entry so Woodcutting stays separate from Miner/Fisher
- * registry presets that also use GatheringBot.
- */
+// Why: skill mode is selected by the presence of `treeName`, `burnMode` and `fireSpot` in the settings schema (see GatheringBot.onStart).
+// Why: this class is the dedicated script entry, so Woodcutting stays separate from the Miner and Fisher registry presets that also use GatheringBot.
+
+/** Woodcutter — GatheringBot preset for trees plus optional chop-then-burn. */
 export const WOODCUTTER_SETTINGS: SettingsSchema = {
     treeName: {
         type: 'string',

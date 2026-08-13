@@ -1,11 +1,7 @@
-/**
- * Real browser + local LostCity end-to-end proof for the Romeo & Juliet rewrite.
- *
- * This uses fresh isolated accounts, the real AIOQuester UI, real navigation and
- * server dialogue. It never points at a production server. See docs/TESTING.md.
- *
- *   CHROME_PROFILE=/tmp/rs2b0t-rj bun tools/romeo-juliet-rewrite-test.ts http://127.0.0.1:8950 10
- */
+/** Local LostCity end-to-end proof for the Romeo & Juliet rewrite: [base] [minutes], CHROME_PROFILE=…
+ *  Uses fresh isolated accounts, the AIOQuester UI, live navigation and server dialogue; it never points at a production server. */
+
+//   CHROME_PROFILE=/tmp/rs2b0t-rj bun tools/romeo-juliet-rewrite-test.ts http://127.0.0.1:8950 10
 import { chromium, type BrowserContext, type Page } from 'playwright-core';
 import { createHash } from 'node:crypto';
 

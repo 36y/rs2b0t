@@ -103,9 +103,7 @@ test('a script can restart after stopping itself during onStart', async () => {
     expect(instances).toHaveLength(2);
     expect(instances[1]?.starts).toBe(1);
     expect(instances[1]?.stops).toBe(1);
-    // A restart replaces the context and its log; without this carry-over the
-    // reason the previous run ended would be gone (the "stopped, nothing in the
-    // logs" report).
+    // Why: a restart replaces the context and its log, so without this carry-over the reason the previous run ended is gone.
     expect(ScriptRunner.ctx?.log.map(line => line.msg)).toContain(
         "previous run of 'Self-stopping test bot' ended (stopped) — test: self-stopping bot"
     );
@@ -232,11 +230,7 @@ test('onStart remains blocked until the stat snapshot is ready', async () => {
     }
 });
 
-/**
- * Harnesses and page-context callers reach `rs2b0t.runner.stop()` with no
- * argument. Throwing there aborts before the state transition, so the run stays
- * `running` forever and every later `start` reports "'X' is still running".
- */
+// Why: harnesses call `rs2b0t.runner.stop()` with no argument, and throwing there aborts before the state transition, leaving the run `running` forever.
 test('stop() without a reason still stops the run', () => {
     expect(stopReasonOf(undefined as never)).toContain('no reason given');
     expect(stopReasonOf('  ')).toContain('no reason given');

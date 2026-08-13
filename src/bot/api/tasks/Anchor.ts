@@ -20,14 +20,10 @@ export interface AnchorHost {
  */
 export const HOME_ARRIVE_RADIUS = 8;
 
-/**
- * Whether post-bank / no-target gather should walk toward the camp anchor.
- *
- * "Already home" is the soft {@link HOME_ARRIVE_RADIUS} disk — not camp membership.
- * Bank stands often sit inside the membership disk but far from resources
- * (Catherby bank→pier ≈ 36). Treating full membership as home left Fisher idling
- * on "no spots" at the bank (#154).
- */
+// Why: "already home" is the soft {@link HOME_ARRIVE_RADIUS} disk rather than camp membership.
+// Why: bank stands often sit inside the membership disk but far from resources (Catherby bank→pier ≈ 36), and treating full membership as home left Fisher idling on "no spots" at the bank (#154).
+
+/** Whether post-bank or no-target gather should walk toward the camp anchor. */
 export function shouldWalkHomeToGatherAnchor(
     distToAnchor: number | null | undefined,
     arriveRadius = HOME_ARRIVE_RADIUS
@@ -39,17 +35,11 @@ export function shouldWalkHomeToGatherAnchor(
     return distToAnchor > r;
 }
 
-/**
- * Backup soft-home from a gather miss (no spot/rock in scene).
- *
- * BankCatch / restock use the tight {@link HOME_ARRIVE_RADIUS} disk via
- * {@link shouldWalkHomeToGatherAnchor}. Gather must **not** — freeform pier-hops and
- * brief spot despawns sit just outside the 8-tile disk and thrash hunt↔home.
- * Only pull home when clearly off the resource pad (bank square / long wander).
- *
- * Uses a soft threshold (~20–28), not full camp membership — bank at ~36 must
- * still soft-home even when membership is 64.
- */
+// Why: BankCatch and restock use the tight {@link HOME_ARRIVE_RADIUS} disk via {@link shouldWalkHomeToGatherAnchor}, but gather must not, since freeform pier-hops and brief spot despawns sit just outside the 8-tile disk and thrash hunt↔home.
+// Why: home is only pulled when clearly off the resource pad — a bank square or a long wander.
+// Why: the threshold is soft (~20–28) rather than full camp membership, because a bank at ~36 must still soft-home even when membership is 64.
+
+/** Backup soft-home from a gather miss (no spot or rock in scene). */
 export function shouldSoftHomeFromGatherMiss(
     distToAnchor: number | null | undefined,
     leash = DEFAULT_CAMP_RADIUS

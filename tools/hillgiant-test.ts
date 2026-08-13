@@ -1,7 +1,6 @@
-// Issue #311 — live HillGiant proof against a local engine. Starts with NO key
-// so the script has to fetch the Edgeville dungeon spawn, unlock the hut, climb
-// down, and kill a giant. Each leg is asserted from real game state.
-//
+// Issue #311 — live HillGiant proof: [base].
+// Starts with no key, so the script has to fetch the Edgeville dungeon spawn, unlock the hut, climb down and kill a giant.
+
 //   bun tools/hillgiant-test.ts [http://localhost:8888]
 import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, positionalArgs, setSettings } from './lib/harness.js';
 
@@ -80,9 +79,7 @@ try {
     if (!gotKey) fail('never picked up the Brass key from the Edgeville dungeon');
     console.log(`PASS 1/3 — picked up the Brass key (at ${JSON.stringify(await tile())})`);
 
-    // 2. reaches the pit. Put the bot on the surface outside the hut first, so
-    // the locked door + ladder is the only way back down and the leg is really
-    // exercised rather than walked around underground.
+    // Why: putting the bot on the surface outside the hut makes the locked door and ladder the only way back down, so the leg is exercised rather than walked around underground.
     await cheatQuiet(page, 'tele 0,48,53,52,60', 4000);
     console.log(`moved to the surface at ${JSON.stringify(await tile())} — hut route is now the only way in`);
     const inPit = await page
@@ -97,7 +94,7 @@ try {
     if (!usedHut) fail('reached the pit without ever using the hut door/ladder leg');
     console.log(`PASS 2/3 — unlocked the hut and climbed into the pit at ${JSON.stringify(await tile())}`);
 
-    // 3. actually fights a giant
+    // 3. fights a giant
     const fought = await page
         .waitForFunction(() => ((globalThis as never as Api).rs2b0t.runner.ctx?.log ?? []).some(l => /attacking Giant|looted/i.test(l.msg)), undefined, { timeout: 180_000 })
         .then(() => true).catch(() => false);

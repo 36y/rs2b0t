@@ -87,9 +87,8 @@ export function meetsRequires(requires: TransportRequires | undefined, state: Wo
         }
     }
 
-    // Essence exit: session dest. Fail closed when state has a known return that
-    // does not match. Fail open when essenceExitReturn is unset (offline pack).
-    // PathFinder also re-checks against path-local return after entry hops.
+    // Why: an essence exit is a session dest, so a state carrying a known return that does not match fails closed, while an unset `essenceExitReturn` fails open for the offline pack.
+    // Why: PathFinder re-checks this against the path-local return after entry hops.
     if (requires.essenceExitReturn !== undefined) {
         const live = state.essenceExitReturn;
         if (live !== undefined && live !== requires.essenceExitReturn) {
@@ -124,11 +123,9 @@ export function hasGatingRequires(requires: TransportRequires | undefined): bool
     );
 }
 
-/**
- * Convenience for PathFinder filters.
- * Matches search policy: no gates → allowed; gated without state → fail closed
- * (same as PathFinder skipping gated edges when WorldState is omitted).
- */
+// Why: this matches search policy — no gates means allowed, while gated without state fails closed, the same as PathFinder skipping gated edges when WorldState is omitted.
+
+/** Convenience predicate for PathFinder filters. */
 export function isEdgeAllowed(requires: TransportRequires | undefined, state: WorldState | undefined): boolean {
     if (!hasGatingRequires(requires)) {
         return true;

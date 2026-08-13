@@ -27,17 +27,10 @@ function graph(): MazeGraph {
     return cached;
 }
 
-/**
- * Solves a door route from wherever the player actually landed.
- *
- * This used to pick the nearest of four hardcoded corner spawns and return its
- * route unconditionally, however far away the player was. The event does not
- * only spawn on those four tiles: two live bots landed on (2905,4566) and
- * (2900,4567), were both handed the (2891,4555) route, and both sat forever on
- * a first door that is walled off from where they stood. Returning a route for
- * somewhere else is worse than returning none, so this solves the real spawn
- * and returns null when it cannot.
- */
+// Why: the event does not only spawn on the four corner tiles — two live bots landed on (2905,4566) and (2900,4567), were both handed the (2891,4555) route, and both sat forever on a first door walled off from where they stood.
+// Why: a route for somewhere else is worse than none, so the observed spawn is solved and null is returned when it cannot be.
+
+/** Solves a door route from wherever the player landed. */
 export function selectRoute(me: { x: number; z: number }): MazeRoute | null {
     const doors = solveRoute(graph(), me);
     if (doors.length === 0) {

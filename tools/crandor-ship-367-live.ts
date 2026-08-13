@@ -1,15 +1,7 @@
-/**
- * Live proof for #367 — Crandor after Dragon Slayer (secret wall, not re-sail).
- *
- * Content: Lady Lumbridge is one-shot mid-quest. Post-complete access is
- * Karamja volcano → dragonsecretdoor → climbing rope / rock opening.
- *
- *   setvar dragonquest 10 (+ relog)
- *   tele volcano rocks (2856,3167) — no tele onto Crandor surface
- *   walkResilient to dig (2848,3296)
- *
- *   ~/redeploy.sh && HEADED=1 bun tools/crandor-ship-367-live.ts
- */
+// Live proof for #367 — Crandor after Dragon Slayer, through the secret wall.
+// Why: Lady Lumbridge is one-shot mid-quest, so post-complete access is Karamja volcano → dragonsecretdoor → climbing rope; nothing teleports onto the Crandor surface.
+
+//   ~/redeploy.sh && HEADED=1 bun tools/crandor-ship-367-live.ts
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';

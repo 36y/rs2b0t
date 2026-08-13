@@ -14,12 +14,12 @@ export const RIDGE_DOOR = new Tile(2998, 3917, 0);
  * must target this (or further south) so only the script's ridge.interact crosses.
  */
 export const RIDGE_APPROACH = new Tile(2998, 3916, 0);
-/**
- * Course membership is gate-based, not a Chebyshev blob:
- *   on course  = same plane, strictly north of the Gate (z > 3931), within COURSE_X_RADIUS.
- * That keeps the wolf pit / ridge approach out, and keeps pit-ladder exits in —
- * a tight COURSE_RADIUS=16 treated ladder exits as "away" and pathfindered out the Gate/Door.
- */
+
+// Why: course membership is gate-based — same plane, strictly north of the Gate (z > 3931), within COURSE_X_RADIUS — not a Chebyshev blob.
+// Why: that keeps the wolf pit and ridge approach out, and pit-ladder exits in.
+// Why: a tight COURSE_RADIUS of 16 reads ladder exits as "away" and pathfinds out through the Gate or Door.
+
+/** Lateral half-width of course membership. */
 export const COURSE_X_RADIUS = 24;
 /** Lateral width of the ridge→gate entry corridor (approach / EnterCourse). */
 const ENTRY_RADIUS = 10;

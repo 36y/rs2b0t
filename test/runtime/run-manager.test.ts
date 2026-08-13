@@ -25,9 +25,7 @@ describe('shouldEnableRun', () => {
         expect(shouldEnableRun(state({ inCombat: true, energy: 0 }))).toBe(false);
     });
 
-    // #117: the toggle clicks a controls-tab component and the server closes the open
-    // modal to service it, which shut the bank mid-trip and left the smelter reading an
-    // empty bank. Nothing needs run while a modal is up.
+    // Why: the toggle clicks a controls-tab component and the server closes the open modal to service it, shutting the bank mid-trip.
     test('holds off while a modal is open rather than closing it', () => {
         expect(shouldEnableRun(state({ modalOpen: true }))).toBe(false);
         expect(shouldEnableRun(state({ modalOpen: true, energy: 100 }))).toBe(false);

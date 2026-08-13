@@ -8,20 +8,9 @@ import { Traversal } from '../../../api/walking/Traversal.js';
 import Tile from '../../../geometry/Tile.js';
 import { DS_ID } from './areas.js';
 
-/**
- * Melzar's Maze, as a fixed list of legs.
- *
- * The route is not guesswork: it is the shortest path the baked collision pack
- * admits from the front door to the chest once each coloured door is opened in
- * key order. Everything in here addresses locs by exact tile and NPCs by exact
- * id, because the maze is full of decoys — six ordinary Giant rats share the
- * one that drops the red key, and eleven unclimbable "Ladder"s share a name
- * with the three that work.
- *
- * A key is not a door opener: `open_and_close_door` teleports the player
- * through and eats the key, so a leg is done when the key is gone and we have
- * landed on the far side.
- */
+// Why: Melzar's Maze is written as a fixed list of legs, and the route is the shortest path the baked collision pack admits from the front door to the chest once each coloured door is opened in key order.
+// Why: locs are addressed by exact tile and NPCs by exact id, as the maze is full of decoys — six ordinary Giant rats share the one that drops the red key, and eleven unclimbable "Ladder"s share a name with the three that work.
+// Why: a key does not open a door in place — `open_and_close_door` teleports the player through and eats the key, so a leg is done when the key is gone and the player has landed on the far side.
 
 /** Only these ids drop keys; the same-named neighbours never do. */
 export const MAZE_NPC = {
@@ -78,13 +67,10 @@ const KEY_IDS: readonly number[] = [
     DS_ID.BLUE_KEY, DS_ID.MAGENTA_KEY, DS_ID.GREEN_KEY
 ];
 
-/**
- * True while standing anywhere inside the maze, on any of its four floors.
- *
- * The east bound stops at 2940 deliberately: the front door stands on 2941, and
- * that tile is the doorstep *outside*. Including it makes "am I still in the
- * maze?" true the moment the bot lets itself out, and it walks straight back in.
- */
+// Why: the east bound stops at 2940 deliberately, as the front door stands on 2941 and that tile is the doorstep outside.
+// Why: including it makes "am I still in the maze?" true the moment the bot lets itself out, and it walks straight back in.
+
+/** True while standing anywhere inside the maze, on any of its four floors. */
 export function inMaze(t: { x: number; z: number; level: number } | null | undefined): boolean {
     if (!t) {
         return false;
@@ -99,10 +85,8 @@ export function inMaze(t: { x: number; z: number; level: number } | null | undef
  * up an interrupted run; within a run the index is carried forward.
  */
 export function legFromPosition(t: { x: number; z: number; level: number }): number {
-    // Every test below reads a floor or a cellar as a place in this route, and
-    // none of them mean anything outside the building. Unguarded, the Dwarven
-    // Mine anvil (z=9813) is "the maze basement" and the run resumes at a zombie
-    // it has no path to.
+    // Why: every test below reads a floor or a cellar as a place in this route, and none of them mean anything outside the building.
+    // Why: unguarded, the Dwarven Mine anvil (z=9813) is "the maze basement" and the run resumes at a zombie it has no path to.
     if (!inMaze(t)) {
         return 0;
     }
@@ -156,10 +140,8 @@ async function killFor(leg: MazeLeg & { kind: 'kill' }, log: (m: string) => void
         await Execution.delayTicks(3);
         return false;
     }
-    // Every floor of this maze is stocked with ordinary same-named monsters that
-    // never drop a key, and they are aggressive. Game.inCombat() reads our own
-    // health bar, so one of them landing a hit would otherwise park this leg
-    // forever: only being locked onto the right NPC is a reason to wait.
+    // Why: every floor of this maze is stocked with aggressive same-named monsters that never drop a key.
+    // Why: Game.inCombat() reads our own health bar, so one of them landing a hit would park this leg forever — only being locked onto the right NPC is a reason to wait.
     if (target.targetsMe()) {
         await Execution.delayTicks(2);
         return heldById(leg.keyId);
@@ -258,14 +240,10 @@ function onTile(t: Tile): boolean {
     return here !== null && here.x === t.x && here.z === t.z && here.level === t.level;
 }
 
-/**
- * Whether a door leg has been crossed.
- *
- * Oziach's maze key is NOT eaten by the front door — its `oplocu` handler never
- * calls `inv_del` — so holding it says nothing about which side we are on, and
- * only position does. Every coloured key is deleted as its door swings, so its
- * absence is itself the proof.
- */
+// Why: Oziach's maze key is not eaten by the front door, as its `oplocu` handler never calls `inv_del`, so holding it says nothing about which side we are on and only position does.
+// Why: every coloured key is deleted as its door swings, so its absence is itself the proof.
+
+/** Whether a door leg has been crossed. */
 export function doorCrossed(
     leg: MazeLeg & { kind: 'door' },
     here: { x: number; z: number; level: number },
@@ -291,13 +269,11 @@ function legDone(leg: MazeLeg, here: { x: number; z: number; level: number }): b
     }
 }
 
-/**
- * Melzar's Maze is one-way: every ladder in is broken from below and every
- * coloured key is spent. The only way back out of the chest room is the cellar
- * ladder in the north-east, then the `funexit` door — which opens from the
- * inside only — and finally the front door, which the maze key still opens
- * because it was never consumed.
- */
+// Why: Melzar's Maze is one-way — every ladder in is broken from below and every coloured key is spent.
+// Why: the only way back out of the chest room is the cellar ladder in the north-east, then the `funexit` door, which opens from the inside only, and finally the front door.
+// Why: the maze key still opens that front door, as it was never consumed.
+
+/** Walk the one route out of the maze. */
 export async function leaveMaze(log: (m: string) => void): Promise<boolean> {
     const here = Game.tile();
     if (!here || !inMaze(here)) {
@@ -366,9 +342,8 @@ export class MazeRun {
         if (!here) {
             return false;
         }
-        // A coloured key in the pack is unambiguous: it exists only between its
-        // kill and its door, so it re-syncs the route after any interruption.
-        // The maze key is not a marker — it is kept for the whole quest.
+        // Why: a coloured key in the pack exists only between its kill and its door, so it re-syncs the route after any interruption.
+        // Why: the maze key is no such marker, as it is kept for the whole quest.
         const keyLeg = MAZE_LEGS.findIndex(l => l.kind === 'door' && l.keyId !== DS_ID.MAZE_KEY && heldById(l.keyId));
         if (keyLeg >= 0) {
             this.index = keyLeg;

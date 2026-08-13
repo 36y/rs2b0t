@@ -353,9 +353,8 @@ export const GLOBAL_SETTINGS: SettingsSchema = {
 };
 
 /**
- * Settings for the tile map picker only (in-picker Settings modal).
- * Not shown under Global settings. Storage namespace: {@link MAP_PICKER_SETTINGS_NS}.
- * URL: `?MapPicker.showBasemap=false` etc.
+ * Settings for the tile map picker only (in-picker Settings modal), not shown under Global settings.
+ * Why: the storage namespace is {@link MAP_PICKER_SETTINGS_NS} and the URL form is `?MapPicker.showBasemap=false`.
  */
 export const MAP_PICKER_SETTINGS_NS = 'MapPicker';
 

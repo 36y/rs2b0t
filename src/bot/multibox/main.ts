@@ -114,8 +114,7 @@ function boot(): void {
         railTiles()[index]?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     }
 
-    // Tiles carry a click-catching overlay (.mbx-hit) because the iframe underneath
-    // would otherwise swallow the click and the rail could never switch bots.
+    // Why: the iframe would otherwise swallow the click, so tiles carry a click-catching overlay (.mbx-hit) and the rail can still switch bots.
     rail.addEventListener('click', ev => {
         if (suppressClick) {
             return;
@@ -305,9 +304,8 @@ function boot(): void {
         setRailHidden(true);
     }
 
-    // Bind live status (name + running dot) onto the rail tiles, which DomSlotOps
-    // keeps in slot order — so snapshot[i] is tile[i]. Tabs filter by visibility
-    // only: hidden tiles stay in the DOM, keeping that mapping intact.
+    // Bind live status (name + running dot) onto the rail tiles, which DomSlotOps keeps in slot order, so snapshot[i] is tile[i].
+    // Why: tabs filter by visibility only — hidden tiles stay in the DOM, keeping that mapping intact.
     function renderRail(): void {
         tabBar.render(controller.tabs(), controller.activeTab());
         const snaps = controller.snapshot();

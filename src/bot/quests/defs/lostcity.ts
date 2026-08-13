@@ -34,7 +34,7 @@ export function parseLostCityJournal(lines: readonly string[] | string): number 
         .trim()
         .toLowerCase();
 
-    // Check newest progress first because later journal entries repeat earlier history.
+    // Why: later journal entries repeat earlier history, so the newest progress is checked first.
     if (text.includes('quest complete!')) return LOST_CITY_STAGE.COMPLETE;
     if (text.includes('crafted a dramen staff')) return LOST_CITY_STAGE.STAFF_MADE;
     if (text.includes('i should craft the branch from the tree into a staff')) return LOST_CITY_STAGE.BRANCH_CUT;

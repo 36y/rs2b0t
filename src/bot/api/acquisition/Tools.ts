@@ -3,22 +3,18 @@ export interface ToolTier {
     name: string;
     /** Skill level required to *use* the tool (mining / woodcutting). */
     level: number;
-    /**
-     * Attack level required to *wield* the tool. Classic metal tiers:
-     * bronze/iron 1, steel 5, mithril 20, adamant 30, rune 40.
-     * Tools may still be used from the backpack without meeting this.
-     */
+    // Why: classic metal tiers are bronze/iron 1, steel 5, mithril 20, adamant 30, rune 40.
+    // Why: tools may still be used from the backpack without meeting this.
+
+    /** Attack level required to wield the tool. */
     attackLevel?: number;
 }
 
-/**
- * Tool requirement for gathering scripts.
- *
- * - `tiered`: best usable tool from a level-ordered list (axes, pickaxes).
- * - `exact`: a named item (tinderbox, hammer, …).
- *
- * Fishing gear is handled separately in FishingMethods (not equippable on this era pack).
- */
+// Why: `tiered` picks the best usable tool from a level-ordered list (axes, pickaxes).
+// Why: `exact` names one item (tinderbox, hammer, …).
+// Why: fishing gear is handled separately in FishingMethods, since it is not equippable on this era pack.
+
+/** Tool requirement for gathering scripts. */
 export type ToolReq =
     | {
           kind: 'tiered';
@@ -267,13 +263,10 @@ export function bankHasBetterGatherTool(
     });
 }
 
-/**
- * Names of tools that should be worn right now (held in inv/equip, equip flag set, not yet worn).
- * Empty when nothing needs wielding.
- *
- * Skips tiers the player cannot wield yet (Attack too low). Classic RS still lets you
- * mine/chop with the tool in the backpack, so we must not thrash Wield forever.
- */
+// Why: tiers the player cannot wield yet (Attack too low) are skipped.
+// Why: classic RS still lets you mine or chop with the tool in the backpack, so Wield must not thrash forever.
+
+/** Names of tools that should be worn now (held, equip flag set, not yet worn); empty when nothing needs wielding. */
 export function toolsNeedingEquip(
     reqs: readonly ToolReq[],
     skillLevel: (skill: string) => number,

@@ -8,10 +8,9 @@ export function vialsToBuy(freeSlots: number, want: number): number {
     return Math.max(0, Math.min(freeSlots, want));
 }
 
-/**
- * A shop run happens every Nth completed trip, never on the very first one —
- * the first trip proves the bank/fountain loop before walking to Taverley.
- */
+// Why: the first trip proves the bank and fountain loop before walking to Taverley.
+
+/** A shop run happens every Nth completed trip, never on the first one. */
 export function isShopRun(runs: number, buyVials: boolean, everyN: number): boolean {
     if (!buyVials || runs <= 0 || everyN <= 0) {
         return false;

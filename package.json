@@ -16,6 +16,8 @@
         "b0t": "sh tools/b0t.sh",
         "test": "bun test",
         "lint": "eslint .",
+        "lint:prose": "node_modules/@vvago/vale/bin/vale docs README.md templates src/bot tools test bundle.ts bot.bundle.ts eslint.config.ts identifier.js",
+        "lint:prose:extras": "bun tools/lint-prose-extras.ts --gate=doc-cap,fragment,why-tag,comment-block",
         "audit:exports": "bun tools/audit-exports.ts",
         "typecheck": "tsc --noEmit",
         "format": "prettier --write",
@@ -40,6 +42,7 @@
         "@eslint/js": "^9.39.2",
         "@happy-dom/global-registrator": "^20.10.6",
         "@types/bun": "1.2.23",
+        "@vvago/vale": "3.17.1",
         "eslint": "^9.39.2",
         "globals": "^17.0.0",
         "jiti": "^2.6.1",
@@ -48,6 +51,7 @@
         "terser": "^5.46.0",
         "typescript-eslint": "^8.53.0"
     },
+    "trustedDependencies": ["@vvago/vale"],
     "peerDependencies": {
         "typescript": "^5.0.0"
     }

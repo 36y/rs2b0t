@@ -4,18 +4,15 @@ function chebyshev(a: NavPoint, b: NavPoint): number {
     return Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z));
 }
 
-/**
- * Default min Chebyshev(start, goal) before a tele edge is admissible.
- * **0** — let A* cost decide (spell/jewellery edges carry time costs in
- * `edgeCosts.ts`). Set a positive floor only when a caller wants a hard gate.
- */
+// Why: 0 leaves A* cost to decide, since spell and jewellery edges carry time costs in `edgeCosts.ts`.
+// Why: a positive floor is set only when a caller wants a hard gate.
+
+/** Default min Chebyshev(start, goal) before a tele edge is admissible. */
 export const DEFAULT_DISTANCE_BEFORE_TELEPORT = 0;
 
-/**
- * Whether a transport kind is enabled by path policy (toggles only — not WorldState).
- * Teleports default ON when policy is absent so catalog edges participate once added;
- * scripts that need pure walk pass `{ useTeleports: false }`.
- */
+// Why: teleports default on when policy is absent so catalog edges participate once added, and scripts wanting pure walk pass `{ useTeleports: false }`.
+
+/** Whether a transport kind is enabled by path policy — toggles only, not WorldState. */
 export function kindAllowedByPolicy(kind: TransportKind, policy: PathPolicy | undefined): boolean {
     if (!policy) {
         return true;
@@ -34,13 +31,10 @@ export function kindAllowedByPolicy(kind: TransportKind, policy: PathPolicy | un
     return true;
 }
 
-/**
- * Teleport-specific gates: allowlist + distance-before-teleport.
- *
- * `routeSpan` is typically Chebyshev(start, goal). For A* admission we use the
- * full route span so short same-city walks never open the tele graph. Callers
- * may pass a tighter remaining estimate later.
- */
+// Why: `routeSpan` is typically Chebyshev(start, goal), and A* admission uses the route span so short same-city walks never open the tele graph.
+// Why: callers may pass a tighter remaining estimate later.
+
+/** Teleport-specific gates: allowlist plus distance-before-teleport. */
 export function teleportAllowedByPolicy(
     edge: TransportEdge,
     policy: PathPolicy | undefined,

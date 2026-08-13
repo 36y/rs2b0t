@@ -66,11 +66,10 @@ async function run(log: (m: string) => void): Promise<boolean> {
     return false;
 }
 
-/**
- * Auto-retaliate is the real hazard here, not the damage: an ice warrior landing
- * a hit makes the bot swing back, and the swing cancels the mine. Nothing in
- * this trip wants a reflex — one ore and out.
- */
+// Why: auto-retaliate is the hazard here rather than the damage — an ice warrior landing a hit makes the bot swing back, and the swing cancels the mine.
+// Why: nothing in this trip wants a reflex, as it is one ore and out.
+
+/** Mine one blurite ore and leave. */
 export async function mineBlurite(log: (m: string) => void): Promise<boolean> {
     if (Inventory.countById(KS_ID.BLURITE_ORE) > 0) {
         return true;

@@ -66,7 +66,7 @@ entry".
 The deploy step rebuilds `out/botclient.js` with `TARGET=local`. A live wall serving that
 same file will reject new logins until it is rebuilt with `TARGET=live`.
 
-## Gates judged on output, not exit code
+## Gates judged on output
 
 The generator drift checks print `STALE` and some then exit non-zero on an unrelated
 teardown crash in the vendored audio shim. Their verdict reads the output, so a clean

@@ -289,11 +289,11 @@ async function turnValve(valve: Loc, label: string, log: (m: string) => void): P
     return 'ok';
 }
 
-/**
- * Server bits: right (valve_1) may only toggle while left is off; left (valve_2) always
- * toggles. Lever needs both bits set. Wrong order → "flow gates resetting". Running
- * wheel + lever → stop. Only succeed on verified start or locked valves.
- */
+// Why: right (valve_1) may only toggle while left is off, and left (valve_2) always toggles.
+// Why: the lever needs both bits set, and the wrong order answers "flow gates resetting".
+// Why: a running wheel with the lever pulled stops it, so success is only reported on a verified start or on locked valves.
+
+/** Try one valve order and report whether the flow started. */
 async function tryValveOrder(
     first: Loc,
     second: Loc,
@@ -663,12 +663,10 @@ async function freeSlotForOre(log: (m: string) => void): Promise<void> {
     await Execution.delayUntil(() => !Inventory.isFull(), 3_000);
 }
 
-/**
- * Mine the west-chamber rock (spawns the *rock* Earth elemental) and take ore.
- * Standing "Earth elemental" NPCs in the workshop do **not** drop quest ore —
- * only `earth_elemental_rock_version` after Mine, and only if we are the hero.
- * Always Mine first; never attack a pre-existing earth elemental.
- */
+// Why: standing "Earth elemental" NPCs in the workshop drop no quest ore — only `earth_elemental_rock_version` after Mine does, and only for the hero.
+// Why: the step therefore always mines first and never attacks a pre-existing earth elemental.
+
+/** Mine the west-chamber rock, which spawns the rock Earth elemental, and take the ore. */
 export async function mineElementalOre(log: (m: string) => void): Promise<boolean> {
     if (heldId(EW_ITEM.ELEMENTAL_ORE.id) > 0) {
         return true;

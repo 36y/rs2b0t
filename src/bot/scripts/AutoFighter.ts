@@ -207,9 +207,8 @@ export default class AutoFighter extends TaskBot {
         BANK_AT = this.settings.num('bankAtLootSlots', 12);
         AUTO_BANK = autoBankEnabled(this.settings.str('banking', 'Auto'));
         BANK_COMMON = this.settings.bool('bankCommonJunk', true);
-        // Pre-#195 saves stored attack/strength/controlled/defence in combatStyle.
-        // Settings option validation would coerce those to default "melee" and leave
-        // meleeStyle at strength — so Defence (etc.) was silently ignored (#461).
+        // Why: pre-#195 saves stored attack/strength/controlled/defence in combatStyle.
+        // Why: settings option validation coerces those to the default "melee" and leaves meleeStyle at strength, so Defence and the rest are ignored (#461).
         const rawCombatStyle = SettingsStore.displayString('AutoFighter', 'combatStyle', SETTINGS.combatStyle!);
         const rawMeleeStyle = SettingsStore.saved('AutoFighter', 'meleeStyle');
         const split = resolveSplitCombatSettings(rawCombatStyle, rawMeleeStyle);
@@ -604,9 +603,8 @@ class SetAttackStyle implements Task {
         return STYLE === 'range' ? Game.combatMode() === RANGE_MODE : Game.hasCombatStyle(MELEE_STYLE);
     }
     validate(): boolean {
-        // com_mode is not persisted; re-assert whenever it disagrees. Style clicks
-        // are legal mid-fight — do not gate on !inCombat (RockCrab lesson: continuous
-        // combat starved the out-of-combat-only assert after DCs / failed first clicks).
+        // Why: com_mode is not persisted, so it is re-asserted whenever it disagrees.
+        // Why: style clicks are legal mid-fight, so this does not gate on !inCombat — continuous combat starves an out-of-combat-only assert after DCs or failed first clicks.
         return STYLE !== 'mage' && !this.selected() && Date.now() >= this.retryAt;
     }
     async execute(): Promise<void> {

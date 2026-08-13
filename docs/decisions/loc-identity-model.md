@@ -1,6 +1,6 @@
 [Manual](../README.md) › Loc identity
 
-# Loc identity is a placement, not an ID
+# Loc identity is a placement
 
 Adapted from an [external note](https://gist.github.com/lulwut/5636d6a3010af2646d341efa9b605599).
 
@@ -18,7 +18,7 @@ A tree becoming a stump can mean either that the placement now contains a differ
 ID, or that the same raw placement now resolves to a different effective ID. Both look
 identical to a script; the engine reaches them differently.
 
-Why it matters here: rs2b0t wraps a real era client, so it reads that client's live
+Why it matters here: rs2b0t wraps a 2004-era client, so it reads that client's live
 scene rather than reproducing a headless state pipeline. Whatever the engine did to
 produce the change, the adapter sees the result.
 

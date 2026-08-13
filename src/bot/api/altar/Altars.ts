@@ -43,7 +43,7 @@ function altarDistance(from: WorldTile | Tile, altar: AltarLocation): number {
     return flat + (altar.tile.level === from.level ? 0 : LEVEL_CHANGE_PENALTY);
 }
 
-/** The nearest altar this account can actually use. */
+/** The nearest altar this account can use. */
 export function nearestAltar(from: WorldTile | Tile): AltarLocation | null {
     let best: { altar: AltarLocation; dist: number } | null = null;
     for (const altar of ALTARS) {

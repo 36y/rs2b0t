@@ -7,14 +7,9 @@ import { talkStrict } from '../../exec/primitives.js';
 import { SV_ITEM, SV_NPC, SV_TILE } from './areas.js';
 import { driveChoice, heldId } from './scene.js';
 
-/**
- * Deepest option first: `pickPreferred` takes the earliest preference that appears,
- * and several of Mosol's menus re-offer an earlier one. Listing "What can we do?"
- * ahead of "I'll go to see the Shaman." would loop forever on his fourth menu.
- *
- * "What danger is there around here?" is deliberately absent — it spawns one to
- * three aggressive Undead Ones, which is why this uses `talkStrict`.
- */
+// Why: the deepest option comes first, as `pickPreferred` takes the earliest preference that appears and several of Mosol's menus re-offer an earlier one.
+// Why: listing "What can we do?" ahead of "I'll go to see the Shaman." would loop forever on his fourth menu.
+// Why: "What danger is there around here?" is deliberately absent, as it spawns one to three aggressive Undead Ones, which is why this uses `talkStrict`.
 const MOSOL_DIALOGUE = [
     "Yes, I'm sure and I'll take the Wampum belt to Trufitus.",
     "I'll go to see the Shaman.",

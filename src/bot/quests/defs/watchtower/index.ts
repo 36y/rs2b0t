@@ -87,11 +87,9 @@ function escapePocket(area: WatchtowerArea, wanted: WatchtowerArea): QuestStep |
     }
 }
 
-/**
- * Take `step` only once we are somewhere it can start from, escaping any other
- * sealed pocket first. `wanted` is where the step's own leg expects to begin;
- * the open mainland always qualifies, because every leg can walk from there.
- */
+// Why: `wanted` is where the step's own leg expects to begin, and the open mainland always qualifies, as every leg can walk from there.
+
+/** Take `step` only once somewhere it can start from, escaping any other sealed pocket first. */
 function at(area: WatchtowerArea, wanted: WatchtowerArea, step: QuestStep): QuestStep {
     return escapePocket(area, wanted) ?? step;
 }
@@ -204,11 +202,9 @@ function stageRiddle(snap: QuestSnapshot, area: WatchtowerArea): QuestStep {
         : { kind: 'custom', name: 'answer the riddle with a death rune', run: answerRiddle };
 }
 
-/**
- * A cave mouth refuses entry without the map and a lit light source, and bounces
- * you to a fixed tile — which loops forever if the kit was banked or lost. Every
- * cave trip checks for both first.
- */
+// Why: a cave mouth refuses entry without the map and a lit light source, and bounces you to a fixed tile, which loops forever if the kit was banked or lost.
+
+/** The cave kit shortfall, or null when both are held. */
 function needCaveKit(snap: QuestSnapshot, area: WatchtowerArea): QuestStep | null {
     if (held(snap, WT_ITEM.SKAVID_MAP.id) === 0) {
         const inBank = bankOnly(snap, WT_ITEM.SKAVID_MAP);
@@ -294,9 +290,8 @@ function stagePotion(snap: QuestSnapshot, area: WatchtowerArea): QuestStep {
 function stageShamans(snap: QuestSnapshot, area: WatchtowerArea): QuestStep {
     const left = flagValue(snap.progress, 'shamans-left') ?? 6;
 
-    // Dissolved shamans respawn, so any trip back in needs food — but only the
-    // steps that actually go back in. Demanding it while merely carrying the
-    // crystals to the wizard parks the quest for no reason.
+    // Why: dissolved shamans respawn, so any trip back in needs food, but only the steps that go back in.
+    // Why: demanding it while carrying the crystals to the wizard parks the quest for no reason.
     const enclaveFood = area === 'enclave' ? null : sourceFood(snap, ENCLAVE_FOOD);
     const provisioned = (step: QuestStep): QuestStep => (enclaveFood ? at(area, 'yanille', enclaveFood) : step);
 
@@ -321,8 +316,7 @@ function stageShamans(snap: QuestSnapshot, area: WatchtowerArea): QuestStep {
     }
 
     if (held(snap, WT_ITEM.CRYSTAL4.id) === 0 && banked(snap, WT_ITEM.CRYSTAL4.id) === 0) {
-        // No area guard: standing in the enclave without a pickaxe is precisely the
-        // case that has to walk back out for one, and at() does the leaving.
+        // Why: there is no area guard, as standing in the enclave without a pickaxe is the case that has to walk back out for one, and at() does the leaving.
         const pick = sourcePickaxe(snap);
         if (pick) {
             return at(area, 'yanille', pick);
@@ -396,9 +390,8 @@ export function decide(snap: QuestSnapshot): QuestStep {
     if (area === 'unknown') {
         return { kind: 'wait', reason: 'player location unavailable' };
     }
-    // Pulling the lever teleports into the shielded copy of the tower in region
-    // 45_73, and nothing else goes there. Standing in it means the quest is done,
-    // whatever the journal colour has caught up to.
+    // Why: pulling the lever teleports into the shielded copy of the tower in region 45_73, and nothing else goes there.
+    // Why: standing in it means the quest is done, whatever the journal colour has caught up to.
     if (area === 'mirrorTower') {
         if (held(snap, WT_ITEM.WATCHTOWER_SPELL.id) > 0) {
             return { kind: 'custom', name: 'read the Watchtower spell scroll', run: readSpellScroll };

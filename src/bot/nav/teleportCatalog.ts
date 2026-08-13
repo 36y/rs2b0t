@@ -13,11 +13,10 @@ type TeleportFamily = 'spell' | 'jewellery' | 'lever';
 
 /** Origin-side restrictions evaluated at the player's current tile (#339). */
 interface TeleportOriginRequires {
-    /**
-     * Maximum wilderness level where this tele may be cast/rubbed.
-     * Player wildy **strictly greater** than this → not planned.
-     * Standard spells / duel ring / games neck: 20. Glory: 30.
-     */
+    // Why: a player wildy level strictly greater than this is not planned.
+    // Why: standard spells, duel ring and games neck sit at 20; glory sits at 30.
+
+    /** Maximum wilderness level where this tele may be cast or rubbed. */
     maxWildernessLevel?: number;
 }
 
@@ -278,11 +277,9 @@ export function inventoryNameMatchesJewellery(itemName: string, dest: TeleportDe
     return dest.itemNameMatch.some(prefix => itemName.includes(prefix));
 }
 
-/**
- * Whether `dest` may be used from `from` given optional wildy on state or computed
- * from coordinates (#339). Fail closed when origin.maxWildernessLevel is set and
- * player wildy is strictly greater.
- */
+// Why: it fails closed when `maxWildernessLevel` is set and the player's wildy level is strictly greater (#339).
+
+/** Whether `dest` may be used from `from`, given wildy on state or computed from coordinates. */
 export function teleportAllowedFromOrigin(
     dest: TeleportDestination,
     from: NavPoint,

@@ -1,10 +1,5 @@
-/**
- * Draw nav path into the client areaGame surface (post-world 3D, pre-nameplates).
- *
- * Uses the same projection as the scene (`projectAreaGame`) so tiles line up with
- * ground under the current camera — fixes the HTML-overlay “few tiles off” drift.
- * Still drawn after model composite (true z-buffer would need World inject).
- */
+// Why: the scene's own projection (`projectAreaGame`) is reused so tiles line up with the ground under the current camera, fixing the HTML-overlay "few tiles off" drift.
+// Why: painting still lands after the model composite — a z-buffered draw would need a World inject.
 
 // eslint-disable-next-line no-restricted-imports -- TODO: route through ClientAdapter
 import type { Client } from '#/client/shell/Client.js';
@@ -227,7 +222,7 @@ export function paintNavPathInGame(_client: Client): void {
     // Object highlighter hulls are drawn on the HTML overlay (crisp 2D strokes).
     // Scene paint keeps path tile quads + click target.
 
-    // Next click target (where the walker will actually click)
+    // Next click target
     if (path.clickIdx >= 0 && path.clickIdx < path.tiles.length) {
         const ct = path.tiles[path.clickIdx]!;
         if (ct.level === me.level) {

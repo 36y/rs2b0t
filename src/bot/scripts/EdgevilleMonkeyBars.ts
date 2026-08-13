@@ -202,19 +202,17 @@ async function climbDungeonLadder(log: (m: string) => void): Promise<boolean> {
     return (Game.tile()?.z ?? 0) < UNDERGROUND_Z;
 }
 
-/**
- * Walk from the wildy monkey-bars side back through the dungeon gates to the ladder,
- * then climb out. Order is reverse of NavigateToMonkeyBars.
- * Gates may already be open from entry, so we try walking through first.
- */
+// Why: the order is the reverse of NavigateToMonkeyBars.
+// Why: the gates may already be open from entry, so walking through is tried first.
+
+/** Walks from the wildy monkey-bars side back through the dungeon gates to the ladder, then climbs out. */
 async function exitDungeonToSurface(log: (m: string) => void): Promise<boolean> {
     if ((Game.tile()?.z ?? 0) < UNDERGROUND_Z) {
         return true;
     }
 
-    // After a swing the bot may land on the far (wilder) side of the bars (~3121,9969).
-    // The exit path goes through the gates toward lower Z, so we need to be on the
-    // approach side (~3121,9964). If we're past the bars (z > 9967), swing back first.
+    // Why: after a swing the bot may land on the far, wilder side of the bars (~3121,9969).
+    // Why: the exit path runs through the gates toward lower Z, so it must start on the approach side (~3121,9964) and swing back when past the bars at z > 9967.
     const here = Game.tile();
     if (here && here.z > 9967) {
         log('On far side of monkey bars — swinging back toward exit before leaving dungeon');
@@ -531,9 +529,8 @@ class RepeatMonkeyBars implements Task {
     async execute() {
         this.bot.setStatus('swinging on monkey bars');
 
-        // Spam mode doesn't wait for a swing to finish, so XP for a prior click
-        // lands on a later tick. Count a swing whenever XP increased since the
-        // last loop iteration instead of synchronously after the click.
+        // Why: spam mode does not wait for a swing to finish, so XP for a prior click lands on a later tick.
+        // Why: a swing is counted whenever XP rose since the last loop iteration, not synchronously after the click.
         const xpNow = Skills.xp('agility');
         if (this.lastXp >= 0 && xpNow > this.lastXp) {
             this.bot.countCompletion();

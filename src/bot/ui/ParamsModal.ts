@@ -45,8 +45,7 @@ export default class ParamsModal {
 
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape' && this.isOpen()) {
-                // Stop bubble so nested hosts (map picker window keydown) do not
-                // also treat this Escape as "close the whole modal".
+                // Why: nested hosts (map picker window keydown) would otherwise treat this Escape as "close the outer modal" too.
                 e.preventDefault();
                 e.stopPropagation();
                 this.close();
@@ -125,9 +124,8 @@ export default class ParamsModal {
         if (this.scriptName === 'Global' && this.showGlobalExtra && this.globalExtra) {
             this.bodyEl.appendChild(this.globalExtra);
         }
-        // Script params lock while a script runs so mid-run schema changes do not
-        // desync the bot. Global / Nav (same storage ns) stay live — lamp skill,
-        // run, bank junk, path paint, etc. are meant to be tweakable mid-session.
+        // Why: mid-run schema changes desync the bot, so script params lock while a script runs.
+        // Global / Nav (same storage ns) stay live — lamp skill, run, bank junk and path paint are meant to be tweakable mid-session.
         const lockScriptParams = this.scriptName !== 'Global' && this.isActive();
         const disabled = lockScriptParams;
         if (lockScriptParams) {

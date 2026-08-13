@@ -32,11 +32,9 @@ export function shouldRestock(foodCount: number, threshold: number): boolean {
     return foodCount < threshold;
 }
 
-/**
- * Eat when a full heal from `heal` fits, or HP is at the safety floor.
- * Prefer {@link shouldEatFood} when you have a food name; this form takes heal
- * directly so loops can re-check after each bite without re-resolving.
- */
+// Why: prefer {@link shouldEatFood} when a food name is to hand; this form takes heal directly so loops can re-check after each bite without re-resolving.
+
+/** Eat when a full heal from `heal` fits, or HP is at the safety floor. */
 export function shouldEat(hp: number, maxHp: number, heal: number, foodCount: number): boolean {
     return shouldEatToUseFood({ hp, maxHp, heal, foodCount });
 }

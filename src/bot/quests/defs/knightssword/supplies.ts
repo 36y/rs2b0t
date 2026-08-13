@@ -12,11 +12,7 @@ import { GENERAL_STORE, KS_ID, KS_NAME, KS_TILE, WYDIN } from './areas.js';
 
 const COINS_ID = 995;
 
-/**
- * The float is a threshold, not a target. `buy` withdraws exactly `estGp` when
- * the pack is short, so topping up to an exact balance sends the bot back to a
- * booth after every item bought.
- */
+// Why: the float is a threshold rather than a target, as `buy` withdraws exactly `estGp` when the pack is short, so topping up to an exact balance sends the bot back to a booth after every item bought.
 export const COIN_FLOAT = 1000;
 export const COIN_LOW = 200;
 
@@ -43,19 +39,14 @@ function withdraw(items: { name: string; qty: number; id?: number }[]): QuestSte
     return { kind: 'withdraw', items };
 }
 
-/**
- * No pinned bank. The quest runs across Falador, Varrock, Port Sarim and
- * Rimmington, and bank contents are global — only the walk differs — so naming
- * one booth costs a kingdom-crossing on every leg that touches it.
- */
+// Why: no bank is pinned, as the quest runs across Falador, Varrock, Port Sarim and Rimmington.
+// Why: bank contents are global and only the walk differs, so naming one booth costs a kingdom-crossing on every leg that touches it.
 const scanBank: QuestStep = { kind: 'scanBank' };
 
-/**
- * `ownsInventory` opts this quest out of the engine's coin and food withdrawal,
- * so the module draws both itself. Food is only ever asked for above ground:
- * preparation has to stop at the door, or a top-up mid-dungeon walks the bot
- * back out of it.
- */
+// Why: `ownsInventory` opts this quest out of the engine's coin and food withdrawal, so the module draws both itself.
+// Why: food is only ever asked for above ground, as preparation has to stop at the door or a top-up mid-dungeon walks the bot back out of it.
+
+/** The module's own coin and food withdrawal, or null when the pack is ready. */
 export function kit(snap: QuestSnapshot, food?: FoodWant | null): QuestStep | null {
     const underground = snap.tile ? isUnderground(snap.tile) : false;
     const items: { name: string; qty: number; id?: number }[] = [];
@@ -100,11 +91,10 @@ async function mixDough(log: (m: string) => void): Promise<boolean> {
     );
 }
 
-/**
- * The Range carries no ops at all — cooking is `[oplocu,_cooking_oven]`, a
- * use-on, the same shape as filling the bucket. A fire will not do:
- * cooking_generic_redberry_pie answers "You need a proper oven to cook that."
- */
+// Why: the Range carries no ops at all — cooking is `[oplocu,_cooking_oven]`, a use-on, the same shape as filling the bucket.
+// Why: a fire will not do, as cooking_generic_redberry_pie answers "You need a proper oven to cook that."
+
+/** Bake the redberry pie on a range. */
 async function cookPie(log: (m: string) => void): Promise<boolean> {
     return useOnLoc(
         KS_ID.UNCOOKED_PIE,
@@ -140,11 +130,10 @@ export const pieDish = (snap: QuestSnapshot): QuestStep =>
 const combine = (item: string, target: string, product: string): QuestStep =>
     ({ kind: 'useOn', item, targetKind: 'item', target, anchor: KS_TILE.WYDIN, product });
 
-/**
- * Backwards from the pie, so a part-built chain resumes at the right rung.
- * Nothing in the game sells a redberry pie and there is no ground spawn, so it
- * has to be baked.
- */
+// Why: the chain is read backwards from the pie, so a part-built chain resumes at the right rung.
+// Why: nothing in the game sells a redberry pie and there is no ground spawn, so it has to be baked.
+
+/** The next rung of the redberry-pie chain. */
 export function pie(snap: QuestSnapshot): QuestStep {
     if (heldId(snap, KS_ID.REDBERRY_PIE) > 0) {
         return { kind: 'wait', reason: 'redberry pie already held' };
@@ -173,10 +162,8 @@ export function pie(snap: QuestSnapshot): QuestStep {
             ? combine(KS_NAME.PASTRY_DOUGH, KS_NAME.PIE_DISH, KS_NAME.PIE_SHELL)
             : pieDish(snap);
     }
-    // Everything water-side is a Varrock errand and everything else is a Port
-    // Sarim one, so the bucket and the sink come first and the town is left
-    // once. Buying the bucket in Port Sarim's reach instead cost a 360-tile
-    // round trip back to Falador between the berries and the range.
+    // Why: everything water-side is a Varrock errand and everything else a Port Sarim one, so the bucket and the sink come first and the town is left once.
+    // Why: buying the bucket in Port Sarim's reach instead cost a 360-tile round trip back to Falador between the berries and the range.
     if (heldId(snap, KS_ID.BUCKET_OF_WATER) === 0) {
         return heldId(snap, KS_ID.BUCKET) > 0
             ? { kind: 'custom', name: 'fill the bucket', run: fillBucket }
@@ -194,11 +181,8 @@ export function pie(snap: QuestSnapshot): QuestStep {
     return { kind: 'custom', name: 'mix pastry dough', run: mixDough };
 }
 
-/**
- * smelting.rs2 loses half of every batch — "The ore is too impure and you fail
- * to refine it." Eight ore leaves a 9-in-256 chance of not clearing two bars,
- * and a short batch is a no-op because the loop re-derives from the bar count.
- */
+// Why: smelting.rs2 loses half of every batch — "The ore is too impure and you fail to refine it."
+// Why: eight ore leaves a 9-in-256 chance of not clearing two bars, and a short batch is a no-op as the loop re-derives from the bar count.
 export const ORE_PER_TRIP = 8;
 
 type Pickaxe = (typeof DORIC_PICKAXES)[number];
@@ -263,9 +247,8 @@ export function ironBarsAt(snap: QuestSnapshot, miningLevel: number): QuestStep 
     if (banked > 0) {
         return withdraw([{ name: KS_NAME.IRON_BAR, qty: Math.min(2 - held, banked), id: KS_ID.IRON_BAR }]);
     }
-    // `mineRock` ignores its qty and mines exactly one ore per invocation, so the
-    // batch has to be counted here — smelting on the first ore would walk the
-    // 130 tiles between Rimmington and the furnace eight times over.
+    // Why: `mineRock` ignores its qty and mines exactly one ore per invocation, so the batch is counted here.
+    // Why: smelting on the first ore would walk the 130 tiles between Rimmington and the furnace eight times over.
     if (heldId(snap, KS_ID.IRON_ORE) >= ORE_PER_TRIP) {
         return { kind: 'custom', name: 'smelt iron bars', run: smeltIron };
     }

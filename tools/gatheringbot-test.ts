@@ -1,37 +1,15 @@
-/**
- * Live verification for GatheringBot (Miner / Fisher / Woodcutter).
- *
- * Boots one mainland account against a local engine, reuses it across scenarios
- * (grant levels / seed items between tests), and asserts on real user flows:
- *
- *   - early-game gather at named camps (start a short walk off the resource)
- *   - end-game pathing (wildy runite, Fishing Guild sharks from Ardougne bank)
- *   - tool acquire with bank isolation (no leftover bank tools → false PASS)
- *   - smith rune axe when bar + hammer + levels are ready
- *
- * Inventory seed: engine cheat `give <obj> <qty>`. Bank seed: `givebank`
- * via {@link seedItemsToBank} (verify at a booth; optional `~bankitem` fallback).
- * Inventory wipe is `~clearinv`. Bank tool purge walks a booth and withdraws
- * matching gear so acquire tests cannot withdraw leftovers.
- *
- * Requires a deployed bot client and a running engine (default http://localhost:8890).
- * Redeploy the bot client yourself when GatheringBot / Game / adapter change —
- * do not use tools/deploy-local.sh from this tree for live e2e.
- *
- * BASE_STATS maxes combat + gather skills once. Independent gather/path loops
- * seed rune tools (inv wiped between scenarios). Acquire scenarios purge bank
- * tools and buy/smith their own — no leftover gear from prior loops.
- *
- * Usage:
- *   bun tools/gatheringbot-test.ts
- *   bun tools/gatheringbot-test.ts mining fishing
- *   bun tools/gatheringbot-test.ts acquire
- *   bun tools/gatheringbot-test.ts endgame
- *   bun tools/gatheringbot-test.ts mine-bank fish-path-shark
- *   BASE=http://localhost:8888 bun tools/gatheringbot-test.ts
- *   HEADED=1 SLOWMO=200 bun tools/gatheringbot-test.ts mine-bank
- *   BUDGET_S=180 bun tools/gatheringbot-test.ts   # per-scenario seconds (default 150)
- */
+/** Live verification for GatheringBot (Miner / Fisher / Woodcutter): scenario ids as argv, BASE / HEADED / SLOWMO / BUDGET_S from the environment.
+ *  Why: inventory seeds go through the engine cheat `give` and bank seeds through `givebank`; acquire scenarios purge bank tools first so a leftover withdrawal cannot false-PASS, and the bot client is redeployed by hand — tools/deploy-local.sh from this tree is not for live e2e. */
+
+// Usage:
+//   bun tools/gatheringbot-test.ts
+//   bun tools/gatheringbot-test.ts mining fishing
+//   bun tools/gatheringbot-test.ts acquire
+//   bun tools/gatheringbot-test.ts endgame
+//   bun tools/gatheringbot-test.ts mine-bank fish-path-shark
+//   BASE=http://localhost:8888 bun tools/gatheringbot-test.ts
+//   HEADED=1 SLOWMO=200 bun tools/gatheringbot-test.ts mine-bank
+//   BUDGET_S=180 bun tools/gatheringbot-test.ts   # per-scenario seconds (default 150)
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs } from './lib/harness.js';
 import {
@@ -248,13 +226,8 @@ async function setSettings(page: Page, script: string, map: Record<string, strin
     }, [script, withDefaults] as const);
 }
 
-/**
- * Seed held items via engine cheat `give` (ClientCheatHandler).
- *
- * Local Server engines expose `give <obj> <qty>`, not the maintainer-content
- * debugprocs `~item` / `~bankitem`. Using `~item` here silently no-ops while
- * `~clearinv` still works — which looks like an endless inventory wipe.
- */
+/** Seed held items via the engine cheat `give` (ClientCheatHandler).
+ *  Why: Local Server engines carry no `~item`/`~bankitem`, and `~item` no-ops silently while `~clearinv` still works — which reads as an endless inventory wipe. */
 async function seedItem(page: Page, debugName: string, displayName: string, qty = 1): Promise<void> {
     const cmd = `give ${debugName} ${qty}`;
     for (let i = 0; i < 8; i++) {
@@ -326,12 +299,8 @@ async function grantStats(page: Page, stats: { skill: string; level: number }[])
     }
 }
 
-/**
- * One-shot after mainland login: max everything so early-zone mobs (Draynor
- * jail guard, etc.) stop shredding the bot and gather/acquire floors are free.
- * ~maxme floods level-up chat — clearChatDialogs must run before any seed/start.
- * Per-scenario stats are kept as no-ops when already 99.
- */
+/** One-shot after mainland login: max everything so early-zone mobs stop shredding the bot and the gather/acquire floors are free.
+ *  Why: ~maxme floods level-up chat, so clearChatDialogs must run before any seed or start. */
 const BASE_STATS: { skill: string; level: number }[] = [
     { skill: 'attack', level: 99 },
     { skill: 'strength', level: 99 },
@@ -345,11 +314,8 @@ const BASE_STATS: { skill: string; level: number }[] = [
     { skill: 'smithing', level: 99 }
 ];
 
-/**
- * Click through level-up / chat continues until the chat modal stays closed.
- * ~maxme (and bulk advancestat) queue a long chain of "Congratulations..." pages
- * that otherwise block movement and leave the bot standing in danger.
- */
+/** Click through level-up / chat continues until the chat modal stays closed.
+ *  Why: ~maxme and bulk advancestat queue a long chain of "Congratulations…" pages that block movement and leave the bot standing in danger. */
 async function clearChatDialogs(page: Page, label = 'dialogs'): Promise<void> {
     const clicked = await page.evaluate(async () => {
         const g = globalThis as never as Abi;
@@ -429,14 +395,8 @@ async function maxAccountAndClearDialogs(page: Page): Promise<void> {
     );
 }
 
-/**
- * Unequip worn gear into the pack, then ~clearinv.
- * clearinv alone leaves the weapon slot — next scenario's seed then stacks a
- * second pick/axe on top of the still-equipped one.
- *
- * Equipment.unequip uses Execution.delayUntil, which needs an active script
- * context — same one-shot LoopingBot pattern as purgeBankTools.
- */
+/** Unequip worn gear into the pack, then ~clearinv.
+ *  Why: clearinv alone leaves the weapon slot, so the next scenario's seed stacks a second pick/axe on the equipped one; Equipment.unequip needs an active script context, hence the one-shot LoopingBot. */
 async function unequipAllWorn(page: Page): Promise<number> {
     const wornBefore = await page.evaluate(() => {
         const eq = (globalThis as never as Abi).__rs2b0t.Equipment;
@@ -573,12 +533,8 @@ async function teleArrive(page: Page, spot: Tile, maxDist = 18): Promise<boolean
 
 type SceneExpect = 'rocks' | 'trees' | 'fish' | 'any-loc' | 'shop' | 'bank' | 'skip';
 
-/**
- * After ::tele the player tile updates before scenery/NPCs rebuild. Starting
- * GatheringBot in that window pins the leash to the camp with zero targets in
- * scene — looks stuck ("no rocks in leash") until something else moves the bot.
- * Poll until the expected resource class is visible near the player.
- */
+/** Poll until the expected resource class is visible near the player.
+ *  Why: after ::tele the player tile updates before scenery and NPCs rebuild, so starting GatheringBot in that window pins the leash to the camp with zero targets in scene ("no rocks in leash"). */
 async function waitSceneReady(
     page: Page,
     expect: SceneExpect,
@@ -663,14 +619,8 @@ async function waitSceneReady(
     throw new Error(`scene not ready for ${label} within ${timeoutMs}ms (post-tele loc lag?)`);
 }
 
-/**
- * Open a bank booth, withdraw every item whose name matches `match`, close,
- * then ~clearinv. Used so acquire scenarios cannot withdraw leftover tools
- * from earlier tests on the same account.
- *
- * Bank/Execution APIs require an active script context (Scheduler), so this
- * spins a one-shot LoopingBot — same pattern as tools/clues/live-clue-sweep.
- */
+/** Open a bank booth, withdraw every item whose name matches `match`, close, then ~clearinv.
+ *  Why: acquire scenarios must not withdraw leftover tools from earlier tests on the same account; Bank/Execution need an active script context, hence the one-shot LoopingBot. */
 async function purgeBankTools(
     page: Page,
     bankStand: Tile,
@@ -728,7 +678,7 @@ async function purgeBankTools(
                             res.done = true;
                             return 5000;
                         }
-                        // Empty bank is fine — loaded() is false when truly empty; still try a beat.
+                        // Empty bank is fine — loaded() is false when the bank holds nothing; still try a beat.
                         await abi.Execution.delayTicks(1);
 
                         let withdrew = 0;
@@ -802,14 +752,8 @@ async function purgeBankTools(
     }
 }
 
-/**
- * Open the bank at `bankStand`, deposit every held item whose name matches
- * `names` (case-insensitive exact), close. Leaves pack empty of those items so
- * the script under test must withdraw them — exercises Banking.open / restock
- * bank path instead of the "materials already held" short-circuit.
- *
- * Same one-shot LoopingBot pattern as {@link purgeBankTools}.
- */
+/** Open the bank at `bankStand`, deposit every held item whose name matches `names` (case-insensitive exact), close.
+ *  Why: leaving the pack empty of those items forces the script under test through Banking.open / restock rather than the "materials already held" short-circuit. */
 async function depositHeldToBank(
     page: Page,
     bankStand: Tile,
@@ -1270,11 +1214,8 @@ const SCENARIOS: Scenario[] = [
             `peak=${productPeak} distCamp ${minDistToCamp}..${maxDistToCamp} ` +
             `tile=${cur.tile ? `${cur.tile.x},${cur.tile.z}` : '?'}`
     },
-    /**
-     * Single-account mule gatherer smoke: full pack + muleMode Gatherer must NOT bank;
-     * hold at meet and wait for partner. Full Gatherer↔Mule trade needs two harnesses
-     * (separate multi-box smoke — coordinate via PM / ready file later).
-     */
+    /** Single-account mule gatherer smoke: a full pack with muleMode Gatherer must hold at the meet and wait for a partner rather than bank.
+     *  A full Gatherer↔Mule trade needs two harnesses. */
     {
         id: 'mine-mule-gatherer-meet',
         tags: ['mining', 'mine', 'mule', 'early'],
@@ -1576,10 +1517,8 @@ const SCENARIOS: Scenario[] = [
             `tile=${cur.tile ? `${cur.tile.x},${cur.tile.z}` : '?'}`
     },
     {
-        // Cook then bank: seed cooked (not raw) so one catch fills the pack with
-        // 1 raw + 26 cooked → cook the raw → bank the cooked pile at Catherby.
-        // #154: must also leave the bank toward the pier after deposit. Catherby
-        // bank is ~36 from spot (inside leash 64) — deposit-only used to false-PASS.
+        // Cook then bank: seed cooked so one catch fills the pack with 1 raw + 26 cooked → cook the raw → bank the cooked pile at Catherby.
+        // Why: #154 — the bot must also leave the bank toward the pier after depositing; Catherby bank is ~36 from the spot, inside the 64 leash, so deposit-only false-PASSed.
         id: 'fish-cook-bank',
         tags: ['fishing', 'fish', 'cook', 'bank', 'early'],
         script: 'Fisher',
@@ -1653,11 +1592,8 @@ const SCENARIOS: Scenario[] = [
             `peak=${productPeak} banked=${bankedHint} nearBank=${sawNearBank} distBank=${minDistToBank} ` +
             `homeAfterBank=${returnedToCampAfterBank} distCampAfterBank=${minDistToCampAfterBank}`
     },
-    /**
-     * Barbarian Village cook surface (outdoor Fire from CookingRanges) — cook-then-bank
-     * without Catherby. Start with nearly full cooked + one free slot: fish last raw,
-     * cook on Fire, bank at Edgeville.
-     */
+    /** Barbarian Village cook surface (outdoor Fire from CookingRanges): cook-then-bank without Catherby.
+     *  Starts nearly full of cooked with one free slot — fish the last raw, cook on the Fire, bank at Edgeville. */
     {
         id: 'fish-cook-barb',
         tags: ['fishing', 'fish', 'cook', 'bank', 'camp', 'early'],
@@ -1814,9 +1750,8 @@ const SCENARIOS: Scenario[] = [
             `mule=${logHas(cur, /mule:\s*cooker/i)} distBank=${minDistToBank}`
     },
     {
-        // Bank raw then cook: givebank 973 raw + inv pot + 26 raw → catch last →
-        // bank hits N → withdraw/cook batch.
-        // 973 bank + 27 deposited = 1000 (explicit bankRawBeforeCook; product default is 56).
+        // Bank raw then cook: givebank 973 raw + inv pot + 26 raw → catch the last → bank hits N → withdraw and cook the batch.
+        // 973 banked + 27 deposited = 1000 (explicit bankRawBeforeCook; the product default is 56).
         id: 'fish-bank-raw-cook',
         tags: ['fishing', 'fish', 'cook', 'bank', 'early'],
         script: 'Fisher',
@@ -1910,9 +1845,8 @@ const SCENARIOS: Scenario[] = [
             if (cur.runner === 'crashed') {
                 return 'fail';
             }
-            // Real bank loop: chop → deposit → return toward camp.
-            // Do not require logs<=2 at pass time — after home the bot re-chops
-            // and refills before the next harness snap (live wc-bank false-fail).
+            // Bank loop: chop → deposit → return toward camp.
+            // Why: after banking the bot re-chops and refills before the next harness snap, so requiring logs<=2 at pass time false-fails.
             if (
                 xpGain > 0
                 && productPeak >= 26
@@ -2073,7 +2007,7 @@ const SCENARIOS: Scenario[] = [
             }
             const xpGain = cur.xp.mining - start.xp.mining;
             const runite = invMatch(cur, /runite ore/i);
-            // Must actually mine — flee/near-camp alone used to false-PASS with 0 XP.
+            // Why: flee or near-camp alone false-PASSes with 0 XP, so the bot has to mine.
             const gathered = xpGain > 0 || sawProduct || runite > 0 || productPeak > 0;
             if (!gathered) {
                 return 'wait';
@@ -2359,9 +2293,8 @@ const SCENARIOS: Scenario[] = [
         id: 'restock-fly-barb',
         tags: ['acquire', 'buy', 'fishing', 'bait', 'restock', 'tools'],
         script: 'Fisher',
-        // Gerrant banks at Draynor — start/purge there so the multi-buy fund trip
-        // is immediate. Missing fly rod + feathers → one Draynor bank open →
-        // Gerrant multi-buy (rod + feathers same shop visit) → barb river.
+        // Gerrant banks at Draynor — start and purge there so the multi-buy fund trip is immediate.
+        // Missing fly rod + feathers → one Draynor bank open → Gerrant multi-buy (rod + feathers, same shop visit) → barb river.
         start: SPOT.draynorBank,
         camp: SPOT.barbVillageFish,
         bank: SPOT.draynorBank,
@@ -2567,9 +2500,8 @@ const SCENARIOS: Scenario[] = [
         id: 'smith-rune-axe',
         tags: ['acquire', 'smith', 'woodcutting', 'wc', 'tools', 'endgame'],
         script: 'Woodcutter',
-        // Materials live in Varrock West bank — script must open bank, withdraw,
-        // then walk anvil. Location stays Draynor so camp bankStand is far; nearby
-        // bank preference should snap to Varrock West underfoot.
+        // Materials live in Varrock West bank, so the script must open the bank, withdraw, then walk to the anvil.
+        // Location stays Draynor so the camp bankStand is far and the nearby-bank preference has to snap to Varrock West underfoot.
         start: SPOT.varrockWestBank,
         camp: SPOT.varrockAnvil,
         settings: {
@@ -2598,7 +2530,7 @@ const SCENARIOS: Scenario[] = [
             const smithed = logHas(cur, /acquire:\s*smithed\s+Rune axe/i);
             const gotRune = hasTool(cur, 'Rune axe') || invCount(cur, 'Rune axe') > 0;
             const equippedLog = logHas(cur, /equipped\s+Rune axe/i);
-            // Must actually hold/wield the axe — smithed log alone used to soft-PASS on equip fail.
+            // Why: the smithed log alone soft-PASSes on an equip failure, so the axe must be held or wielded.
             if (smithed && gotRune) {
                 return 'pass';
             }
@@ -2649,9 +2581,7 @@ try {
     await mainlandAccount(page, base, USER);
     console.log(`${stamp()} mainland-ready as '${USER}'`);
 
-    // Max everything once, then drain level-up chat before any tele/seed/start.
-    // Early zones (Draynor jail guard, etc.) will otherwise kill a low-HP bot
-    // while it's stuck behind "Congratulations, you just advanced...".
+    // Why: early zones (Draynor jail guard) kill a low-HP bot stuck behind "Congratulations, you just advanced…", so max once and drain the chat before any tele/seed/start.
     console.log(`${stamp()} base stats → 99 (maxme + clear dialogs)`);
     await maxAccountAndClearDialogs(page);
 
@@ -2883,8 +2813,7 @@ try {
                     }
                 }
 
-                // fish-cook-* seeds cooked catch; track cooked+raw so productPeak /
-                // near-bank / bankedHint still fire on deposit (product keywords are raw-only).
+                // fish-cook-* seeds cooked catch, so track cooked+raw to keep productPeak / near-bank / bankedHint firing on deposit (the product keywords are raw-only).
                 // fish-bank-raw-cook tracks raw lobster through the bank trip.
                 const product =
                     sc.id === 'fish-cook-bank' || sc.id === 'fish-cooker-solo'
@@ -2904,9 +2833,7 @@ try {
                 if (product > productPeak) {
                     productPeak = product;
                 }
-                // Near bank after a real haul. Use productPeak (not live product): deposit
-                // can clear the pack between 4s snaps, and Draynor trees sit on the bank
-                // disk so simultaneous product>=10 + near-bank often misses (wc-bank).
+                // Why: deposit can clear the pack between 4s snaps and Draynor trees sit on the bank disk, so near-bank reads productPeak rather than the live product (wc-bank).
                 if (
                     cur.tile
                     && sc.bank

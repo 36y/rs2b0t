@@ -9,13 +9,8 @@ export interface RuneRoute {
 }
 
 /*
- * All rune altar locations decoded from Server/content/scripts/skill_runecraft/configs/runecraft.dbrow
- * Format: exit_coord = level_chunkX_chunkZ_offsetX_offsetZ
- *   tileX = chunkX * 64 + offsetX
- *   tileZ = chunkZ * 64 + offsetZ
- *
- * members=0 are F2P, members=1 require membership.
- * Banks refer to names in BankLocations.BANK_LOCATIONS.
+ * Rune altar locations decoded from Server/content/scripts/skill_runecraft/configs/runecraft.dbrow, where exit_coord = level_chunkX_chunkZ_offsetX_offsetZ.
+ * Decode with tileX = chunkX * 64 + offsetX and tileZ = chunkZ * 64 + offsetZ; members=0 is F2P, and banks name entries in BankLocations.BANK_LOCATIONS.
  */
 export const RUNES: Record<string, RuneRoute> = {
     'Air rune': {

@@ -43,9 +43,7 @@ async function readDruidicRitualStage(): Promise<number | undefined> {
     if (status === 'notStarted') return DRUIDIC_RITUAL_STAGE.NOT_STARTED;
     if (status !== 'inProgress') return undefined;
 
-    // druidquest is a server-only permanent varp (it is not transmitted to the
-    // client), so the server-rendered quest journal is the exact browser-visible
-    // stage oracle.
+    // Why: druidquest is a server-only permanent varp and is not transmitted to the client, so the server-rendered quest journal is the browser-visible stage oracle.
     const lines = await Quests.journal('Druidic Ritual');
     const stage = parseDruidicRitualJournal(lines);
     if (reader.modals().main !== -1) {
@@ -260,9 +258,7 @@ async function enterCauldronRoom(log: (message: string) => void): Promise<boolea
             return false;
         }
 
-        // The double-door script first moves an outside player onto the
-        // threshold.  Cross the open leaf immediately, before it closes three
-        // server ticks later.
+        // Why: the double-door script first moves an outside player onto the threshold, and the open leaf closes three server ticks later.
         await DirectNavigator.walkTo(CAULDRON_DOOR_INSIDE, 0, 3000);
         return inCauldronRoom();
     }

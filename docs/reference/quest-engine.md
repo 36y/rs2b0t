@@ -19,7 +19,7 @@ export function decide(snap: QuestSnapshot): QuestStep {
 }
 ```
 
-That is the whole of Cook's Assistant. The snapshot the engine hands it:
+Cook's Assistant is that one function. The snapshot the engine hands it:
 
 ```ts
 export interface QuestSnapshot {
@@ -43,7 +43,7 @@ export interface QuestSnapshot {
 ### What the client can see
 
 The era protocol does **not** stream mid-quest stage numbers or bitfields to
-the client for almost every quest. What actually lands in the bot process:
+the client for almost every quest. What lands in the bot process:
 
 | Signal | API | On the wire | Granularity |
 |---|---|---|---|
@@ -73,8 +73,7 @@ Prefer oracles that do not open the log:
 2. **Game messages** after an action (“water wheel starting up”, “already fixed”).
 3. **Scene behaviour** (valve locked ⇒ water already running; do not re-pull).
 4. **`Quests.status`** for coarse gates (started vs done).
-5. **`Quests.journal` via `readStage` / `readProgress`** only when nothing else
-   distinguishes the branch.
+5. **`Quests.journal` via `readStage` / `readProgress`** only when nothing else distinguishes the branch.
 
 When the stage number alone cannot say where a quest is — which of three tribes
 are satisfied, which words have been learned, how many monsters remain — a module

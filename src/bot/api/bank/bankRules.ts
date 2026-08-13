@@ -1,10 +1,7 @@
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-/**
- * Deposit and bank-trigger rules, kept free of client imports so scripts and
- * tests can pull them in without loading the adapter graph.
- * Re-exported from Banking.ts — import from either.
- */
+// Why: deposit and bank-trigger rules are kept free of client imports so scripts and tests can pull them in without loading the adapter graph.
+// Why: re-exported from Banking.ts, so either import path works.
 
 /**
  * When a bot should break off and bank.
@@ -81,11 +78,10 @@ export function matchesCommonBankLoot(name: string, id: number = -1): boolean {
     return COMMON_BANK_LOOT.some(p => n.includes(p));
 }
 
-/**
- * Inventory junk that steals pack slots during long AFK loops (random-event
- * leftovers, common bank loot). Callers must still exclude tools/gear/logs.
- * Used by GatheringBot chop-then-burn when banking is deferred for a fire load.
- */
+// Why: callers must still exclude tools, gear and logs themselves.
+// Why: used by GatheringBot chop-then-burn when banking is deferred for a fire load.
+
+/** Inventory junk that steals pack slots during long AFK loops (random-event leftovers, common bank loot). */
 export function isDisposableGatherJunk(name: string | null | undefined, id: number = -1): boolean {
     if (matchesCommonBankLoot(name ?? '', id)) {
         return true;
@@ -94,9 +90,8 @@ export function isDisposableGatherJunk(name: string | null | undefined, id: numb
     if (n.length === 0) {
         return false;
     }
-    // Event / world leftovers that are not gear and not a gather product.
-    // Every name here is verified against the content's obj configs — entries
-    // for objs this revision does not have match nothing and only mislead.
+    // Why: event and world leftovers that are neither gear nor a gather product.
+    // Why: every name here is verified against the content's obj configs, since entries for objs this revision lacks match nothing and only mislead.
     return (
         n === 'flier'
         || n === 'half a meat pie'

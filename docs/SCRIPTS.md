@@ -5,11 +5,9 @@
 
 # Bundled scripts
 
-The client ships **52 scripts** across 20 categories. They double as worked
-examples of the [scripting API](API.md) — the source for each is under
-[`src/bot/scripts/`](../src/bot/scripts/).
-
-Settings listed here are the parameters the panel exposes before you start a script.
+- Scripts: 52. Categories: 20.
+- Source: [`src/bot/scripts/`](../src/bot/scripts/). API: [scripting API](API.md).
+- Settings are the parameters the panel exposes before a script starts.
 
 ## Contents
 
@@ -40,7 +38,7 @@ Settings listed here are the parameters the panel exposes before you start a scr
 
 Brimhaven Agility Arena — banks food+coins at Ardougne south, ships to Brimhaven, pays Cap'n Izzy, tags ticket pillars on the level-optimal path, and grinds centre spikes between tags
 
-Tags: `brimhaven`, `arena`, `tickets`, `banking`, `food`
+- Tags: `brimhaven`, `arena`, `tickets`, `banking`, `food`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -52,7 +50,7 @@ Tags: `brimhaven`, `arena`, `tickets`, `banking`, `food`
 
 Edgeville dungeon monkey bars — restock via dungeon ladder or after death. NOT RECOMMENDED FOR 10HP ACCOUNTS.
 
-Tags: `edgeville`, `dungeon`, `monkey-bars`, `wilderness`, `banking`
+- Tags: `edgeville`, `dungeon`, `monkey-bars`, `wilderness`, `banking`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -66,7 +64,7 @@ Tags: `edgeville`, `dungeon`, `monkey-bars`, `wilderness`, `banking`
 
 Travels to and runs the Gnome Stronghold agility course
 
-Tags: `course`, `gnome`
+- Tags: `course`, `gnome`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -77,7 +75,7 @@ Tags: `course`, `gnome`
 
 Runs the Wilderness Agility Course, eats while running, and on death banks (food-only) then returns — needs Agility 52 + carried food (start at the entrance)
 
-Tags: `course`, `wilderness`, `food`, `death-recovery`
+- Tags: `course`, `wilderness`, `food`, `death-recovery`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -92,7 +90,7 @@ Tags: `course`, `wilderness`, `food`, `death-recovery`
 
 Fights East Ardougne market guards, feeds itself from the Baker's stall, loots rares, banks them at the south bank, solves clue drops (needs melee stats that beat the 60s guard respawn — ~str 80 unarmed)
 
-Tags: `ardougne`, `thieving`, `banking`, `clues`, `afk`
+- Tags: `ardougne`, `thieving`, `banking`, `clues`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -117,7 +115,7 @@ Tags: `ardougne`, `thieving`, `banking`, `clues`, `afk`
 
 Start-or-coordinate fighter — kills any named NPC in its leash, loots selected drops, auto-banks, solves clues, and returns to the killing spot
 
-Tags: `combat`, `clues`, `banking`, `afk`
+- Tags: `combat`, `clues`, `banking`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -147,7 +145,7 @@ Tags: `combat`, `clues`, `banking`, `afk`
 
 Kills Chaos druids — Edgeville dungeon, the picklocked Chaos Druid Tower (46 Thieving), or Yanille dungeon Chaos druid warriors past the 40 Agility ledge — loots Herb/Law/Nature rune drops, banks them
 
-Tags: `wilderness`, `edgeville`, `ardougne`, `yanille`, `herbs`, `banking`
+- Tags: `wilderness`, `edgeville`, `ardougne`, `yanille`, `herbs`, `banking`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -161,7 +159,7 @@ Tags: `wilderness`, `edgeville`, `ardougne`, `yanille`, `herbs`, `banking`
 
 Kills chickens, loots and buries bones (anchor = start tile)
 
-Tags: `lumbridge`, `bones`, `feathers`, `afk`
+- Tags: `lumbridge`, `bones`, `feathers`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -187,7 +185,7 @@ Tags: `lumbridge`, `bones`, `feathers`, `afk`
 
 Walks to the Lumbridge, north-west Lumbridge, south-Falador, or East Ardougne cow fields, loots hides + bones, and supports field-aware banking
 
-Tags: `lumbridge`, `falador`, `ardougne`, `cowhide`, `bones`, `banking`, `afk`
+- Tags: `lumbridge`, `falador`, `ardougne`, `cowhide`, `bones`, `banking`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -215,7 +213,7 @@ Tags: `lumbridge`, `falador`, `ardougne`, `cowhide`, `bones`, `banking`, `afk`
 
 Walks to the Al Kharid Duel Arena, pairs with other players, accepts both no-stake screens, fights with melee, and trains Attack/Strength plus opt-in Defence toward configured target levels
 
-Tags: `duel arena`, `pvp`, `attack`, `strength`, `defence`, `multibox`
+- Tags: `duel arena`, `pvp`, `attack`, `strength`, `defence`, `multibox`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -227,7 +225,7 @@ Tags: `duel arena`, `pvp`, `attack`, `strength`, `defence`, `multibox`
 
 Waterfall Dungeon fire giants: range/mage safespot or melee, enters by raft + rope + Glarial's amulet, rides the barrel out to bank
 
-Tags: `waterfall`, `safespot`, `members`, `banking`
+- Tags: `waterfall`, `safespot`, `members`, `banking`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -258,7 +256,7 @@ Tags: `waterfall`, `safespot`, `members`, `banking`
 
 Wilderness green dragons N of Edgeville: melee/mage w/ anti-dragon shield, banks bones + hides
 
-Tags: `wilderness`, `dragons`, `hides`
+- Tags: `wilderness`, `dragons`, `hides`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -287,7 +285,7 @@ Tags: `wilderness`, `dragons`, `hides`
 
 Edgeville dungeon hill giants — fetches the brass key if the bank has none, unlocks the hut, and banks limpwurt roots and big bones at Varrock West
 
-Tags: `combat`, `giants`, `edgeville`, `varrock`, `banking`, `looting`
+- Tags: `combat`, `giants`, `edgeville`, `varrock`, `banking`, `looting`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -304,7 +302,7 @@ Tags: `combat`, `giants`, `edgeville`, `varrock`, `banking`, `looting`
 
 Moss giants N of Ardougne: range/mage safespot or melee, banks all loot
 
-Tags: `ardougne`, `safespot`, `afk`
+- Tags: `ardougne`, `safespot`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -330,7 +328,7 @@ Tags: `ardougne`, `safespot`, `afk`
 
 Rellekka rock crabs: aggro-stack-kill-reset, loots key halves
 
-Tags: `rellekka`, `keys`, `afk`
+- Tags: `rellekka`, `keys`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -371,7 +369,7 @@ Tags: `rellekka`, `keys`, `afk`
 
 Catherby cook loop — withdraw raw fish, cross to the range, cook it all one at a time, bank everything, repeat
 
-Tags: `catherby`, `cooking`, `banking`, `afk`
+- Tags: `catherby`, `cooking`, `banking`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -389,7 +387,7 @@ Tags: `catherby`, `cooking`, `banking`, `afk`
 
 Seers flax field picker — pick flax until full, bank it at Seers, repeat
 
-Tags: `seers`, `gathering`, `banking`, `afk`
+- Tags: `seers`, `gathering`, `banking`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -405,7 +403,7 @@ Tags: `seers`, `gathering`, `banking`, `afk`
 
 Two-player cooperative flax picking and spinning — Runner picks flax and delivers to Spinner; Spinner spins flax into bow strings and banks them
 
-Tags: `crafting`, `fletching`, `flax`, `bow-strings`, `trade`, `two-player`, `afk`
+- Tags: `crafting`, `fletching`, `flax`, `bow-strings`, `trade`, `two-player`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -417,7 +415,7 @@ Tags: `crafting`, `fletching`, `flax`, `bow-strings`, `trade`, `two-player`, `af
 
 Seers flax spinner — withdraw flax, climb to the spinning wheel, Spin-X into bow string, bank, repeat
 
-Tags: `seers`, `crafting`, `banking`, `afk`
+- Tags: `seers`, `crafting`, `banking`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -438,7 +436,7 @@ Tags: `seers`, `crafting`, `banking`, `afk`
 
 Banks at the nearest bank, withdraws uncut gems and a chisel, cuts every gem your Crafting level allows — lowest-level first — deposits the cut gems (and crushed gems), and repeats. Leave all gems unchecked to cut everything you can; check specific gems to restrict the run to a subset. Each bank cycle deposits everything from your pack, so start with nothing valuable carried
 
-Tags: `crafting`, `gems`, `banking`, `members`
+- Tags: `crafting`, `gems`, `banking`, `members`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -448,7 +446,7 @@ Tags: `crafting`, `gems`, `banking`, `members`
 
 Needle-and-thread crafting loop — banks for leather and makes the best item your Crafting level allows for it
 
-Tags: `crafting`, `leather`, `dragonhide`, `banking`, `afk`
+- Tags: `crafting`, `leather`, `dragonhide`, `banking`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -459,7 +457,7 @@ Tags: `crafting`, `leather`, `dragonhide`, `banking`, `afk`
 
 Al Kharid tanning loop — banks hides, tans the whole load in one click at the Tanner, and every Nth trip keeps a slot free to buy out Dommik's thread
 
-Tags: `alkharid`, `leather`, `dragonhide`, `banking`, `afk`
+- Tags: `alkharid`, `leather`, `dragonhide`, `banking`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -475,7 +473,7 @@ Tags: `alkharid`, `leather`, `dragonhide`, `banking`, `afk`
 
 Banks logs and burns them along the longest clear lane next to the bank — Varrock east/west, Draynor or Seers
 
-Tags: `firemaking`, `banking`, `varrock`, `draynor`, `seers`, `afk`
+- Tags: `firemaking`, `banking`, `varrock`, `draynor`, `seers`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -488,7 +486,7 @@ Tags: `firemaking`, `banking`, `varrock`, `draynor`, `seers`, `afk`
 
 Fishes a chosen method at the spot that offers it; banks the catch, optionally cooks at a nearby range, or drops it. Change Cook mode to reveal fish filter, burnt policy, and (for bank-raw-then-cook) the N quantity. Optional Buy/repair buys missing gear from the nearest fishing shop (Harry at Catherby, Gerrant for feathers/fly rod) and can buy bait/feathers up to Bait qty.
 
-Tags: `gathering`, `drop`, `banking`, `cooking`
+- Tags: `gathering`, `drop`, `banking`, `cooking`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -516,7 +514,7 @@ Tags: `gathering`, `drop`, `banking`, `cooking`
 
 Bank-standing fletcher — withdraw logs, knife-fletch the chosen product (arrow shafts / unstrung bow), deposit, repeat
 
-Tags: `fletching`, `banking`, `afk`
+- Tags: `fletching`, `banking`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -530,7 +528,7 @@ Tags: `fletching`, `banking`, `afk`
 
 Spam-attaches feathers to stackable dart tips at the five-action-per-tick server ceiling; runs anywhere until either input stack is empty
 
-Tags: `fletching`, `darts`, `members`, `fast`
+- Tags: `fletching`, `darts`, `members`, `fast`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -542,7 +540,7 @@ Tags: `fletching`, `darts`, `members`, `fast`
 
 Banks at the nearest bank, withdraws unidentified herbs, cleans (identifies) every one your Herblore level allows — lowest-level first — deposits the cleaned herbs, and repeats. Leave all herbs unchecked to clean everything you can; check specific herbs to restrict the run to a subset. Each bank cycle deposits everything from your pack, so start with nothing valuable carried
 
-Tags: `herblore`, `identify`, `clean`, `banking`, `members`
+- Tags: `herblore`, `identify`, `clean`, `banking`, `members`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -552,7 +550,7 @@ Tags: `herblore`, `identify`, `clean`, `banking`, `members`
 
 Collects one herblore secondary — red spiders' eggs, snape grass, eye of newt, chocolate dust (buy+grind), white berries (dragonfire shield), or toad's legs — with food on dangerous routes and a 5k coin cap for shops
 
-Tags: `herblore`, `secondaries`, `banking`, `shopping`, `loot`
+- Tags: `herblore`, `secondaries`, `banking`, `shopping`, `loot`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -564,7 +562,7 @@ Tags: `herblore`, `secondaries`, `banking`, `shopping`, `loot`
 
 Banks at the nearest bank, withdraws vials of water and a chosen herb, spam-makes 14 unfinished potions, then withdraws a chosen secondary to finish them and deposits the potions, repeating the cycle. Each leg picks an herb and a secondary from the dropdowns, or types one via Custom
 
-Tags: `herblore`, `potion`, `banking`, `members`, `afk`
+- Tags: `herblore`, `potion`, `banking`, `members`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -577,13 +575,13 @@ Tags: `herblore`, `potion`, `banking`, `members`, `afk`
 
 Infinite Herblore grind at the fungus-covered cavern wall under the Karamja jungle — searches, identifies, and drops Rogues purse on the tick. Walks itself there; needs Herblore 3 and Jungle Potion past the point where Trufitus asks for the purse
 
-Tags: `herblore`, `karamja`, `members`, `afk`
+- Tags: `herblore`, `karamja`, `members`, `afk`
 
 ### VialFiller
 
 Falador vial-filling loop — banks empty vials, fills them one by one at the fountain, and can restock from Jatix in Taverley every Nth trip
 
-Tags: `falador`, `vials`, `water`, `banking`, `afk`
+- Tags: `falador`, `vials`, `water`, `banking`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -599,7 +597,7 @@ Tags: `falador`, `vials`, `water`, `banking`, `afk`
 
 Automated teleportation with intelligent banking and safety features
 
-Tags: `teleport`, `magic`, `banking`, `aio`
+- Tags: `teleport`, `magic`, `banking`, `aio`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -614,13 +612,13 @@ Tags: `teleport`, `magic`, `banking`, `aio`
 
 Mines coal at the Coal Trucks, buffers 120 in the trucks, then drains them into the Seers bank — needs Mining 30 and a pickaxe. No combat handling: the level-27 giant bats are aggressive below 55 combat.
 
-Tags: `mining`, `coal`, `seers`, `banking`
+- Tags: `mining`, `coal`, `seers`, `banking`
 
 ### EssMiner
 
 Rune essence loop — Aubury teleport, one-click mine to a full pack, portal back, bank at Varrock East. Needs Rune Mysteries; uses your best pickaxe and buys the exact best usable tier from Nurmof when banked coins cover it
 
-Tags: `varrock`, `mining`, `banking`, `afk`
+- Tags: `varrock`, `mining`, `banking`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -631,7 +629,7 @@ Tags: `varrock`, `mining`, `banking`, `afk`
 
 Mines the selected rock types, then banks the ore at the nearest bank or drops it (power-mining). Optional trip food is eaten when its full heal fits or to turn food slots into more ore slots. Needs a pickaxe (best available is restocked from the bank when Full inventory is Auto). Optional Buy/repair acquires picks from Nurmof (and repairs broken picks).
 
-Tags: `gathering`, `banking`, `drop`
+- Tags: `gathering`, `banking`, `drop`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -654,7 +652,7 @@ Tags: `gathering`, `banking`, `drop`
 
 Parks at ONE shop and buys it out repeatedly on a total gp budget — no routing. Defaults to Lundail's Mage Arena rune shop (banks via Gundai's dialog); get the bot to the shop yourself.
 
-Tags: `wilderness`, `shopping`, `banking`, `runes`, `afk`
+- Tags: `wilderness`, `shopping`, `banking`, `runes`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -669,7 +667,7 @@ Tags: `wilderness`, `shopping`, `banking`, `runes`, `afk`
 
 World shop-run supply loop — cycles shop clusters buying Herblore supplies, feathers, runes, and arrows/arrowtips, banking between clusters with capped gp withdrawals; skips shops until stock regenerates
 
-Tags: `shopping`, `banking`, `worldwalker`
+- Tags: `shopping`, `banking`, `worldwalker`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -686,7 +684,7 @@ Tags: `shopping`, `banking`, `worldwalker`
 
 Walks to a chosen destination and stops — Lumbridge, Varrock, Falador, Ardougne, Rellekka, Taverley (centre); Draynor, Al Kharid, Edgeville, Seers, Catherby, Yanille (bank); or a custom tile
 
-Tags: `navigation`, `utility`, `web-walk`
+- Tags: `navigation`, `utility`, `web-walk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -700,7 +698,7 @@ Tags: `navigation`, `utility`, `web-walk`
 
 Bank-standing Prayer trainer — withdraws full loads of an exact bone name and buries them until the bank is empty
 
-Tags: `prayer`, `bones`, `banking`, `afk`
+- Tags: `prayer`, `bones`, `banking`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -712,7 +710,7 @@ Tags: `prayer`, `bones`, `banking`, `afk`
 
 All-in-one quest completer — queues the implemented quests (empty selection = all), provisions items bank-first, runs each to journal-complete
 
-Tags: `quest`, `queue`, `aio`
+- Tags: `quest`, `queue`, `aio`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -724,7 +722,7 @@ Tags: `quest`, `queue`, `aio`
 
 Alfred Grimhand's Barcrawl — banks for the drinks, gets the card from the outpost guard, tours all ten bars nearest-first and hands it back in (opens the Barbarian Outpost gate)
 
-Tags: `miniquest`, `barcrawl`, `barbarian outpost`, `gate`
+- Tags: `miniquest`, `barcrawl`, `barbarian outpost`, `gate`
 
 ## Runecrafting
 
@@ -732,7 +730,7 @@ Tags: `miniquest`, `barcrawl`, `barbarian outpost`, `gate`
 
 Crafter + mule runecrafting loop — both run bank→ruins→bank each cycle. Crafter has the talisman, crafts at the altar, trades runes for essence at the ruins. Mule ferries essence to the ruins and runes back to the bank. Dry mule signals at the bank and the crafter shares 1/N essence. Multi-mule round-robin with comma-separated partner names.
 
-Tags: `runecrafting`, `trade`, `crafter`, `mule`, `falador`, `edgeville`
+- Tags: `runecrafting`, `trade`, `crafter`, `mule`, `falador`, `edgeville`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -745,7 +743,7 @@ Tags: `runecrafting`, `trade`, `crafter`, `mule`, `falador`, `edgeville`
 
 Master Nature Crafter — a master stands at the nature altar (Karamja), takes essence from configured runners via trade, and crafts natures; runners bank essence at Ardougne, un-note it at the general store, and ship it to the master. Mode + partner name(s) via settings
 
-Tags: `runecrafting`, `nature`, `trade`, `master`, `runner`, `karamja`
+- Tags: `runecrafting`, `nature`, `trade`, `master`, `runner`, `karamja`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -760,7 +758,7 @@ Tags: `runecrafting`, `nature`, `trade`, `master`, `runner`, `karamja`
 
 AIO Runecrafting (Air/Earth) — Solo banks its own essence and crafts at the altar; a Runner needs its own talisman and carries a full 26-essence load into the altar; the Mule Recipient camps next to the altar, never leaves, and crafts between the deliveries runners bring it
 
-Tags: `runecrafting`, `banking`, `trade`, `runner`, `mule`, `afk`
+- Tags: `runecrafting`, `banking`, `trade`, `runner`, `mule`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -774,7 +772,7 @@ Tags: `runecrafting`, `banking`, `trade`, `runner`, `mule`, `afk`
 
 Al Kharid smelter — withdraw ore, use it on the Furnace to smelt bars (all 8 bar types), bank, repeat
 
-Tags: `smithing`, `smelting`, `banking`, `afk`
+- Tags: `smithing`, `smelting`, `banking`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -790,7 +788,7 @@ Tags: `smithing`, `smelting`, `banking`, `afk`
 
 Varrock anvil smithing — withdraw bars + a hammer, make the chosen item at the anvil, bank the products, repeat
 
-Tags: `smithing`, `anvil`, `banking`, `afk`
+- Tags: `smithing`, `anvil`, `banking`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -807,7 +805,7 @@ Tags: `smithing`, `anvil`, `banking`, `afk`
 
 Baker's-stall cake thiever — steals on the golden stand, resets nearby when watched, banks full packs, flees (kites) or fights a catching guard per guardResponse, solves clue drops
 
-Tags: `ardougne`, `thieving`, `banking`, `clues`, `afk`
+- Tags: `ardougne`, `thieving`, `banking`, `clues`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -818,7 +816,7 @@ Tags: `ardougne`, `thieving`, `banking`, `clues`, `afk`
 
 Low-level East Ardougne pickpocket bot — steals cake for food, pickpockets Guard/Knight/Paladin/Hero, flees (kites) or fights the guard per the guardResponse setting, banks loot + junk, grabs ground coins, solves clue drops
 
-Tags: `ardougne`, `thieving`, `banking`, `clues`, `afk`
+- Tags: `ardougne`, `thieving`, `banking`, `clues`, `afk`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -839,7 +837,7 @@ Tags: `ardougne`, `thieving`, `banking`, `clues`, `afk`
 
 Pickpockets an NPC (Man by default), eats after failed steals, and optionally banks to restock food before returning to the start tile
 
-Tags: `pickpocket`, `coins`, `banking`, `food`
+- Tags: `pickpocket`, `coins`, `banking`, `food`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -860,7 +858,7 @@ Tags: `pickpocket`, `coins`, `banking`, `food`
 
 Solves the easy clue scroll (or opens the casket) in your pack — banks everything except clue/food/spade at the nearest bank, walks the trail, opens the reward. Idles until you hand it a clue.
 
-Tags: `clues`, `banking`, `utility`
+- Tags: `clues`, `banking`, `utility`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
@@ -875,7 +873,7 @@ Tags: `clues`, `banking`, `utility`
 
 Completes Tutorial Island unassisted (no cheats)
 
-Tags: `tutorial`, `onboarding`
+- Tags: `tutorial`, `onboarding`
 
 ## Woodcutting
 
@@ -883,7 +881,7 @@ Tags: `tutorial`, `onboarding`
 
 Chops the chosen tree type, then banks logs, drops them, or burns a full load (chop-then-burn). Needs an axe; burn mode also needs a tinderbox (both restock from the bank when Full inventory is Auto). Optional Buy/repair acquires axes from Bob or smiths mith+ from bars.
 
-Tags: `gathering`, `banking`, `drop`, `firemaking`
+- Tags: `gathering`, `banking`, `drop`, `firemaking`
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|

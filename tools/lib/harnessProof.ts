@@ -1,16 +1,5 @@
-/**
- * Shared live-harness proof artifacts: success/baseline screenshots + JSON
- * proof files (pattern used by tools/shantay-pass-route-test.ts / issue #182).
- *
- * Usage:
- *   const proof = createHarnessProof({ issue: 285, slug: 'edgeville-exit' });
- *   // after success:
- *   await proof.writeSuccess(page, { ...payload });
- *   // baseline fail repro (e.g. --expect-unreachable):
- *   await proof.writeBaseline(page, { ...payload });
- *   // on throw:
- *   await proof.writeFailure(page).catch(() => undefined);
- */
+/** Shared live-harness proof artifacts: success/baseline screenshots plus JSON proof files.
+ *  createHarnessProof({ issue, slug }) → writeSuccess(page, payload) / writeBaseline(page, payload) / writeFailure(page). */
 import { mkdir } from 'node:fs/promises';
 import type { Page } from 'playwright-core';
 

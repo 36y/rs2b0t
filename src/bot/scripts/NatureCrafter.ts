@@ -224,9 +224,8 @@ class HandleOpenTrade implements Task {
             await Trade.decline();
             return;
         }
-        // Real safety (regressed in bankEvery commit a660439): only refuse if precious
-        // items are on OUR offer. Declining any non-empty myOffer killed legitimate
-        // air/nature receives when the offer UI still held leftover slots / litter.
+        // Why: only precious items on our own offer justify a refusal.
+        // Why: declining any non-empty myOffer kills legitimate air and nature receives when the offer UI still holds leftover slots or litter.
         const offered = Trade.myOffer();
         const precious = [this.bot.cfg().talisman, this.bot.cfg().rune, ESSENCE].map(n => n.toLowerCase());
         if (offered.some(o => precious.includes((o.name ?? '').toLowerCase()))) {

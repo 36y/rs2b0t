@@ -1,8 +1,6 @@
 import { boxKey } from './box.js';
 
-// Per-instance: sessionStorage (per tab; per iframe in the MultiBox via ?box=),
-// never the origin-shared localStorage — else every tab logs in as whichever
-// tab saved last.
+// Why: sessionStorage is per tab (per iframe in the MultiBox via ?box=), while origin-shared localStorage would make every tab log in as whichever tab saved last.
 const hasStorage = typeof sessionStorage !== 'undefined';
 
 export interface Creds {

@@ -1,31 +1,10 @@
-/**
- * Pack stress corpus ripped from in-tree script / nav data (not a hand-maintained
- * mega-JSON). Sources of truth:
- *   - BANK_LOCATIONS          (bank stands every bot returns to)
- *   - WALK_DESTINATIONS       (WalkToBot / common tele hubs)
- *   - NAV_TARGETS             (per-script stands from coverage tooling)
- *   - tools/nav/mainland-routes.json  (curated F2P/mine legs)
- *
- * **Path dedupe (what matters for stress):**
- *   1. Exact from→to once at build time.
- *   2. Optional near-endpoint collapse (`--endpoint-radius`, default 3) for
- *      obvious generator twins (BOT camp↔bank vs COMMUTE).
- *   3. After pack A*, collapse routes whose **journey signature** matches —
- *      end map-square + hop sequence (not start). Pure-walks into the same
- *      region collapse (all *→Rellekka walk → one HARD leg); tele vs walk stay
- *      separate.
- *
- * Generated JSON / hardest list are written **after** pack journey dedupe.
- * **Hardest ranking uses teleports by default** (full runes + magic 99 WorldState),
- * matching live v2 stress. Pass `--no-tele` for pure-walk cost ranking only.
- *
- *   bun --preload ./test/setup-dom.ts tools/nav/script-route-corpus.ts --write
- *   bun --preload ./test/setup-dom.ts tools/nav/script-route-corpus.ts --hardest=25
- *   bun --preload ./test/setup-dom.ts tools/nav/script-route-corpus.ts --no-tele --hardest=25
- *   bun --preload ./test/setup-dom.ts tools/nav/script-route-corpus.ts --endpoint-radius=0 --corridor-grid=32
- *
- * Preload is required: BankLocations pulls a tiny bit of client surface (happy-dom).
- */
+/** Pack stress corpus ripped from in-tree script / nav data: BANK_LOCATIONS, WALK_DESTINATIONS, NAV_TARGETS and tools/nav/mainland-routes.json. --write, --hardest=25, --no-tele, --endpoint-radius=0, --corridor-grid=32.
+ *  Why: paths dedupe three times — exact from→to at build time, an optional near-endpoint collapse for generator twins, and a post-A* journey-signature collapse on end map-square plus hop sequence; hardest ranking uses teleports by default (full runes, magic 99) to match live stress, and the preload is required since BankLocations pulls a little client surface. */
+
+//   bun --preload ./test/setup-dom.ts tools/nav/script-route-corpus.ts --write
+//   bun --preload ./test/setup-dom.ts tools/nav/script-route-corpus.ts --hardest=25
+//   bun --preload ./test/setup-dom.ts tools/nav/script-route-corpus.ts --no-tele --hardest=25
+//   bun --preload ./test/setup-dom.ts tools/nav/script-route-corpus.ts --endpoint-radius=0 --corridor-grid=32
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -76,11 +55,8 @@ const cheb = (a: NavPoint, b: NavPoint): number =>
 
 const keyOf = (p: NavPoint): string => `${p.x},${p.z},${p.level}`;
 
-/**
- * Prefer curated / hub sources when two generators emit nearly the same leg
- * (e.g. BOT camp↔bank vs COMMUTE to nearest bank — same path for stress).
- * Higher = keep. Reverse directions are never collapsed into each other.
- */
+/** Prefer curated / hub sources when two generators emit nearly the same leg (BOT camp↔bank against COMMUTE to nearest bank). Higher = keep.
+ *  Reverse directions are never collapsed into each other. */
 const SOURCE_PRIORITY: Record<string, number> = {
     'mainland-routes.json': 100,
     WALK_DESTINATIONS: 80,
@@ -134,20 +110,8 @@ export type PathHopLike = {
 
 export type WaypointLike = { x: number; z: number; level: number };
 
-/**
- * Journey fingerprint for stress / HARD dedupe.
- *
- * **End map-square + hop sequence only** — not the start tile. Otherwise the
- * HARD list is flooded with near-identical pure-walks into the same region
- * (Varrock/Falador/… → Rellekka all cost≈295, hops=1).
- *
- * - Same pure-walk destination → one representative (keep hardest).
- * - Tele vs walk (or different hop kinds) stay distinct.
- * - Reverse legs stay distinct (destination map-square swaps).
- *
- * `sampleEvery` is reserved for future walk-corridor sampling; default
- * `grid` **64** = one map square.
- */
+/** Journey fingerprint for stress / HARD dedupe: end map-square plus hop sequence, never the start tile. Same pure-walk destination collapses to one representative (keep hardest); tele against walk, differing hop kinds and reverse legs all stay distinct.
+ *  Why: keying on the start tile floods the HARD list with near-identical pure-walks into the same region (Varrock/Falador/… → Rellekka all cost≈295, hops=1). `sampleEvery` is reserved for walk-corridor sampling; default `grid` 64 = one map square. */
 export function pathCorridorSignature(
     waypoints: WaypointLike[],
     hops: PathHopLike[],
@@ -422,10 +386,8 @@ if (isMain) {
     const ranked: RankedScriptRoute[] = [];
     const t0 = performance.now();
 
-    // Match live v2 / maxme stress: teles + skill-gated guild doors open.
-    // Magic-only was wrong: Fishing Guild doors need fishing 68 (specialRequires).
-    // Missing skills default to 0 → fail-closed → A* burns the expansion budget
-    // on real script targets (BANK_* → Fishing Guild, ShopRunner feather stand).
+    // Match live v2 / maxme stress: teles plus skill-gated guild doors open.
+    // Why: magic alone was wrong — Fishing Guild doors need fishing 68 (specialRequires), and missing skills default to 0, so A* fails closed and burns the expansion budget on script targets (BANK_* → Fishing Guild, ShopRunner feather stand).
     const maxedSkills: Record<string, number> = {
         magic: 99,
         Magic: 99,

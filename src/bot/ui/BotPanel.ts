@@ -314,9 +314,7 @@ export default class BotPanel {
             status.className = 'rs2b0t-load-status rs2b0t-load-ok';
         });
         button(buttons, 'Log in', () => {
-            // Log in as whoever is typed here. Without this the button used only the
-            // last Saved account, so a freshly typed login silently did nothing (or
-            // logged in as the wrong bot) until you pressed Save first.
+            // Why: reading only the last Saved account makes a freshly typed login do nothing, or log in as the wrong bot, until Save is pressed first.
             AutoRelogin.setCredentials(userInput.value.trim(), passInput.value);
             const ok = AutoRelogin.loginNow();
             status.textContent = ok ? 'logging in…' : 'enter a username / already ingame';

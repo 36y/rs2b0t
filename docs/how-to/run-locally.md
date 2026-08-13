@@ -38,8 +38,7 @@ the engine resolves content as `../content`.
 3. Wait for `World ready`. First boot packs the cache and logs harmless
    `WARN missing model …` lines.
 
-4. Confirm with `curl -o /dev/null -w '%{http_code}\n' http://localhost:<web>/rs2.cgi`,
-   which prints `200`.
+4. Confirm with `curl -o /dev/null -w '%{http_code}\n' http://localhost:<web>/rs2.cgi`, which prints `200`.
 
 See [ports](../reference/ports.md) for defaults, changing them, and why `World ready`
 does not mean the game port is bound.
@@ -85,7 +84,7 @@ and bot clients, builds the collision pack from that engine's map data if
 absent, copies the bundles into `public/client/` and `public/bot/`, and installs
 `bot.html` and `multibox.html`.
 
-Both outputs live in the repo's `out/`, shared across the whole checkout.
+Both outputs live in the repo's `out/`, shared across the checkout.
 
 Not yet executed against an upstream engine: this section and the login key above are
 derived from `tools/deploy-local.sh` and `bot.bundle.ts` rather than an observed run.

@@ -1,7 +1,5 @@
-// Issue #429 — live BrimhavenAgility proof against a local engine.
-// Boots near the arena (or Ardougne bank), seeds food/coins/agility, starts the
-// script, and asserts: pay/enter → tag at least one pillar → optional spike hop.
-//
+// Issue #429 — live BrimhavenAgility proof: [base].
+
 //   bun tools/brimhaven-agility-test.ts [http://localhost:8888]
 import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, positionalArgs, setSettings } from './lib/harness.js';
 

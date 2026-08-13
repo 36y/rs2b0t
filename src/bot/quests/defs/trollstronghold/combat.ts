@@ -48,18 +48,11 @@ class Protection {
     }
 }
 
-/**
- * Run `walk` with a protection prayer that tracks the threat instead of a
- * stretch of map.
- *
- * A fixed on-at-A-off-at-B window is always wrong at one end: the throwers are
- * behind you well before the stronghold door, and every tick of prayer burnt
- * after that is a tick the fight inside does not get. `Sustain` is pumped by the
- * walker on every pass, so borrowing the hook for the duration of the walk gives
- * a per-tick check — up while something is actually shooting, down the moment it
- * is not. The host's own hook (eating) still runs, first, because prayer is free
- * when it is already holding and food is not.
- */
+// Why: a fixed on-at-A-off-at-B window is always wrong at one end — the throwers are behind you well before the stronghold door, and every tick of prayer burnt after that is a tick the fight inside does not get.
+// Why: `Sustain` is pumped by the walker on every pass, so borrowing the hook for the duration of the walk gives a per-tick check: up while something is shooting, down the moment it is not.
+// Why: the host's own hook (eating) still runs first, as prayer is free when it is already holding and food is not.
+
+/** Run `walk` with a protection prayer that tracks the threat rather than a stretch of map. */
 export async function protectedWalk(
     kind: ProtectKind,
     threat: () => boolean,
@@ -135,11 +128,10 @@ export interface FightPlan {
     protect: ProtectKind;
     /** Ticks before the fight is declared stuck. */
     guard: number;
-    /**
-     * Options to take when a dialogue opens mid-fight. Dad forfeits below 20
-     * hitpoints instead of dying: `defeat_dad` sets the stage, heals him to full
-     * and offers "I'll be going now." — leaving that undrained loses the win.
-     */
+    // Why: Dad forfeits below 20 hitpoints instead of dying — `defeat_dad` sets the stage, heals him to full and offers "I'll be going now."
+    // Why: leaving that dialogue undrained loses the win.
+
+    /** Options to take when a dialogue opens mid-fight. */
     dialogue?: readonly string[];
     /** Called with the option taken whenever `dialogue` drives a choice. */
     onDialogue?: (chosen: string) => void;
@@ -147,14 +139,10 @@ export interface FightPlan {
     onMissing?: () => Promise<boolean>;
 }
 
-/**
- * **One action per tick, in priority order: dialogue, pray, eat, attack.**
- *
- * The server runs a single op per tick and silently drops the rest, so a loop
- * that eats, prays and swings in the same breath loses two of the three. Prayer
- * goes before food because it is free once the varp says it is up, and because
- * a loop that eats first spends every damaged tick on food and never re-arms.
- */
+// Why: the server runs a single op per tick and silently drops the rest, so a loop that eats, prays and swings in the same breath loses two of the three — one action per tick, in the order dialogue, pray, eat, attack.
+// Why: prayer goes before food because it is free once the varp says it is up, and because a loop that eats first spends every damaged tick on food and never re-arms.
+
+/** Run one fight to its win condition. */
 export async function fight(plan: FightPlan, log: (m: string) => void): Promise<boolean> {
     const prayers = new Protection(plan.protect);
     if (!prayers.usable) {
@@ -172,9 +160,7 @@ export async function fight(plan: FightPlan, log: (m: string) => void): Promise<
                 log(`${plan.what}: done (${swings} attacks, ${prayers.arms} prayer re-arms)`);
                 return true;
             }
-            // A random event has to be answered by the host, and this loop owns
-            // the tick budget until it returns. Hand it back rather than swing
-            // through a genie for the next four hundred ticks.
+            // Why: a random event has to be answered by the host, and this loop owns the tick budget until it returns, so it hands back rather than swing through a genie for the next four hundred ticks.
             if (EventSignal.pending()) {
                 log(`${plan.what}: yielding to a random event`);
                 return false;
@@ -217,9 +203,8 @@ export async function fight(plan: FightPlan, log: (m: string) => void): Promise<
                 log(`${plan.what}: hp=${Skills.effective('hitpoints')}/${Skills.level('hitpoints')}`
                     + ` prayer=${Prayer.points()} attacks=${swings}`);
             }
-            // Melee keeps swinging on its own, so re-clicking the same target
-            // spends the tick's one action re-targeting. Dad's slam knocks us
-            // seven tiles clear and drops combat — that is when to re-issue.
+            // Why: melee keeps swinging on its own, so re-clicking the same target spends the tick's one action re-targeting.
+            // Why: Dad's slam knocks us seven tiles clear and drops combat, which is when to re-issue.
             if (target.index === attacking && Game.inCombat()) {
                 await Execution.delayTicks(1);
                 continue;

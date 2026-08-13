@@ -138,9 +138,7 @@ describe('decide — topping the pack up on a capped truck', () => {
     test('keeps mining once the truck is capped but the pack is not', () => {
         expect(decide(view({ truckFull: true, coalHeld: 17 }))).toEqual({ kind: 'mine' });
     });
-    // Regression: the fill phase used to jump straight to travel-to-seers, which walks to
-    // the TRUCK stand with a full pack and then doubles back to the bank — 196 tiles
-    // against 156. The truck is capped, so the carried pack can only go to the bank.
+    // Why: the truck is capped, so a carried pack can only go to the bank — routing via the truck stand costs 196 tiles against 156.
     test('heads for the bank, not the truck, once both are full', () => {
         expect(decide(view({ truckFull: true, packFull: true, coalHeld: 27 }))).toEqual({ kind: 'bank' });
     });
@@ -164,8 +162,7 @@ describe('decide — topping the pack up on a capped truck', () => {
 });
 
 describe('decide — pickaxe outranks every phase', () => {
-    // Live regression: ~maxme grants stats and never gear, so the bot stood in the
-    // mine clicking rocks for three minutes with no pickaxe, no message and no xp.
+    // Why: ~maxme grants stats and never gear, so a bot reaches the mine with no pickaxe and no message.
     test('no pickaxe banks instead of mining', () => {
         expect(decide(view({ hasPickaxe: false }))).toEqual({ kind: 'bank' });
     });
@@ -250,10 +247,7 @@ const mining = (over: Partial<MineView> = {}): MineView => ({
 });
 
 describe('mineWaitDone — a swing that stops without a yield must end the wait', () => {
-    // The bug: the wait only watched for success (a coal gain, a full pack, a random
-    // event, a dialog). When another player took the rock, or a manual click cancelled
-    // the action, the swing stopped and none of those ever became true — so the wait ran
-    // the full MINE_STALL_MS. 20s of standing still per interruption.
+    // Why: another player taking the rock stops the swing without a coal gain, a full pack, an event or a dialog, so a success-only wait burns the full MINE_STALL_MS.
     test('the swing stopping with no coal ends the wait', () => {
         expect(mineWaitDone('sustain', mining({ animating: false }))).toBe(true);
     });
@@ -266,9 +260,7 @@ describe('mineWaitDone — a swing that stops without a yield must end the wait'
 });
 
 describe('mineWaitDone — the start stage cannot spin', () => {
-    // Why two stages: the swing takes a tick or two to begin after the click, so a bare
-    // `!animating` check would be true the instant we start waiting and the loop would
-    // re-click forever without ever mining.
+    // Why: the swing takes a tick or two to begin after the click, so a bare `!animating` check is true the instant the wait starts and the loop re-clicks forever.
     test('waits for the swing to begin rather than reporting done immediately', () => {
         expect(mineWaitDone('start', mining({ animating: false }))).toBe(false);
     });

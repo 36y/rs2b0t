@@ -29,10 +29,9 @@ import { LOADOUT_SETTING } from '../api/loadout/loadoutSetting.js';
 
 const TARGET = 'Giant';
 
-// Verified on a rev-274 engine: the hut door is opened by USING the key on it
-// (oploc1 only says "The door is locked"), and the ladder inside drops into the
-// Edgeville dungeon giant pit.
-// Varrock West is closer to the Edgeville dungeon hut than East (#428).
+// Why: on a rev-274 engine the hut door opens by using the key on it — oploc1 only says "The door is locked".
+// Why: the ladder inside the hut drops into the Edgeville dungeon giant pit.
+// Why: Varrock West is closer to the Edgeville dungeon hut than East (#428).
 const BANK_TILE = new Tile(3185, 3440, 0);
 const HUT_DOOR = new Tile(3115, 3450, 0);
 const HUT_LADDER = new Tile(3116, 3452, 0);

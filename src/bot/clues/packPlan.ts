@@ -39,12 +39,10 @@ export function weaponNeeded(weaponName: string, inBackpack: boolean, equipped: 
     return weaponName !== '' && !inBackpack && !equipped;
 }
 
-/**
- * Worst-case slots a casket needs on opening. The reward is rolled into a side
- * inv and then moved in one slot at a time, so anything that does not fit hits
- * the floor. Roll counts from the engine's reward scripts:
- * easy 2+random(3), medium 3+random(3), hard 4+random(3).
- */
+// Why: the reward is rolled into a side inv and moved one slot at a time, so anything that does not fit hits the floor.
+// Why: roll counts from the engine's reward scripts are easy 2+random(3), medium 3+random(3), hard 4+random(3).
+
+/** Worst-case slots a casket needs on opening. */
 export function casketRewardSlots(casketObj: string): number {
     if (casketObj.includes('_hard_')) {
         return 6;

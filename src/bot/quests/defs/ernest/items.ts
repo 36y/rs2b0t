@@ -59,11 +59,10 @@ export function inCloset(tile: { x: number; z: number; level: number } | null | 
         && tile!.z >= CLOSET_BOX.minZ && tile!.z <= CLOSET_BOX.maxZ;
 }
 
-/**
- * The closet is a sealed ten-tile room. `open_and_close_door2` shuts the door
- * behind whoever crosses it and `op1=Open` answers "The door is locked", so the
- * key is the only way in *and* the only way back out. It is never consumed.
- */
+// Why: the closet is a sealed ten-tile room — `open_and_close_door2` shuts the door behind whoever crosses it and `op1=Open` answers "The door is locked".
+// Why: the key is therefore the only way in and the only way back out, and it is never consumed.
+
+/** Cross the closet door in the named direction. */
 async function crossClosetDoor(want: 'in' | 'out', log: (m: string) => void): Promise<boolean> {
     const done = (): boolean => inCloset(Game.tile()) === (want === 'in');
     if (done()) {
@@ -82,11 +81,10 @@ async function crossClosetDoor(want: 'in' | 'out', log: (m: string) => void): Pr
     );
 }
 
-/**
- * Nothing routes out of the closet, so any leg that starts in there has to key
- * its way out before it walks anywhere. `decide()` calls this ahead of everything
- * else, including the bank trip.
- */
+// Why: nothing routes out of the closet, so any leg that starts in there has to key its way out before it walks anywhere.
+// Why: `decide()` calls this ahead of everything else, including the bank trip.
+
+/** Key out of the closet before any leg that walks. */
 export async function leaveCloset(log: (m: string) => void): Promise<boolean> {
     await Sustain.run();
     return crossClosetDoor('out', log);
@@ -120,20 +118,14 @@ export async function fetchRubberTube(log: (m: string) => void): Promise<boolean
     return crossClosetDoor('out', log);
 }
 
-/**
- * Search the fountain. `false` means the piranhas are still alive.
- *
- * `promptLoc`, not a bare op: `[oploc1,hauntedfountain]` runs two `~chatplayer`
- * lines before the `inv_add`, so the gauge only lands once the dialogue has been
- * continued twice. Waiting on the item without driving the box never sees it.
- */
+// Why: `[oploc1,hauntedfountain]` runs two `~chatplayer` lines before the `inv_add`, so the gauge only lands once the dialogue has been continued twice.
+// Why: waiting on the item without driving the box never sees it, hence `promptLoc` over a bare op.
 const BITTEN = /something in the water bites you/i;
 
-/**
- * `bitten` is the only proof the piranhas are alive. A search that never landed
- * looks identical to one that did and hurt, and reading the first as the second
- * is how a reach refusal quietly became "poison the fountain again".
- */
+// Why: `bitten` is the only proof the piranhas are alive, as a search that never landed looks identical to one that did and hurt.
+// Why: reading the first as the second is how a reach refusal became "poison the fountain again".
+
+/** Search the fountain; `bitten` means the piranhas are still alive. */
 async function searchFountain(log: (m: string) => void): Promise<'gauge' | 'bitten' | 'unknown'> {
     for (let attempt = 0; attempt < 3; attempt++) {
         if (!(await Traversal.walkResilient(EC_TILE.FOUNTAIN_STAND, { radius: 1, attempts: 3, timeoutMs: 120_000, log }))) {
@@ -194,11 +186,10 @@ async function poisonFountain(log: (m: string) => void): Promise<boolean> {
     );
 }
 
-/**
- * Search first: `%haunted_manor_fountain_poisoned` is unreadable, and a fountain
- * poisoned on an earlier run hands the gauge straight over. The wrong guess
- * costs one hitpoint.
- */
+// Why: `%haunted_manor_fountain_poisoned` is unreadable, and a fountain poisoned on an earlier run hands the gauge straight over, so the search comes first.
+// Why: the wrong guess costs one hitpoint.
+
+/** Fetch the pressure gauge, poisoning the fountain if the search comes back bitten. */
 export async function fetchPressureGauge(log: (m: string) => void): Promise<boolean> {
     if (held(EC_ID.PRESSURE_GAUGE) > 0) {
         return true;
@@ -215,9 +206,8 @@ export async function fetchPressureGauge(log: (m: string) => void): Promise<bool
     if (!(await poisonFountain(log))) {
         return held(EC_ID.PRESSURE_GAUGE) > 0;
     }
-    // The pour runs a five-tick message chain before the varp flips, and the
-    // search that races it comes back bitten. Report on the gauge, not on the
-    // op: a false with the gauge in the pack sends the bot round again.
+    // Why: the pour runs a five-tick message chain before the varp flips, and a search that races it comes back bitten.
+    // Why: the report is on the gauge rather than on the op, as a false with the gauge in the pack sends the bot round again.
     await Execution.delayTicks(6);
     for (let attempt = 0; attempt < 3 && held(EC_ID.PRESSURE_GAUGE) === 0; attempt++) {
         await searchFountain(log);

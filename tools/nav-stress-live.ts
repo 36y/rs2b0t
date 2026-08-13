@@ -1,21 +1,8 @@
-/**
- * Live stress suite for nav: spell teles, jewellery Rub, pure walk + path paint,
- * trapdoor, multi-destination chain.
- *
- * Operator only — not upstream CI.
- *
- *   ~/redeploy.sh
- *   HEADED=1 bun tools/nav-stress-live.ts
- *
- * Optional: BASE=…  CASES=spell-varrock,jewellery-duel,path-paint,paint-compare  BUDGET_S=120
- * Mid-walk: ENERGY_REFILL_AT=25 (default) — throttled sustain (SUSTAIN_EVERY_S, default 5s).
- *
- * Explore path paint (default ON when showNavPath):
- *   PATH_PAINT_SCENE_EXPAND=0|1   scene-BFS pack expand (default 1)
- *   PATH_PAINT_CLIENT_SEG=0|1     cyan client-walk segment after click (default 1)
- * Cases: path-paint (samples PathPublish), paint-compare (asserts clientSegment appears)
- * Shared harness: tools/lib/navLiveHarness.ts
- */
+/** Live stress suite for nav: spell teles, jewellery Rub, pure walk with path paint, trapdoor, multi-destination chain. Operator only. BASE, CASES, BUDGET_S, ENERGY_REFILL_AT, SUSTAIN_EVERY_S, PATH_PAINT_SCENE_EXPAND, PATH_PAINT_CLIENT_SEG.
+ *  Cases path-paint (samples PathPublish) and paint-compare (asserts clientSegment appears). Shared harness: tools/lib/navLiveHarness.ts */
+
+//   ~/redeploy.sh
+//   HEADED=1 bun tools/nav-stress-live.ts
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';

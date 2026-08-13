@@ -48,9 +48,8 @@ interface ReachEntityOpts<T extends ReachEntity> {
 
 const REACH_BFS_STEPS = 400;
 /**
- * How far the scene probe's verdict is worth trusting. `REACH_BFS_STEPS` expansions
- * run out at ~11 tiles of open ground, so beyond this a plain "too far" reads exactly
- * like "walled off" — and a patrolling target would have us opening doors for nothing.
+ * How far the scene probe's verdict is worth trusting.
+ * Why: `REACH_BFS_STEPS` expansions run out at ~11 tiles of open ground, so beyond this a plain "too far" is indistinguishable from "walled off" and a patrolling target would have us opening doors for nothing.
  */
 const PROBE_RADIUS = 10;
 
@@ -65,12 +64,8 @@ async function closeIn(near: WorldTile, radius: number, log: (m: string) => void
 
 const REACH_DOOR_ATTEMPTS = 8;
 
-/**
- * A shut wall-door blocks the step onto its own tile, so an adjacentOk probe
- * rejects exactly the door that needs opening (#293). Wall locs operate from
- * either side of their edge, so reaching any tile on or beside the door is
- * enough to click it.
- */
+// Why: a shut wall-door blocks the step onto its own tile, so an adjacentOk probe rejects the one door that needs opening (#293).
+// Why: wall locs operate from either side of their edge, so reaching any tile on or beside the door is enough to click it.
 function doorApproachable(doorTile: WorldTile): boolean {
     for (let dx = -1; dx <= 1; dx++) {
         for (let dz = -1; dz <= 1; dz++) {
@@ -119,10 +114,8 @@ async function reachThroughDoors(
     probeUnreachable = false
 ): Promise<ReachStatus> {
     for (let i = 0; i < REACH_DOOR_ATTEMPTS; i++) {
-        // The server only says "I can't reach that!" once its own path search
-        // dead-ends, which a target that keeps moving can postpone forever. For
-        // those, probe the scene instead; a wrong probe just falls through to the
-        // click below and costs nothing.
+        // Why: the server only says "I can't reach that!" once its own path search dead-ends, which a target that keeps moving can postpone forever.
+        // Why: for those, probing the scene is cheap — a wrong probe falls through to the click below and costs nothing.
         if (probeUnreachable && !expect()) {
             const blocked = targetTile();
             const here = reader.worldTile();
@@ -158,9 +151,8 @@ async function reachThroughDoors(
 }
 
 /**
- * The shared last-mile primitive: walk to a stand, act, and open the blocking
- * door when the server says it cannot reach. Use this rather than hand-rolling
- * another approach loop.
+ * The shared last-mile primitive: walk to a stand, act, and open the blocking door when the server says it cannot reach.
+ * Why: use this rather than hand-rolling another approach loop.
  * @see docs/reference/nav-walker.md#the-reach-primitive
  */
 export const Reach = {

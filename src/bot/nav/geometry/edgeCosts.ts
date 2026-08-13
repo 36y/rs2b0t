@@ -1,35 +1,12 @@
-/**
- * Nav path costs — **time**, in run-tile units.
- *
- * Pathfinder A* (and bank planning) pick the **lowest total cost**. Adjacent
- * walk graph steps cost {@link TILE_STEP_COST} each. Non-walk actions are
- * priced with {@link ticksToCost} so a teleport/glider/ship only wins when it
- * saves real travel time.
- *
- * ## Server movement (Lost City engine / Player + PathingEntity)
- *
- * - **Walk** (`MoveSpeed.WALK`): 1 path step per game tick.
- * - **Run** (`MoveSpeed.RUN`): up to 2 path steps per game tick
- *   (`processMovement` takes walkDir then runDir).
- *
- * Run energy (`Player.updateEnergy`, energy 0…10000):
- * - `stepsTaken < 2` (idle or walk): recover `((agility/6)|0) + 8`
- * - `stepsTaken >= 2` (ran this tick): drain `(67 + 67*clamp(weightKg,0,64)/64)|0`
- * - energy 0 → run toggled off; energy &lt; 100 → tempRun cleared
- *
- * Cost **unit** = one map tile at continuous **run** (2 tiles / tick).
- * So wall-time ticks ≈ cost / {@link RUN_TILES_PER_TICK} while running.
- * Pure walk is half speed → twice the cost per tile ({@link TILE_STEP_COST_WALK}).
- *
- * Default A* assumes run for step costs (bots enable run). Full energy
- * simulation (drain/recover along the route) is future work; constants below
- * use the server formulas for recover/drain helpers and tick→cost conversion.
- *
- * Design (@lulwut): calibrate action time; prefer cost over static span gates.
- *
- * @see Server engine `Player.updateEnergy`, `PathingEntity.processMovement`
- * @see bankPlan.ts
- */
+// Why: nav path costs are time, in run-tile units, and pathfinder A* (with bank planning) picks the lowest total cost.
+// Why: adjacent walk graph steps cost {@link TILE_STEP_COST} each, while non-walk actions are priced with {@link ticksToCost} so a teleport, glider or ship only wins when it saves travel time.
+// Why: on the Lost City engine (Player + PathingEntity), `MoveSpeed.WALK` takes 1 path step per game tick and `MoveSpeed.RUN` takes up to 2, since `processMovement` takes walkDir then runDir.
+// Why: run energy in `Player.updateEnergy` runs 0…10000 — `stepsTaken < 2` (idle or walk) recovers `((agility/6)|0) + 8`, `stepsTaken >= 2` (ran this tick) drains `(67 + 67*clamp(weightKg,0,64)/64)|0`.
+// Why: energy 0 toggles run off, and energy below 100 clears tempRun.
+// Why: the cost unit is one map tile at continuous run (2 tiles / tick), so wall-time ticks ≈ cost / {@link RUN_TILES_PER_TICK} while running.
+// Why: pure walk is half speed and therefore twice the cost per tile ({@link TILE_STEP_COST_WALK}).
+// Why: A* assumes run for step costs since bots enable run; full energy simulation along the route is future work, and the constants below use the server formulas for the recover/drain helpers and the tick→cost conversion.
+// Why: design @lulwut — calibrate action time and prefer cost over static span gates.
 
 import type { TransportKind } from '../types.js';
 
@@ -70,11 +47,9 @@ export function runEnergyRecoverPerTick(agilityLevel: number): number {
     return ((agi / 6) | 0) + 8;
 }
 
-/**
- * Energy drained on a tick with `stepsTaken >= 2` (ran).
- * Server: weight kg = runweight/1000, clamp 0…64;
- * `loss = (67 + (67 * clampWeight) / 64) | 0`
- */
+// Why: the server takes weight kg as runweight/1000 clamped 0…64, then `loss = (67 + (67 * clampWeight) / 64) | 0`.
+
+/** Energy drained on a tick with `stepsTaken >= 2` (ran). */
 export function runEnergyDrainPerRunTick(weightKg: number): number {
     const clampWeight = Math.min(Math.max(weightKg, 0), 64);
     return (67 + (67 * clampWeight) / 64) | 0;
@@ -110,11 +85,9 @@ const LEVER_TELEPORT_COST = ticksToCost(3);
  */
 export const BANK_WITHDRAW_COST = ticksToCost(12);
 
-/**
- * Default edge costs by transport kind (run-tile units).
- * Doors stay cheap (open + step). Dialogue-heavy travel is expensive so short
- * ODs stay pure walk when that is faster.
- */
+// Why: doors stay cheap (open + step) while dialogue-heavy travel is expensive, so short ODs stay pure walk when that is faster.
+
+/** Default edge costs by transport kind (run-tile units). */
 export const DEFAULT_EDGE_COST: Readonly<Record<TransportKind, number>> = {
     /** Open + step (~1–2 ticks). */
     door: ticksToCost(2),

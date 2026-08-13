@@ -389,11 +389,9 @@ export default class GatheringBot extends TaskBot {
     private toolAcquire: ToolAcquireMode = 'off';
     /** Game tick when acquire backoff ends (not wall-clock). */
     private acquireBackoffUntilTick = 0;
-    /**
-     * One-shot bank trip at run start when Buy/repair is on (withdraw better banked
-     * axe/pick, then optional shop upgrade). Needed for chop-then-burn which never
-     * hits BankCatch, and for cold starts with bronze equipped + steel in bank.
-     */
+    // Why: chop-then-burn never hits BankCatch, and a cold start can have bronze equipped with steel in the bank.
+
+    /** One-shot bank trip at run start when Buy/repair is on: withdraw a better banked axe or pick, then an optional shop upgrade. */
     private startupToolBankSyncPending = false;
     /**
      * When true, ~1/{@link FORGETFUL_BANK_ODDS} bank closes walk out and re-open
@@ -412,10 +410,8 @@ export default class GatheringBot extends TaskBot {
 
     private rejected = new Set<string>();
     private cooldownUntil = new Map<string, number>();
-    /**
-     * After FleeCombat kites off a multi-combat pack, suppress ReturnToAnchor /
-     * gather re-entry until this timestamp so we don't walk straight back onto spiders.
-     */
+    // Why: after FleeCombat kites off a multi-combat pack, ReturnToAnchor and gather re-entry are suppressed so the bot does not walk straight back onto spiders.
+
     /** Game tick when camp re-entry hold ends after combat kite. */
     private combatClearUntilTick = 0;
 
@@ -516,12 +512,9 @@ export default class GatheringBot extends TaskBot {
             this.location = null;
         }
 
-        // Membership:
-        // - Resolved camp (named or Auto-snap) → camp geography (campRadius / floor 64),
-        //   never the Auto UI leash (that was clipping camp scan to e.g. 18).
-        // - Freeform Auto / power None → start-tile leash from UI (+ None floor).
-        // Fishing discovery for named camps is any matching spot inside membership;
-        // freeform uses player-relative hunt (see Gather.findFishSpot).
+        // Why: a resolved camp, named or Auto-snap, takes camp geography (campRadius or the floor of 64), never the Auto UI leash, which clips the camp scan to as little as 18.
+        // Why: freeform Auto and power None take the start-tile leash from the UI, plus the None floor.
+        // Why: fishing discovery for named camps is any matching spot inside membership, while freeform uses the player-relative hunt in Gather.findFishSpot.
         if (this.location?.spot) {
             this.anchor = resolveRunAnchor(new Tile(here.x, here.z, here.level), this.location.spot);
             this.leash = resolveCampRadius(this.location.campRadius, NAMED_CAMP_LEASH_FLOOR);
@@ -530,9 +523,8 @@ export default class GatheringBot extends TaskBot {
             this.leash = effectiveGatherLeash(this.leash, locSetting);
         }
 
-        // After ::tele / zone load, Locs+Npcs are empty for a beat (docs/NAV.md
-        // #level-change-loc-lag). Blank ≠ absent — wait before first gather tick
-        // so we don't idle on "no rocks/trees in leash" with an empty scene.
+        // Why: after ::tele or a zone load, Locs and Npcs are empty for a beat (docs/decisions/level-change-lag.md).
+        // Why: blank is not absent, so the first gather tick waits rather than idling on "no rocks/trees in leash" with an empty scene.
         if (this.fishing) {
             await Execution.delayUntilTicks(() => Npcs.query().results().length > 0, 9);
         } else {
@@ -733,12 +725,10 @@ export default class GatheringBot extends TaskBot {
             });
         }
 
-        // Combat policy:
-        // - Tick-manip retaliate methods: Auto Retaliate ON, no FleeCombat (may die).
-        // - Wilderness Miner: hold ground against NPCs so an aggressive camp remains mineable.
-        //   A detectable player attack still yields to FleeCombat.
-        // - Location Auto: expert / may-die — leave combat alone (no flee babysitting).
-        // - Named/None AFK: Auto Retaliate off + FleeCombat walks hits off.
+        // Why: tick-manip retaliate methods run Auto Retaliate ON with no FleeCombat, and may die.
+        // Why: Wilderness Miner holds ground against NPCs so an aggressive camp stays mineable, but a detectable player attack still yields to FleeCombat.
+        // Why: Location Auto is expert and may-die, so combat is left alone with no flee babysitting.
+        // Why: named and None AFK run Auto Retaliate off with FleeCombat walking hits off.
         if (this.tickManip.allowCombat) {
             if (Game.setAutoRetaliate(true)) {
                 this.log('combat: Auto Retaliate ON (tick manip — may die)');
@@ -824,9 +814,8 @@ export default class GatheringBot extends TaskBot {
         const bankMule = this.isMuleReceiver();
         const gatherTools =
             !muleSide && (this.mining() || this.woodcutting() || this.toolReqs.length > 0) && !this.fishing;
-        // Miner always carries the combat tasks so its live wilderness policy can
-        // switch from holding NPC aggro to fleeing a detectable player attack.
-        // Other gatherers retain the old named/None-only registration policy.
+        // Why: Miner always carries the combat tasks, so its live wilderness policy can switch from holding NPC aggro to fleeing a detectable player attack.
+        // Why: other gatherers keep the named/None-only registration policy.
         const mobFlee =
             !muleSide &&
             (this.mining() ||
@@ -840,9 +829,9 @@ export default class GatheringBot extends TaskBot {
         this.add(
             new ContinueDialog(),
             ...(minerFoodLoop ? [new MinerEatFood(this)] : []),
-            // Sticky combatCycle (no face target) — wait; do not thrash-walk.
-            // Named/None only: break multi-combat pulls (wildy spiders) by walking off.
-            // Auto / retaliate tick-manip = may-die — no mob flee.
+            // Why: a sticky combatCycle with no face target waits rather than thrash-walking.
+            // Why: named and None only break multi-combat pulls, such as wildy spiders, by walking off.
+            // Why: Auto and retaliate tick-manip are may-die, so there is no mob flee.
             ...(mobFlee ? [new WaitStickyCombat(this), new FleeCombat(this)] : []),
             // Entry/relogin can restore Auto Retaliate. Re-assert the Wilderness
             // Miner stance after dialog/eating/player flee, before any gather work.
@@ -1001,11 +990,9 @@ export default class GatheringBot extends TaskBot {
         );
     }
 
-    /**
-     * Defer tool acquire for `ticks` game ticks.
-     * Never shortens an existing longer cooldown (inner scarcity must not be
-     * clobbered by outer upgrade-fail).
-     */
+    // Why: an existing longer cooldown is never shortened, so inner scarcity is not clobbered by an outer upgrade-fail.
+
+    /** Defer tool acquire for `ticks` game ticks. */
     markAcquireBackoff(ticks = 25): void {
         this.acquireBackoffUntilTick = Math.max(
             this.acquireBackoffUntilTick,
@@ -1103,14 +1090,10 @@ export default class GatheringBot extends TaskBot {
         await this.bankPace();
     }
 
-    /**
-     * After wielding a tool, anything that was previously equipped may land in the
-     * inventory (old axe/pick, or a weapon/shield). Re-open bank if needed and
-     * deposit those so users don't lose gear mid-run.
-     *
-     * Prefer {@link prepareWornSurplusForDeposit} + deposit while the bank is
-     * already open so the happy path never needs this recovery reopen.
-     */
+    // Why: wielding a tool can shove whatever was equipped — an old axe or pick, a weapon or shield — into the inventory, and it must be deposited so users do not lose gear mid-run.
+    // Why: prefer {@link prepareWornSurplusForDeposit} plus a deposit while the bank is already open, so the happy path never needs this recovery reopen.
+
+    /** Re-opens the bank when needed and deposits gear displaced by a wield. */
     async bankDisplacedAfterEquip(
         displaced: readonly string[],
         log: (m: string) => void = m => this.log(`  ${m}`)
@@ -1144,11 +1127,9 @@ export default class GatheringBot extends TaskBot {
         await this.bankPace();
     }
 
-    /**
-     * Unequip worse worn tiered tools (and optional extras) into the pack while
-     * the bank is open so they can be deposited in the same session.
-     * Equipment.unequip does not require the bank to be closed.
-     */
+    // Why: Equipment.unequip does not require the bank to be closed, so the surplus can be deposited in the same session.
+
+    /** Unequips worse worn tiered tools, and optional extras, into the pack while the bank is open. */
     async prepareWornSurplusForDeposit(
         log: (m: string) => void = m => this.log(`  ${m}`),
         extraKeep: readonly string[] = []
@@ -1718,11 +1699,10 @@ export default class GatheringBot extends TaskBot {
     isNamedCamp(): boolean {
         return this.location !== null;
     }
-    /**
-     * Player-relative fishing primary disk.
-     * Named camps: location.chaseRadius or {@link DEFAULT_CHASE_RADIUS}.
-     * Freeform: same as membership leash (UI / floor).
-     */
+    // Why: named camps take location.chaseRadius or {@link DEFAULT_CHASE_RADIUS}.
+    // Why: freeform takes the same value as the membership leash, from the UI or the floor.
+
+    /** Player-relative fishing primary disk. */
     chaseRadius(): number {
         if (this.location) {
             return resolveChaseRadius(this.location.chaseRadius, DEFAULT_CHASE_RADIUS);
@@ -1920,13 +1900,11 @@ export default class GatheringBot extends TaskBot {
         );
     }
 
-    /**
-     * Arm knife+log delay (+2 server).
-     *
-     * Server only sets %action_delay after a Make confirm (process_fletch_logs).
-     * Make-X / count dialog is a failure mode for tick manip — always Make-1.
-     * Product completion is incidental; re-click gather on the next tick.
-     */
+    // Why: the server only sets %action_delay after a Make confirm (process_fletch_logs).
+    // Why: the Make-X count dialog is a failure mode for tick manip, so this always uses Make-1.
+    // Why: product completion is incidental — gather is re-clicked on the next tick.
+
+    /** Arms the knife+log delay (+2 server). */
     async armKnifeDelay(): Promise<boolean> {
         if (ChatDialog.isMakeMenu()) {
             return this.confirmKnifeDelayMake();
@@ -2268,12 +2246,10 @@ export default class GatheringBot extends TaskBot {
         return !tileWithinLeash(this, Game.tile() ?? this.getAnchor(), slack);
     }
 
-    /**
-     * Soft return toward the gather anchor after bank/shop/repair.
-     * Skips only when already inside the soft arrive disk ({@link HOME_ARRIVE_RADIUS})
-     * — not the full gather leash. Bank stands at named camps often sit inside the
-     * leash but far from resources (Catherby bank is ~36 from the pier).
-     */
+    // Why: the skip uses the soft arrive disk ({@link HOME_ARRIVE_RADIUS}), not the full gather leash.
+    // Why: bank stands at named camps often sit inside the leash but far from resources — the Catherby bank is ~36 from the pier.
+
+    /** Soft return toward the gather anchor after bank, shop or repair. */
     async walkHomeIfNeeded(
         log: (m: string) => void = m => this.log(`  ${m}`),
         arriveRadius = HOME_ARRIVE_RADIUS
@@ -2287,12 +2263,10 @@ export default class GatheringBot extends TaskBot {
         return Traversal.walkResilient(anchor, { radius: arriveRadius, log });
     }
 
-    /**
-     * True when already at/near the script bank (or bank UI open). Used so tool
-     * upgrades never pull the player off trees/rocks on a cold start.
-     * Draynor bank is only ~12 tiles from the willow anchor — inside ReturnToAnchor
-     * slack — so "away from spot" alone is not a safe upgrade gate.
-     */
+    // Why: tool upgrades must never pull the player off trees or rocks on a cold start.
+    // Why: the Draynor bank is only ~12 tiles from the willow anchor, inside ReturnToAnchor slack, so "away from spot" alone is not a safe upgrade gate.
+
+    /** True when already at or near the script bank, or the bank UI is open. */
     nearScriptBank(radius = 8): boolean {
         if (Bank.isOpen()) {
             return true;
@@ -2315,13 +2289,11 @@ export default class GatheringBot extends TaskBot {
         return this.startupToolBankSyncPending && this.toolAcquire === 'on';
     }
 
-    /**
-     * Withdraw better banked tiered tools (steel while bronze is held) and deposit
-     * the worse tier in the **same** bank open. Does **not** equip — caller closes
-     * once then wields offline so we never open/close thrice for one upgrade.
-     * Bank must already be open/loaded.
-     * Returns names that should be equipped after the bank closes.
-     */
+    // Why: the worse tier is deposited in the same bank open, and nothing is equipped here — the caller closes once then wields offline, so one upgrade never opens and closes the bank three times.
+    // Why: the bank must already be open and loaded.
+    // Why: the returned names are what should be equipped after the bank closes.
+
+    /** Withdraws better banked tiered tools, steel while bronze is held. */
     async withdrawBetterGatherToolsFromBank(
         log: (m: string) => void = m => this.log(`  ${m}`)
     ): Promise<{ withdrew: boolean; toEquip: string[] }> {
@@ -2366,12 +2338,11 @@ export default class GatheringBot extends TaskBot {
         return { withdrew: true, toEquip: [...new Set(toEquip)] };
     }
 
-    /**
-     * If Buy/repair is on and a better banked or affordable tool exists, take it now.
-     * Prefer bank withdraw (steel in bank + bronze held) before shop/smith.
-     * Single bank session: withdraw → unequip surplus → deposit → optional coins → close once → equip.
-     * Returns true when a bank/shop trip was attempted (success or fail with backoff).
-     */
+    // Why: a bank withdraw — steel in bank with bronze held — is preferred before shop or smith.
+    // Why: it runs as one bank session: withdraw, unequip surplus, deposit, optional coins, close once, equip.
+    // Why: true means a bank or shop trip was attempted, whether it succeeded or failed with backoff.
+
+    /** Takes a better banked or affordable tool when Buy/repair is on. */
     async tryUpgradeGatherToolAtBank(log: (m: string) => void = m => this.log(`  ${m}`)): Promise<boolean> {
         const startup = this.startupToolBankSyncNeeded();
         if (!this.toolAcquireEnabled()) {
@@ -2669,14 +2640,10 @@ export default class GatheringBot extends TaskBot {
         );
     }
 
-    /**
-     * Close bank if open, then Wield each tool. Returns false if any equip failed.
-     * Must not run while bank is open — backpack ops become Deposit-*.
-     *
-     * @param opts.bankDisplaced when true (default), reopen bank to deposit gear
-     *   shoved into the pack by the wield. Prefer false when surplus was already
-     *   unequipped+deposited in the same bank session before this call.
-     */
+    // Why: this must not run while the bank is open, since backpack ops become Deposit-*.
+    // Why: opts.bankDisplaced defaults to true and reopens the bank to deposit gear shoved into the pack by the wield; pass false when the surplus was already unequipped and deposited in the same bank session.
+
+    /** Closes the bank if open, then Wields each tool. False when any equip failed. */
     async equipTools(
         names: readonly string[],
         log: (m: string) => void = m => this.log(`  ${m}`),
@@ -2805,9 +2772,8 @@ export default class GatheringBot extends TaskBot {
         if (this.gearKeep.length > 0 && !depositAllExcept(this.gearKeep)(name)) {
             return false;
         }
-        // cook-then-bank / finished cook load: cooked (and banked burnt) must be
-        // depositable via BankCatch as a safety net if FishBankCooked never ran
-        // (cookingLoad cleared / interrupted). Mid-cook BankCatch is blocked separately.
+        // Why: cooked fish, and banked burnt, must stay depositable through BankCatch as a safety net when FishBankCooked never ran because cookingLoad was cleared or interrupted.
+        // Why: mid-cook BankCatch is blocked separately.
         if (
             this.cookEnabled()
             && !this.cookingLoad
@@ -2893,11 +2859,10 @@ export default class GatheringBot extends TaskBot {
         return this.location;
     }
 
-    /**
-     * No named camp preset — Auto freeform or power None.
-     * Fisher spot search is player-relative; start tile still bounds wander via ReturnToAnchor.
-     * Named camps also chase fish from the player, but fence spots to camp membership.
-     */
+    // Why: the fisher spot search is player-relative, and the start tile still bounds wander through ReturnToAnchor.
+    // Why: named camps also chase fish from the player, but fence spots to camp membership.
+
+    /** True when there is no named camp preset: Auto freeform or power None. */
     isFreeformCamp(): boolean {
         return this.location === null;
     }

@@ -25,13 +25,8 @@ describe('kill-for-key anchors (KILL_ANCHORS ↔ keyFrom)', () => {
 
 const present = auditInputsPresent();
 
-// Destinations the baked nav pack cannot route to. Each is a pack gap with a
-// diagnosis in PACK_UNREACHABLE, not a clue-database bug: the solver abandons
-// cleanly, and fixing the pack makes the clue start working untouched.
-//
-// Derived, not a second copy of the list. The audit already fails both ways —
-// an unlisted id that cannot route, and a listed id that now can — so pinning
-// the ids again here only ever drifts out of sync with the file it mirrors.
+// Destinations the baked nav pack cannot route to; each carries a diagnosis in PACK_UNREACHABLE.
+// Why: derived rather than re-pinned — the audit already fails on an unlisted id that cannot route and on a listed id that now can.
 const EXPECTED_ABANDON = Object.keys(PACK_UNREACHABLE).map(Number).sort((a, b) => a - b);
 
 describe.skipIf(!present)('clue audit (pack-gated)', () => {

@@ -162,10 +162,8 @@ class AutoReloginImpl {
         }
 
         const c = this.creds();
-        // Title-screen auto-login is checkbox-only. A running/paused script still
-        // reconnects after a disconnect so unattended scripts survive a DC (#215).
-        // Mid-reconnect does NOT keep logging in after the script is stopped and
-        // the checkbox is off — that was "cannot turn off autologin" in Multibox.
+        // Why: title-screen auto-login is checkbox-only, and a running or paused script still reconnects after a disconnect so unattended scripts survive a DC (#215).
+        // Why: mid-reconnect must not keep logging in once the script is stopped and the checkbox is off, which read as "cannot turn off autologin" in Multibox.
         const wantLogin = c !== null && (this.autoLogin || this.scriptActive());
 
         if (this.wasIngame) {

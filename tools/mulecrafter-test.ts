@@ -1,7 +1,5 @@
-// MuleCrafter e2e: 1 crafter + N mules (default 1) for 10 min soak on Air runes.
-// Tests the bank→ruins→bank loop, trading at ruins, and dry-signalling at the bank.
-// Usage: bun tools/mulecrafter-test.ts [base] [budget-min] [num-mules] [rune]
-//   rune: "Air rune" (default) or "Mind rune"
+// MuleCrafter e2e: 1 crafter + N mules (default 1) for a 10 min soak on Air runes — the bank→ruins→bank loop, trading at the ruins, and dry-signalling at the bank.
+// Usage: bun tools/mulecrafter-test.ts [base] [budget-min] [num-mules] [rune: "Air rune" (default) or "Mind rune"]
 
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs, cheatQuiet, fail, stopScript, setSettings, type } from './lib/harness.js';

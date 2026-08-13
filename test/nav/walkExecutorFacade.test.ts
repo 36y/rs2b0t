@@ -2,11 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { WalkExecutor } from '#/bot/nav/WalkExecutor.js';
 import { Traversal } from '#/bot/api/walking/Traversal.js';
 
-/**
- * Guard against nav exec-split regressions: Traversal.walkResilient and scripts
- * call methods on the WalkExecutor facade. #323 was tryNearbyDoor missing after
- * the doorCrossing extract.
- */
+// Why: Traversal.walkResilient and scripts call the WalkExecutor facade, so an exec split can drop a method with no compile error.
 describe('WalkExecutor public facade (walkResilient / scripts)', () => {
     test('unstick + probe + walk surface is callable', () => {
         expect(typeof WalkExecutor.walkTo).toBe('function');

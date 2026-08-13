@@ -1,18 +1,13 @@
-/**
- * End-to-end runner.
- *
- * Deploys once, runs the offline gates and then the e2e harnesses sequentially,
- * and writes a report that diffs against the previous run — so the output names
- * what CHANGED rather than what is merely red.
- *
- * Usage:
- *   bun run e2e                     # quick: the fast harnesses
- *   bun run e2e -- --level smart    # only what the working diff can affect
- *   bun run e2e -- --level full     # every harness, quests included
- *   bun run e2e -- --only troll,horror
- *   bun run e2e -- --gates-only     # offline gates, no engine needed
- *   bun run e2e -- --verbose        # stream every child line
- */
+/** End-to-end runner: --level quick|smart|full, --only <names>, --gates-only, --verbose.
+ *  Deploys once, runs the offline gates then the harnesses, and diffs the report against the previous run so the output names what changed. */
+
+// Usage:
+//   bun run e2e                     # quick: the fast harnesses
+//   bun run e2e -- --level smart    # only what the working diff can affect
+//   bun run e2e -- --level full     # every harness, quests included
+//   bun run e2e -- --only troll,horror
+//   bun run e2e -- --gates-only     # offline gates, no engine needed
+//   bun run e2e -- --verbose        # stream every child line
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -41,12 +36,8 @@ const BUDGET: Record<string, number> = {
 };
 const DEFAULT_BUDGET = 12;
 
-/**
- * `verdict` overrides the exit code where a tool's status is in its output.
- * The generators print STALE and then some exit non-zero on an unrelated
- * teardown crash in the vendored audio shim, so exit code alone reports a clean
- * generator as a regression.
- */
+/** `verdict` overrides the exit code where a tool reports its status in its output.
+ *  Why: the generators print STALE and some then exit non-zero on an unrelated teardown crash in the vendored audio shim. */
 const DRIFT = (text: string): Status => (/\bSTALE\b|does not match/i.test(text) ? 'fail' : 'pass');
 
 interface Gate { name: string; cmd: string[]; verdict?: (text: string) => Status; }
@@ -87,13 +78,8 @@ function tokens(file: string): string[] {
         .filter(t => t.length > 3 && !/^\d+$/.test(t));
 }
 
-/**
- * smart: run only harnesses the working diff could plausibly affect.
- *
- * A harness is selected when one of its filename tokens appears in a changed
- * path, or when a subsystem it must exercise changed. Shared code — the adapter,
- * runtime, or the api surface — can affect anything, so it selects everything.
- */
+/** smart: run only harnesses the working diff could plausibly affect.
+ *  A harness is selected when one of its filename tokens appears in a changed path or a subsystem it exercises changed; shared code (adapter, runtime, api) selects everything. */
 function smartSelect(changed: string[]): { files: string[]; why: string } {
     if (changed.length === 0) return { files: [], why: 'no changes against main' };
     const broad = changed.some(c => /^src\/bot\/(adapter|runtime|api)\//.test(c) || c === 'package.json');

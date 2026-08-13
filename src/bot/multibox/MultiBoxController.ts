@@ -42,11 +42,8 @@ export class MultiBoxController {
         return this.active;
     }
 
-    // A bot is added empty — its login is typed into the bot's own panel, so there
-    // is nothing to prompt for here. `account` is for automation and vault
-    // restores, which inject credentials only. Title-screen auto-login stays off
-    // unless the bot's Global checkbox (or ?autologin=1) arms it; a running
-    // script still reconnects on its own (#215).
+    // A bot is added empty, its login typed into the bot's own panel; `account` is for automation and vault restores, which inject credentials only.
+    // Why: title-screen auto-login stays off unless the bot's Global checkbox (or ?autologin=1) arms it, though a running script still reconnects on its own (#215).
     add(account?: Account): SlotSnapshot | null {
         const acct: Account = account ?? { username: `bot${this.nextId}`, password: '' };
         if (acct.username.length === 0) {
@@ -295,9 +292,7 @@ export class MultiBoxController {
         }
         for (const s of this.slots) {
             // A background tab shows nothing, so its bots stop painting entirely.
-            // 'hidden' gates the same draw call the renderer switch does, but it
-            // is the wall's own state — the user's per-bot switch is untouched,
-            // so returning to the tab resumes exactly what was running before.
+            // Why: 'hidden' gates the same draw call the renderer switch does but is the wall's own state, so a tab return resumes what the user's per-bot switch had running.
             const mode: RenderMode = s.tab !== this.active ? 'hidden' : s.id === this.focusedId ? 'focused' : 'background';
             this.setMode(s, mode);
         }

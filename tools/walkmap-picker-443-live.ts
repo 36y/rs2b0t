@@ -1,18 +1,13 @@
-/**
- * Live smoke for walkable map picker (#443) via Playwright clicks.
- *
- * Writes gitignored proof artifacts for PR attach:
- *   out/issue443-walkable-map-picker-proof.json
- *   screenshots/issue443-walkable-map-picker-success.png
- *
- *   HEADED=1 bun tools/walkmap-picker-443-live.ts [http://localhost:8890]
- *
- * After PASS + open PR:
- *   tools/attach-live-proof-to-pr.sh --pr <n> --issue 443 --slug walkable-map-picker \
- *     --harness 'HEADED=1 bun tools/walkmap-picker-443-live.ts'
- *
- * Deploy first: `~/redeploy.sh` (needs botclient.js + collision.lcnav.gz on the engine).
- */
+/** Live smoke for the walkable map picker (#443) through Playwright clicks: [base]. Deploy first — it needs botclient.js and collision.lcnav.gz on the engine.
+ *  Writes out/issue443-walkable-map-picker-proof.json and screenshots/issue443-walkable-map-picker-success.png. */
+
+//   HEADED=1 bun tools/walkmap-picker-443-live.ts [http://localhost:8890]
+
+// After PASS + open PR:
+//   tools/attach-live-proof-to-pr.sh --pr <n> --issue 443 --slug walkable-map-picker \
+//     --harness 'HEADED=1 bun tools/walkmap-picker-443-live.ts'
+
+// Deploy first: `~/redeploy.sh` (needs botclient.js + collision.lcnav.gz on the engine).
 import { fail, launchBrowser, positionalArgs } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';
 

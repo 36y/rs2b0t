@@ -1,0 +1,18 @@
+extends: existence
+message: "Delete '%s' rather than substituting a synonym."
+level: error
+ignorecase: true
+tokens:
+  - genuinely
+  - actually
+  - concrete
+  - compelling
+  - crucial
+  - notably
+  - importantly
+  - strikingly
+  - truly
+  - precisely
+  - simply
+  - very
+  - quite

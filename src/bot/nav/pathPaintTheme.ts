@@ -1,9 +1,5 @@
-/**
- * Global nav path paint theme (path / transport / hop-text colours).
- *
- * Wired settings: path, transport, click, text (+ size / show text).
- * Reserved slots (not in Global UI yet): calculating, unreachable, collision.
- */
+// Why: the wired settings are path, transport, click and text, plus size and show-text.
+// Why: calculating, unreachable and collision are reserved slots, not yet in the Global UI.
 
 import { SettingsStore, type SettingsBag } from '../runtime/Settings.js';
 

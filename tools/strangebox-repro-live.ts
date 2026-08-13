@@ -1,6 +1,6 @@
-// Live repro — Strange box ("Mysterious box") random event.
-// Seeds a real macro_cube and watches the always-on guardian try to solve it.
-//
+// Live repro — Strange box ("Mysterious box") random event: [base].
+// Seeds a macro_cube and watches the always-on guardian try to solve it.
+
 //   bun tools/strangebox-repro-live.ts [http://localhost:8888]
 import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, positionalArgs } from './lib/harness.js';
 
@@ -59,9 +59,7 @@ try {
         fail('could not seed macro_cube via ::give');
     }
 
-    // Watch the guardian work for 5 minutes. The engine replicates the cube every
-    // 150 ticks (~90s) and unstacks it every 16 ticks, so a solver that fails
-    // should show a strictly growing box count.
+    // Why: the engine replicates the cube every 150 ticks (~90s) and unstacks it every 16 ticks, so a solver that fails shows a strictly growing box count across the 5-minute watch.
     const deadline = Date.now() + 300_000;
     let peak = seeded.boxes;
     let solvedToZero = false;

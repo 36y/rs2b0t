@@ -2,13 +2,13 @@
 
 # Quest harness recipes (A–F)
 
-Per-quest seed and stage commands, with what each recipe has actually proven.
+Per-quest seed and stage commands, with what each recipe has proven.
 
 ## Elemental Workshop — harness recipes and combat floor search
 
 Polish goal (all quests with non-required combat): find the **bare minimum**
 stats that still clear, record fails, then later branch tactics by power level
-([Quests — proven floors](../reference/quest-eligibility.md#official-reqs-vs-bot-proven-floors-polish-goal)).
+([Quests — proven floors](../reference/quest-eligibility.md#bot-proven-floors-polish-goal)).
 
 | Recipe | What it proves | Status |
 |---|---|---|
@@ -23,7 +23,7 @@ Constants:
 (50/50/40/50), `EW_FAILED_COMBAT` (40/40/25/40), `EW_PROBE_COMBAT` (45/…),
 `EW_OFFICIAL_SKILLS`. `warnReadiness` logs if the account is below the proven floor.
 
-Ideal smoke:
+The ideal smoke run is this:
 
 ```sh
 HEADED=1 bun tools/aio-quest-test.ts http://localhost:8890 ew1 elemental_workshop 15 \
@@ -88,7 +88,7 @@ the bot can find it.
 Measured end to end at the default `--tick 300`: **11 minutes** from a clean
 account, no parks.
 
-Three things worth knowing:
+Three details govern this harness:
 
 - **`--poisoned` sets `haunted_manor_fountain_poisoned`.** The gauge leg Searches
   the fountain first and only fetches poison and fish food if the piranhas bite,

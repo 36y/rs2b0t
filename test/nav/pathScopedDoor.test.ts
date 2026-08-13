@@ -70,14 +70,7 @@ describe('path-scoped nearby door pick (multiloc placement)', () => {
     });
 });
 
-/**
- * A door that cannot be crossed at all (a quest-locked gate, a leaf the server
- * refuses) has to survive the walk it failed on. `resetAvoids` clears the
- * per-walk avoid list, so without a session escalation the next
- * `walkResilient` ladder pass plans straight back through it — live that was
- * seven Morytania clue destinations each burning their whole 484-second budget
- * in front of the same Paterdomus gate at (3405,9895).
- */
+// Why: `resetAvoids` clears the per-walk avoid list, so without a session escalation the next `walkResilient` pass plans straight back through an uncrossable door.
 describe('failed door strikes escalate past one walk', () => {
     const hop = {
         x: 3405,
@@ -101,11 +94,8 @@ describe('failed door strikes escalate past one walk', () => {
     });
 });
 
-/**
- * Only openable barriers may be banned for the run. A `Gangplank` that "refuses"
- * three times is a scene that has not caught up, and banning it marooned a bot
- * on the Karamja ship deck with no other exit.
- */
+// Only openable barriers may be banned for the run.
+// Why: a `Gangplank` refusing three times is a scene that has not caught up, and banning it maroons a bot on the ship deck.
 describe('what may be banned for the run', () => {
     test('doors and gates', () => {
         expect(barrierBannable('door', 'Door')).toBe(true);

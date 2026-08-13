@@ -1,17 +1,8 @@
-/**
- * Live proof: Swarm + Maze random events against local Server content.
- *
- * Verified against:
- *   content/scripts/macro events/configs/macro_events.constant  (^macro_swarm=1, ^macro_maze=8)
- *   content/scripts/macro events/scripts/general/macro_event_swarm.rs2
- *   content/scripts/macro events/scripts/general/macro_event_maze.rs2
- *   pack loc 3634 = macro_maze_complete "Strange shrine" Touch @ 0_45_71_31_31
- *
- *   ~/redeploy.sh   # botclient with RandomEventGuardian + maze fix
- *   bun tools/random-events-live.ts [http://localhost:8890]
- *
- * Proof: out/issue-randomevents-proof.json + screenshots/
- */
+/** Live proof: Swarm + Maze random events against local Server content: [base]. Needs a botclient carrying RandomEventGuardian and the maze fix.
+ *  Verified against macro_events.constant (^macro_swarm=1, ^macro_maze=8), macro_event_swarm.rs2, macro_event_maze.rs2, and pack loc 3634 = macro_maze_complete "Strange shrine" Touch @ 0_45_71_31_31. Proof: out/issue-randomevents-proof.json + screenshots/ */
+
+//   ~/redeploy.sh   # botclient with RandomEventGuardian + maze fix
+//   bun tools/random-events-live.ts [http://localhost:8890]
 import { mkdir } from 'node:fs/promises';
 import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login, positionalArgs } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';

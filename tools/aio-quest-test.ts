@@ -1,35 +1,21 @@
-/**
- * Live AIOQuester harness against a local engine.
- *
- * Usage:
- *   HEADED=1 bun tools/aio-quest-test.ts \
- *     [base] [user] [questsCsv] [minutes] [giveCsv] [statsCsv] [food] [cheatsCsv] [tele]
- *
- * giveCsv   — seed items. Forms:
- *               knife:1              → engine `give knife 1` into **inventory**
- *               bank:knife:1         → engine `givebank knife 1` (fallback `~bankitem`)
- *             Use engine debug names (bronze_pickaxe, not "Bronze pickaxe").
- *             Prefer give/givebank over content `~item` (busy-guard / silent no-op).
- * statsCsv  — `max` for ~maxme+dialog drain, or advancestat pairs mining:20,smithing:20
- * food      — AIOQuester food setting (display name)
- * cheatsCsv — raw debugprocs before seeds (e.g. speed 300). Prefer statsCsv=max over ~maxme here.
- * tele      — world tile `x,z` or `x,z,level`, or engine tele `level,mx,mz,lx,lz`
- *
- * Ideal (inventory pre-loaded, max stats) — mid-quest smoke only (proven PASS):
- *   HEADED=1 bun tools/aio-quest-test.ts http://localhost:8890 ew1 elemental_workshop 15 \
- *     'knife:1,hammer:1,bronze_pickaxe:1,thread:1,leather:1,needle:1,coal:4,lobster:15,steel_scimitar:1' \
- *     max Lobster 'speed 300' '2716,3481'
- *
- * Realistic (empty pack, bank tools, min skill gates). Proven combat floor 50/50/40/50;
- * 40/40/25/40 died on Water elemental (see EW_PROVEN_COMBAT_FLOOR / TESTING.md):
- *   HEADED=1 bun tools/aio-quest-test.ts http://localhost:8890 ew2 elemental_workshop 25 \
- *     'bank:knife:1,bank:hammer:1,bank:bronze_pickaxe:1,bank:thread:2,bank:leather:1,bank:needle:1,bank:coal:8,bank:lobster:20,bank:steel_scimitar:1,bank:coins:50000' \
- *     'mining:20,smithing:20,crafting:20,attack:50,strength:50,defence:40,hitpoints:50' \
- *     Lobster 'speed 300' '2725,3491'
- *
- * @see docs/reference/seeding-test-accounts.md
- * @see docs/reference/quest-eligibility.md#official-reqs-vs-bot-proven-floors-polish-goal
- */
+// Live AIOQuester harness: [base] [user] [questsCsv] [minutes] [giveCsv] [statsCsv] [food] [cheatsCsv] [tele].
+// Why: giveCsv takes engine debug names (bronze_pickaxe) through give/givebank — content `~item` no-ops silently behind the busy guard.
+
+// Usage:
+//   HEADED=1 bun tools/aio-quest-test.ts \
+//     [base] [user] [questsCsv] [minutes] [giveCsv] [statsCsv] [food] [cheatsCsv] [tele]
+
+// Ideal (inventory pre-loaded, max stats) — mid-quest smoke only (proven PASS):
+//   HEADED=1 bun tools/aio-quest-test.ts http://localhost:8890 ew1 elemental_workshop 15 \
+//     'knife:1,hammer:1,bronze_pickaxe:1,thread:1,leather:1,needle:1,coal:4,lobster:15,steel_scimitar:1' \
+//     max Lobster 'speed 300' '2716,3481'
+
+// Realistic (empty pack, bank tools, min skill gates). Proven combat floor 50/50/40/50;
+// 40/40/25/40 died on Water elemental (see EW_PROVEN_COMBAT_FLOOR / TESTING.md):
+//   HEADED=1 bun tools/aio-quest-test.ts http://localhost:8890 ew2 elemental_workshop 25 \
+//     'bank:knife:1,bank:hammer:1,bank:bronze_pickaxe:1,bank:thread:2,bank:leather:1,bank:needle:1,bank:coal:8,bank:lobster:20,bank:steel_scimitar:1,bank:coins:50000' \
+//     'mining:20,smithing:20,crafting:20,attack:50,strength:50,defence:40,hitpoints:50' \
+//     Lobster 'speed 300' '2725,3491'
 import type { Page } from 'playwright-core';
 import { launchBrowser, positionalArgs } from './lib/harness.js';
 import {

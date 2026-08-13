@@ -1,16 +1,7 @@
-/**
- * Live smoke: nav spell teleport in the path graph.
- *
- * Lumbridge → Varrock with useTeleportCatalog + runes. Expect hop log
- * "casting Varrock teleport" and arrival near Varrock square.
- *
- * Operator tooling — not an upstream CI gate. Deploy the bot client into
- * whatever engine you run (see docs/RUNNING.md / your local deploy script),
- * then: HEADED=1 bun tools/nav-tele-smoke.ts
- *
- * Optional: BASE=… BUDGET_S=90
- * Shared harness: tools/lib/navLiveHarness.ts
- */
+/** Live smoke: nav spell teleport in the path graph. Lumbridge → Varrock with useTeleportCatalog + runes, expecting the hop log "casting Varrock teleport" and arrival near Varrock square.
+ *  Operator tooling, not a CI gate — deploy the bot client into whatever engine you run first. BASE, BUDGET_S. Shared harness: tools/lib/navLiveHarness.ts */
+
+// then: HEADED=1 bun tools/nav-tele-smoke.ts
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';

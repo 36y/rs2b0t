@@ -18,17 +18,11 @@ const COMPASS: [number, number][] = [
 const MIN_FLEE_DIST = 4;
 const RING_STEP = 2;
 
-/**
- * Tiles to run to when a random event has to be escaped, farthest from the threat
- * first.
- *
- * Sweeps inward from `dist` rather than offering a single ring. Indoors, eight exact
- * tiles at one radius nearly all land inside rock: measured from the Waterfall
- * Dungeon safespot only 2 of 8 at distance 12 are even walkable, against 6-7 of 8 a
- * few tiles nearer. A single ring therefore makes the bot give up and stand there
- * being hit while somewhere perfectly good sits just inside it.
- * @see docs/reference/api-events.md
- */
+// Why: sweeps inward from `dist` rather than offering a single ring, because indoors the eight tiles at one radius nearly all land inside rock.
+// Why: measured from the Waterfall Dungeon safespot, only 2 of 8 at distance 12 are walkable against 6-7 of 8 a few tiles nearer, so a single ring leaves the bot standing there being hit while a good tile sits just inside it.
+// @see docs/reference/api-events.md
+
+/** Tiles to run to when a random event has to be escaped, farthest from the threat first. */
 export function fleeCandidates(from: Pt, threat: { x: number; z: number }, dist: number): Pt[] {
     const seen = new Set<string>();
     const out: Pt[] = [];

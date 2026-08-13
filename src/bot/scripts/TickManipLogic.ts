@@ -1,19 +1,13 @@
-/**
- * Optional tick-manipulation methods for GatheringBot (#160).
- *
- * Server ground truth for this revision / rs2b2t content, not OSRS wiki numbers:
- * - Woodcutting default action_delay = map_clock + 3
- * - Fly fishing (freshfish) = +4
- * - Mining interval = pickaxe mining_rate (mith=4, rune=2, …)
- * - Knife + log fletch arms +2 after Make-1 confirm (never Make-X; product finish is incidental)
- * - Auto-retaliate flinch = attackrate/2 (rapid style −1)
- *
- * Client cannot read %action_delay — planners use XP / inventory / tick edges.
- *
- * Product gate: {@link TICK_MANIP_SHIPPED} is false until methods are fully ready.
- * When false, UI options are Off-only and {@link profileForSetting} always returns Off
- * so end users cannot enable WIP methods (saved settings are ignored).
- */
+// Optional tick-manipulation methods for GatheringBot (#160).
+
+// Why: the numbers below are server ground truth for this revision and rs2b2t content, not OSRS wiki figures.
+// Why: woodcutting default action_delay = map_clock + 3.
+// Why: fly fishing (freshfish) = +4.
+// Why: mining interval = pickaxe mining_rate (mith=4, rune=2, …).
+// Why: knife + log fletch arms +2 after a Make-1 confirm, never Make-X, and product finish is incidental.
+// Why: auto-retaliate flinch = attackrate/2, rapid style −1.
+// Why: the client cannot read %action_delay, so planners use XP, inventory and tick edges.
+// Why: {@link TICK_MANIP_SHIPPED} is false until methods are ready, and while false the UI options are Off-only and {@link profileForSetting} always returns Off, ignoring saved settings.
 
 /**
  * Flip to true when tick-manip methods are ready for end users.
@@ -35,11 +29,10 @@ export const FLETCHABLE_LOG_NAMES = [
 ] as const;
 
 
-/**
- * Soft product hint for Make-1 when the menu offers shafts (normal Logs only).
- * Oak+ only offer bows — armKnifeDelay falls back to the first product.
- * Never use Make-X for delay arming.
- */
+// Why: Oak and above only offer bows, so armKnifeDelay falls back to the first product.
+// Why: Make-X is never used for delay arming.
+
+/** Soft product hint for Make-1 when the menu offers shafts (normal Logs only). */
 export const KNIFE_DELAY_MAKE_MATCH = 'shaft';
 
 // ── Fisher ──────────────────────────────────────────────────────────────────
@@ -301,11 +294,10 @@ export function tickManipUiOptions(full: readonly string[]): string[] {
 export const TICK_MANIP_UNSHIPPED_HELP =
     'Tick methods are not shipped yet (WIP). Leave Off — AFK gather only. Non-Off values in saved settings are ignored.';
 
-/**
- * Resolve a settings label to a runtime profile.
- * When {@link TICK_MANIP_SHIPPED} is false, always Off (ignores label).
- * Unit tests for methods should call the *Profile builders directly.
- */
+// Why: while {@link TICK_MANIP_SHIPPED} is false this is always Off and the label is ignored.
+// Why: unit tests for methods should call the *Profile builders directly.
+
+/** Resolves a settings label to a runtime profile. */
 export function profileForSetting(
     skill: TickManipSkill,
     label: string
@@ -350,28 +342,22 @@ export function miningRateForPickaxe(pickName: string | null | undefined): numbe
     return 7;
 }
 
-/**
- * After a resource roll (XP / inventory gain) at `rollTick`, when to issue the
- * next primary gather click for a fixed native cycle.
- *
- * Server pattern: set delay = map_clock + N when expired; roll when equal.
- * Re-click on the roll tick (offset 0) or the following tick (offset 1) if the
- * client is a beat late.
- */
+// Why: the server sets delay = map_clock + N when expired and rolls when equal.
+// Why: the re-click lands on the roll tick (offset 0), or the following tick (offset 1) when the client is a beat late.
+
+/** When to issue the next primary gather click after a resource roll at `rollTick`, for a fixed native cycle. */
 export function nextGatherClickTick(rollTick: number, cycleTicks: number, lateSlack = 0): number {
     const c = Math.max(1, Math.floor(cycleTicks));
     const slack = Math.max(0, Math.floor(lateSlack));
     return Math.floor(rollTick) + c + slack;
 }
 
-/**
- * Knife-delay phase relative to delay-arm tick `armTick` (Make-1 confirm):
- * - t1 armTick: knife+log + Make-1 → %action_delay = map_clock+2
- * - t2 armTick+1: re-click gather (delay still live)
- * - t3 armTick+2: delay expires → gather roll window
- *
- * Callers often stamp armTick ≈ last gather roll when the bot reacts same-tick.
- */
+// Why: t1 at armTick is knife+log with Make-1, which sets %action_delay = map_clock+2.
+// Why: t2 at armTick+1 re-clicks gather while the delay is still live.
+// Why: t3 at armTick+2 is when the delay expires and the gather roll window opens.
+// Why: callers often stamp armTick at about the last gather roll, when the bot reacts on the same tick.
+
+/** Knife-delay phase relative to the delay-arm tick (Make-1 confirm). */
 type KnifeDelayPhase = 'delay-action' | 'reclick' | 'wait';
 
 export function knifeDelayPhase(nowTick: number, armTick: number): KnifeDelayPhase {

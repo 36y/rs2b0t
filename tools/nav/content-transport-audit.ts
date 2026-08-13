@@ -1,11 +1,8 @@
-/**
- * Scan Server content scripts for travel systems and compare to bot graph data.
- *
- *   CONTENT_DIR=~/experiments/Server/content \
- *     bun tools/nav/content-transport-audit.ts
- *
- * Optional: --json for machine output. No engine pack required.
- */
+/** Scan Server content scripts for travel systems and compare them to the bot graph data.
+ *  CONTENT_DIR=~/experiments/Server/content, optional --json. No engine pack required. */
+
+//   CONTENT_DIR=~/experiments/Server/content \
+//     bun tools/nav/content-transport-audit.ts
 import fs from 'node:fs';
 import path from 'node:path';
 import { homedir } from 'node:os';

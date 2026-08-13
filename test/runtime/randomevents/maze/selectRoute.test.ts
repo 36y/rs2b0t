@@ -3,12 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import { selectRoute } from '#/bot/runtime/randomevents/maze/selectRoute.js';
 import { MAZE_SPAWNS } from '#/bot/runtime/randomevents/maze/mazeGraph.js';
 
-/**
- * The event does not only spawn on the four corners. Two live bots landed on
- * (2905,4566) and (2900,4567); the old nearest-corner lookup handed both the
- * (2891,4555) route, whose first door (2903,4554) is walled off from where they
- * stood, and they burned 16 minutes restarting the same dead route.
- */
+// Why: the event spawns off the four corners, so a nearest-corner lookup hands a route whose first door is walled off from where the bot stands.
 const REAL_STUCK_SPAWNS = [
     { x: 2905, z: 4566 },
     { x: 2900, z: 4567 }

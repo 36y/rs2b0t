@@ -21,11 +21,9 @@ export interface WorldStateData {
      * bank virtualization. Undefined = offline / unknown → slashTool fail open.
      */
     canSlashWeb?: boolean;
-    /**
-     * Current wilderness combat level (0 outside wild).
-     * Used for origin-aware teleport admission (#339). When omitted, planners
-     * compute from the path start tile via `wildernessLevelAt`.
-     */
+    // Why: used for origin-aware teleport admission (#339); when omitted, planners compute it from the path start tile via `wildernessLevelAt`.
+
+    /** Current wilderness combat level, 0 outside the wild. */
     wildernessLevel?: number;
     /**
      * Active essence-mine return id (`aubury`|`sedridor`|…) from

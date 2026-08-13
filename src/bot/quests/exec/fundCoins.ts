@@ -1,9 +1,5 @@
-/**
- * Default AIOQuester "need quest money" route: pickpocket Men, heal with Kebabs.
- *
- * Verified anchors match Waterfall / Goblin Diplomacy funding legs — Al Kharid Man
- * stands next to the kebab shop; Varrock Man is used only to afford the 10 gp toll.
- */
+// Default AIOQuester "need quest money" route: pickpocket Men, heal with Kebabs.
+// Why: the anchors match the Waterfall and Goblin Diplomacy funding legs — the Al Kharid Man stands next to the kebab shop, and the Varrock Man is used only to afford the 10 gp toll.
 import { Execution } from '../../api/execution/Execution.js';
 import { EventSignal } from '../../api/execution/EventSignal.js';
 import { Game } from '../../api/game/Game.js';

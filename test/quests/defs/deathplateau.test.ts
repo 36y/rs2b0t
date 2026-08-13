@@ -281,9 +281,7 @@ describe('decide', () => {
             progress: progress(DP_STAGE.NOT_STARTED),
             inv: ['Coins', 'Coins', 'Coins']
         }));
-        // Coins may be counted as one stack entry depending on counts() — seed bankKnown with coins in inv via name map.
-        // heldName uses inv map with count; counts(['Coins','Coins']) gives coins:2 which may be < 200.
-        // Expect either withdraw/scan or start talk.
+        // Why: counts(['Coins','Coins']) gives coins:2 rather than a stack value, so the balance may read under 200 and either a bank step or the start talk is correct.
         expect(['custom', 'withdraw', 'scanBank', 'deposit', 'wait']).toContain(step.kind);
     });
 

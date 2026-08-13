@@ -1,10 +1,5 @@
-/**
- * Resolve the git commit baked into a client/bot bundle.
- *
- * Override with RS2B0T_GIT_COMMIT (full SHA) when the build tree has no .git
- * (CI checkout without history, Docker COPY, etc.). GITHUB_SHA is also accepted.
- * RS2B0T_GIT_DIRTY=1|true forces a dirty flag when the override is used.
- */
+/** Resolve the git commit baked into a client/bot bundle.
+ *  Override with RS2B0T_GIT_COMMIT (full SHA) or GITHUB_SHA when the build tree has no .git; RS2B0T_GIT_DIRTY=1|true forces a dirty flag alongside the override. */
 import { execSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 

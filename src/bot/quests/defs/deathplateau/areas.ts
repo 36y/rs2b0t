@@ -46,12 +46,8 @@ export const TILE = {
     DENULTH: new Tile(2896, 3528, 0),
     EOHRIC: new Tile(2902, 3565, 1),
     HAROLD: new Tile(2905, 3539, 1),
-    /**
-     * Reachable stand OUTSIDE Harold's bedroom (hallway, north of door loc).
-     * (2906,3545) is blocked; (2907,3544) is the live-reachable approach tile.
-     * Never path to Harold's tile first — that makes walkResilient Open the door
-     * as a normal transport and leave the knock mesbox / "Come in!" undrained.
-     */
+    // Why: (2906,3545) is blocked, and (2907,3544) is the live-reachable approach tile in the hallway north of the door loc.
+    // Why: pathing to Harold's tile first makes walkResilient Open the door as a normal transport and leaves the knock mesbox and "Come in!" undrained.
     HAROLD_DOOR: new Tile(2907, 3544, 1),
     HAROLD_DOOR_LOC: new Tile(2906, 3543, 1),
     TOSTIG: new Tile(2910, 3537, 0),
@@ -155,10 +151,7 @@ export const DEATH_DICE_ROLL_COM = 8421;
 export const DEATH_DICE_CONTINUE_COM = 8423;
 
 export const COIN_FLOAT = 2000;
-/**
- * Harold starts with 100gp. Content only sets `harold_lostall` (IOU) when
- * `harold_gold - bet < 0` — an exact 100gp win zeros him without the IOU and
- * needs a second win. Betting 101gp bankrupts him on the first win.
- */
+// Why: Harold starts with 100gp and the content only sets `harold_lostall` (the IOU) when `harold_gold - bet < 0`.
+// Why: an exact 100gp win zeros him without the IOU and needs a second win, where betting 101gp bankrupts him on the first.
 export const GAMBLE_BET = 101;
 export const ALE_PRICE = 5;

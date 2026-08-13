@@ -61,10 +61,7 @@ export function shieldDisabled(worn: Loadout['worn']): boolean {
 
 /**
  * What the character is wearing, as a loadout.
- *
- * Slots come from the catalog by name rather than from the equipment
- * interface's slot index: the catalog already knows a rune scimitar is a
- * righthand item, so there is no index mapping to get wrong.
+ * Why: slots come from the catalog by name rather than the equipment interface's slot index, since the catalog already knows a rune scimitar is a righthand item and no index mapping can go wrong.
  */
 export function wornFromEquipment(equipped: readonly { name: string | null }[]): Loadout['worn'] {
     const out: Loadout['worn'] = {};

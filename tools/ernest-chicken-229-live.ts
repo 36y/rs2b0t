@@ -1,23 +1,8 @@
-/**
- * Live Ernest the Chicken harness (#229), stage-scoped or end-to-end.
- *
- *   HEADED=1 bun tools/ernest-chicken-229-live.ts --stage 0 --until 3 --minutes 90
- *   HEADED=1 bun tools/ernest-chicken-229-live.ts --stage 2 --until 3 --minutes 60
- *
- * `--stage N` sets `%haunted` and relogs: `update_questlist` only recolours the
- * journal entry at login, and the module reads the tab rather than the varp.
- *
- * The bank is seeded with coins and food and nothing else. The spade, poison,
- * fish food and closet key all have sources in the world, and seeding one hides
- * whether the bot can find it.
- *
- * Stats are set to 70 rather than `~maxme`: a maxed account hides reach and
- * damage problems the issue explicitly wants exercised.
- *
- * Base is :8890 (rs2b2t-engine). Ernest is free-to-play, but bank seeding is not:
- * the :8888 sim answers neither `givebank` nor `~bankitem`, so a run there starts
- * with an empty bank and parks on the food float.
- */
+/** Live Ernest the Chicken harness (#229): --stage N --until N --minutes N, base :8890.
+ *  Why: `--stage` relogs since update_questlist only recolours the journal at login; stats are 70 rather than `~maxme` so reach and damage problems stay visible; the bank holds coins and food alone so the spade, poison, fish food and closet key are sourced in the world; the :8888 sim answers neither `givebank` nor `~bankitem`. */
+
+//   HEADED=1 bun tools/ernest-chicken-229-live.ts --stage 0 --until 3 --minutes 90
+//   HEADED=1 bun tools/ernest-chicken-229-live.ts --stage 2 --until 3 --minutes 60
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 
@@ -149,15 +134,8 @@ async function snapshot(page: Page): Promise<Snapshot> {
     }, QUEST);
 }
 
-/**
- * A live run loads the deployed bundles, never the working tree.
- *
- * `navworker.js` is copied as well as `botclient.js`: the transport graph — and
- * with it the bookcase crossing this quest needs to reach the ladder alcove — is
- * compiled into the nav worker, which is a separate entrypoint. Deploying only
- * the client leaves the navigator on the old edges, and the symptom is a flat
- * "no path to (3092,3363,0): unreachable" for a route the offline probe likes.
- */
+/** A live run loads the deployed bundles, never the working tree.
+ *  Why: the transport graph compiles into navworker.js, a separate entrypoint — deploying only botclient.js leaves the navigator on the old edges and every route reports "unreachable". */
 const DEPLOYED = ['botclient.js', 'botclient.js.map', 'navworker.js', 'navworker.js.map'];
 
 function deployBundle(): void {
@@ -217,11 +195,8 @@ try {
         await clearChatDialogs(page, 'post-relog dialog(s)');
     }
 
-    // After the relog, not before: the stage setvar relogs, and a cheat-set perm
-    // varp does not reliably survive that round trip.
-    //
-    // The one piece of quest state a fresh account cannot reach — a fountain
-    // poisoned on an earlier run. Exercises the Search-first branch.
+    // Why: the stage setvar relogs and a cheat-set perm varp does not reliably survive that round trip.
+    // A fountain poisoned on an earlier run is the one piece of quest state a fresh account cannot reach; it exercises the Search-first branch.
     if (args.poisoned) {
         await cheatQuiet(page, 'setvar haunted_manor_fountain_poisoned 1');
         const set = await getServerVarQuiet(page, 'haunted_manor_fountain_poisoned');

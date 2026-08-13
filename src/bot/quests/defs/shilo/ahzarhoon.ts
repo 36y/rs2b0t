@@ -22,11 +22,10 @@ function fissure(): ReturnType<typeof locNear> {
     return locNear(SV_LOC.FISSURE, 'Search', 10);
 }
 
-/**
- * The fissure is a 50-tick `loc_change` over the mound, so it evaporates between
- * visits. Looking at the mound re-creates whichever fissure the stage has earned,
- * and every fissure step goes through here first.
- */
+// Why: the fissure is a 50-tick `loc_change` over the mound, so it evaporates between visits.
+// Why: looking at the mound re-creates whichever fissure the stage has earned, so every fissure step goes through here first.
+
+/** Make sure the stage's fissure exists before acting on it. */
 async function ensureFissure(log: (m: string) => void): Promise<boolean> {
     if (fissure()) {
         return true;
@@ -150,8 +149,7 @@ export async function takeTatteredScroll(log: (m: string) => void): Promise<bool
     if (!(await inSouthRoom(log))) {
         return false;
     }
-    // A failed Agility roll drops the ceiling on you instead of yielding the scroll;
-    // the step simply runs again.
+    // Why: a failed Agility roll drops the ceiling on you instead of yielding the scroll, and the step runs again.
     return promptLoc(
         {
             name: SV_LOC.LOOSE_ROCKS,
@@ -201,11 +199,10 @@ export async function takeZadimusCorpse(log: (m: string) => void): Promise<boole
     );
 }
 
-/**
- * Reading sets the two bits that gate the Bervirius tomb and the necklace craft.
- * It is idempotent, and the journal stops rendering those flags once the Bervirius
- * dolmen is searched — so the module reads on sight rather than on demand.
- */
+// Why: reading sets the two bits that gate the Bervirius tomb and the necklace craft, and it is idempotent.
+// Why: the journal stops rendering those flags once the Bervirius dolmen is searched, so the module reads on sight rather than on demand.
+
+/** Read a scroll, setting the tomb and necklace bits. */
 export function readScroll(itemId: number): (log: (m: string) => void) => Promise<boolean> {
     return async log => {
         const scroll = Inventory.items().find(item => item.id === itemId);
@@ -220,9 +217,8 @@ export function readScroll(itemId: number): (log: (m: string) => void) => Promis
         if (!(await driveChoice(YES_READ, log))) {
             return false;
         }
-        // The scroll body is a *main* modal built with if_settext, not a chat box.
-        // driveChoice cannot see it, and while it is up every journal read comes
-        // back empty — which reads as "stage unavailable" and parks the quest.
+        // Why: the scroll body is a main modal built with if_settext rather than a chat box, so driveChoice cannot see it.
+        // Why: while it is up every journal read comes back empty, which reads as "stage unavailable" and parks the quest.
         await Execution.delayUntil(() => reader.modals().main !== -1, 6000);
         if (reader.modals().main !== -1) {
             actions.closeModal();

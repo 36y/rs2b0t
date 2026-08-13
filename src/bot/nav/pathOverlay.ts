@@ -1,14 +1,6 @@
-/**
- * Draw published nav path as ground-style tile quads on the bot #overlay canvas.
- *
- * We only have HTML #overlay on top of the 3D canvas, so we approximate:
- *   - project each path tile's four corners (same Client.overlayPos as entities)
- *   - fill/stroke diamond quads
- *   - clip to the 3D game viewport (512×334 at 4,4) so chat/tabs stay clean
- *
- * Colours / hop text come from Global settings (see pathPaintTheme.ts).
- * Still depth-less vs models (always above people/locs). That needs a Client paint hook.
- */
+// Why: only the HTML #overlay sits on top of the 3D canvas, so the published path is approximated by projecting each tile's four corners with the same Client.overlayPos as entities, filling and stroking diamond quads, and clipping to the 3D game viewport (512×334 at 4,4) so chat and tabs stay clean.
+// Why: colours and hop text come from Global settings (see pathPaintTheme.ts).
+// Why: the paint is depth-less against models and always draws above people and locs — fixing that needs a Client paint hook.
 
 import { reader } from '../adapter/ClientAdapter.js';
 import { Locs } from '../api/locs/Locs.js';
@@ -216,11 +208,10 @@ function fillQuad(
     ctx.stroke();
 }
 
-/**
- * Wireframe AABB (8 corners: 0–3 ground, 4–7 top).
- * Same edge pattern as FireGiant.outlineTarget / reader.npcBox.
- * Optional translucent face fills make thin doors/ladders easier to spot.
- */
+// Why: the edge pattern matches FireGiant.outlineTarget and reader.npcBox.
+// Why: the optional translucent face fills make thin doors and ladders easier to spot.
+
+/** Wireframe AABB, 8 corners: 0–3 ground, 4–7 top. */
 export function strokeLocHull(
     ctx: CanvasRenderingContext2D,
     box: { x: number; y: number }[],

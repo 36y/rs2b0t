@@ -28,9 +28,8 @@ export interface WalkResilientOptions {
     policy?: WalkOptions['policy'];
     bankItemCounts?: WalkOptions['bankItemCounts'];
     /**
-     * Danger / no-go zones for every baked repath (same as WalkOptions.avoidZones).
-     * Known ids and/or ad-hoc rects. @see src/bot/nav/data/dangerZones.ts
-     * Automatic catalog zones are resolved by WalkExecutor from live player state.
+     * Danger / no-go zones for every baked repath (same as WalkOptions.avoidZones), as known ids or ad-hoc rects.
+     * Why: automatic catalog zones are resolved by WalkExecutor from live player state.
      */
     avoidZones?: WalkOptions['avoidZones'];
 }
@@ -71,12 +70,8 @@ export const Traversal = {
     withTeles: NAV_WITH_TELES,
 
     /**
-     * Whether ordinary walks may inject teleport edges — the Global
-     * `navTeleports` toggle every walk already consults.
-     *
-     * Exposed because knowing it is a *provisioning* question: A* only injects a
-     * hop the live inventory can pay for, so a script that wants the toggle to
-     * mean anything has to put the runes in the pack before it walks.
+     * Whether ordinary walks may inject teleport edges — the Global `navTeleports` toggle every walk already consults.
+     * Why: exposed because it is a provisioning question — A* only injects a hop the live inventory can pay for, so a script that wants the toggle to mean anything must put the runes in the pack before it walks.
      */
     teleportsEnabled(): boolean {
         try {

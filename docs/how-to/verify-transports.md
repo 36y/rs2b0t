@@ -34,8 +34,7 @@ entry hop only — there is no `setvar exit_essence_mine_coord`.
 
 ## Seed a quest gate by hand
 
-1. `setvar <varp> <complete>` from the table in
-   [transport reference](../reference/transports-2004.md#quest-seeds).
+1. `setvar <varp> <complete>` from the table in [transport reference](../reference/transports-2004.md#quest-seeds).
 2. **Relog.** `Quests.status` reads the quest-list colour, which is pushed at login.
 
 ## See also

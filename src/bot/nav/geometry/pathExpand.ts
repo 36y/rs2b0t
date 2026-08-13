@@ -1,13 +1,6 @@
-/**
- * Expand pack waypoints into a dense tile list for paint / corridor snap.
- *
- * **Explore (not production-proven):** when both endpoints of a same-level segment
- * are in the live scene, fill with flag-aware BFS (`canStepLocal`) so the painted
- * polyline can match `Client.tryMove` more closely than Chebyshev diagonals.
- *
- * Falls back to Chebyshev when scene flags are unavailable, ends differ by level,
- * transport hops, or BFS fails / exceeds budget.
- */
+// Why: pack waypoints are expanded into a dense tile list for paint and corridor snap.
+// Why: explore path, not production-proven — when both endpoints of a same-level segment are in the live scene, the fill uses flag-aware BFS (`canStepLocal`) so the painted polyline matches `Client.tryMove` more closely than Chebyshev diagonals.
+// Why: it falls back to Chebyshev when scene flags are unavailable, when the ends differ by level, on transport hops, and when BFS fails or exceeds budget.
 
 import { canStepLocal, type FlagsAt, type LocalPoint } from './localReach.js';
 

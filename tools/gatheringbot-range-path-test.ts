@@ -1,25 +1,15 @@
-/**
- * Range-path smoke for every fishing camp with a curated cook surface.
- *
- * For each pier (and distinct bank) surface:
- *   1. Tele to the camp pier (or bank for bank-role)
- *   2. Seed a full pack of raw fish
- *   3. Start Fisher with the matching cook mode
- *   4. Pass when the bot reaches the range stand and/or gains cook XP
- *
- * Catches door/approach regressions (Seers Large door) without a full bank-home loop.
- *
- * Case list is mirrored from api/catalogs/CookingRanges FISH_CAMP_COOK_PLANS (keep in sync).
- * Do not import from src/bot (client graphics init) — this tool runs under plain Bun.
- *
- * Usage:
- *   HEADED=1 bun tools/gatheringbot-range-path-test.ts
- *   BUDGET_S=120 bun tools/gatheringbot-range-path-test.ts
- *   CAMPS=Catherby,Seers bun tools/gatheringbot-range-path-test.ts
- *
- * Redeploy first when GatheringBot / CookingRanges / walkOpening change:
- *   ~/redeploy.sh
- */
+/** Range-path smoke for every fishing camp with a curated cook surface: tele to the pier, seed raw fish, start Fisher, pass on reaching the range stand or gaining cook XP.
+ *  Why: the case list mirrors CookingRanges FISH_CAMP_COOK_PLANS and must be kept in sync, and nothing here may import from src/bot — the client graphics init breaks under plain Bun. */
+
+// Why: it catches door/approach regressions (Seers Large door) without a full bank-home loop.
+
+// Usage:
+//   HEADED=1 bun tools/gatheringbot-range-path-test.ts
+//   BUDGET_S=120 bun tools/gatheringbot-range-path-test.ts
+//   CAMPS=Catherby,Seers bun tools/gatheringbot-range-path-test.ts
+
+// Redeploy first when GatheringBot / CookingRanges / walkOpening change:
+//   ~/redeploy.sh
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs } from './lib/harness.js';
 import {

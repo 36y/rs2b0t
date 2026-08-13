@@ -30,12 +30,7 @@ const ARDOUGNE_BANK: NavPoint = { x: 2655, z: 3286, level: 0 };
 /** trail_clue_medium_anagram009 — Donovan the Family Handyman, upstairs. */
 const DONOVAN_CLUE = 2855;
 
-/**
- * The mansion's ground floor has a 22-tile strip along its north wall, sealed
- * off from the rest of the floor. It is walkable and reads as unsealed, so the
- * ladder's approach was anchored there and nothing could ever reach it — the
- * clue was unsolvable. The approach belongs on the reachable side.
- */
+// Why: the ground floor's 22-tile north strip is walkable and reads as unsealed, so an approach anchored there is unreachable from the rest of the floor.
 describe.skipIf(!HAS_COLLISION_PACK)('Sinclair Mansion ladder', () => {
     test('the ladder approach is reachable from the world', () => {
         const stranded: NavPoint = { x: 2737, z: 3583, level: 0 };

@@ -17,12 +17,7 @@ function world(quests: Record<string, QuestProgress>, worn: string[] = []): Worl
     } as unknown as WorldState;
 }
 
-/**
- * Paterdomus is the only way into Morytania, so an ungated route sends every
- * Morytania destination to a barrier the player cannot pass — live that was
- * seven clue trails each burning their whole eight-minute budget at the same
- * gate. Gate them at plan time, and let anyone who has the quest straight through.
- */
+// Why: Paterdomus is the only way into Morytania, so an ungated route sends every Morytania destination to a barrier the player cannot pass.
 describe('Priest in Peril crossings', () => {
     const gate1 = { x: 3405, z: 9895, level: 0 }; // pip_underground_door1
     const gate2 = { x: 3431, z: 9897, level: 0 }; // pip_underground_door2

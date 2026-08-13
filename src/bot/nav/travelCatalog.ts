@@ -1,12 +1,6 @@
-/**
- * Curated 2004-era travel edges derived from Server content scripts.
- *
- * Families: spirit trees, gnome glider, Entrana ferry, Shilo↔Brimhaven cart.
- * Loaded alongside transports.json (see NavWorker). Stands may be refined with
- * live probes; destinations come from content constants / p_teleport targets.
- *
- * Content root (operator machine): experiments/Server/content/scripts/
- */
+// Why: curated 2004-era travel edges derived from Server content scripts — spirit trees, gnome glider, Entrana ferry, Shilo↔Brimhaven cart.
+// Why: loaded alongside transports.json (see NavWorker); stands may be refined with live probes while destinations come from content constants and p_teleport targets.
+// Why: the content root on the operator machine is experiments/Server/content/scripts/.
 
 import type { TransportEdgeData } from './PathFinder.js';
 import { essenceExitEdges } from './essenceExit.js';
@@ -97,11 +91,10 @@ function edge(
     };
 }
 
-/**
- * Spirit tree network (spirit_tree.rs2).
- * Stronghold tree needs Grand Tree complete; village/young trees need Tree Gnome Village.
- * Encoded as members + quest complete on each origin family.
- */
+// Why: in spirit_tree.rs2 the stronghold tree needs Grand Tree complete while the village and young trees need Tree Gnome Village.
+// Why: encoded as members plus quest complete on each origin family.
+
+/** Spirit tree network edges. */
 export function spiritTreeEdges(): TransportEdgeData[] {
     const strongholdReq: TransportRequires = { ...REQ.grandTreeComplete };
     const villageReq: TransportRequires = { ...REQ.treeGnomeComplete };
@@ -129,11 +122,10 @@ export function spiritTreeEdges(): TransportEdgeData[] {
     return out;
 }
 
-/**
- * Gnome glider pads (gnome_glider.rs2).
- * Content forces non-hub hops via Ta Quir Priw — encode only hub↔pad edges.
- * Execution is Talk-to **Gnome pilot** + glidermap click (not a loc named glider).
- */
+// Why: gnome_glider.rs2 forces non-hub hops via Ta Quir Priw, so only hub↔pad edges are encoded.
+// Why: execution is a Talk-to on the Gnome pilot plus a glidermap click — there is no loc named glider.
+
+/** Gnome glider pad edges. */
 export function gliderEdges(): TransportEdgeData[] {
     const hub = GLIDER_PAD.taQuirPriw;
     /** Pads with a return hop in `~calc_glidervar` (gnome_glider.rs2). */
@@ -188,11 +180,10 @@ export function entranaFerryEdges(): TransportEdgeData[] {
     ];
 }
 
-/**
- * Shilo ↔ Brimhaven jungle cart (vigroy / hajedy).
- * Fare is 5% of coins clamped 10–200 — plan with min 10 coins.
- * Brimhaven→Shilo requires Shilo Village complete.
- */
+// Why: the fare is 5 % of coins clamped 10–200, so the plan uses a minimum of 10 coins.
+// Why: Brimhaven → Shilo requires Shilo Village complete.
+
+/** Shilo ↔ Brimhaven jungle cart edges (vigroy / hajedy). */
 export function shiloCartEdges(): TransportEdgeData[] {
     const coins10: TransportRequires = {
         members: true,
@@ -225,18 +216,12 @@ export function shiloCartEdges(): TransportEdgeData[] {
     ];
 }
 
-/**
- * Rune Mysteries complete → essence mine via wizard Teleport.
- *
- * Content (`essence_mine.rs2`): landing is `random(enum essence_mine_teleports)` over
- * **22** tiles across mapsquare 45_75, then `map_findsquare(..., 0, 1, lineofsight)`.
- * That is not a static destination — blacklisted from the path graph (#388). Scripts
- * that need the mine own the wizard hop (specialCrossings Talk-to for execution).
- *
- * `essenceEntrySetsReturn` is kept on the audit rows so docs/tests know which
- * wizard sets which session return; it is not plan-usable while blacklisted.
- * Exit edges stay routable and require the matching `essenceExitReturn` (#377).
- */
+// Why: in `essence_mine.rs2` the landing is `random(enum essence_mine_teleports)` over 22 tiles across mapsquare 45_75, then `map_findsquare(..., 0, 1, lineofsight)`.
+// Why: that is not a static destination, so these rows are blacklisted from the path graph (#388) and scripts needing the mine own the wizard hop via a specialCrossings Talk-to.
+// Why: `essenceEntrySetsReturn` is kept on the audit rows so docs and tests know which wizard sets which session return; it is not plan-usable while blacklisted.
+// Why: exit edges stay routable and require the matching `essenceExitReturn` (#377).
+
+/** Rune Mysteries complete → essence mine, via the wizard Teleport. */
 export function essenceEntryEdges(): TransportEdgeData[] {
     const f2p: TransportRequires = { ...REQ.runeMysteriesComplete };
     const membersReq: TransportRequires = {
@@ -297,18 +282,13 @@ export function wildyLeverEdges(): TransportEdgeData[] {
     ];
 }
 
-/**
- * Mage Arena outdoor barrier (`magearena_scan`, loc 2880, map m48_61).
- *
- * Content (`mage_arena.rs2`): one placement pair; direction from player vs loc.
- * - **Inbound** (north → south): needs `%magearena >= complete` + no armour/weapons
- *   (`~can_enter_mage_arena`). Miniquest is not on the quest list — plan uses
- *   members + `forbidEntranaRestricted` (same gear heuristic as Entrana); incomplete
- *   miniquest still fails at the loc.
- * - **Outbound** (south → north): free tele to north of loc.
- *
- * Dual directed edges so pathfind cannot pin a single approach and drop a side (#403).
- */
+// Why: `mage_arena.rs2` gives one placement pair for `magearena_scan` (loc 2880, map m48_61), with direction taken from the player versus the loc.
+// Why: inbound (north → south) needs `%magearena >= complete` plus no armour or weapons (`~can_enter_mage_arena`).
+// Why: the miniquest is not on the quest list, so the plan uses members + `forbidEntranaRestricted`, the same gear heuristic as Entrana; an incomplete miniquest still fails at the loc.
+// Why: outbound (south → north) is a free tele to north of the loc.
+// Why: dual directed edges are emitted so pathfind cannot pin one approach and drop a side (#403).
+
+/** Mage Arena outdoor barrier edges. */
 export function mageArenaBarrierEdges(): TransportEdgeData[] {
     // Placements: 0_48_61_33_49 + 0_48_61_34_49 → (3105|3106, 3953).
     const locX = 3105;
@@ -364,9 +344,8 @@ export function agilityShortcutEdges(): TransportEdgeData[] {
     // Edgeville dungeon monkeybars (loc params).
     const mbA = parseLcCoord('0_48_155_48_44');
     const mbB = parseLcCoord('0_48_155_49_49');
-    // Yanille agility dungeon balancing ledge (area_yanille/agility_dungeon.rs2).
-    // Content start tiles 0_40_148_20_48 / _20_40; dual placements (2580,9519)/(2580,9513);
-    // Agility 40. Without this edge bank→chaos-druid-warrior field is disconnected.
+    // Why: area_yanille/agility_dungeon.rs2 gives content start tiles 0_40_148_20_48 / _20_40 and dual placements (2580,9519)/(2580,9513) at Agility 40.
+    // Why: without this edge the bank → chaos-druid-warrior field is disconnected.
     const yanilleLedgeN = parseLcCoord('0_40_148_20_48'); // 2580,9520
     const yanilleLedgeS = parseLcCoord('0_40_148_20_40'); // 2580,9512
     const yanilleLedge = (from: NavPoint, to: NavPoint, locZ: number, debug: string): TransportEdgeData => ({
@@ -399,11 +378,10 @@ export function agilityShortcutEdges(): TransportEdgeData[] {
     ];
 }
 
-/**
- * Elkoy maze escort (areas/area_gnome/scripts/elkoy.rs2).
- * Outside `elkoy` → ^elkoy_maze_coord; village `elkoy_village` → ^elkoy_entrance_coord.
- * Requires Tree Gnome Village **started** (escort dialogue; not_started is intro only).
- */
+// Why: in areas/area_gnome/scripts/elkoy.rs2 the outside `elkoy` goes to ^elkoy_maze_coord and the village `elkoy_village` goes to ^elkoy_entrance_coord.
+// Why: Tree Gnome Village must be started for the escort dialogue — not_started offers the intro only.
+
+/** Elkoy maze escort edges. */
 export function elkoyMazeEdges(): TransportEdgeData[] {
     const entrance = parseLcCoord('0_39_49_8_56'); // 2504,3192
     const maze = parseLcCoord('0_39_49_19_23'); // 2515,3159

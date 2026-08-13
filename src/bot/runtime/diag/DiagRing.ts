@@ -1,8 +1,5 @@
 // docs/decisions/multibox-telemetry-honesty.md
-//
-// Columnar, fixed-capacity sample storage. Object-per-sample costs ~10x the bytes
-// and adds GC pressure to the very main thread we are trying to measure, so every
-// series is a pre-allocated Float64Array and a sample is a strided write.
+// Why: an object per sample costs ~10x the bytes and adds GC pressure to the main thread being measured, so every series is a pre-allocated Float64Array and a sample is a strided write.
 
 /** Slot value meaning "the sampler did not run" -- distinct from a real 0. */
 export const MISSING = Number.NaN;

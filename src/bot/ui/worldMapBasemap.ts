@@ -1,12 +1,6 @@
 /**
- * Shared basemap manifest + coordinate helpers for the walkable map picker.
- *
- * Deploy bake (schema ≥ 2) produces:
- *  - terrain-only basemap (no Key icons, labels, or zone tints)
- *  - pre-baked transparent **overlays** (Key icons, multi, free) generated once
- *
- * The picker composites overlays at paint time — toggling Key / multi / free is free
- * (no MapView). Walkability still comes from collision.lcnav.gz.
+ * Shared basemap manifest + coordinate helpers for the walkable map picker. Deploy bake (schema ≥ 2) produces a terrain-only basemap (no Key icons, labels or zone tints) plus pre-baked transparent overlays (Key icons, multi, free) generated once.
+ * Why: the picker composites overlays at paint time, so toggling Key / multi / free costs no MapView run; walkability still comes from collision.lcnav.gz.
  */
 
 /** Bump when bake layout / overlay contract changes. */

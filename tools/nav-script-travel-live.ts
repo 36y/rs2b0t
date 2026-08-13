@@ -1,42 +1,11 @@
-/**
- * Live walk stress over **every** travel OD scraped from clues, gathering, and quests.
- *
- * Corpus: `tools/nav/script-travel-corpus.ts` (CLUE_DB, gather catalogs, quest areas.ts).
- *
- * Segments (SEGMENT=…):
- *   all | clues | quests | gathering-all | fishing | mining | woodcutting
- *   | firemaking | cooking
- *
- *   ~/redeploy.sh
- *   HEADED=1 SEGMENT=fishing LIMIT=0 bun tools/nav-script-travel-live.ts
- *   HEADED=1 SEGMENT=clues LIMIT=20 BUDGET_S=300 bun tools/nav-script-travel-live.ts
- *   HEADED=1 SEGMENT=quests OFFSET=0 LIMIT=50 bun tools/nav-script-travel-live.ts
- *   HEADED=1 SEGMENT=gathering-all bun tools/nav-script-travel-live.ts
- *
- * Startup uses clean **IF_BUTTON logout** (com 2458 → ClientProt.IF_BUTTON=9) after
- * tutorial varps so mainlandAccount relogs in ~9s instead of a long unclean hold.
- * See tools/tutorial/harness.ts mainlandAccount + relog.
- *
- * Shared harness: tools/lib/navLiveHarness.ts (paint, energy, tele kit, walk probe).
- *
- * LIMIT=0 → all legs in the segment (default 25 for safety).
- * OFFSET=N skips the first N legs (chunk long segments).
- * USE_TELEPORTS=0 pure-walk (seeds runes only; walk policy tele off). ENERGY_REFILL_AT=25 mid-walk energy.
- * USE_TELEPORTS=1 (default) seeds charged jewellery + runes and enables tele policy.
- * PATH_PAINT=1 (default) — pack path + cyan client segment + scene expand + camera yaw-follow.
- *   PATH_PAINT=0 / PATH_PAINT_SCENE_EXPAND=0 / PATH_PAINT_CLIENT_SEG=0 to turn pieces off.
- *
- * Proof honesty: success.png/proof only when every leg passes; any FAIL → failure screenshot + exit 1.
- *
- * Stuck / harness abort (research fleet — not product fail-rate):
- *   STUCK_ABORT=1 (default) — kill a leg early when wall time ≫ path-cost estimate
- *     and the character has not moved (door thrash / pathfind loop).
- *     STUCK_FACTOR=2.5 STUCK_MIN_S=20 STUCK_NOMOVE_S=12
- *   HARNESS_SUITE_ABORT=1 (default) — stop the whole suite on harness death only
- *     (`is still running`, seed failure, tele placement failure). Product OD fails continue.
- *   HP_REFILL_AT=40 (default) — mid-walk setstat hitpoints when effective ≤ threshold (0=off).
- *   SUSTAIN_EVERY_S=5 — energy+HP check period (not every poll second; multi-suite friendly).
- */
+/** Live walk stress over every travel OD scraped from clues, gathering and quests (corpus: tools/nav/script-travel-corpus.ts). SEGMENT=all|clues|quests|gathering-all|fishing|mining|woodcutting|firemaking|cooking, LIMIT (0 = all, default 25), OFFSET, USE_TELEPORTS, PATH_PAINT, ENERGY_REFILL_AT, HP_REFILL_AT, SUSTAIN_EVERY_S. A success proof is written only when every leg passes.
+ *  Why: startup logs out through IF_BUTTON com 2458 so mainlandAccount relogs in ~9s rather than holding a long unclean disconnect; STUCK_ABORT kills a leg whose wall time far exceeds the path-cost estimate while the character has not moved (door thrash), and HARNESS_SUITE_ABORT stops the suite on harness death alone — product OD failures continue. */
+
+//   ~/redeploy.sh
+//   HEADED=1 SEGMENT=fishing LIMIT=0 bun tools/nav-script-travel-live.ts
+//   HEADED=1 SEGMENT=clues LIMIT=20 BUDGET_S=300 bun tools/nav-script-travel-live.ts
+//   HEADED=1 SEGMENT=quests OFFSET=0 LIMIT=50 bun tools/nav-script-travel-live.ts
+//   HEADED=1 SEGMENT=gathering-all bun tools/nav-script-travel-live.ts
 import fs from 'node:fs';
 import path from 'node:path';
 

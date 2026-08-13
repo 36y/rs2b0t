@@ -36,10 +36,11 @@ export function parseTradePartnerHeader(header: string): string | null {
     return name.length > 0 ? name : null;
 }
 
-// Two-party: both players must "Trade with" each other to open the screen, then both accept offer + confirm.
+// Why: both players must "Trade with" each other to open the screen, then both accept the offer and confirm.
+// Why: any movement or combat closes the modal, so a trade needs a dedicated task to own the loop while it is open.
+
 /**
- * Player-to-player trading. Any movement or combat closes the modal, so a
- * trade needs a dedicated task to own the loop while it is open.
+ * Player-to-player trading.
  * @see docs/reference/api-items.md#item-acquisition
  */
 export const Trade = {

@@ -1,12 +1,6 @@
-/**
- * Curated re-enable of edges that the transport pipeline left as
- * `disabledReason: state-aware…` when we know a simple plan-time gate.
- *
- * Multi-destination / dialogue-state ladders (Horror, Watchtower maze, …) stay
- * disabled — wrong dest is worse than a long walk.
- *
- * Keyed by content-pack `debugName` (preferred) or `locName|action`.
- */
+// Why: this curates the re-enable of edges the transport pipeline left as `disabledReason: state-aware…` where a plan-time gate is known.
+// Why: multi-destination and dialogue-state ladders (Horror, Watchtower maze, …) stay disabled, since a wrong dest is worse than a long walk.
+// Why: keyed by content-pack `debugName` when present, otherwise `locName|action`.
 
 import type { TransportRequires } from './types.js';
 

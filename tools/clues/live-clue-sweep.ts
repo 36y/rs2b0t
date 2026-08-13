@@ -85,9 +85,7 @@ async function bootWorker(browser: Browser, w: number): Promise<Page> {
         }
     }
     await cheatBoot(page, 'give coins 2000');
-    // Hard coordinate digs spawn a lvl-65 or lvl-108 wizard. The solver assumes
-    // the account arrives geared, so the sweep equips it the same way a player
-    // would before starting a hard trail.
+    // Why: hard coordinate digs spawn a lvl-65 or lvl-108 wizard, and the solver assumes the account arrives geared.
     if (tier === 'hard' || tier === null) {
         // Chainbody, not platebody: rune_platebody is gated behind Dragon Slayer
         // and silently refuses to equip on a fresh account.
@@ -107,8 +105,7 @@ async function bootWorker(browser: Browser, w: number): Promise<Page> {
         await cheatBoot(page, 'give lobster 20');
     }
 
-    // Without this the solver's bank stop treats the food as loot and deposits
-    // it, because ClueSolver's `food` setting defaults to blank.
+    // Why: ClueSolver's `food` setting defaults to blank, and its bank stop then deposits the food as loot.
     await page.evaluate(entries => {
         for (const [k, v] of Object.entries(entries)) {
             sessionStorage.setItem(`rs2b0t:set:ClueSolver:${k}`, String(v));

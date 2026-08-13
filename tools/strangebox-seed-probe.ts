@@ -1,4 +1,4 @@
-// Probe: which seeding path actually puts a Strange box (macro_cube) in the pack.
+// Probe: which seeding path puts a Strange box (macro_cube) in the pack.
 import { boot, bringUpOffIsland, cheatQuiet, fail, launchBrowser, login } from './lib/harness.js';
 
 const base = process.argv[2] ?? 'http://localhost:8888';

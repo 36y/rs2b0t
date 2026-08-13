@@ -1,16 +1,9 @@
-/**
- * Live proof for #364 — Gu'Tanoth ledges (chasm Jump-From + Toban cave).
- *
- * Case A (default): dig 3546 via chasm
- *   give coins, maxme (agility), tele jump stand (2531,3026)
- *   walkResilient dig (2542,3031)
- *
- * Case B: dig 3548 via Toban cave
- *   CASE=toban HEADED=1 bun tools/gutanoth-ledges-364-live.ts
- *   tele cave mouth (2499,2988) → dig (2581,3030)
- *
- *   ~/redeploy.sh && HEADED=1 bun tools/gutanoth-ledges-364-live.ts
- */
+/** Live proof for #364 — Gu'Tanoth ledges. Case A (default): dig 3546 via the chasm Jump-From, tele jump stand (2531,3026) → dig (2542,3031).
+ *  Case B (CASE=toban): dig 3548 via the Toban cave, tele cave mouth (2499,2988) → dig (2581,3030). */
+
+//   CASE=toban HEADED=1 bun tools/gutanoth-ledges-364-live.ts
+
+//   ~/redeploy.sh && HEADED=1 bun tools/gutanoth-ledges-364-live.ts
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';

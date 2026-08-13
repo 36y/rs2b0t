@@ -80,9 +80,8 @@ export function parseRomeoJulietJournal(lines: readonly string[] | string): numb
     if (text.includes('i have to find romeo') && text.includes("tell him what's happened")) {
         return ROMEO_JULIET_STAGE.JULIET_IN_CRYPT;
     }
-    // Content branch 274 corrected the journal's legacy "cadaver" spelling to
-    // the actual item spelling, "cadava". Match the stable authored clause so
-    // both deployed revisions resolve to the same server stage.
+    // Why: content branch 274 corrected the journal's legacy "cadaver" spelling to the item spelling, "cadava".
+    // Why: matching the stable authored clause makes both deployed revisions resolve to the same server stage.
     if (text.includes('i went to the apothecary regarding making this') && text.includes('potion, and he told me to bring him some')) {
         return ROMEO_JULIET_STAGE.SPOKEN_TO_APOTHECARY;
     }

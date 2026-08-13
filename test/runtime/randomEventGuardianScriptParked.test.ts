@@ -12,15 +12,7 @@ const { Scheduler } = await import('#/bot/runtime/Scheduler.js');
 const { ScriptContext } = await import('#/bot/runtime/ScriptContext.js');
 const { ScriptRunner } = await import('#/bot/runtime/ScriptRunner.js');
 
-/**
- * When an event lands at a loop boundary, Supervisor turns the loop iteration
- * into an event-wait: loopInFlight stays true while the iteration parks on
- * `delayUntil(detect() === null)`, expecting the guardian to clear the event
- * (genie hands a lamp; the lamp is its own follow-up event). The guardian must
- * handle regardless of that parked iteration — if it waits for the loop to
- * yield, the two deadlock: script waits for the event to clear, guardian waits
- * for the script to yield, and the bot freezes until a manual stop.
- */
+// Why: an event at a loop boundary parks the iteration on `delayUntil(detect() === null)` with loopInFlight true, so a guardian that waits for the loop to yield deadlocks against it.
 describe('RandomEventGuardian with a parked script loop', () => {
     let origDetect: typeof RandomEvents.detect;
     let origHandle: typeof RandomEvents.handle;

@@ -78,11 +78,9 @@ export function inCaves(tile: QuestSnapshot['tile']): boolean {
     return tile !== null && tile !== undefined && tile.z >= 9400;
 }
 
-/**
- * Journal stages, in the order the engine walks them. `get_*` means Trufitus has
- * named the herb; `found_*` means it has been picked, which is the only state in
- * which he will accept it.
- */
+// Why: `get_*` means Trufitus has named the herb, and `found_*` means it has been picked, which is the only state in which he will accept it.
+
+// Journal stages, in the order the engine walks them.
 export const JP_STAGE = {
     NOT_STARTED: 0,
     GET_SNAKE_WEED: 1,
@@ -273,10 +271,8 @@ export function decide(snap: QuestSnapshot): QuestStep {
     if (snap.journal === 'unknown') {
         return { kind: 'wait', reason: 'quest journal not loaded' };
     }
-    // A carried unid outranks the journal. It exists only because we just picked
-    // it, which is exactly the state the journal cannot render: at `found_snake_weed`
-    // holding the unid it writes no line at all, and every other `found_` stage
-    // writes the *previous* stage's "go and pick it" line.
+    // Why: a carried unid outranks the journal, as it exists only because it was just picked — the state the journal cannot render.
+    // Why: at `found_snake_weed` holding the unid the journal writes no line at all, and every other `found_` stage writes the previous stage's "go and pick it" line.
     const carried = JUNGLE_HERBS.find(h => (snap.invIds?.get(h.unidId) ?? 0) > 0);
     if (carried) {
         return { kind: 'custom', name: `identify the ${carried.name}`, run: identifyHerb(carried) };
@@ -308,8 +304,7 @@ export function decide(snap: QuestSnapshot): QuestStep {
 
 export const junglepotion: QuestModule = {
     record: QUESTS.find(record => record.id === 'junglepotion')!,
-    // Karamja has no bank and nothing here needs one; Ardougne West is simply the
-    // nearest one to the crossing, for the engine's own bookkeeping.
+    // Why: Karamja has no bank and nothing here needs one, and Ardougne West is the nearest one to the crossing, for the engine's own bookkeeping.
     bank: ARDOUGNE_BANK,
     ownsInventory: true,
     readProgress: readJungleProgress,

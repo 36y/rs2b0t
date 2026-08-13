@@ -1,9 +1,6 @@
 // docs/decisions/multibox-telemetry-honesty.md
-//
-// "A right-click takes 2 seconds" is the symptom that actually gets reported, so it
-// is measured directly rather than inferred from CPU. Firefox has no Long Tasks API
-// but does implement Event Timing, which reports how long an input waited plus how
-// long its handler ran -- exactly the number a user perceives as lag.
+// Why: "a right-click takes 2 seconds" is the symptom that gets reported, so it is measured directly rather than inferred from CPU.
+// Why: Firefox has no Long Tasks API but does implement Event Timing, which reports how long an input waited plus how long its handler ran -- the number a user perceives as lag.
 
 const DEFAULT_THRESHOLD_MS = 100;
 

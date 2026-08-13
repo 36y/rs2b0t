@@ -1,19 +1,11 @@
-// docs/how-to/write-a-harness.md
-//
-// Dragon Slayer, one quest at a time, against a local engine.
-//
+// Dragon Slayer, one quest at a time: --stage N --var N --oracle N --shield N --goblin N --give --speed 300.
+// Why: `~update_questlist` recounts %qp from completed quests at login, so `qp` is set after the last relog; --give is for wedges, since seeding a stage's items proves nothing about the stages before it.
+
 //   bun tools/dragonslayer-solo-test.ts                     uncheated 0 -> complete
 //   bun tools/dragonslayer-solo-test.ts --stage 2           jump to "spoken to Oziach"
 //   bun tools/dragonslayer-solo-test.ts --stage 3 --var 2   ... with 2 of 3 hull holes patched
 //   bun tools/dragonslayer-solo-test.ts --stage 2 --oracle 3 --shield 1 --goblin 1
 //   bun tools/dragonslayer-solo-test.ts --speed 100         server ms/tick, default 300
-//
-// The quest is quest-point gated at 32, which no fresh account has, so `qp` is set
-// after the last relog — `~update_questlist` recounts it from completed quests at
-// login and would undo an earlier setvar.
-//
-// Seeding a stage with the items that stage needs proves nothing about the stages
-// before it; --give is for wedges, not for skipping the sourcing legs.
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 
@@ -53,11 +45,8 @@ const VARS: Record<string, string> = {
 const FALADOR_BANK = { x: 3013, z: 3355, level: 0 };
 const COINS_ID = 995;
 
-/**
- * Quests to mark complete so ~count_questpoints returns 36 on its own, which is
- * what gets the bot through the Champions' Guild door. Each pair is the varp and
- * its own `_complete` value; the points they are worth are in the comments.
- */
+/** Quests marked complete so ~count_questpoints returns 36 on its own, which is what opens the Champions' Guild door.
+ *  Each pair is the varp and its `_complete` value; the trailing comment is the points it is worth. */
 const EARNED_QP: readonly [string, number][] = [
     ['arthur', 7],       // Merlin's Crystal, 6
     ['goblinquest', 6],  // Goblin Diplomacy, 5
@@ -161,19 +150,8 @@ try {
         console.log(`gave ${pair}`);
     }
 
-    // Quest points cannot be cheated into place: %qp is recounted from completed
-    // quests by ~update_questpoints, which ~send_quest_progress calls the moment
-    // the Guild master starts Dragon Slayer. A setvar therefore survives right up
-    // until the quest begins and then collapses to the real figure, and the bot
-    // is dropped mid-run for failing its own entry requirement.
-    //
-    // So earn them instead: complete everything, then put Dragon Slayer back to
-    // not-started. The recount is genuine from then on.
-    // Marked complete one varp at a time rather than with ~completequests: that
-    // debugproc opens two choice dialogs first — a gang for Shield of Arrav and
-    // a side for Temple of Ikov — which nothing here answers, so it completes
-    // nothing at all. These nine are worth 36 between them and leave Dragon
-    // Slayer itself untouched.
+    // Why: ~send_quest_progress recounts %qp the moment the Guild master starts Dragon Slayer, so a cheated value collapses mid-run and drops the bot for failing its own entry requirement.
+    // Why: ~completequests opens two choice dialogs nothing here answers (a gang for Shield of Arrav, a side for Temple of Ikov) and completes nothing, so these nine varps worth 36 are set one at a time.
     if (questPoints > 0) {
         for (const [varp, value] of EARNED_QP) {
             if (!(await cheatQuiet(page, `setvar ${varp} ${value}`))) {

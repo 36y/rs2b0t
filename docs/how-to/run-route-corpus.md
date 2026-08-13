@@ -24,14 +24,12 @@ budget instead of opening the guild doors.
 
 **Dedupe stages** (see `tools/nav/script-route-corpus.ts`):
 
-1. **Endpoint near-dedupe** (`dedupePaths`) — drop generator twins with nearly the
-   same directed from→to.
+1. **Endpoint near-dedupe** (`dedupePaths`) — drop generator twins with nearly the same directed from→to.
 2. **Journey fingerprint** (`pathCorridorSignature` + `dedupeByCorridor`) —
    fingerprint is **end map-square + hop sequence** only (not start). Pure-walks
    into the same region collapse (one *→Rellekka walk); tele vs walk stay
    separate. Keep the highest-difficulty row per signature.
-3. **HARD top-N** (`rankHardest`) — score cost / expansions / hop count for the
-   live sample list.
+3. **HARD top-N** (`rankHardest`) — score cost / expansions / hop count for the live sample list.
 
 ## See also
 

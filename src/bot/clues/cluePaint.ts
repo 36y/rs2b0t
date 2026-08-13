@@ -4,9 +4,8 @@ import { ClueExecutor, tilesTo } from '#/bot/clues/ClueExecutor.js';
 const MUTED = '#8a919a';
 
 /**
- * The in-progress clue block: which leg, what it is doing, and how far it still
- * has to walk. Shared so a grind bot that hands clues to SolveClue shows the
- * same detail as ClueSolver rather than a one-line status.
+ * The in-progress clue block: which leg, what it is doing, and how far it still has to walk.
+ * Why: shared so a grind bot that hands clues to SolveClue shows the same detail as ClueSolver rather than a one-line status.
  */
 export function paintClueProgress(p: PaintFrame, idle = 'no clue in progress'): void {
     const cur = ClueExecutor.current;

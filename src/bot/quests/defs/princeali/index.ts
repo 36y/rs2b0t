@@ -31,11 +31,8 @@ import { PURSE_FLOOR, PURSE_TOP, scanBank, sourceCoins } from './supplies.js';
 
 type Leg = (snap: QuestSnapshot) => QuestStep | null;
 
-/**
- * Read top to bottom, this is the route: Al-Kharid, Lumbridge, Varrock,
- * Rimmington and Port Sarim, Draynor, Lady Keli, Osman. Each leg returns null
- * once it is satisfied, so a resumed run rejoins the tour wherever it left off.
- */
+// Why: read top to bottom this is the route — Al-Kharid, Lumbridge, Varrock, Rimmington and Port Sarim, Draynor, Lady Keli, Osman.
+// Why: each leg returns null once it is satisfied, so a resumed run rejoins the tour wherever it left off.
 const PREP: readonly Leg[] = [
     sourceBronzeBar,
     sourceWater,
@@ -89,10 +86,9 @@ export function decide(snap: QuestSnapshot): QuestStep {
     if (!snap.bankKnown) {
         return scanBank();
     }
-    // Al-Kharid is reachable only through the 10gp toll gate or the Shantay Pass, and
-    // the walker pre-avoids a crossing it cannot pay for. Hassan and Osman are both
-    // behind it, so the purse comes before the first step that walks anywhere.
-    // Completing the quest makes the gate free, hence the stage bound.
+    // Why: Al-Kharid is reachable only through the 10gp toll gate or the Shantay Pass, and the walker pre-avoids a crossing it cannot pay for.
+    // Why: Hassan and Osman are both behind it, so the purse comes before the first step that walks anywhere.
+    // Why: completing the quest makes the gate free, hence the stage bound.
     if (stage < PRINCE_STAGE.SAVED) {
         const purse = sourceCoins(snap, PURSE_FLOOR, PURSE_TOP);
         if (purse) {

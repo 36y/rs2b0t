@@ -13,11 +13,8 @@ import { EC_ID, EC_NAME, EC_TILE } from './areas.js';
 
 type BasementRegion = 'entry' | 'r1r4' | 'r2' | 'r5' | 'r3' | 'r6' | 'r9' | 'outside';
 
-/**
- * The seven components the nine puzzle doors cut the basement into, from a flood
- * over the baked collision pack with the doors closed. The boxes are pairwise
- * disjoint, so a tile alone names a room.
- */
+// Why: these are the seven components the nine puzzle doors cut the basement into, from a flood over the baked collision pack with the doors closed.
+// Why: the boxes are pairwise disjoint, so a tile alone names a room.
 export const REGION_BOX = {
     entry: { minX: 3100, maxX: 3118, minZ: 9745, maxZ: 9757 },
     r1r4: { minX: 3105, maxX: 3112, minZ: 9758, maxZ: 9767 },
@@ -126,11 +123,10 @@ const DOOR_LOCKED = /this door is locked/i;
 const held = (id: number): number => Inventory.countById(id);
 const here = (): { x: number; z: number; level: number } | null => Game.tile();
 
-/**
- * Pull until the server confirms the state we want. These levers never change
- * model, so the chat line is the only oracle — and [oploc1] reads the bit before
- * toggling, so the line names the resulting state.
- */
+// Why: these levers never change model, so the chat line is the only oracle.
+// Why: [oploc1] reads the bit before toggling, so the line names the resulting state.
+
+/** Pull a lever until the server confirms the wanted state. */
 async function setLever(lever: LeverName, want: 'up' | 'down', log: (m: string) => void): Promise<boolean> {
     const stand = LEVER_TILE[lever];
     for (let attempt = 0; attempt < 4; attempt++) {
@@ -252,12 +248,10 @@ async function enterBasement(log: (m: string) => void): Promise<boolean> {
     return status === 'done' && basementRegion(here()) !== 'outside';
 }
 
-/**
- * `entry` and `r9` are the only rooms this can leave from: everything else needs
- * an unwind, and only `fetchOilCan` knows how far the chain got. A fresh process
- * that starts stranded mid-maze cannot know the lever bits and says so rather
- * than looping — the levers reset on the ladder it cannot reach.
- */
+// Why: `entry` and `r9` are the only rooms this can leave from, as everything else needs an unwind and only `fetchOilCan` knows how far the chain got.
+// Why: a fresh process that starts stranded mid-maze cannot know the lever bits and says so rather than looping, since the levers reset on the ladder it cannot reach.
+
+/** Walk out of the basement, or report that the position is unrecoverable. */
 async function leaveBasement(log: (m: string) => void): Promise<boolean> {
     if (basementRegion(here()) === 'outside') {
         return true;
@@ -283,14 +277,11 @@ async function leaveBasement(log: (m: string) => void): Promise<boolean> {
     return status === 'done' && basementRegion(here()) === 'outside';
 }
 
-/**
- * Pull the alcove lever back into the manor.
- *
- * The nav crossing exists, but the executor gets one look at the scene and the
- * arrival here is a scripted teleport — every loc query is empty for about a tick
- * after one, so a single miss blacklists the edge and strands the bot in a pocket
- * with no other way out. Reach retries, which is the whole difference.
- */
+// Why: the nav crossing exists, but the executor gets one look at the scene and the arrival here is a scripted teleport.
+// Why: every loc query is empty for about a tick after one, so a single miss blacklists the edge and strands the bot in a pocket with no other way out.
+// Why: Reach retries, which is the whole difference.
+
+/** Pull the alcove lever back into the manor. */
 async function leaveAlcove(log: (m: string) => void): Promise<boolean> {
     if (!inAlcove(here())) {
         return true;
@@ -374,9 +365,8 @@ export async function fetchOilCan(log: (m: string) => void): Promise<boolean> {
             await unwind(log);
             continue;
         }
-        // The can is this step's deliverable. Try to walk out, but report on the
-        // can: a false here re-enters the maze for a leg that already succeeded,
-        // and `decide()`'s escape branch retries the way out anyway.
+        // Why: the can is this step's deliverable, so the report is on the can rather than on the walk out.
+        // Why: a false here re-enters the maze for a leg that already succeeded, and `decide()`'s escape branch retries the way out anyway.
         await leaveManorBasement(log);
         return held(EC_ID.OIL_CAN) > 0;
     }

@@ -1,9 +1,8 @@
-/**
- * Flood-fill connectivity components under the collision pack + active edges.
- *
- *   bun tools/nav/component-report.ts --seed 3019,9849,0 --seed 3019,9739,0
- *   bun tools/nav/component-report.ts --seeds-file tools/nav/mainland-routes.json
- */
+/** Flood-fill connectivity components under the collision pack + active edges.
+ *  --seed 3019,9849,0 (repeatable), or --seeds-file tools/nav/mainland-routes.json */
+
+//   bun tools/nav/component-report.ts --seed 3019,9849,0 --seed 3019,9739,0
+//   bun tools/nav/component-report.ts --seeds-file tools/nav/mainland-routes.json
 import fs from 'node:fs';
 
 import { gunzipSync } from 'fflate';

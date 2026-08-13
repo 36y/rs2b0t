@@ -1,15 +1,9 @@
-/**
- * Real browser proof for issue #182: leave the Kharidian Desert through the
- * Shantay Pass and walk to Varrock with the production navigation APIs.
- *
- * The harness only accepts loopback HTTP servers, refuses the live multibox
- * port, and refuses to run when the served bot bundle differs from this
- * worktree's build.
- *
- *   bun run build:bot
- *   bun tools/shantay-pass-route-test.ts --base http://127.0.0.1:8990
- *   bun tools/shantay-pass-route-test.ts --base http://127.0.0.1:8990 --expect-unreachable
- */
+/** Browser proof for issue #182: leave the Kharidian Desert through the Shantay Pass and walk to Varrock with the production navigation APIs. --base, --expect-unreachable; run `bun run build:bot` first.
+ *  The harness accepts loopback HTTP only, refuses the live multibox port, and refuses to run when the served bot bundle differs from this worktree's build. */
+
+//   bun run build:bot
+//   bun tools/shantay-pass-route-test.ts --base http://127.0.0.1:8990
+//   bun tools/shantay-pass-route-test.ts --base http://127.0.0.1:8990 --expect-unreachable
 import { createHash } from 'node:crypto';
 import { mkdir } from 'node:fs/promises';
 

@@ -74,22 +74,18 @@ export interface QuestSustain {
 export interface QuestModule {
     record: QuestRecord;
     hops?: LadderHop[];
-    /**
-     * The bank this quest uses. Most quests sit in one town and naming its bank
-     * is both shorter and more predictable than working it out. `'nearest'` is
-     * for the ones that do not — a quest spread across four kingdoms pays for a
-     * pinned bank on every single leg.
-     */
+    // Why: most quests sit in one town, where naming its bank is shorter and more predictable than working it out.
+    // Why: `'nearest'` is for the ones that do not, as a quest spread across four kingdoms pays for a pinned bank on every leg.
+
+    /** The bank this quest uses. */
     bank?: Tile | 'nearest';
     grind?: string[];
     food?: number;
     gather?: Record<string, (snap: QuestSnapshot, need: number) => QuestStep>;
     tools?: string[];
-    /**
-     * Walked when the quest is finished, before the retreat to a bank, for the
-     * quests that end somewhere the navigator cannot leave on its own. Return
-     * true once the character is somewhere a bank walk can start from.
-     */
+    // Why: this exists for the quests that end somewhere the navigator cannot leave on its own.
+
+    /** Walked when the quest is finished, before the retreat to a bank; true once a bank walk can start. */
     exit?: (log: (m: string) => void) => Promise<boolean>;
     /** The module owns all banking/loadout decisions, including restarts in bankless areas. */
     ownsInventory?: boolean;
@@ -99,17 +95,13 @@ export interface QuestModule {
     readProgress?: () => QuestProgress | undefined | Promise<QuestProgress | undefined>;
     /** Optional quest-specific survival policy applied while this module is active. */
     sustain?: QuestSustain;
-    /**
-     * Spending money to keep in the pack, default `COIN_FLOAT`. Set 0 when the
-     * module fetches coins at the point of sale — the float is restored on every
-     * provisioning loop, so a standing balance means a bank trip per purchase.
-     */
+    // Why: set 0 when the module fetches coins at the point of sale, as the float is restored on every provisioning loop and a standing balance means a bank trip per purchase.
+
+    /** Spending money to keep in the pack, default `COIN_FLOAT`. */
     coinFloat?: number;
-    /**
-     * Optional one-shot advisory when this module becomes the active runner.
-     * Use for “live harness only proved X stats” warnings — not hard gates.
-     * Return null when the account looks fine.
-     */
+    // Why: this is for advisories such as "the live harness only proved X stats" rather than hard gates.
+
+    /** One-shot advisory when this module becomes the active runner; null when the account looks fine. */
     warnReadiness?: () => string | null;
     /**
      * Extra log lines when this quest decides a step (or on death). Pilot for

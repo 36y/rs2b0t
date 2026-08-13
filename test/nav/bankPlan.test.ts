@@ -81,10 +81,7 @@ describe('itemsRequiredByWaypoints / missing', () => {
         expect(need['Coins']).toBe(10);
     });
 
-    // Real geometry from the baked pack: the crossing is keyed at the approach
-    // stand (3304,3118) while the loc sits at (3302,3116). Keying the lookup on
-    // the loc alone found nothing, so no pass was ever withdrawn and the desert
-    // read as unreachable.
+    // Why: the baked pack keys the crossing at the approach stand (3304,3118) while the loc sits at (3302,3116), so a lookup on the loc alone finds nothing.
     test('Shantay pass toll is found when the loc tile differs from the crossing key', () => {
         const path: Waypoint[] = [
             wp(3304, 3118),

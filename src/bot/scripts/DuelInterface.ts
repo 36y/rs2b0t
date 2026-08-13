@@ -37,12 +37,9 @@ function waiting(statusComId: number): boolean {
     return /^waiting for other player/i.test(reader.ifText(statusComId)?.trim() ?? '');
 }
 
-/**
- * The no-stake Duel Arena handshake and player operations.
- *
- * The two accept screens deliberately remain separate. Both players must click
- * each screen, and the first click leaves that player on a "Waiting..." state.
- */
+// Why: the two accept screens deliberately stay separate — both players must click each one, and the first click leaves that player on "Waiting...".
+
+/** The no-stake Duel Arena handshake and player operations. */
 export const Duel = {
     offerOpen(): boolean {
         return reader.modals().main === DUEL_SELECT_MODAL;

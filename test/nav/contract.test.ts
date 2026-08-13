@@ -184,7 +184,6 @@ describe('nav v2 path policy (teleports)', () => {
         // Unset → DEFAULT_DISTANCE_BEFORE_TELEPORT (0); short spans still admit the edge.
         expect(teleportAllowedByPolicy(varrockTele, { useTeleports: true }, 20).ok).toBe(true);
         expect(teleportAllowedByPolicy(varrockTele, undefined, 5).ok).toBe(true);
-        // Explicit floor still works for callers that want the old gate.
         expect(teleportAllowedByPolicy(varrockTele, { useTeleports: true, distanceBeforeTeleport: 40 }, 20).ok).toBe(
             false
         );

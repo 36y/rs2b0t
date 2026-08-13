@@ -432,13 +432,11 @@ export interface FishingVendorNear {
     z: number;
 }
 
-/**
- * Preferred fishing vendor for a gear piece.
- * - Feathers / fly fishing rod → Gerrant only (Harry does not stock them).
- * - Everything else Harry stocks → nearest of Harry vs Gerrant by straight-line
- *   distance from `near` (Catherby lobster pot → Harry, not Port Sarim).
- * - No position: bait/big net still prefer Harry; other tools default Gerrant (F2P).
- */
+// Why: feathers and the fly fishing rod come from Gerrant only, since Harry does not stock them.
+// Why: everything else Harry stocks goes to the nearer of Harry and Gerrant by straight-line distance from `near` (Catherby lobster pot → Harry, not Port Sarim).
+// Why: with no position, bait and big net still prefer Harry while other tools default to Gerrant (F2P).
+
+/** Preferred fishing vendor for a gear piece. */
 export function fishingVendorFor(name: string, near?: FishingVendorNear | null): ToolVendor {
     const n = name.toLowerCase();
     if (GERRANT_ONLY_FISHING.has(n)) {
@@ -471,7 +469,7 @@ export function isFishingBaitPiece(g: Pick<FishingGearPiece, 'name' | 'restock'>
 
 /**
  * Apply the script bait/feather target qty to method gear (tools unchanged).
- * Only used when the method actually requires bait/feathers.
+ * Why: only used when the method requires bait or feathers.
  */
 export function withBaitTarget(
     method: Pick<FishingMethod, 'gear'>,
@@ -492,13 +490,11 @@ export interface PlanFishingGearOpts {
 
 export type FishingGearBuyPlan = Extract<ToolAcquirePlan, { kind: 'buy' }>;
 
-/**
- * Plan buys for every missing fishing gear piece that is buyable and affordable.
- * Order follows method.gear (tools before bait stacks when listed that way).
- *
- * Tools: buy when held+bank &lt; min (usually 1).
- * Bait/feathers: buy up to baitQty (or gear.restock) when total held+bank is below that target.
- */
+// Why: order follows method.gear, so tools come before bait stacks when listed that way.
+// Why: tools are bought when held+bank &lt; min (usually 1).
+// Why: bait and feathers are bought up to baitQty (or gear.restock) when total held+bank is below that target.
+
+/** Plan buys for every missing fishing gear piece that is buyable and affordable. */
 export function planFishingGearBuys(
     method: Pick<FishingMethod, 'gear'>,
     w: AcquireWorld,
@@ -667,11 +663,10 @@ function needsToolVendorSurfaceHop(
     return Math.max(dx, dz) > 20;
 }
 
-/**
- * Walk to a tool vendor. Nurmof gets an explicit surface trapdoor hop when
- * still above ground so pathing does not stall at the mine entrance.
- * Lives in api/ so Miner/WC/Fisher scripts do not re-copy hop logic.
- */
+// Why: Nurmof needs an explicit surface trapdoor hop when still above ground, or pathing stalls at the mine entrance.
+// Why: shared from api/ so the Miner, Woodcutter and Fisher scripts do not re-copy the hop logic.
+
+/** Walk to a tool vendor. */
 export async function walkToToolVendor(
     vendor: ToolVendor,
     log: (m: string) => void = () => {}

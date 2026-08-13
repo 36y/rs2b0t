@@ -74,11 +74,7 @@ describe('documentation links', () => {
             for (const { path, line } of extractRepoPaths(readFileSync(doc, 'utf8'))) {
                 // a nested page may name a path relative to itself
                 if (existsSync(path) || (dir !== '' && existsSync(`${dir}/${path}`))) continue;
-                // Generated artifacts are cited on purpose — docs/NAV.md documents
-                // the script-route corpus JSON that tools/nav/script-route-corpus.ts
-                // emits — and they are gitignored precisely because they are built,
-                // not committed. Absent from a fresh checkout is correct, so a
-                // gitignored path is a live reference rather than a broken one.
+                // Why: docs cite generated artifacts on purpose, and a gitignored path is absent from a fresh checkout by design.
                 if (isGitIgnored(path)) continue;
                 missing.push(`${doc}:${line} -> ${path}`);
             }

@@ -11,11 +11,12 @@ export const IDENTIFY_OP = 'Identify';
 export const DROP_OP = 'Drop';
 
 export const COINS = 'Coins';
-/**
- * The Karamja ship is a `Pay-fare` SpecialCrossing, and the navigator prunes crossings it
- * cannot pay for — so an empty pack makes the whole island read as `unreachable` rather than
- * as "you are broke". Must stay in step with `nav/data/specialCrossings.ts`.
- */
+
+// Why: the Karamja ship is a `Pay-fare` SpecialCrossing, and the navigator prunes crossings it cannot pay for.
+// Why: an empty pack therefore makes the whole island read as `unreachable` rather than as "you are broke".
+// Why: this must stay in step with `nav/data/specialCrossings.ts`.
+
+/** Karamja ship fare. */
 export const FARE = 30;
 /** Enough for the crossing plus the Al Kharid toll gate on the way. */
 export const FARE_FLOAT = 100;
@@ -79,12 +80,10 @@ function dist(a: Point, b: Point): number {
     return Math.hypot(b.x - a.x, b.z - a.z);
 }
 
-/**
- * Cost of banking at `bank` on the way from `here` to `dest`, rather than distance from the
- * player. A bank behind us is a there-and-back detour even when it is the closest one: from the
- * Lumbridge death spawn Al Kharid is nearest, but it is 50 tiles the wrong way and the walk
- * afterwards comes straight back past Draynor.
- */
+// Why: a bank behind us is a there-and-back detour even when it is the closest one.
+// Why: from the Lumbridge death spawn Al Kharid is nearest, but it is 50 tiles the wrong way and the walk afterwards comes straight back past Draynor.
+
+/** Cost of banking at `bank` on the way from `here` to `dest`. */
 export function detourCost(here: Point, bank: Point, dest: Point): number {
     return dist(here, bank) + dist(bank, dest);
 }
@@ -104,11 +103,10 @@ interface CycleState {
     freeSlots: number;
 }
 
-/**
- * One tick's packets. `opheld` runs inline during decode while `oploc` resolves in the
- * movement phase, so this burst pipelines: identify and drop act on what the pack already
- * holds and the search lands after them. Four user events, inside the engine's five.
- */
+// Why: `opheld` runs inline during decode while `oploc` resolves in the movement phase, so identify and drop act on what the pack already holds and the search lands after them.
+// Why: four user events, inside the engine's five.
+
+/** One tick's packets. */
 export function planCycle(state: CycleState): CycleAction[] {
     const plan: CycleAction[] = [];
     if (state.continuePending) {

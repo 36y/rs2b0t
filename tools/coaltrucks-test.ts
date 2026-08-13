@@ -1,12 +1,10 @@
-// docs/how-to/write-a-harness.md
-// Live CoalTrucks run against a local engine.
+// Live CoalTrucks run: --phase cross|fill|drain|nopick|full --speed 300 --minutes N.
+// Why: the truck count is a server-only varp the bot cannot read, so it is seeded with ::setvar and asserted with ::getvar.
+
 //   bun tools/coaltrucks-test.ts --phase cross --speed 300 --minutes 3   # proves the log balance level
 //   bun tools/coaltrucks-test.ts --phase fill  --speed 300 --minutes 8
 //   bun tools/coaltrucks-test.ts --phase drain --speed 300 --minutes 8
 //   bun tools/coaltrucks-test.ts --minutes 45                            # full uncheated loop
-//
-// The truck count is a server-only varp the bot cannot read, but ::getvar can —
-// so the truck is seeded with ::setvar and asserted with ::getvar.
 import { fail, launchBrowser } from './lib/harness.js';
 import { cheatQuiet, getServerVar, mainlandAccount, relog, startScript } from './tutorial/harness.js';
 
@@ -65,9 +63,7 @@ try {
         fail('could not max stats');
     }
 
-    // A fresh bot always starts in the fill phase, so there is no teleport that drops it
-    // straight into draining — the run/cross/drain legs all start at the mine truck with
-    // a full truck and a full pack, and reach their leg through the real transitions.
+    // Why: a fresh bot always starts in the fill phase, so run/cross/drain seat at the mine truck and reach their leg through the ordinary transitions.
     const seat = phase === 'run' || phase === 'cross' || phase === 'drain' ? TELE.mineTruck : TELE.mine;
 
     // ::setvar works on a protected varp as long as the account is idle.
@@ -84,9 +80,7 @@ try {
         }
     }
     if (phase === 'fill' || phase === 'partial') {
-        // Coal is a 16/100 roll, so a pack mined from empty takes ~11 minutes. Seed
-        // most of it and let the bot mine the last few: the leg is about the deposit
-        // ladder, and the xp assertion still proves it did the mining itself.
+        // Why: coal is a 16/100 roll, so a pack mined from empty takes ~11 minutes; the xp assertion still proves the bot mined the rest.
         if (!(await cheatQuiet(page, 'give coal 24'))) {
             fail('could not seed the pack with coal');
         }
@@ -105,9 +99,7 @@ try {
             fail('could not seed a pickaxe');
         }
     }
-    // Stand-ins for random-event leavings: neither is coal, neither is bankable by the
-    // truck, and both squat a coal slot on every future load until the bank clears them.
-    // A spare bronze pickaxe checks the keep-list is the pickaxe *in use*, not any pickaxe.
+    // Why: junk stands in for random-event leavings — neither is coal, neither is bankable by the truck, and a spare bronze pickaxe checks the keep-list is the pickaxe in use.
     if (phase === 'drain' || phase === 'full') {
         console.log('seeding junk (coins, bones, a spare pickaxe) to prove the deposit is bank-all-except, not an allow-list');
         for (const junk of ['give coins 500', 'give bones 3', 'give bronze_pickaxe']) {
@@ -161,8 +153,7 @@ try {
     const deadline = t0 + minutes * 60_000;
     let lastLogTime = 0;
     let last = first;
-    // WalkExecutor logs "<label>: crossed" only after isOnFarSide confirms it, so this
-    // is evidence the log was actually walked — not that a packet was sent.
+    // WalkExecutor logs "<label>: crossed" only after isOnFarSide confirms it, which is evidence the log was walked rather than a packet sent.
     let crossed = false;
     /** A leg that meant to hand over a pickaxe and did not is a broken seed, not a pass. */
     let sawNoPickaxe = false;
@@ -231,17 +222,12 @@ try {
     const gained = last.xp - first.xp;
     console.log(`final: truck=${truckAfter} xp=+${gained} over ${ticks} ticks pos=${fmt(last.pos)} deposits=[${deposits.join(',')}]`);
 
-    // Catch a broken seed before it reads as a pass: every leg but nopick hands over a
-    // pickaxe, and a pack seeded so full it has no room for one silently reroutes the
-    // whole run down the no-pickaxe path.
+    // Why: a pack seeded so full it has no room for a pickaxe silently reroutes the run down the no-pickaxe path.
     if (phase !== 'nopick' && sawNoPickaxe) {
         fail('the pickaxe seed did not land — the pack had no free slot for it');
     }
 
-    // Any leg that actually hauls must bank the carried pack before walking anywhere near
-    // the truck: it is capped, so a truck-first route costs 196 tiles against 156. Checking
-    // the walk and not just the pull matters — the operation order can read bank-then-pull
-    // while the route still doubles back, which is exactly how this shipped broken once.
+    // Why: the truck is capped, so a truck-first route costs 196 tiles against 156, and the operation order can read bank-then-pull while the route still doubles back.
     if (haulOrder.includes('took') && haulOrder[0] !== 'bank') {
         fail(`walked to the truck before banking the carried pack (order: ${haulOrder.slice(0, 5).join(' -> ')})`);
     }
@@ -334,9 +320,7 @@ try {
         }
         console.log(`PASS: no pickaxe — walked to the bank and stopped honestly at ${fmt(last.pos)}`);
     } else {
-        // "It gained xp" would pass a run that mined forever and never completed a
-        // cycle, so require the whole loop: filled the truck to the cap, ran to Seers,
-        // and drained it.
+        // Why: "it gained xp" would pass a run that mined forever, so require the loop — cap the truck, run to Seers, drain it.
         if (gained <= 0) {
             fail('no mining xp gained over the full run');
         }

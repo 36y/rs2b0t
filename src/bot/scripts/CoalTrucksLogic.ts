@@ -16,12 +16,11 @@ export const TRUCK_LEASH = 4;
 /** Anything inside this of the anchor counts as the working area: rocks, truck stand, walk slop. */
 export const MINE_AREA = 20;
 
-/**
- * Pulls per haul before heading back. A 120 truck drains in 4 full packs plus a ~12
- * remainder, and that last 102-tile round trip for 12 coal is poor value. The remainder
- * is not lost — it stays in the truck and the miner tops it up next cycle. Measured per
- * cycle: 4 pulls banks 135 over 720 tiles, 5 pulls banks 147 over 822.
- */
+// Why: a 120 truck drains in 4 full packs plus a ~12 remainder, and that last 102-tile round trip for 12 coal is poor value.
+// Why: the remainder is not lost — it stays in the truck and the miner tops it up next cycle.
+// Why: measured per cycle, 4 pulls banks 135 over 720 tiles and 5 pulls banks 147 over 822.
+
+/** Pulls per haul before heading back. */
 export const MAX_PULLS_PER_HAUL = 4;
 
 export const MINE_ANCHOR = new Tile(2582, 3481, 0);
@@ -39,7 +38,9 @@ export const MINE_STALL_MS = 20_000;
 
 export type Phase = 'fill' | 'run' | 'drain';
 
-/** Two-stage because the swing has not begun yet on the tick we start waiting. */
+// Why: the swing has not begun yet on the tick the wait starts, so it takes two stages.
+
+/** Stage of a mining swing wait. */
 type MineStage = 'start' | 'sustain';
 
 export interface MineView {
@@ -130,9 +131,8 @@ export function decide(view: WorldView): Action {
         return { kind: 'bank' };
     }
 
-    // The truck is capped when the run starts, so the carried pack cannot go into it.
-    // Bank on the way in rather than touching the truck first and doubling back —
-    // mine->bank is 156, mine->truck->bank is 196.
+    // Why: the truck is capped when the run starts, so the carried pack cannot go into it.
+    // Why: banking on the way in beats touching the truck first and doubling back — mine->bank is 156, mine->truck->bank is 196.
     if (view.phase === 'run') {
         return view.coalHeld > 0 ? { kind: 'bank' } : { kind: 'travel-to-seers' };
     }

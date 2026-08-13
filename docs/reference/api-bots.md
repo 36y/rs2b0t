@@ -27,8 +27,7 @@ abstract class AbstractBot {
 ```
 
 - `onStop` runs on **both** a clean stop and a crash — release resources here.
-- Event callbacks (`this.on`) fire mid-frame: set flags / `log`, do real work in
-  `loop()`.
+- Event callbacks (`this.on`) fire mid-frame: set flags or `log`, and keep the work in `loop()`.
 
 ### LoopingBot
 

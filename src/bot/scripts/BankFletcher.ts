@@ -188,9 +188,9 @@ class FletchDialog implements Task {
             return;
         }
 
-        // Ride the batch to completion (#177): Make-X should consume `count` logs without
-        // reopening the menu. Do not bail on brief !animating gaps (old loop left logs).
-        // Fixed-qty fallback: ride until menu reopens / true idle stall.
+        // Why: Make-X consumes `count` logs without reopening the menu, so the batch is ridden to completion (#177).
+        // Why: brief !animating gaps are not a bail-out condition, or logs are left behind.
+        // Why: the fixed-quantity fallback rides until the menu reopens or a true idle stall.
         const floor = usedMakeX ? Math.max(0, start - count) : 0;
         let mark = this.bot.logCount();
         let idle = 0;

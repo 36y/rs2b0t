@@ -137,12 +137,9 @@ export default class PotionMaker extends TaskBot {
     }
 }
 
-/**
- * First leg: with the pack empty — either a cold start or the bank the
- * previous cycle left open — withdraw the water + herb halves of a batch and
- * close. Runs only when the pack holds neither herbs nor unfinished potions, so
- * it never interrupts the middle of a make.
- */
+// Why: it runs only when the pack holds neither herbs nor unfinished potions, so it never interrupts the middle of a make.
+
+/** First leg: withdraws the water and herb halves of a batch into an empty pack, then closes the bank. */
 class RestockIngredients implements Task {
     constructor(private bot: PotionMaker) {}
 
@@ -216,11 +213,9 @@ class RestockIngredients implements Task {
     }
 }
 
-/**
- * Second leg: spam-use the last herb on the last vial of water to turn the
- * whole batch into unfinished potions. Clicking the last slots lets the game
- * drain the stacks from the end, exactly like GemCutter's cut spam.
- */
+// Why: clicking the last slots lets the game drain the stacks from the end, the same way GemCutter's cut spam does.
+
+/** Second leg: spam-uses the last herb on the last vial of water to turn the batch into unfinished potions. */
 class MakeUnfinished implements Task {
     constructor(private bot: PotionMaker) {}
 
@@ -269,11 +264,7 @@ class MakeUnfinished implements Task {
     }
 }
 
-/**
- * Third leg: finish the batch. Withdraw the secondary (leaving the unfinished
- * potions in the pack), spam-use the last secondary on the last unfinished
- * potion, then deposit the finished potions so the next cycle can restock.
- */
+/** Third leg: withdraws the secondary, spam-uses it on the unfinished potions, then deposits the finished batch. */
 class FinishPotions implements Task {
     constructor(private bot: PotionMaker) {}
 
@@ -348,9 +339,7 @@ class FinishPotions implements Task {
             );
         }
 
-        // Final hand-in of the finished potions. Leave the bank OPEN — the next
-        // cycle's RestockIngredients reuses it to withdraw the next batch, so
-        // each loop runs bank-open → empty pack → bank-open without reopen.
+        // Why: the bank is left open, since the next cycle's RestockIngredients reuses it and each loop runs bank-open → empty pack → bank-open with no reopen.
         this.bot.setStatus('banking finished potions');
         if (!(await Bank.openNearestAccess(access, m => this.bot.log(`  ${m}`)))) {
             this.bot.log('could not open the bank — retrying');

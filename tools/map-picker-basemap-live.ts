@@ -1,21 +1,14 @@
-/**
- * Live smoke for the map tile picker (basemap + walkable dots + settings).
- *
- * Requires login (local engine auto-creates accounts).
- *
- *   HEADED=1 bun tools/map-picker-basemap-live.ts [http://localhost:8890]
- *   bun run verify:map-picker -- http://localhost:8890
- *
- * Deploy first: `~/redeploy.sh` (botclient + collision + basemap + worldmap.jag).
- *
- * Proof:
- *   out/issue0-map-picker-basemap-proof.json
- *   screenshots/issue0-map-picker-basemap-success.png
- *
- * Attach:
- *   tools/attach-live-proof-to-pr.sh --pr <n> --issue 0 --slug map-picker-basemap \
- *     --harness 'HEADED=0 bun tools/map-picker-basemap-live.ts http://localhost:8890'
- */
+/** Live smoke for the map tile picker (basemap + walkable dots + settings): [base]. Requires login; deploy botclient + collision + basemap + worldmap.jag first.
+ *  Proof: out/issue0-map-picker-basemap-proof.json, screenshots/issue0-map-picker-basemap-success.png */
+
+//   HEADED=1 bun tools/map-picker-basemap-live.ts [http://localhost:8890]
+//   bun run verify:map-picker -- http://localhost:8890
+
+// Deploy first: `~/redeploy.sh` (botclient + collision + basemap + worldmap.jag).
+
+// Attach:
+//   tools/attach-live-proof-to-pr.sh --pr <n> --issue 0 --slug map-picker-basemap \
+//     --harness 'HEADED=0 bun tools/map-picker-basemap-live.ts http://localhost:8890'
 import { boot, fail, launchBrowser, login, positionalArgs } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';
 

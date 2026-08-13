@@ -1,8 +1,4 @@
-/**
- * Offline pack / WorldState honesty for the single world walker.
- * Without a live WorldState snapshot, search fails open on coin/skill gates
- * (pack tools). With WorldState, those gates fail closed.
- */
+// Coin and skill gates fail open without a WorldState snapshot and fail closed with one.
 import { describe, expect, test } from 'bun:test';
 import { gunzipSync } from 'fflate';
 import fs from 'node:fs';

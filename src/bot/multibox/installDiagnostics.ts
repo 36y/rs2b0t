@@ -1,7 +1,5 @@
 // docs/decisions/multibox-telemetry-honesty.md
-//
-// Wires the diagnostics pieces to the live wall. Kept out of main.ts so the wiring
-// stays readable and the sampler can be tested without a DOM.
+// Why: kept out of main.ts so the sampler can be tested without a DOM.
 
 import { FreezeWatch } from '../runtime/diag/FreezeWatch.js';
 import { InputLatency, browserObserverFactory } from '../runtime/diag/InputLatency.js';
@@ -22,8 +20,8 @@ export interface Diagnostics {
 }
 
 /**
- * A frame that has not booted yet simply has no `diag` to read; a frame that has
- * booted but whose drain throws is a real fault and must not be swallowed.
+ * A frame that has not booted yet has no `diag` to read; a frame that has booted
+ * but whose drain throws is a fault and must not be swallowed.
  */
 function collectFrames(frames: () => Iterable<DiagFrame>): () => FrameSample[] {
     return () => {

@@ -1,36 +1,15 @@
-/**
- * Live walk stress over script-ripped high-traffic routes.
- *
- * Always:
- *   - server tick 300ms (`speed 300`) — restored to 600 on exit
- *   - full run energy + run on before each leg (`~energy` content debugproc)
- *   - mid-walk energy/HP sustain (throttled SUSTAIN_EVERY_S, default 5s)
- *
- * Note: `energy` alone is a no-op — engine has no native energy cheat. Content
- * `[debugproc,energy]` is `~energy` (healenergy 10000 + run on). Needs p_finduid
- * (player not mid protected script); refill retries a few times if busy.
- *
- *   ~/redeploy.sh
- *   HEADED=1 HARD=1 ENERGY_REFILL_AT=25 bun tools/nav-script-routes-live.ts
- *   HEADED=1 TRANSPORT_HEAVY=1 LIMIT=12 bun tools/nav-script-routes-live.ts
- *   HEADED=1 LIMIT=8 BUDGET_S=180 bun tools/nav-script-routes-live.ts
- *   HEADED=1 LIMIT=10 bun tools/nav-script-routes-live.ts
- *   HEADED=1 SHIP_352=1 bun tools/nav-script-routes-live.ts
- *   HEADED=1 LIMIT=2 PATH_PAINT=1 bun tools/nav-script-routes-live.ts   # dual red/cyan paint
- *
- * HARD=1 reads tools/nav/script-routes.hardest.json only (no DOM preload).
- * TRANSPORT_HEAVY=1 reads tools/nav/transport-heavy.routes.json
- *   (regenerate: bun tools/nav/transport-heavy-routes.ts --write --n=14).
- *   Essence multiloc: TH-ess-round-* wizard→mine→portal (no setvar).
- * SHIP_352=1 → Ardougne↔Brimhaven board+gangplank legs (issue #352 stuck-on-boat).
- * USE_TELEPORTS=0 to disable spell/jewellery tele inject (default on).
- * PATH_PAINT=1 (default) enables showNavPath + explore scene expand + cyan client segment.
- * Jewellery: charged duel/glory/games neck seeded at start (and topped up each leg) so
- *   real OD paths may Rub; not a fake end-of-run allowlist test. JEWELLERY_ONLY=1 restores
- *   synthetic JEWEL-* isolation legs if needed.
- * Pack-only: bun --preload ./test/setup-dom.ts tools/nav/script-route-corpus.js --hardest=25
- * Shared harness: tools/lib/navLiveHarness.ts
- */
+/** Live walk stress over script-ripped high-traffic routes: HARD=1, TRANSPORT_HEAVY=1, SHIP_352=1, JEWELLERY_ONLY=1, LIMIT, BUDGET_S, PATH_PAINT, USE_TELEPORTS, ENERGY_REFILL_AT. Server tick drops to 300ms and is restored to 600 on exit; charged duel/glory/games neck are seeded at start and topped up each leg so OD paths may Rub.
+ *  Why: `energy` alone is a no-op — the engine has no native energy cheat — so refills go through the content debugproc `~energy` (healenergy 10000 + run on), which needs p_finduid and retries while the player is mid protected script. */
+
+//   ~/redeploy.sh
+//   HEADED=1 HARD=1 ENERGY_REFILL_AT=25 bun tools/nav-script-routes-live.ts
+//   HEADED=1 TRANSPORT_HEAVY=1 LIMIT=12 bun tools/nav-script-routes-live.ts
+//   HEADED=1 LIMIT=8 BUDGET_S=180 bun tools/nav-script-routes-live.ts
+//   HEADED=1 LIMIT=10 bun tools/nav-script-routes-live.ts
+//   HEADED=1 SHIP_352=1 bun tools/nav-script-routes-live.ts
+//   HEADED=1 LIMIT=2 PATH_PAINT=1 bun tools/nav-script-routes-live.ts   # dual red/cyan paint
+
+// Pack-only: bun --preload ./test/setup-dom.ts tools/nav/script-route-corpus.js --hardest=25
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';
@@ -99,8 +78,7 @@ const proof = createHarnessProof({ issue: 0, slug: 'nav-script-routes' });
 type Tile = NavTile;
 
 /**
- * Prefer mainland + f2p-ish walk hubs + bank/camp commutes — the paths scripts
- * actually thrash. Full pack mesh stays in script-route-corpus.js.
+ * Prefer mainland + f2p-ish walk hubs + bank/camp commutes — the paths scripts thrash. Full pack mesh stays in script-route-corpus.js.
  */
 export function pickLiveRoutes(all: ScriptRoute[], limit: number): ScriptRoute[] {
     const score = (r: ScriptRoute): number => {
@@ -232,13 +210,8 @@ async function runEssenceRoundtrip(
     return { ok, detail, logs };
 }
 
-/**
- * Issue #352: bots boarded Ardougne→Brimhaven then sat on the deck (no gangplank Cross).
- * OD pairs force Barnaby/Customs Pay-fare + deck→shore gangplank (shared exec).
- *
- * Stands from transports.json / specialCrossings (Barnaby 2683,3272 → deck 2775,3234 L1
- * → plank to 2772,3234 L0; reverse Customs 2772,3234 → Ardougne deck 2683,3268 L1 → shore).
- */
+/** Issue #352: bots boarded Ardougne→Brimhaven and then sat on the deck without crossing the gangplank. These OD pairs force Barnaby/Customs Pay-fare plus the deck→shore gangplank.
+ *  Stands from transports.json / specialCrossings: Barnaby 2683,3272 → deck 2775,3234 L1 → plank to 2772,3234 L0; reverse Customs 2772,3234 → Ardougne deck 2683,3268 L1 → shore. */
 export function loadShip352Routes(limit = 2): ScriptRoute[] {
     const all: ScriptRoute[] = [
         {
@@ -375,11 +348,8 @@ function jewelleryUsedInLogs(logs: string[]): boolean {
 }
 
 const all = USE_HARDEST || USE_TRANSPORT_HEAVY || USE_SHIP_352 ? [] : await loadSeedRoutes();
-/**
- * Essence multiloc entry is wizard Teleport into a random mine pad — not a fixed
- * pathfinder OD (expansion budget fails even with tele catalog on). Skip TH-ess-*
- * so LIMIT counts ship/glider/spirit/cart/Entrana (and combo) legs instead.
- */
+/** Skip TH-ess-* so LIMIT counts ship / glider / spirit / cart / Entrana legs instead.
+ *  Why: essence multiloc entry is a wizard Teleport into a random mine pad, not a fixed pathfinder OD — the expansion budget fails even with the tele catalog on. */
 function loadTransportHeavyForLive(limit: number): TransportHeavyRoute[] {
     const raw = loadTransportHeavyRoutes(0); // full list
     const filtered = raw.filter(r => !r.essenceRoundtrip && !/^TH-ess-/i.test(r.id));
@@ -439,9 +409,8 @@ try {
 
     await maxmeAndClearDialogs(page);
 
-    // Transport-heavy / HARD: seed quest varps then relog so quest-list colours update
-    // (content only recolours via ~update_questlist at login).
-    // SHIP_352 only needs coins (Barnaby/Customs 30gp) — no quest varps.
+    // Why: content only recolours the quest list through ~update_questlist at login, so transport-heavy / HARD seed the quest varps and then relog.
+    // SHIP_352 needs coins alone (Barnaby/Customs 30gp), no quest varps.
     if (USE_TRANSPORT_HEAVY || USE_HARDEST) {
         const setvars = transportQuestSetvarCommands();
         console.log(`${stamp()} seeding ${setvars.length} transport quest varps…`);

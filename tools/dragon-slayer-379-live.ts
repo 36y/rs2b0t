@@ -1,12 +1,7 @@
-/**
- * Live proof for #379 Dragon Slayer stuck:
- *  1) Banked maze key → withdraw / maze, not Oziach thrash
- *  2) Oracle chest room → open magic door west after map piece
- *
- *   ~/redeploy.sh && HEADED=1 bun tools/dragon-slayer-379-live.ts
- *
- * Proof: out/issue379-dragon-slayer-stuck-proof.json
- */
+/** Live proof for #379 Dragon Slayer stuck: a banked maze key is withdrawn for the maze rather than thrashing Oziach, and the Oracle chest room opens the magic door west after the map piece.
+ *  Proof: out/issue379-dragon-slayer-stuck-proof.json */
+
+//   ~/redeploy.sh && HEADED=1 bun tools/dragon-slayer-379-live.ts
 import type { Page } from 'playwright-core';
 import { launchBrowser, parseArgs } from './lib/harness.js';
 import { createHarnessProof } from './lib/harnessProof.js';

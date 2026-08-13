@@ -17,16 +17,9 @@ export const EW_OFFICIAL_SKILLS = {
     crafting: 20
 } as const;
 
-/**
- * Lowest **non-required** combat profile that has completed a full headed harness
- * (realistic bank seed + official skill mins). Polish goal: push this down and
- * eventually branch tactics by power level (safespot / kite vs melee).
- *
- * History (update when a headed run changes the floor):
- * - max combat + inv seed — PASS (mid-quest loop)
- * - Att/Str 40, Def 25, HP 40 + bank seed — FAIL (Water elemental death)
- * - Att/Str 50, Def 40, HP 50 + bank seed — PASS (~270s, 2026-08-01)
- */
+// Why: this is the lowest non-required combat profile that has completed a full headed harness, on a realistic bank seed at the official skill minimums.
+// Why: headed runs so far — max combat with an inventory seed PASS (mid-quest loop); Att/Str 40, Def 25, HP 40 on a bank seed FAIL (Water elemental death); Att/Str 50, Def 40, HP 50 on a bank seed PASS (about 270s, 2026-08-01).
+// Why: the polish goal is to push this down and branch tactics by power level, so update it when a headed run changes the floor.
 export const EW_PROVEN_COMBAT_FLOOR = {
     attack: 50,
     strength: 50,
@@ -166,11 +159,10 @@ function isCombatWeaponName(name: string): boolean {
         || n.includes('warhammer');
 }
 
-/**
- * Book spine accepts a knife *or* any slash weapon (server checks slashattack_anim).
- * Inventory only — `useOn` needs a pack item; worn blades must be removed first
- * (see slashBookForKey) or we withdraw a knife.
- */
+// Why: the book spine accepts a knife or any slash weapon, as the server checks slashattack_anim.
+// Why: this is inventory-only, since `useOn` needs a pack item — worn blades have to be removed first (see slashBookForKey) or a knife is withdrawn.
+
+/** True when the pack holds something that can slash the book open. */
 export function hasHeldSlashTool(snap: QuestSnapshot): boolean {
     if (held(snap, EW_ITEM.KNIFE.id) > 0) {
         return true;

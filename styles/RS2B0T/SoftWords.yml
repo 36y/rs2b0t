@@ -1,0 +1,11 @@
+extends: existence
+message: "'%s' reads as emphasis; keep it only in its technical sense."
+level: warning
+ignorecase: true
+tokens:
+  - just
+  - real
+  - really
+  - exactly
+  - entire
+  - whole

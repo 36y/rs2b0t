@@ -38,9 +38,8 @@ const SEARCH_OPS = ['Search', 'Open'];
 const ARRIVE_RADIUS = 1;
 const WALK_ATTEMPTS = 4;
 const WALK_TIMEOUT_MS = 45_000;
-// Trails cross the map — Varrock to Feldip, Varrock to level-50 Wilderness — so
-// they route through the teleport catalog when the kit is held. Short hops stay
-// on foot: a tele is only admitted once the route is longer than this.
+// Why: trails cross the map — Varrock to Feldip, Varrock to level-50 Wilderness — so they route through the teleport catalog when the kit is held.
+// Why: a tele is admitted only once the route is longer than this, so short hops stay on foot.
 const TELEPORT_MIN_SPAN = 40;
 const STEP_ATTEMPTS = 4;
 const PROGRESS_MS = 6000;
@@ -56,10 +55,8 @@ const KEY_ENGAGE_MS = 3000;
 // black_heather respawns in 100 ticks; the rest of the riddle keepers are quicker.
 const KEY_RESPAWN_MS = 70_000;
 const LOOT_WAIT_MS = 3000;
-// player_combat.rs2 refuses op2 outright in single-way combat: while we are still
-// flagged from another fight, while another player has hit the target inside the
-// last 8 ticks, or when the target is someone else's random event. Each refusal
-// is a chat line and a dropped op, so the attack has to be re-sent, not waited out.
+// Why: player_combat.rs2 refuses op2 outright in single-way combat — while we are still flagged from another fight, while another player has hit the target inside the last 8 ticks, or when the target is someone else's random event.
+// Why: each refusal is a chat line and a dropped op, so the attack has to be re-sent rather than waited out.
 const ATTACK_REFUSED = /already under attack|someone else is fighting|not after you/i;
 
 import { TALK_ANCHORS } from '#/bot/clues/data/talkAnchors.js';
@@ -103,8 +100,7 @@ let teleportsEnabled = true;
 
 /**
  * Options for a cross-map clue leg, so the teleport policy lives in one place.
- * Close-in walks (stepping onto an NPC or a dropped key) do not use this — a
- * tele would be absurd at two tiles, and the span gate would refuse it anyway.
+ * Why: close-in walks (stepping onto an NPC or a dropped key) do not use this — the span gate would refuse a tele at two tiles anyway.
  */
 function walkOpts(log: (m: string) => void, radius = ARRIVE_RADIUS): Parameters<typeof Traversal.walkResilient>[1] {
     return {
@@ -122,10 +118,8 @@ function walkOpts(log: (m: string) => void, radius = ARRIVE_RADIUS): Parameters<
 const gateItemsTried = new Set<string>();
 
 /**
- * Walk a clue leg, and treat an unpayable toll as a shopping trip rather than a
- * dead end. The navigator names what the route was short of — the Kharidian
- * desert has one entrance and it eats a Shantay pass — so a leg that fails for
- * want of a 5gp ticket buys one and walks again instead of abandoning the trail.
+ * Walk a clue leg, treating an unpayable toll as a shopping trip rather than a dead end.
+ * Why: the navigator names what the route was short of — the Kharidian desert has one entrance and it eats a Shantay pass — so a leg failing for want of a 5gp ticket buys one and walks again.
  */
 async function walkLeg(dest: NavPoint, log: (m: string) => void, radius = ARRIVE_RADIUS): Promise<boolean> {
     if (await Traversal.walkResilient(dest, walkOpts(log, radius))) {
@@ -159,14 +153,6 @@ function heldIds(): number[] {
     return Inventory.items().map(i => i.id);
 }
 
-/**
- * Did anything enter the pack since `before`?
- *
- * A step also counts as progressed when it picks up something it needed — a
- * riddle key, a tool — but only gains count. Comparing the whole pack instead
- * made every bite of food read as progress, so a leg that did nothing at all
- * still reported `step done` and burned a leg off the trail budget.
- */
 function heldCounts(): Map<number, number> {
     const counts = new Map<number, number>();
     for (const i of Inventory.items()) {
@@ -175,6 +161,10 @@ function heldCounts(): Map<number, number> {
     return counts;
 }
 
+// Why: only gains count — comparing the pack as a whole made every bite of food read as progress, so a leg that did nothing still reported `step done` and burned a leg off the trail budget.
+// Why: a step also counts as progressed when it picks up something it needed, such as a riddle key or a tool.
+
+/** Did anything enter the pack since `before`? */
 function gainedSince(before: Map<number, number>): boolean {
     for (const [id, count] of heldCounts()) {
         if (count > (before.get(id) ?? 0)) {
@@ -240,9 +230,8 @@ async function eatOneForRoom(): Promise<boolean> {
 }
 
 /**
- * A casket rolls its reward into a side inv and then moves it in one slot at a
- * time — anything that does not fit lands on the floor. Eat food to clear the
- * space first; nothing else in a trail pack is safe to shed.
+ * Eat food to clear casket reward space; nothing else in a trail pack is safe to shed.
+ * Why: a casket rolls its reward into a side inv and moves it one slot at a time, so anything that does not fit lands on the floor.
  */
 async function makeRoomForReward(casketObj: string, log: (m: string) => void): Promise<void> {
     const want = casketRewardSlots(casketObj);
@@ -261,9 +250,8 @@ async function makeRoomForReward(casketObj: string, log: (m: string) => void): P
 }
 
 /**
- * Whatever the reward could not fit lands under us. Take it back, eating for
- * room as we go, so a tight pack costs nothing. Restricted to our own tile so
- * this never hoovers up unrelated drops.
+ * Take back whatever the reward could not fit and left under us, eating for room as we go.
+ * Why: restricted to our own tile so this never hoovers up unrelated drops.
  */
 async function collectSpilledReward(log: (m: string) => void): Promise<void> {
     const here = reader.worldTile();
@@ -312,16 +300,11 @@ async function answerChallengeIfOpen(step: ClueStep, log: (m: string) => void): 
     return true;
 }
 
-/**
- * Kill the keeper of a riddle key and pick the key up.
- *
- * Shaped like {@link fightGuardian} rather than a single op: `Attack` is refused
- * outright whenever the server thinks the fight belongs to somebody else, and
- * riddle001's keeper stands in the Bandit Camp, where aggressive bandits keep us
- * combat-flagged for most of the approach. One fire-and-forget op therefore left
- * the bot standing next to an untouched target for the whole wait, so the attack
- * is re-sent until it takes — on the tick, with upkeep pumped the whole way.
- */
+// Why: `Attack` is refused outright whenever the server thinks the fight belongs to somebody else, so the op is re-sent on the tick until it takes.
+// Why: riddle001's keeper stands in the Bandit Camp, where aggressive bandits keep us combat-flagged for most of the approach.
+// Why: shaped like fightGuardian rather than one fire-and-forget op, with upkeep pumped throughout.
+
+/** Kill the keeper of a riddle key and pick the key up. */
 async function acquireRiddleKey(kf: NonNullable<ClueRow['keyFrom']>, huntTile: NavPoint, log: (m: string) => void): Promise<boolean> {
     const haveKey = (): boolean => Inventory.items().some(i => i.id === kf.keyId);
     if (haveKey()) {
@@ -398,9 +381,8 @@ async function acquireRiddleKey(kf: NonNullable<ClueRow['keyFrom']>, huntTile: N
             continue;
         }
 
-        // Ride the fight out on the tick so food keeps going in. Falling straight
-        // through when we never engaged is the point: the loop re-sends instead
-        // of parking on an op the server quietly dropped.
+        // Why: riding the fight out on the tick keeps food going in.
+        // Why: falling through when we never engaged lets the loop re-send instead of parking on an op the server quietly dropped.
         await sustainUntil(
             () => haveKey() || keyOnGround() !== null || !Game.inCombat(),
             Math.max(0, deadline - Date.now())
@@ -459,9 +441,8 @@ async function dispatch(step: ClueStep, log: (m: string) => void): Promise<void>
             }
             await dig();
 
-            // A guarded coord yields the wizard on the first dig and the casket
-            // only on a dig after it dies, so both happen in one attempt. The
-            // fight chases, so walk back before the second dig.
+            // Why: a guarded coord yields the wizard on the first dig and the casket only on a dig after it dies, so both happen in one attempt.
+            // Why: the fight chases, so walk back before the second dig.
             const guardian = (step as ClueRow).guardian;
             if (guardian) {
                 const outcome = await fightGuardian(guardian, log);

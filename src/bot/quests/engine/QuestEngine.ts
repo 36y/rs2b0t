@@ -143,9 +143,8 @@ export class QuestEngine implements Task {
             return;
         }
 
-        // Quest-complete scrolls (and similar leftovers) sit on main and block the
-        // next decide() tick. Interactive quest UIs also use main — never auto-close
-        // those (Death Plateau dice / combination handwriting were being killed mid-step).
+        // Why: quest-complete scrolls and similar leftovers sit on main and block the next decide() tick.
+        // Why: interactive quest UIs also use main and are never auto-closed, as the Death Plateau dice and combination handwriting were being killed mid-step.
         const mainModal = reader.modals().main;
         if (
             !skipEarly
@@ -218,10 +217,8 @@ export class QuestEngine implements Task {
         }
 
         if (snap.journal === 'complete') {
-            // A finished quest is not a finished job. These end in a dragon's
-            // lair, a wilderness, a dungeon — and a bot that is dropped where it
-            // stood logs out there, or does not, and dies there. The quest is
-            // done when the character is standing at a bank.
+            // Why: these quests end in a dragon's lair, a wilderness, a dungeon, and a bot dropped where it stood logs out there, or does not, and dies there.
+            // Why: the job is done when the character is standing at a bank.
             if (!this.retreated.has(id) && !(await this.retreatToBank(module, id, rows))) {
                 return;
             }
@@ -264,9 +261,7 @@ export class QuestEngine implements Task {
         }
         if (!this.provisioned.has(id)) {
             const plan = planProvisioning(module.record.items, snap.inv, this.lastBankCounts);
-            // A quest that fetches coins at the point of sale wants no float at
-            // all: this runs every loop while anything is still outstanding, so
-            // a standing balance is restored after every single purchase.
+            // Why: a quest that fetches coins at the point of sale wants no float, as this runs every loop while anything is outstanding and a standing balance is restored after every purchase.
             const coinFloat = coinFloatWithdraw(snap.inv, this.lastBankCounts, module.coinFloat ?? COIN_FLOAT);
             const foodItem = this.host.foodItem();
             // Only withdraw food once the bank inventory is known — guessing a
@@ -314,10 +309,8 @@ export class QuestEngine implements Task {
         const attempt = this.tracker.open(`${id}|${stepDesc}`, now);
         const stepLine = `${module.record.name}: ${stepDesc}`;
         const fresh = stepLine !== this.lastStepLogged;
-        // A leg that keeps re-deciding to the same step is the normal way this
-        // engine loops, so silence on the repeat is the default. The heartbeat is
-        // what stops a long chain — mine, smelt, hammer, all called `smith 8
-        // nails` — from looking like a hang.
+        // Why: a leg that keeps re-deciding to the same step is the normal way this engine loops, so silence on the repeat is the default.
+        // Why: the heartbeat is what stops a long chain — mine, smelt, hammer, all called `smith 8 nails` — from looking like a hang.
         const announce = verbose || fresh || this.tracker.beat(now);
         if (announce) {
             const context = `stage ${snap.stage ?? '?'} · ${formatTile(snap.tile)} · ${snap.freeSlots} free`;
@@ -371,7 +364,7 @@ export class QuestEngine implements Task {
         });
         const took = Date.now() - startedAt;
 
-        // A cooperative step may have returned specifically because death interrupted it.
+        // Why: a cooperative step may have returned because death interrupted it.
         if (await this.recoverDeathIfPending()) {
             return;
         }
@@ -386,9 +379,7 @@ export class QuestEngine implements Task {
             }
         }
 
-        // The no-progress watchdog below only counts steps that *succeeded*, so a
-        // step failing forever parks nothing and — before the heartbeat above —
-        // said nothing either. Name it rather than let it spin in silence.
+        // Why: the no-progress watchdog below only counts steps that succeeded, so a step failing forever parks nothing and, before the heartbeat above, said nothing either.
         if (ok) {
             this.failStreak = 0;
         } else if (++this.failStreak % FAIL_WARN === 0) {
@@ -458,15 +449,11 @@ export class QuestEngine implements Task {
         return true;
     }
 
-    /**
-     * Drives a finished quest's character back to a bank before the queue moves
-     * on. `exit` comes first for the quests whose last step leaves them somewhere
-     * the navigator has no route out of; the bank walk itself is a `scanBank`, so
-     * it picks the nearest reachable bank exactly like every other bank leg.
-     *
-     * Bounded: a bot standing safely on the wrong side of a broken route is a
-     * better outcome than one that never finishes its queue.
-     */
+    // Why: `exit` comes first for the quests whose last step leaves them somewhere the navigator has no route out of.
+    // Why: the bank walk itself is a `scanBank`, so it picks the nearest reachable bank like every other bank leg.
+    // Why: it is bounded, as a bot standing safely on the wrong side of a broken route is a better outcome than one that never finishes its queue.
+
+    /** Drive a finished quest's character back to a bank before the queue moves on. */
     private async retreatToBank(module: QuestModule, id: string, rows: QueueRow[]): Promise<boolean> {
         const tries = (this.retreatTries.get(id) ?? 0) + 1;
         this.retreatTries.set(id, tries);

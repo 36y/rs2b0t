@@ -169,9 +169,8 @@ class Clean implements Task {
     }
 
     async execute(): Promise<void> {
-        // Spam-click every eligible unid in one pass — interact() only fires the
-        // driver op (no wait), so per-item delay is skipped. The identifying is
-        // gated by a single settle on the clean-id count / herblore xp.
+        // Why: interact() fires the driver op with no wait, so every eligible unid is clicked in one pass without a per-item delay.
+        // Why: the identifying is gated by a single settle on the clean-id count and herblore xp.
         const beforeClean = this.bot.cleanCount();
         const beforeXp = Skills.xp('herblore');
         const clickedHerbs: HerbDef[] = [];
@@ -196,9 +195,8 @@ class Clean implements Task {
         if (ok) {
             this.bot.countClean(this.bot.cleanCount() - beforeClean);
         } else if (this.bot.takeRefusal()) {
-            // The engine refused every click we just made (level drift in the table,
-            // or the world is non-members) — drop the herbs we actually clicked, not a
-            // re-derived level guess.
+            // Why: the engine refused every click just made — level drift in the table, or a non-members world.
+            // Why: the herbs clicked are denied, not a re-derived level guess.
             for (const herb of clickedHerbs) {
                 this.bot.deny(herb);
             }
@@ -244,10 +242,8 @@ class BankTrip implements Task {
 
         this.bot.log('bank opened, starting withdraw/deposit cycle');
 
-        // Fast banking: open bank → immediately start trying to withdraw.
-        // Don't wait for Bank.loaded(). If bank isn't ready, withdrawXById
-        // returns false (bankBackpackReady fails) and we retry next tick.
-        // Only deposit if pack is full and we can't withdraw.
+        // Why: withdrawXById returns false when bankBackpackReady fails, so the withdraw can start without waiting on Bank.loaded() and retry next tick.
+        // Why: depositing only happens when the pack is full and no withdraw landed.
         let withdrew = 0;
         let deposited = 0;
         const startMs = Date.now();

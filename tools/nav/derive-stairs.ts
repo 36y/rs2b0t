@@ -9,9 +9,8 @@ import { PathFinder, type NavPoint, type TransportEdgeData } from '#/bot/nav/Pat
 import { Reader, bridgedLevel, forEachLoc, loadLocTypes, loadMapsquares, parseLands } from './lib.js';
 import { parseSwitchStairs } from './stairsParse.js';
 
-// This is the first stage of transport generation and intentionally emits
-// bare source edges. Use tools/nav/derive-transports.sh to follow it with full
-// ladder derivation and exact LostCity loc enrichment in the required order.
+// First stage of transport generation; emits bare source edges by design.
+// Follow it with tools/nav/derive-transports.sh for full ladder derivation and exact LostCity loc enrichment, in that order.
 
 function argVal(name: string): string | undefined {
     const i = process.argv.indexOf(name);
@@ -25,9 +24,8 @@ const packPath = argVal('--pack') ?? 'out/collision.lcnav.gz';
 
 const LADDER_LOC_IDS = new Set([1746, 1747, 1748, 1749, 1750]);
 
-// These destinations contain Castle Wars spawn trapdoors rather than a
-// Climb-down ladder. Keep the rejected auto-reverses in stairEdges.json as
-// documentation, but PathFinder must not route through them.
+// These destinations hold Castle Wars spawn trapdoors rather than a Climb-down ladder.
+// Why: the rejected auto-reverses stay in stairEdges.json as documentation, but PathFinder must not route through them.
 const DISABLED_AUTO_REVERSES = new Map<string, string>([
     ['2370,3134,2>2370,3134,1', 'Castle Wars Zamorak spawn trapdoor (loc 4472) only offers Open; revision 274 has no Climb-down loc or handler.'],
     ['2429,3075,2>2429,3075,1', 'Castle Wars Saradomin spawn trapdoor (loc 4471) only offers Open; revision 274 has no Climb-down loc or handler.']
@@ -64,11 +62,8 @@ function reverseAction(action: string): string {
     return action;
 }
 
-// Underground is not another level — the engine p_telejumps you to the same
-// level 6400 squares north (`movecoord(coord, 0, 0, 6400)`). So a cellar hop
-// looks like a same-level walk to anything that only inspects `level`, which is
-// why these were never auto-reversed and every cellar could be climbed out of
-// but not into.
+// Underground is not another level — the engine p_telejumps you to the same level 6400 squares north (`movecoord(coord, 0, 0, 6400)`).
+// Why: a cellar hop therefore looks like a same-level walk to anything that only inspects `level`, which is why these were never auto-reversed and every cellar could be climbed out of but not into.
 const UNDERGROUND_SHIFT = 6400;
 
 function underground(p: NavPoint): boolean {
@@ -80,21 +75,14 @@ function changesFloor(e: TransportEdgeData): boolean {
     return e.from.level !== e.to.level || underground(e.from) !== underground(e.to);
 }
 
-/**
- * Same-level underground hops must be `dungeon`, not `stair`: PathFinder only
- * hands the executor a `toTile` for dungeon-kind edges, and without one it has
- * no arrival condition and cannot drive the Open-then-descend two-step that a
- * shut trapdoor or manhole needs.
- */
+/** Same-level underground hops must be `dungeon` rather than `stair`.
+ *  Why: PathFinder only hands the executor a `toTile` for dungeon-kind edges, and without one it has no arrival condition and cannot drive the Open-then-descend two-step a shut trapdoor or manhole needs. */
 function edgeKind(e: TransportEdgeData): TransportEdgeData['kind'] {
     return e.from.level === e.to.level && underground(e.from) !== underground(e.to) ? 'dungeon' : e.kind;
 }
 
-// Walkable is not the same as reachable. build-collision leaves sealed tiles
-// behind — a lone square with no exits at all, or a one-tile-wide strip whose
-// only exits run along itself — and snapping a ladder onto one lands the walker
-// somewhere it can never leave. Measuring the local component is enough to tell
-// them apart without a whole-map flood.
+// Walkable is not reachable: build-collision leaves sealed tiles behind — a lone square with no exits at all, or a one-tile-wide strip whose only exits run along itself.
+// Why: snapping a ladder onto one lands the walker somewhere it can never leave, and the local component size tells them apart without a whole-map flood.
 const LOCAL_FLOOD_CAP = 192;
 const DX8 = [0, 1, 0, -1, 1, 1, -1, -1];
 const DZ8 = [1, 0, -1, 0, 1, -1, -1, 1];
@@ -130,9 +118,7 @@ function snapWalkable(finder: PathFinder, x: number, z: number, level: number): 
             continue;
         }
         fallback ??= p;
-        // A tile with no exits at all can be stood on and never left. Landing a
-        // ladder there strands the walker, so keep looking; the first ordinary
-        // candidate still wins, leaving every other ladder untouched.
+        // Why: a tile with no exits at all can be stood on and never left, so a ladder landed there strands the walker; the first ordinary candidate still wins, leaving every other ladder untouched.
         if (localComponentSize(finder, p) > 1) {
             return p;
         }

@@ -7,7 +7,7 @@ export interface CarryEntry {
 
 export interface Loadout {
     name: string;
-    /** Slot → display name, because that is what scripts match on. */
+    /** Slot → display name. Why: display name is what scripts match on. */
     worn: Partial<Record<Slot, string>>;
     carry: CarryEntry[];
 }
