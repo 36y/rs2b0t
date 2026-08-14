@@ -20,7 +20,7 @@ world, rather than a conversation:
 | Primitive | What it handles |
 |---|---|
 | `promptLoc(step, log)` | walk to a stand, act on a loc, answer the prompt it raised |
-| `useOnLoc(itemId, loc, prefer, expect, log)` | the same for `oplocu`, which no op-based step can express |
+| `useOnLoc(itemId, loc, prefer, expect, log)` | the same for `oplocu`, which no op-based step can express; pass `loc.id` where same-named locs stand together |
 | `driveChoice(prefer, log)` | `driveDialog` that abandons rather than guessing |
 | `locNear(name, op, within)` / `heldId(id)` / `settleScene()` | the small repeated lookups |
 

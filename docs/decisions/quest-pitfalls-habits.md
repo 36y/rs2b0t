@@ -133,6 +133,13 @@ Family Crest added four more, and the first two generalise past this quest:
   and a death there drops it. The top-up has to be conditional on something still being
   unbought, or it and the deposit take turns undoing each other.
 
+- **The engine serves one bundle to every session.** `public/bot` is shared and `bot.html`
+  hard-codes `./bot/botclient.js`, so a concurrent session's deploy landing inside the fifteen
+  seconds a harness spends booting hands the run somebody else's branch — and the symptom is a
+  quest queue full of quests you did not write. Assert your own build loaded, from something the
+  bundle itself prints (the AIOQuester queue line naming the quest), and fail in the first minute
+  rather than spending the budget.
+
 ## See also
 
 - [Engine behaviour](quest-pitfalls-engine.md)

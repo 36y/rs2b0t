@@ -141,6 +141,7 @@ export async function useOnLoc(
         return false;
     }
     await settleScene();
+    // Why: same-named locs a tile apart are the rule inside a quest area, and `nearest` picks the decoy.
     const target = Locs.query()
         .name(loc.name)
         .where(l => loc.id === undefined || l.id === loc.id)
@@ -148,7 +149,7 @@ export async function useOnLoc(
         .nearest();
     const item = Inventory.items().find(entry => entry.id === itemId);
     if (!target || !item) {
-        log(`no '${loc.name}' or no item ${itemId} to use on it near (${loc.near.x},${loc.near.z})`);
+        log(`no '${loc.name}'${loc.id === undefined ? '' : ` id ${loc.id}`} or no item ${itemId} to use on it near (${loc.near.x},${loc.near.z})`);
         return false;
     }
     if (!(await item.useOn(target))) {

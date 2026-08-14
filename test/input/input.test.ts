@@ -13,6 +13,7 @@ describe('Input', () => {
             'useItemOnLoc',
             'useItemOnNpc',
             'useItemOnItem',
+            'useItemOnObj',
             'castOnNpc',
             'walk',
             'continueDialog'

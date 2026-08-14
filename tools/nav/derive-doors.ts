@@ -70,7 +70,10 @@ function main(): void {
             'famcrest_doori2h1', 'famcrest_doorh2g1',
             // Fight Arena's cell doors never open, and door1 teleports the player into the arena at stages 9-11 rather than opening.
             // Why: baked as edges the pathfinder routes into a cell it cannot leave, or walks a bot mid-errand into a boss fight.
-            'arena_prisondoor', 'arena_jeremydoor', 'fightarena_door1'
+            'arena_prisondoor', 'arena_jeremydoor', 'fightarena_door1',
+            // Clock Tower's rat-cage gate: jail_doors.rs2 answers "This door doesn't seem to open from here..." to anyone outside it, and ctlevera is the way in.
+            // Why: its only map placement is the cage at 2595,9657 — Fight Arena's copies are loc_add, which no map derivation sees.
+            'ctratgatea'
         ]);
         const label = `${type.name ?? ''} ${type.debugname ?? ''}`.toLowerCase();
         if (label.includes('locked') || (type.debugname ?? '').startsWith('macro_') || SCRIPT_REFUSED.has(type.debugname ?? '')) {

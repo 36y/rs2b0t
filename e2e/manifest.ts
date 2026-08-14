@@ -8,7 +8,7 @@ export const CASES: readonly Case[] = [
         covers: { scripts: ['AIOQuester'] },
         status: 'documented',
         budgetMin: 120,
-        documentedIn: 'docs/reference/quest-harness-recipes.md'
+        documentedIn: 'docs/reference/quest-harness-recipes-4.md'
     },
     {
         id: 'aio-skip-quest-432-live',
@@ -45,6 +45,15 @@ export const CASES: readonly Case[] = [
         harness: 'clue-trails-live.ts',
         covers: { scripts: ['ClueSolver'] },
         status: 'unvetted'
+    },
+    {
+        id: 'clock-tower-236-live',
+        harness: 'clock-tower-236-live.ts',
+        covers: { scripts: ['AIOQuester'] },
+        status: 'vetted',
+        budgetMin: 60,
+        provenAt: 'ae6a6bc5',
+        note: 'Clock Tower start to finish in 6 minutes at --tick 200; --stage counts placed cogs'
     },
     {
         id: 'coaltrucks-test',
@@ -121,7 +130,7 @@ export const CASES: readonly Case[] = [
         covers: { scripts: ['AIOQuester'] },
         status: 'documented',
         budgetMin: 45,
-        documentedIn: 'docs/reference/quest-harness-recipes.md'
+        documentedIn: 'docs/reference/quest-harness-recipes-4.md'
     },
     {
         id: 'external-script-test',

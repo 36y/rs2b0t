@@ -115,7 +115,8 @@ see [Quest pitfalls](../decisions/quest-pitfalls-3.md).
 
 ## See also
 
-- [Quest harness recipes (A–E)](quest-harness-recipes.md)
+- [Quest harness recipes (A–D)](quest-harness-recipes.md)
+- [Quest harness recipes (E)](quest-harness-recipes-4.md)
 - [Quest harness recipes (F–H)](quest-harness-recipes-2.md)
 - [Quest harness method](quest-harness-method.md)
 - [Seeding test accounts](seeding-test-accounts.md)

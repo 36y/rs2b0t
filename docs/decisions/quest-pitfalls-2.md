@@ -146,4 +146,5 @@ Horror from the Deep added six, and the first two are not quest facts at all:
 - [Quest pitfalls](quest-pitfalls.md)
 - [Later quests](quest-pitfalls-3.md)
 - [Fight Arena](quest-pitfalls-4.md)
+- [Clock Tower](quest-pitfalls-5.md)
 - [Add a quest](../how-to/add-a-quest.md)

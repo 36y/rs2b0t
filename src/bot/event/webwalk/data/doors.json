@@ -197,7 +197,6 @@
     {"x":2595,"z":3180,"level":0,"locId":1519,"locName":"Large door","dir":"N"},
     {"x":2595,"z":3188,"level":0,"locId":1533,"locName":"Door","dir":"N"},
     {"x":2595,"z":9644,"level":0,"locId":1530,"locName":"Door","dir":"E"},
-    {"x":2595,"z":9657,"level":0,"locId":37,"locName":"Gate","dir":"E"},
     {"x":2597,"z":3087,"level":0,"locId":1600,"locName":"Magic guild door","dir":"W"},
     {"x":2597,"z":3088,"level":0,"locId":1601,"locName":"Magic guild door","dir":"W"},
     {"x":2598,"z":9648,"level":0,"locId":1530,"locName":"Door","dir":"S"},

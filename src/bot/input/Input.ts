@@ -50,6 +50,10 @@ export const Input = {
         return select(useObjId, useSlot, useComId) && actions.menuAction(MiniMenuAction.USEHELD_ONNPC, index, 0, 0);
     },
 
+    useItemOnObj(useObjId: number, useSlot: number, useComId: number, targetObjId: number, lx: number, lz: number): boolean {
+        return select(useObjId, useSlot, useComId) && actions.menuAction(MiniMenuAction.USEHELD_ONOBJ, targetObjId, lx, lz);
+    },
+
     useItemOnItem(useObjId: number, useSlot: number, useComId: number, targetObjId: number, targetSlot: number, targetComId: number): boolean {
         return select(useObjId, useSlot, useComId) && actions.menuAction(MiniMenuAction.USEHELD_ONHELD, targetObjId, targetSlot, targetComId);
     },

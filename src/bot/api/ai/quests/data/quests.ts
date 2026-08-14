@@ -236,6 +236,7 @@ export const QUESTS: QuestRecord[] = [
     {
         id: 'cog', name: 'Clock Tower', questPoints: 1,
         requirements: {},
+        // Why: the bucket of water that cools the black cog is a quest-internal consumable, so the module fetches it on the leg that needs it rather than the provisioner fetching one on every resume.
         items: []
     },
     {

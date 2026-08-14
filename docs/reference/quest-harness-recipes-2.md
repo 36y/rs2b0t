@@ -131,7 +131,8 @@ deliberately so a map change fails loudly instead of quietly.
 
 ## See also
 
-- [Quest harness recipes (A–E)](quest-harness-recipes.md)
+- [Quest harness recipes (A–D)](quest-harness-recipes.md)
+- [Quest harness recipes (E)](quest-harness-recipes-4.md)
 - [Quest harness recipes (I–Z)](quest-harness-recipes-3.md)
 - [Quest harness method](quest-harness-method.md)
 - [Seeding test accounts](seeding-test-accounts.md)
