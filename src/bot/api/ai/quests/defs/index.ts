@@ -18,6 +18,7 @@ import { witchshouse } from './witchshouse.js';
 import { dwarfcannon } from './dwarfcannon/index.js';
 import { merlinscrystal } from './merlinscrystal.js';
 import { priestperil } from './priestperil.js';
+import { druidspirit } from './druidspirit/index.js';
 import { blackknight } from './blackknight.js';
 import { druidicritual } from './druidicritual.js';
 import { lostcity } from './lostcity.js';
@@ -39,7 +40,7 @@ import { clocktower } from './clocktower.js';
 // Why: Dragon Slayer is last, as it is gated at 32 quest points and the queue has to earn them on the way past everything else before it becomes runnable.
 // Why: Death Plateau comes before Troll Stronghold, which requires it complete.
 // Why: Plague City comes before Family Crest, whose Ardougne legs ride the teleport it unlocks.
-export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, knightssword, sheepshearer, restlessghost, cooksassistant, impcatcher, ernest, hetty, romeojuliet, princeali, piratestreasure, waterfall, goblindiplomacy, demonslayer, witchshouse, dwarfcannon, clocktower, merlinscrystal, priestperil, blackknight, druidicritual, lostcity, touristtrap, watchtower, vampireslayer, junglepotion, shilo, elementalworkshop, deathplateau, trollstronghold, plaguecity, familycrest, horror, fightarena, dragonslayer];
+export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, knightssword, sheepshearer, restlessghost, cooksassistant, impcatcher, ernest, hetty, romeojuliet, princeali, piratestreasure, waterfall, goblindiplomacy, demonslayer, witchshouse, dwarfcannon, clocktower, merlinscrystal, priestperil, druidspirit, blackknight, druidicritual, lostcity, touristtrap, watchtower, vampireslayer, junglepotion, shilo, elementalworkshop, deathplateau, trollstronghold, plaguecity, familycrest, horror, fightarena, dragonslayer];
 
 export function defById(id: string): QuestModule | undefined {
     return QUEST_DEFS.find(d => d.record.id === id);
