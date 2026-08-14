@@ -118,6 +118,7 @@ death recovery re-enters with **Push** (no key) and re-withdraws bank tools.
 
 ## See also
 
-- [Quest harness recipes (G–Z)](quest-harness-recipes-2.md)
+- [Quest harness recipes (G–M)](quest-harness-recipes-2.md)
+- [Quest harness recipes (N–Z)](quest-harness-recipes-3.md)
 - [Quest harness method](quest-harness-method.md)
 - [Seeding test accounts](seeding-test-accounts.md)

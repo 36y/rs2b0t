@@ -1,6 +1,6 @@
 [Manual](../README.md) › [Testing](../TESTING.md) › Quest harness recipes
 
-# Quest harness recipes (G–Z)
+# Quest harness recipes (G–M)
 
 ## Horror from the Deep — stage-scoped harness
 
@@ -125,5 +125,6 @@ free-to-play wherever it is farmed.
 ## See also
 
 - [Quest harness recipes (A–F)](quest-harness-recipes.md)
+- [Quest harness recipes (N–Z)](quest-harness-recipes-3.md)
 - [Quest harness method](quest-harness-method.md)
 - [Seeding test accounts](seeding-test-accounts.md)

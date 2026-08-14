@@ -97,7 +97,9 @@ export const QUESTS: QuestRecord[] = [
         questPoints: 2,
         requirements: {},
         items: [
-            { name: 'Karamjan rum', qty: 1, kind: 'acquirable' }
+            { name: 'Karamjan rum', qty: 1, kind: 'acquirable' },
+            { name: 'White apron', qty: 1, kind: 'acquirable' },
+            { name: 'Spade', qty: 1, kind: 'acquirable' }
         ]
     },
     {

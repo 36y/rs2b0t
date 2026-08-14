@@ -144,4 +144,5 @@ Horror from the Deep added six, and the first two are not quest facts at all:
 ## See also
 
 - [Quest pitfalls](quest-pitfalls.md)
+- [Later quests](quest-pitfalls-3.md)
 - [Add a quest](../how-to/add-a-quest.md)

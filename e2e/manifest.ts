@@ -380,6 +380,12 @@ export const CASES: readonly Case[] = [
         status: 'unvetted'
     },
     {
+        id: 'piratestreasure-231-live',
+        harness: 'piratestreasure-231-live.ts',
+        covers: { scripts: ['AIOQuester'] },
+        status: 'unvetted'
+    },
+    {
         id: 'plague-pipe-366-live',
         harness: 'plague-pipe-366-live.ts',
         covers: { subsystems: ['world'] },
