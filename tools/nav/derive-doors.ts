@@ -73,7 +73,10 @@ function main(): void {
             'arena_prisondoor', 'arena_jeremydoor', 'fightarena_door1',
             // Clock Tower's rat-cage gate: jail_doors.rs2 answers "This door doesn't seem to open from here..." to anyone outside it, and ctlevera is the way in.
             // Why: its only map placement is the cage at 2595,9657 — Fight Arena's copies are loc_add, which no map derivation sees.
-            'ctratgatea'
+            'ctratgatea',
+            // West Ardougne's plague house: loc_2534 answers "This door is locked." to everyone, and loc_2535 opens only for a warrant holder with a mourner in earshot, mid-conversation.
+            // Why: baked as edges the pathfinder alternates between the two and crosses neither.
+            'loc_2534', 'loc_2535'
         ]);
         const label = `${type.name ?? ''} ${type.debugname ?? ''}`.toLowerCase();
         if (label.includes('locked') || (type.debugname ?? '').startsWith('macro_') || SCRIPT_REFUSED.has(type.debugname ?? '')) {

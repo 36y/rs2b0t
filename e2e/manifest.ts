@@ -412,6 +412,16 @@ export const CASES: readonly Case[] = [
         status: 'unvetted'
     },
     {
+        id: 'plague-city-243-live',
+        harness: 'plague-city-243-live.ts',
+        covers: { scripts: ['AIOQuester'], subsystems: ['quests'] },
+        status: 'vetted',
+        budgetMin: 45,
+        provenAt: '3ab5d0a4',
+        documentedIn: 'docs/reference/quest-harness-recipes-5.md',
+        note: 'clean account to journal complete in 23min at --tick 300, no parks'
+    },
+    {
         id: 'plague-pipe-366-live',
         harness: 'plague-pipe-366-live.ts',
         covers: { subsystems: ['world'] },

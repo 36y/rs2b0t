@@ -361,10 +361,9 @@ export const QUESTS: QuestRecord[] = [
     {
         id: 'elena', name: 'Plague City', questPoints: 1,
         requirements: {},
-        items: [
-            { name: 'Rope', qty: 1, kind: 'mustHave' },
-            { name: 'Dwellberries', qty: 1, kind: 'acquirable' }
-        ]
+        // The rope, spade, buckets, berries and cure ingredients are sourced per
+        // stage by the module, which owns its own inventory.
+        items: []
     },
     {
         id: 'fishingcompo', name: 'Fishing Contest', questPoints: 1,
