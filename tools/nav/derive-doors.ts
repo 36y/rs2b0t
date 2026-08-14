@@ -67,7 +67,10 @@ function main(): void {
             // Family Crest's perfect-gold mine — each answers "This door is locked" unless its own combination of the three levers is set.
             // Why: the combination that opens one shuts another, so the quest drives the chain itself (defs/familycrest/mine.ts).
             'famcrest_doorh2', 'famcrest_doorh2i2', 'famcrest_doorg2h1',
-            'famcrest_doori2h1', 'famcrest_doorh2g1'
+            'famcrest_doori2h1', 'famcrest_doorh2g1',
+            // Fight Arena's cell doors never open, and door1 teleports the player into the arena at stages 9-11 rather than opening.
+            // Why: baked as edges the pathfinder routes into a cell it cannot leave, or walks a bot mid-errand into a boss fight.
+            'arena_prisondoor', 'arena_jeremydoor', 'fightarena_door1'
         ]);
         const label = `${type.name ?? ''} ${type.debugname ?? ''}`.toLowerCase();
         if (label.includes('locked') || (type.debugname ?? '').startsWith('macro_') || SCRIPT_REFUSED.has(type.debugname ?? '')) {

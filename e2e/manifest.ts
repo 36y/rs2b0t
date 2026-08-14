@@ -136,7 +136,17 @@ export const CASES: readonly Case[] = [
         covers: { scripts: ['AIOQuester'] },
         status: 'documented',
         budgetMin: 75,
-        documentedIn: 'docs/reference/quest-harness-recipes.md'
+        documentedIn: 'docs/reference/quest-harness-recipes-2.md'
+    },
+    {
+        id: 'fight-arena-233-live',
+        harness: 'fight-arena-233-live.ts',
+        covers: { scripts: ['AIOQuester'] },
+        status: 'vetted',
+        budgetMin: 20,
+        provenAt: 'd708e10e',
+        documentedIn: 'docs/reference/quest-harness-recipes-2.md',
+        note: 'uncheated --stage 0 --until 14 finished in 7 minutes at --tick 150'
     },
     {
         id: 'fight-arena-iron-374-live',
@@ -244,7 +254,7 @@ export const CASES: readonly Case[] = [
         covers: { scripts: ['AIOQuester'] },
         status: 'documented',
         budgetMin: 90,
-        documentedIn: 'docs/reference/quest-harness-recipes-2.md'
+        documentedIn: 'docs/reference/quest-harness-recipes-3.md'
     },
     {
         id: 'knights-sword-228-live',

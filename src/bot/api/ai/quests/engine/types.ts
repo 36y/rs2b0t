@@ -89,6 +89,9 @@ export interface QuestModule {
     exit?: (log: (m: string) => void) => Promise<boolean>;
     /** The module owns all banking/loadout decisions, including restarts in bankless areas. */
     ownsInventory?: boolean;
+    // Why: food is the bulkiest withdrawal a quest makes, so a module that arms itself from the bank has to be dressed before the pack fills, or the gear has nowhere to land.
+    /** False to hold the food float back this pass; absent means withdraw it as soon as the bank is known. */
+    foodReady?: (snap: QuestSnapshot) => boolean;
     /** Read an exact quest stage from client-visible state. Async journals are supported. */
     readStage?: () => number | undefined | Promise<number | undefined>;
     /** Supersedes readStage: the stage plus sub-progress the stage number cannot carry. */

@@ -14,6 +14,7 @@ import { executeStep } from '../../api/ai/quests/exec/steps.js';
 import { QUEST_DEFS, defById } from '../../api/ai/quests/defs/index.js';
 import { QuestFood } from '../../api/ai/quests/food.js';
 import { QuestLoadout } from '../../api/ai/quests/gear.js';
+import { FOOD_OPTIONS } from '../../api/combat/food.js';
 import { foodOf } from '../../api/loadout/loadoutPlan.js';
 import { LOADOUT_SETTING, selectedLoadout } from '../../api/loadout/loadoutSetting.js';
 import type { QueueRow, QueueStatus } from '../../api/ai/quests/engine/queue.js';
@@ -42,7 +43,7 @@ const ICON: Record<QueueStatus, string> = {
     UNKNOWN: '?'
 };
 
-const FALLBACK_FOOD = 'Trout';
+const FALLBACK_FOOD = 'Lobster';
 
 export const AIO_SETTINGS: SettingsSchema = {
     quests: {
@@ -54,6 +55,13 @@ export const AIO_SETTINGS: SettingsSchema = {
         help: 'which implemented quests to complete, run in the listed order; leave empty to run every implemented quest'
     },
     loadout: LOADOUT_SETTING,
+    food: {
+        type: 'string',
+        default: FALLBACK_FOOD,
+        options: FOOD_OPTIONS,
+        label: 'Food',
+        help: 'what the engine withdraws for any quest declaring a food count, and what the bot eats; a loadout carrying its own food wins over this'
+    },
     verbose: {
         type: 'boolean',
         default: true,
@@ -109,7 +117,7 @@ export default class AIOQuester extends TaskBot {
     }
 
     foodItem(): string | null {
-        return foodOf(QuestLoadout.current, FALLBACK_FOOD);
+        return foodOf(QuestLoadout.current, this.settings.str('food', FALLBACK_FOOD));
     }
 
     verbose(): boolean {

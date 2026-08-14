@@ -1,9 +1,63 @@
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+
 import { chromium } from 'playwright-core';
 import type { Browser, Page } from 'playwright-core';
 
 export function fail(msg: string): never {
     console.error(`FAIL: ${msg}`);
     process.exit(1);
+}
+
+export interface IsolatedClient {
+    /** Page to open, e.g. `/bot-fa7k2j.html`. */
+    page: string;
+    /** Delete this run's copy of the client. */
+    cleanup(): void;
+}
+
+// Why: `bot.html` hardcodes one bundle path, so every session that deploys into `public/bot/` overwrites the others and the last writer decides what everyone runs.
+// Why: a copy per run under its own directory costs a few megabytes and removes the race rather than detecting it — the client is served by the engine either way, so the origin, the websocket and the asset stream are unchanged.
+
+/**
+ * Deploy this run's own client next to the engine's, and return the page that loads it.
+ * @see docs/decisions/quest-pitfalls-3.md
+ */
+export function deployIsolatedClient(tag: string, engineDir = process.env.ENGINE_DIR ?? `${homedir()}/code/rs2b2t-engine`): IsolatedClient {
+    const publicDir = `${engineDir}/public`;
+    const shared = `${publicDir}/bot.html`;
+    if (!existsSync(shared)) {
+        fail(`deploy: ${shared} not found — set ENGINE_DIR to the engine serving this run`);
+    }
+    const build = Bun.spawnSync(['bun', 'run', 'build:bot'], { stdout: 'pipe', stderr: 'pipe' });
+    if (build.exitCode !== 0) {
+        fail(`deploy: build:bot failed\n${build.stderr.toString()}`);
+    }
+    // Why: `build:bot` does not bake the collision pack, and without it every Navigator dies on boot and walking degrades in silence to the scene stepper.
+    if (!existsSync('out/collision.lcnav.gz')) {
+        fail('deploy: out/collision.lcnav.gz missing — run tools/nav/build-collision.ts first');
+    }
+
+    const dir = `${publicDir}/bot/${tag}`;
+    const html = `${publicDir}/bot-${tag}.html`;
+    rmSync(dir, { recursive: true, force: true });
+    mkdirSync(dir, { recursive: true });
+    cpSync('out', dir, { recursive: true });
+
+    const rewritten = readFileSync(shared, 'utf8').replaceAll('./bot/botclient.js', `./bot/${tag}/botclient.js`);
+    if (!rewritten.includes(`./bot/${tag}/botclient.js`)) {
+        fail(`deploy: ${shared} does not reference ./bot/botclient.js — the rewrite matched nothing`);
+    }
+    writeFileSync(html, rewritten);
+    console.log(`deploy: this run's client at /bot/${tag}/ served by /bot-${tag}.html`);
+
+    return {
+        page: `/bot-${tag}.html`,
+        cleanup: () => {
+            rmSync(dir, { recursive: true, force: true });
+            rmSync(html, { force: true });
+        }
+    };
 }
 
 /** Flags that consume the argument after them. Their values are not positionals. */

@@ -1,6 +1,6 @@
 [Manual](../README.md) › [Testing](../TESTING.md) › Quest harness recipes
 
-# Quest harness recipes (A–F)
+# Quest harness recipes (A–E)
 
 Per-quest seed and stage commands, with what each recipe has proven.
 
@@ -63,34 +63,6 @@ HEADED=1 bun e2e/aio-quest-test.ts http://localhost:8890 ewreal elemental_worksh
   Lobster 'speed 300' '2725,3491'
 ```
 
-## Family Crest — stage-scoped harness
-
-Family Crest is eleven server stages across four kingdoms, so it has its own
-harness rather than a `e2e/aio-quest-test.ts` invocation:
-[`e2e/family-crest-210-live.ts`](../../e2e/family-crest-210-live.ts). It seeds a
-fixed bank, jumps `%crestquest`, and passes when the journal reaches `--until`.
-
-```sh
-HEADED=1 bun e2e/family-crest-210-live.ts --stage 7 --until 8 --minutes 28   # the gold mine
-HEADED=1 bun e2e/family-crest-210-live.ts --stage 0 --minutes 120            # end to end
-```
-
-Two things that harness has to do and a plain `setvar` does not:
-
-- **Relog after the stage jump.** `update_questlist` recolours the journal entry
-  at login only, and every module reads the tab rather than the varp — so a
-  `setvar crestquest 7` without a relog leaves the quest reading *not started*.
-- **Clear `crest_spells_levers_gauntlets` too.** The lever bits and the
-  four-blasts-cast bits share that varp, so a stage jump that leaves it set
-  starts Chronozon already weakened and the fight proves nothing.
-
-It is **members-only** (`map_members`), so it needs the :8890 world, not :8888.
-
-Caleb's five cooked fish and the two rubies are bank seeds by design — no shop
-in the game stocks cooked bass or shrimp, and the Ardougne gem merchant restocks
-a single ruby every 60k ticks. Everything else (moulds, antipoison, blast runes,
-a pickaxe) is bought live.
-
 ## Ernest the Chicken — stage-scoped harness
 
 [`e2e/ernest-chicken-229-live.ts`](../../e2e/ernest-chicken-229-live.ts) drives
@@ -141,7 +113,7 @@ death recovery re-enters with **Push** (no key) and re-withdraws bank tools.
 
 ## See also
 
-- [Quest harness recipes (G–M)](quest-harness-recipes-2.md)
-- [Quest harness recipes (N–Z)](quest-harness-recipes-3.md)
+- [Quest harness recipes (F–H)](quest-harness-recipes-2.md)
+- [Quest harness recipes (I–Z)](quest-harness-recipes-3.md)
 - [Quest harness method](quest-harness-method.md)
 - [Seeding test accounts](seeding-test-accounts.md)

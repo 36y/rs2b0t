@@ -277,7 +277,8 @@ export class QuestEngine implements Task {
             const foodItem = this.host.foodItem();
             // Only withdraw food once the bank inventory is known — guessing a
             // shortfall forces a failed booth trip and can scramble a full pack.
-            const foodFloat = (module.food && foodItem && this.bankKnown)
+            const foodReady = module.foodReady?.(snap) ?? true;
+            const foodFloat = (module.food && foodItem && this.bankKnown && foodReady)
                 ? floatWithdraw(snap.inv, this.lastBankCounts, foodItem, module.food)
                 : null;
             const extras = [coinFloat, foodFloat].filter((w): w is { name: string; qty: number } => w !== null);
@@ -293,7 +294,11 @@ export class QuestEngine implements Task {
             } else if (plan.withdraw.length > 0 || extras.length > 0) {
                 step = { kind: 'withdraw', items: [...plan.withdraw, ...extras], bank: bankFor(module) };
             } else if (plan.satisfied) {
-                this.provisioned.add(id);
+                // Why: holding the food back is not being provisioned — closing the block here would
+                // retire it for the run and the quest would fight on an empty stomach.
+                if (foodReady) {
+                    this.provisioned.add(id);
+                }
                 step = module.decide(snap);
             } else {
                 const want = plan.gather[0];

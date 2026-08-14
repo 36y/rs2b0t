@@ -92,9 +92,10 @@ async function waitIngame(page: Page, timeoutMs: number, label: string): Promise
     }
 }
 
-export async function bootAndLogin(page: Page, base: string, user: string): Promise<void> {
-    console.log(`  boot: loading ${base}/bot.html (cache download may take a while; BOOT_MS=${Math.round(BOOT_MS / 1000)}s)`);
-    await page.goto(`${base}/bot.html?nodeid=10`);
+// Why: `clientPage` is how a run opts into its own copy of the client (`deployIsolatedClient`); the default keeps every harness that has not on the shared one.
+export async function bootAndLogin(page: Page, base: string, user: string, clientPage = '/bot.html'): Promise<void> {
+    console.log(`  boot: loading ${base}${clientPage} (cache download may take a while; BOOT_MS=${Math.round(BOOT_MS / 1000)}s)`);
+    await page.goto(`${base}${clientPage}?nodeid=10`);
     await waitClientBooted(page, 'bootAndLogin');
     console.log('  boot: title loop up — logging in');
 
@@ -235,10 +236,10 @@ const OFF_ISLAND_TELE = '0,50,50,20,20';
 
 /** New account → off Tutorial Island without playing it: boot and login, tele off-island and setvar tutorial 1000, clean IF_BUTTON logout (com 2458), then login again so the side icons and tutorial UI lock refresh from the login payload.
  *  Why: CLIENT_CHEAT packets are used rather than keyboard `::…` typing, since the island chat/tutorial UI eats keystrokes and stalls for a long time before a setvar sticks; the clean logout avoids the unclean-disconnect 60s "already logged in" hold, so with RELOG_COOLDOWN_MS≈2s the hop runs ~9s after boot. */
-export async function mainlandAccount(page: Page, base: string, user: string): Promise<void> {
+export async function mainlandAccount(page: Page, base: string, user: string, clientPage = '/bot.html'): Promise<void> {
     const t0 = Date.now();
     console.log(`mainlandAccount: boot+login as '${user}'`);
-    await bootAndLogin(page, base, user);
+    await bootAndLogin(page, base, user, clientPage);
 
     console.log(`mainlandAccount: tele ${OFF_ISLAND_TELE} + setvar tutorial 1000`);
     if (!(await cheatQuiet(page, `tele ${OFF_ISLAND_TELE}`))) {

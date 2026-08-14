@@ -30,3 +30,4 @@ fall out of that, and both were found the hard way:
 
 - [Engine behaviour](quest-pitfalls-engine.md)
 - [More pitfalls](quest-pitfalls-2.md)
+- [Fight Arena](quest-pitfalls-3.md)
