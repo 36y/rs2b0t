@@ -4,6 +4,29 @@
 
 Per-quest seed and stage commands, with what each recipe has proven.
 
+## Dwarf Cannon — stage-scoped harness
+
+Dwarf Cannon needs no items and no prerequisite quests: the Commander issues the railings
+and the tool kit, Nulodion issues the notes and the mould, and every one has a re-issue
+branch. The bank seed is coins, food and a melee kit only — seeding anything the quest
+hands out would hide a dialogue that never fired.
+
+[`e2e/dwarf-cannon-254-live.ts`](../../e2e/dwarf-cannon-254-live.ts) takes `--stage N`
+(`%mcannon`) and `--multi N` (`%mcannonmulti`: bits 5-10 are the six railings, bits 0-3
+the four cannon components), then relogs, since `update_questlist` only recolours the
+journal at login. Useful `--multi` values are `2016` for all six railings, `15` for all
+four components and `2031` for both.
+
+| Recipe | What it proves | Status |
+|---|---|---|
+| `--stage 1 --multi 0 --until 2` | Six railings, and the Commander accepting them | **PASS** (3min) |
+| `--stage 2 --multi 2016 --until 3` | The watchtower climb, the remains, the descent | **PASS** (4min) |
+| `--stage 3 --multi 2016 --until 5` | The goblin cave, the crate, the mud-pile exit | **PASS** (3min) |
+| `--stage 5 --multi 2016 --until 9` | The tool kit, the shed door, the repair menu | **PASS** (7min) |
+| `--stage 9 --multi 2031 --until 11` | Nulodion, and the hand-back | **PASS** (4min) |
+| `--stage 4 --multi 2016 --at 2620,9797,0` | Resuming from inside the cave | **PASS** (12min, QP 0→1) |
+| `--stage 0` | Start to finish | **PASS** (17min, QP 0→1) |
+
 ## Elemental Workshop — harness recipes and combat floor search
 
 Polish goal (all quests with non-required combat): find the **bare minimum**

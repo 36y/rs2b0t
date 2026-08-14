@@ -15,6 +15,7 @@ import { waterfall } from './waterfall.js';
 import { goblindiplomacy } from './goblindiplomacy.js';
 import { demonslayer } from './demonslayer.js';
 import { witchshouse } from './witchshouse.js';
+import { dwarfcannon } from './dwarfcannon/index.js';
 import { merlinscrystal } from './merlinscrystal.js';
 import { priestperil } from './priestperil.js';
 import { blackknight } from './blackknight.js';
@@ -34,7 +35,7 @@ import { horror } from './horror/index.js';
 
 // Why: Dragon Slayer is last, as it is gated at 32 quest points and the queue has to earn them on the way past everything else before it becomes runnable.
 // Why: Death Plateau comes before Troll Stronghold, which requires it complete.
-export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, knightssword, sheepshearer, restlessghost, cooksassistant, impcatcher, ernest, hetty, romeojuliet, princeali, piratestreasure, waterfall, goblindiplomacy, demonslayer, witchshouse, merlinscrystal, priestperil, blackknight, druidicritual, lostcity, touristtrap, watchtower, vampireslayer, junglepotion, shilo, elementalworkshop, deathplateau, trollstronghold, familycrest, horror, dragonslayer];
+export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, knightssword, sheepshearer, restlessghost, cooksassistant, impcatcher, ernest, hetty, romeojuliet, princeali, piratestreasure, waterfall, goblindiplomacy, demonslayer, witchshouse, dwarfcannon, merlinscrystal, priestperil, blackknight, druidicritual, lostcity, touristtrap, watchtower, vampireslayer, junglepotion, shilo, elementalworkshop, deathplateau, trollstronghold, familycrest, horror, dragonslayer];
 
 export function defById(id: string): QuestModule | undefined {
     return QUEST_DEFS.find(d => d.record.id === id);

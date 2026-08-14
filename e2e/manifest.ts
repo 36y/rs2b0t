@@ -103,6 +103,13 @@ export const CASES: readonly Case[] = [
         status: 'unvetted'
     },
     {
+        id: 'dwarf-cannon-254-live',
+        harness: 'dwarf-cannon-254-live.ts',
+        covers: { scripts: ['AIOQuester'] },
+        status: 'unvetted',
+        budgetMin: 60
+    },
+    {
         id: 'entrana-gear-368-live',
         harness: 'entrana-gear-368-live.ts',
         covers: { subsystems: ['world'] },
