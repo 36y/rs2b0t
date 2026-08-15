@@ -222,6 +222,16 @@ export const CASES: readonly Case[] = [
         status: 'unvetted'
     },
     {
+        id: 'hazeel-cult-248-live',
+        harness: 'hazeel-cult-248-live.ts',
+        covers: { scripts: ['AIOQuester'], subsystems: ['quests'] },
+        status: 'vetted',
+        budgetMin: 45,
+        provenAt: 'a8fa0762',
+        documentedIn: 'docs/reference/quest-harness-recipes-8.md',
+        note: 'clean account to journal complete in 4min at --tick 200, no parks; --stage is %hazeelcultquest'
+    },
+    {
         id: 'herblore-secondaries-test',
         harness: 'herblore-secondaries-test.ts',
         covers: { scripts: ['HerbloreSecondaries'] },
