@@ -485,6 +485,16 @@ export const CASES: readonly Case[] = [
         status: 'unvetted'
     },
     {
+        id: 'sea-slug-259-live',
+        harness: 'sea-slug-259-live.ts',
+        covers: { scripts: ['AIOQuester'], subsystems: ['quests'] },
+        status: 'vetted',
+        provenAt: '8b21aef5',
+        budgetMin: 45,
+        documentedIn: 'docs/reference/quest-harness-recipes-5.md',
+        note: 'Sea Slug start to finish in 5 minutes at --tick 200; --stage writes %seaslugquest straight'
+    },
+    {
         id: 'shantay-pass-route-test',
         harness: 'shantay-pass-route-test.ts',
         covers: { subsystems: ['nav', 'world'] },

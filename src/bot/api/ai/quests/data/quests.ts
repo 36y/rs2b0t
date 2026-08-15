@@ -520,7 +520,7 @@ export const QUESTS: QuestRecord[] = [
         id: 'seaslug',
         name: 'Sea Slug Quest',
         questPoints: 1,
-        requirements: {},
+        requirements: { skills: [{ skill: 'firemaking', level: 30 }] },
         items: []
     },
     {
