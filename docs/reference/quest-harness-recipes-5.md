@@ -1,6 +1,6 @@
 [Manual](../README.md) › [Testing](../TESTING.md) › Quest harness recipes
 
-# Quest harness recipes (P–Z)
+# Quest harness recipes (P–R)
 
 Per-quest seed and stage commands, with what each recipe has proven.
 
@@ -103,47 +103,13 @@ Five details govern this harness:
   silence when none is within 14 tiles, so a `--stage 27` leg that lands on an empty
   street logs the wait rather than the crossing.
 
-## Sea Slug — stage-scoped harness
-
-[`e2e/sea-slug-259-live.ts`](../../e2e/sea-slug-259-live.ts) drives the quest from a
-clean account or from any point inside it. `--stage N` writes `%seaslugquest`
-straight, 0 to 11, then relogs so the quest list recolours.
-
-```sh
-HEADED=1 bun e2e/sea-slug-259-live.ts --stage 0 --until 12 --minutes 40 --tick 200  # end to end
-HEADED=1 bun e2e/sea-slug-259-live.ts --stage 0 --until 3 --minutes 15 --tick 200   # Caroline, Holgart, the Khazard paste
-HEADED=1 bun e2e/sea-slug-259-live.ts --stage 3 --until 6 --minutes 15 --tick 200   # the ladder, the crates, Kent
-HEADED=1 bun e2e/sea-slug-259-live.ts --stage 6 --until 8 --minutes 20 --tick 200   # Bailey's torch and the rub
-HEADED=1 bun e2e/sea-slug-259-live.ts --stage 8 --until 12 --minutes 20 --tick 200  # the panel, the crane, the reward
-```
-
-The bank holds coins and food alone. The swamp paste is bought at the Khazard
-counter, and the torch, the damp sticks and the broken glass all have sources on the
-platform.
-
-Measured at `--tick 200`, no parks: **5 minutes** from a clean account to quest
-complete. Per leg — stages 3 to 6 in 2 minutes, stage 6 to complete in 3.
-
-Four details govern this harness:
-
-- **`--stage` is the raw varp.** Every step of this quest is a `%seaslugquest` write
-  and nothing else, so one `setvar` seeds any point in it. The relog is what makes the
-  quest list agree with the varp.
-- **Stages 7-10 are seeded with an unlit torch.** Bailey replaces a lost torch on
-  stages 7-9 and has no line at all on stage 10, so a torchless seed there can neither
-  climb the ladder nor ask for a replacement.
-- **Stats are 70 rather than maxed.** Nothing on this quest fights — every sea slug
-  and fisherman is `vislevel=hide` — and the only damage in it is the 4 for climbing
-  the ladder without a lit torch.
-- **It fails in the first minute if the loaded bundle has no Sea Slug in its queue.**
-  The engine serves one `public/bot`, and a concurrent session that deploys while this
-  harness boots hands the run their branch instead.
-
 ## See also
 
 - [Quest harness recipes (A–D)](quest-harness-recipes.md)
 - [Quest harness recipes (E)](quest-harness-recipes-4.md)
 - [Quest harness recipes (F–H)](quest-harness-recipes-2.md)
-- [Quest harness recipes (I–O)](quest-harness-recipes-3.md)
+- [Quest harness recipes (I–L)](quest-harness-recipes-3.md)
+- [Quest harness recipes (M–O)](quest-harness-recipes-6.md)
+- [Quest harness recipes (S–Z)](quest-harness-recipes-7.md)
 - [Quest harness method](quest-harness-method.md)
 - [Seeding test accounts](seeding-test-accounts.md)

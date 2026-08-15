@@ -48,4 +48,4 @@ Ten, and the first three are all the same mistake — trusting a coordinate.
 ## See also
 
 - [Quest pitfalls](quest-pitfalls.md) — the map
-- [Sea Slug harness recipe](../reference/quest-harness-recipes-5.md)
+- [Sea Slug harness recipe](../reference/quest-harness-recipes-7.md)
