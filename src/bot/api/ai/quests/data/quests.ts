@@ -368,11 +368,9 @@ export const QUESTS: QuestRecord[] = [
     {
         id: 'fishingcompo', name: 'Fishing Contest', questPoints: 1,
         requirements: { skills: [{ skill: 'fishing', level: 10 }] },
-        items: [
-            { name: 'Garlic', qty: 1, kind: 'mustHave' },
-            { name: 'Fishing rod', qty: 1, kind: 'mustHave' },
-            { name: 'Red vine worm', qty: 1, kind: 'acquirable' }
-        ]
+        // The garlic, rod, spade and worms are sourced per stage by the module, which
+        // walks Draynor → Falador → Catherby → McGrubor's Wood in that order anyway.
+        items: []
     },
     {
         id: 'fluffs', name: "Gertrude's Cat", questPoints: 1,

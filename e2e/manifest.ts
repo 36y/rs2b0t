@@ -176,6 +176,16 @@ export const CASES: readonly Case[] = [
         status: 'unvetted'
     },
     {
+        id: 'fishing-contest-244-live',
+        harness: 'fishing-contest-244-live.ts',
+        covers: { scripts: ['AIOQuester'] },
+        status: 'vetted',
+        budgetMin: 15,
+        provenAt: '8b21aef5',
+        documentedIn: 'docs/reference/quest-harness-recipes-2.md',
+        note: 'uncheated --stage 0 --until 5 finished in 6 minutes at --tick 150; --stage is %fishingcompo'
+    },
+    {
         id: 'gatheringbot-cooker-pair-test',
         harness: 'gatheringbot-cooker-pair-test.ts',
         covers: { scripts: ['GatheringBot'] },
@@ -255,7 +265,7 @@ export const CASES: readonly Case[] = [
         covers: { scripts: ['AIOQuester'] },
         status: 'documented',
         budgetMin: 90,
-        documentedIn: 'docs/reference/quest-harness-recipes-2.md'
+        documentedIn: 'docs/reference/quest-harness-recipes-6.md'
     },
     {
         id: 'hosted-proof-test',

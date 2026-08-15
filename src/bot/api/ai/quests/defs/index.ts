@@ -42,6 +42,7 @@ import { monksfriend } from './monksfriend.js';
 import { seaslug } from './seaslug/index.js';
 import { murder } from './murder/index.js';
 import { tribaltotem } from './tribaltotem.js';
+import { fishingcontest } from './fishingcontest/index.js';
 
 // Why: Dragon Slayer is last, as it is gated at 32 quest points and the queue has to earn them on the way past everything else before it becomes runnable.
 // Why: Death Plateau comes before Troll Stronghold, which requires it complete.
@@ -49,7 +50,8 @@ import { tribaltotem } from './tribaltotem.js';
 // Why: Shield of Arrav sits late among the free quests — it is the one quest that stalls without a partner or a banked certificate, so the queue should bank the others first.
 // Why: Tribal Totem sits with the other Ardougne quests — no quest requires it, and its 21 Thieving gate is eligibility's job rather than the order's.
 // Why: Hazeel Cult follows Plague City for the same reason Family Crest does — every leg of it is in Ardougne, so the teleport Plague City unlocks pays for all of them.
-export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, knightssword, sheepshearer, restlessghost, cooksassistant, impcatcher, ernest, hetty, romeojuliet, princeali, piratestreasure, shieldofarrav, waterfall, goblindiplomacy, demonslayer, witchshouse, dwarfcannon, clocktower, monksfriend, merlinscrystal, priestperil, druidspirit, blackknight, druidicritual, lostcity, touristtrap, watchtower, vampireslayer, junglepotion, shilo, elementalworkshop, deathplateau, trollstronghold, plaguecity, hazeelcult, tribaltotem, familycrest, horror, fightarena, seaslug, murder, dragonslayer];
+// Why: Fishing Contest follows Vampire Slayer, which is the other quest that empties Morgan's cupboard, so the two Draynor legs run back to back.
+export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, knightssword, sheepshearer, restlessghost, cooksassistant, impcatcher, ernest, hetty, romeojuliet, princeali, piratestreasure, shieldofarrav, waterfall, goblindiplomacy, demonslayer, witchshouse, dwarfcannon, clocktower, monksfriend, merlinscrystal, priestperil, druidspirit, blackknight, druidicritual, lostcity, touristtrap, watchtower, vampireslayer, fishingcontest, junglepotion, shilo, elementalworkshop, deathplateau, trollstronghold, plaguecity, hazeelcult, tribaltotem, familycrest, horror, fightarena, seaslug, murder, dragonslayer];
 
 export function defById(id: string): QuestModule | undefined {
     return QUEST_DEFS.find(d => d.record.id === id);
