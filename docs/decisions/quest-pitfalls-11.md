@@ -48,6 +48,6 @@ Eight, and half of them are about the nav graph rather than the quest.
 
 - [Quest pitfalls](quest-pitfalls.md)
 - [More pitfalls](quest-pitfalls-2.md)
-- [Tribal Totem's harness recipe](../reference/quest-harness-recipes-7.md)
+- [Tribal Totem's harness recipe](../reference/quest-harness-recipes-9.md)
 - [Nav doors](../reference/nav-doors.md)
 - [Add a quest](../how-to/add-a-quest.md)

@@ -591,6 +591,14 @@ export const CASES: readonly Case[] = [
         status: 'unvetted'
     },
     {
+        id: 'tbwt-261-live',
+        harness: 'tbwt-261-live.ts',
+        covers: { scripts: ['AIOQuester'] },
+        status: 'documented',
+        budgetMin: 180,
+        documentedIn: 'docs/reference/quest-harness-recipes-9.md'
+    },
+    {
         id: 'thievingbot-test',
         harness: 'thievingbot-test.ts',
         covers: { scripts: ['ThievingBot'] },

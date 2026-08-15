@@ -111,6 +111,7 @@ Five details govern this harness:
 - [Quest harness recipes (H)](quest-harness-recipes-8.md)
 - [Quest harness recipes (I–L)](quest-harness-recipes-3.md)
 - [Quest harness recipes (M–O)](quest-harness-recipes-6.md)
-- [Quest harness recipes (S–Z)](quest-harness-recipes-7.md)
+- [Quest harness recipes (S)](quest-harness-recipes-7.md)
+- [Quest harness recipes (T)](quest-harness-recipes-9.md)
 - [Quest harness method](quest-harness-method.md)
 - [Seeding test accounts](seeding-test-accounts.md)

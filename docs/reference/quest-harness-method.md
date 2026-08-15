@@ -44,5 +44,6 @@ What every quest harness does, independent of which quest it drives.
 - [Quest harness recipes (I–L)](quest-harness-recipes-3.md)
 - [Quest harness recipes (M–O)](quest-harness-recipes-6.md)
 - [Quest harness recipes (P–R)](quest-harness-recipes-5.md)
-- [Quest harness recipes (S–Z)](quest-harness-recipes-7.md)
+- [Quest harness recipes (S)](quest-harness-recipes-7.md)
+- [Quest harness recipes (T)](quest-harness-recipes-9.md)
 - [Seeding test accounts](seeding-test-accounts.md)
