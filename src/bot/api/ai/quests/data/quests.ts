@@ -221,7 +221,9 @@ export const QUESTS: QuestRecord[] = [
     },
     {
         id: 'biohazard', name: 'Biohazard', questPoints: 3,
-        requirements: {},
+        requirements: { quests: ['elena'] },
+        // The vials, the sample, the gown, the key and the priest suit are all
+        // sourced per stage by the module, which owns its own inventory.
         items: []
     },
     {

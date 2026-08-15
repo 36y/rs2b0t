@@ -117,8 +117,6 @@
     {"x":2551,"z":3082,"level":0,"locId":1533,"locName":"Door","dir":"N"},
     {"x":2551,"z":3098,"level":0,"locId":1530,"locName":"Door","dir":"S"},
     {"x":2551,"z":3308,"level":0,"locId":1530,"locName":"Door","dir":"E"},
-    {"x":2551,"z":3320,"level":0,"locId":2036,"locName":"Door","dir":"N"},
-    {"x":2551,"z":3328,"level":0,"locId":2036,"locName":"Door","dir":"S"},
     {"x":2551,"z":3569,"level":0,"locId":1544,"locName":"Door","dir":"W"},
     {"x":2551,"z":3570,"level":0,"locId":1542,"locName":"Door","dir":"W"},
     {"x":2552,"z":3314,"level":0,"locId":1530,"locName":"Door","dir":"E"},

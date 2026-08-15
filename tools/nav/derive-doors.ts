@@ -77,6 +77,8 @@ function main(): void {
             // West Ardougne's plague house: loc_2534 answers "This door is locked." to everyone, and loc_2535 opens only for a warrant holder with a mourner in earshot, mid-conversation.
             // Why: baked as edges the pathfinder alternates between the two and crosses neither.
             'loc_2534', 'loc_2535',
+            // Why: the mourner headquarters' two doors are locked until the stew is poisoned and then open only to a worn doctor's gown behind an "In you go doc." the walker cannot answer, and baked as edges the route to the cauldron runs through the building — which is the one thing the stage needing the cauldron cannot do. The fence at 2541,3331 is the way in.
+            'mournerstewdoor',
             // Shield of Arrav's three hideout doors. Why: the weapon store answers Open with "The door is securely locked" and yields only to an oplocu with the key, while the other two refuse until you have joined and then p_teleport you through — none is an edge the walker can step.
             'phoenixdoor', 'phoenixdoor2', 'blackarmdoor'
         ]);
