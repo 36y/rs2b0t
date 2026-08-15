@@ -342,6 +342,15 @@ export const CASES: readonly Case[] = [
         note: 'import-fences.md names it as an ABI consumer, not as run instructions'
     },
     {
+        id: 'monks-friend-240-live',
+        harness: 'monks-friend-240-live.ts',
+        covers: { scripts: ['AIOQuester'] },
+        status: 'vetted',
+        budgetMin: 30,
+        provenAt: '8b21aef5',
+        note: "Monk's Friend start to finish in 5 minutes at --tick 200; --stage is the raw %drunkmonkquest"
+    },
+    {
         id: 'mossgiant-dart-test',
         harness: 'mossgiant-dart-test.ts',
         covers: { scripts: ['MossGiant'] },
