@@ -90,6 +90,9 @@ function main(): void {
 
     const ONE_WAY_EXCLUDED = new Set([
         '3108,3353,0', '3109,3353,0',
+        // Handelmort Mansion's inner door: quest_totem.rs2 opens it only for a player north of it, and everything the mansion holds is reached by Cromperty's block instead.
+        // Why: baked both ways the pathfinder treats the mansion as a shortcut and the walker loops on "This door is securely locked"; the outward half is curated in travelCatalog.ts.
+        '2635,3321,0',
         // Gu'Tanoth's east gate: the ogre guard demands a bar of gold and teleports you down the hill otherwise, and nothing in the game needs that crossing.
         // Why: its north-west twin is left in — that guard refuses only until the relic is shown, after which the gate behaves as an ordinary door and everything west of it depends on the edge.
         '2549,3028,0', '2550,3028,0'

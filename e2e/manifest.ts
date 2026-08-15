@@ -590,6 +590,15 @@ export const CASES: readonly Case[] = [
         status: 'unvetted'
     },
     {
+        id: 'tribal-totem-262-live',
+        harness: 'tribal-totem-262-live.ts',
+        covers: { scripts: ['AIOQuester'] },
+        status: 'vetted',
+        budgetMin: 45,
+        provenAt: 'ea865e4d',
+        note: 'Tribal Totem start to finish in 5 minutes at --tick 200 on 70 stats; --stage is %totemquest and --combo skips the KURT lock'
+    },
+    {
         id: 'trollstronghold-264-live',
         harness: 'trollstronghold-264-live.ts',
         covers: { scripts: ['AIOQuester'] },
