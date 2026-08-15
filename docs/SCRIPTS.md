@@ -5,7 +5,7 @@
 
 # Bundled scripts
 
-- Scripts: 51. Categories: 19.
+- Scripts: 52. Categories: 19.
 - Source: [`src/bot/scripts/`](../src/bot/scripts/). API: [scripting API](API.md).
 - Settings are the parameters the panel exposes before a script starts.
 
@@ -24,7 +24,7 @@
 - [Money making](#money-making) — 2
 - [Navigation](#navigation) — 1
 - [Prayer](#prayer) — 1
-- [Quest](#quest) — 2
+- [Quest](#quest) — 3
 - [Runecrafting](#runecrafting) — 3
 - [Smithing](#smithing) — 2
 - [Thieving](#thieving) — 3
@@ -713,10 +713,24 @@ All-in-one quest completer — queues the implemented quests (empty selection = 
 
 | Setting | Type | Default | Notes |
 |---|---|---|---|
-| `quests` | string[] | `[]` | Quest queue (empty = all) — one of: Rune Mysteries Quest, Doric's Quest, The Knight's Sword, Sheep Shearer, The Restless Ghost, Cook's Assistant, Imp Catcher, Ernest the Chicken, Witch's Potion, Romeo & Juliet, Prince Ali Rescue, Pirate's Treasure, Waterfall Quest, Goblin Diplomacy, Demon Slayer, Witch's House, Dwarf Cannon, Clock Tower, Merlin's Crystal, Priest in Peril, Nature Spirit, Black Knight's Fortress, Druidic Ritual, Lost City, The Tourist Trap, Watch Tower, Vampire Slayer, Jungle Potion, Shilo Village, Elemental Workshop, Death Plateau, Troll Stronghold, Plague City, Family Crest, Horror from the Deep, Fight Arena, Dragon Slayer |
+| `quests` | string[] | `[]` | Quest queue (empty = all) — one of: Rune Mysteries Quest, Doric's Quest, The Knight's Sword, Sheep Shearer, The Restless Ghost, Cook's Assistant, Imp Catcher, Ernest the Chicken, Witch's Potion, Romeo & Juliet, Prince Ali Rescue, Pirate's Treasure, Shield of Arrav, Waterfall Quest, Goblin Diplomacy, Demon Slayer, Witch's House, Dwarf Cannon, Clock Tower, Merlin's Crystal, Priest in Peril, Nature Spirit, Black Knight's Fortress, Druidic Ritual, Lost City, The Tourist Trap, Watch Tower, Vampire Slayer, Jungle Potion, Shilo Village, Elemental Workshop, Death Plateau, Troll Stronghold, Plague City, Family Crest, Horror from the Deep, Fight Arena, Dragon Slayer |
 | `loadout` | string | `""` | Loadout — one of:  |
 | `food` | string | `"Lobster"` | Food — one of: Shark, Lobster, Swordfish, Tuna, Salmon, Trout, Pike, Bass, Herring, Sardine, Anchovies, Shrimps, Cooked meat, Cooked chicken, Bread, Stew, Cake, Chocolate cake, Plain pizza, Meat pizza, Anchovy pizza, Pineapple pizza, Redberry pie, Meat pie, Apple pie |
+| `arravGang` | string | `"random"` | Shield of Arrav gang — one of: random, phoenix, blackarm |
+| `arravPartner` | string | `""` | Shield of Arrav partner |
+| `arravCerts` | number (1–50) | `2` | Shield of Arrav certificates |
 | `verbose` | boolean | `true` | Verbose step log |
+
+### ArravSupplier
+
+Shield of Arrav certificate faucet — joins both gangs from one account, farms both shield halves and banks certificates for other bots; never redeems, so the chest and the curator keep working
+
+- Tags: `quest`, `shield of arrav`, `certificate`, `supplier`
+
+| Setting | Type | Default | Notes |
+|---|---|---|---|
+| `certTarget` | number (2–200) | `10` | Certificates to bank |
+| `partner` | string | `""` | Bootstrap key partner |
 
 ### Barcrawl
 

@@ -11,6 +11,7 @@ import { hetty } from './hetty.js';
 import { romeojuliet } from './romeojuliet.js';
 import { princeali } from './princeali/index.js';
 import { piratestreasure } from './piratestreasure/index.js';
+import { shieldofarrav } from './shieldofarrav/index.js';
 import { waterfall } from './waterfall.js';
 import { goblindiplomacy } from './goblindiplomacy.js';
 import { demonslayer } from './demonslayer.js';
@@ -40,7 +41,8 @@ import { clocktower } from './clocktower.js';
 // Why: Dragon Slayer is last, as it is gated at 32 quest points and the queue has to earn them on the way past everything else before it becomes runnable.
 // Why: Death Plateau comes before Troll Stronghold, which requires it complete.
 // Why: Plague City comes before Family Crest, whose Ardougne legs ride the teleport it unlocks.
-export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, knightssword, sheepshearer, restlessghost, cooksassistant, impcatcher, ernest, hetty, romeojuliet, princeali, piratestreasure, waterfall, goblindiplomacy, demonslayer, witchshouse, dwarfcannon, clocktower, merlinscrystal, priestperil, druidspirit, blackknight, druidicritual, lostcity, touristtrap, watchtower, vampireslayer, junglepotion, shilo, elementalworkshop, deathplateau, trollstronghold, plaguecity, familycrest, horror, fightarena, dragonslayer];
+// Why: Shield of Arrav sits late among the free quests — it is the one quest that stalls without a partner or a banked certificate, so the queue should bank the others first.
+export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, knightssword, sheepshearer, restlessghost, cooksassistant, impcatcher, ernest, hetty, romeojuliet, princeali, piratestreasure, shieldofarrav, waterfall, goblindiplomacy, demonslayer, witchshouse, dwarfcannon, clocktower, merlinscrystal, priestperil, druidspirit, blackknight, druidicritual, lostcity, touristtrap, watchtower, vampireslayer, junglepotion, shilo, elementalworkshop, deathplateau, trollstronghold, plaguecity, familycrest, horror, fightarena, dragonslayer];
 
 export function defById(id: string): QuestModule | undefined {
     return QUEST_DEFS.find(d => d.record.id === id);

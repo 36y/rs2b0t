@@ -22,6 +22,8 @@ import type { QuestModule } from '../../api/ai/quests/engine/types.js';
 import { ScriptRunner } from '../../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 import {
+    ARRAV_GANG_OPTIONS,
+    applyArravSettings,
     resolveSustainPolicy,
     selectSustainConsumable,
     type ResolvedSustainPolicy,
@@ -61,6 +63,30 @@ export const AIO_SETTINGS: SettingsSchema = {
         options: FOOD_OPTIONS,
         label: 'Food',
         help: 'what the engine withdraws for any quest declaring a food count, and what the bot eats; a loadout carrying its own food wins over this'
+    },
+    arravGang: {
+        type: 'string',
+        default: 'random',
+        options: [...ARRAV_GANG_OPTIONS],
+        label: 'Shield of Arrav gang',
+        group: 'Shield of Arrav',
+        help: 'which gang to join; random picks one from a hash of the character name, so the same character always picks the same gang'
+    },
+    arravPartner: {
+        type: 'string',
+        default: '',
+        label: 'Shield of Arrav partner',
+        group: 'Shield of Arrav',
+        help: 'character name of the bot running the other gang; the quest cannot be finished alone unless a certificate is already banked'
+    },
+    arravCerts: {
+        type: 'number',
+        default: 2,
+        min: 1,
+        max: 50,
+        label: 'Shield of Arrav certificates',
+        group: 'Shield of Arrav',
+        help: 'how many certificates to mint before redeeming one; each pair costs both bots a fresh shield half, and the surplus banks for other bots'
     },
     verbose: {
         type: 'boolean',
@@ -102,6 +128,11 @@ export default class AIOQuester extends TaskBot {
 
         QuestLoadout.current = selectedLoadout(this.settings);
         QuestFood.name = this.foodItem();
+        applyArravSettings({
+            gang: this.settings.str('arravGang', 'random'),
+            partner: this.settings.str('arravPartner', ''),
+            certs: this.settings.num('arravCerts', 2)
+        });
         Sustain.set(async () => { if (this.shouldEat()) { await this.eatOnce(); } });
         // A death must release the active quest operation before the engine can recover it.
         EventSignal.setInterrupt(() => this.skipRequested || this.died);

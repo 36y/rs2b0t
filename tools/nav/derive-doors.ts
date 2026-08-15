@@ -76,7 +76,9 @@ function main(): void {
             'ctratgatea',
             // West Ardougne's plague house: loc_2534 answers "This door is locked." to everyone, and loc_2535 opens only for a warrant holder with a mourner in earshot, mid-conversation.
             // Why: baked as edges the pathfinder alternates between the two and crosses neither.
-            'loc_2534', 'loc_2535'
+            'loc_2534', 'loc_2535',
+            // Shield of Arrav's three hideout doors. Why: the weapon store answers Open with "The door is securely locked" and yields only to an oplocu with the key, while the other two refuse until you have joined and then p_teleport you through — none is an edge the walker can step.
+            'phoenixdoor', 'phoenixdoor2', 'blackarmdoor'
         ]);
         const label = `${type.name ?? ''} ${type.debugname ?? ''}`.toLowerCase();
         if (label.includes('locked') || (type.debugname ?? '').startsWith('macro_') || SCRIPT_REFUSED.has(type.debugname ?? '')) {

@@ -102,6 +102,36 @@ Measured end to end at `--tick 200`: **19 minutes, 37 steps, no parks** — walk
 with no teleports. Roughly half of that is the Mort Myre ↔ Al Kharid round trip the
 silver sickle costs.
 
+## Shield of Arrav
+
+Two harnesses, because one account cannot finish the quest.
+
+[`e2e/shield-of-arrav-232-live.ts`](../../e2e/shield-of-arrav-232-live.ts) drives one gang
+side. Two varps, seeded one at a time — `~completequests` opens a gang-choice dialog
+nothing answers and completes nothing:
+
+```
+--gang phoenix|blackarm   which side to run
+--phoenix N --blackarm N  seed both varps, then relog
+--until N                 target varp value
+--want-half               assert a Broken shield lands in the pack instead
+```
+
+`--want-half` exists because the half-farming legs move no varp: the chest and the
+cupboard hand over an object and nothing else changes. Asserting the varp there passes
+before the leg has run.
+
+It must **not** assert `journal === 'complete'` — a lone account can never redeem. At
+`--gang blackarm --blackarm 2` it seeds a `phoenixkey2` into the bank and says so: only
+Straven issues one, and joining Phoenix makes Katrine refuse you, so that stage is not
+self-sufficient by construction.
+
+[`e2e/shield-of-arrav-pair-232-live.ts`](../../e2e/shield-of-arrav-pair-232-live.ts) is the
+only run that turns the journal green. One `browser.newContext()` per account, because
+settings live in `sessionStorage` keyed `rs2b0t:set:<Script>:<key>` and a shared context
+cross-contaminates the two bots. PASS wants all four: `phoenixgang = 10`,
+`blackarmgang = 4`, and both journals green.
+
 ## See also
 
 - [Quest harness recipes (A–D)](quest-harness-recipes.md)

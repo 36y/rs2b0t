@@ -66,6 +66,7 @@ import ShopBuyout, { SHOPBUYOUT_SETTINGS } from './ShopBuyout/ShopBuyout.js';
 import FlaxRunner, { SETTINGS as FLAXRUNNER_SETTINGS } from './FlaxRunner/FlaxRunner.js';
 import { ShopRunner, SHOPRUNNER_SETTINGS } from './ShopRunner/ShopRunner.js';
 import AIOTeleport, { SETTINGS as AIOTELEPORT_SETTINGS } from './AIOTeleport/AIOTeleport.js';
+import ArravSupplier, { ARRAV_SUPPLIER_SETTINGS } from './ArravSupplier/ArravSupplier.js';
 import Barcrawl from './Barcrawl/Barcrawl.js';
 import DuelArena, { DUEL_ARENA_SETTINGS } from './DuelArena/DuelArena.js';
 
@@ -86,6 +87,15 @@ ScriptRegistry.register({
     tags: ['quest', 'queue', 'aio'],
     settingsSchema: AIO_SETTINGS,
     create: () => new AIOQuester()
+});
+
+ScriptRegistry.register({
+    name: 'ArravSupplier',
+    description: 'Shield of Arrav certificate faucet — joins both gangs from one account, farms both shield halves and banks certificates for other bots; never redeems, so the chest and the curator keep working',
+    category: 'Quest',
+    tags: ['quest', 'shield of arrav', 'certificate', 'supplier'],
+    settingsSchema: ARRAV_SUPPLIER_SETTINGS,
+    create: () => new ArravSupplier()
 });
 
 ScriptRegistry.register({
