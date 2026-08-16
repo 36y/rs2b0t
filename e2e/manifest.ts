@@ -396,6 +396,15 @@ export const CASES: readonly Case[] = [
         note: "Monk's Friend start to finish in 5 minutes at --tick 200; --stage is the raw %drunkmonkquest"
     },
     {
+        id: 'mortton-255-live',
+        harness: 'mortton-255-live.ts',
+        covers: { scripts: ['AIOQuester'], subsystems: ['quests'] },
+        status: 'vetted',
+        provenAt: '929f506d',
+        budgetMin: 120,
+        documentedIn: 'docs/reference/quest-harness-recipes-3.md'
+    },
+    {
         id: 'mossgiant-dart-test',
         harness: 'mossgiant-dart-test.ts',
         covers: { scripts: ['MossGiant'] },
