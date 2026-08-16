@@ -50,6 +50,7 @@ import { treegnome } from './treegnome/index.js';
 import { mortton } from './mortton/index.js';
 import { gertrudescat } from './gertrudescat.js';
 import { grandtree } from './grandtree/index.js';
+import { scorpcatcher } from './scorpcatcher/index.js';
 
 // Why: Dragon Slayer is last, as it is gated at 32 quest points and the queue has to earn them on the way past everything else before it becomes runnable.
 // Why: Death Plateau comes before Troll Stronghold, which requires it complete.
@@ -63,7 +64,8 @@ import { grandtree } from './grandtree/index.js';
 // Why: Holy Grail follows Merlin's Crystal, which is its prerequisite and the only source of the Excalibur its one fight needs.
 // Why: Shades of Mort'ton follows Nature Spirit, whose gate-guard unlock is what opens Mort Myre and so the only road south to Mort'ton.
 // Why: The Grand Tree sits beside Tree Gnome Village so the two gnome-area quests run back to back — no quest requires it, and its 25 Agility gate is eligibility's job rather than the order's.
-export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, knightssword, sheepshearer, restlessghost, cooksassistant, impcatcher, ernest, hetty, romeojuliet, princeali, piratestreasure, shieldofarrav, gertrudescat, waterfall, goblindiplomacy, demonslayer, witchshouse, dwarfcannon, clocktower, monksfriend, merlinscrystal, holygrail, priestperil, druidspirit, mortton, blackknight, druidicritual, lostcity, touristtrap, watchtower, vampireslayer, fishingcontest, junglepotion, tbwt, shilo, elementalworkshop, deathplateau, trollstronghold, plaguecity, biohazard, hazeelcult, tribaltotem, familycrest, horror, fightarena, seaslug, murder, treegnome, grandtree, dragonslayer];
+// Why: Scorpion Catcher comes after Horror from the Deep, which is the other quest built on the barcrawl — running it second finds the outpost gate already open.
+export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, knightssword, sheepshearer, restlessghost, cooksassistant, impcatcher, ernest, hetty, romeojuliet, princeali, piratestreasure, shieldofarrav, gertrudescat, waterfall, goblindiplomacy, demonslayer, witchshouse, dwarfcannon, clocktower, monksfriend, merlinscrystal, holygrail, priestperil, druidspirit, mortton, blackknight, druidicritual, lostcity, touristtrap, watchtower, vampireslayer, fishingcontest, junglepotion, tbwt, shilo, elementalworkshop, deathplateau, trollstronghold, plaguecity, biohazard, hazeelcult, tribaltotem, familycrest, horror, scorpcatcher, fightarena, seaslug, murder, treegnome, grandtree, dragonslayer];
 
 export function defById(id: string): QuestModule | undefined {
     return QUEST_DEFS.find(d => d.record.id === id);

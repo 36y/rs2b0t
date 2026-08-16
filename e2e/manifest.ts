@@ -78,6 +78,12 @@ export const CASES: readonly Case[] = [
         note: 'Clock Tower start to finish in 6 minutes at --tick 200; --stage counts placed cogs'
     },
     {
+        id: 'scorpion-catcher-258-live',
+        harness: 'scorpion-catcher-258-live.ts',
+        covers: { scripts: ['AIOQuester'] },
+        status: 'unvetted'
+    },
+    {
         id: 'coaltrucks-test',
         harness: 'coaltrucks-test.ts',
         covers: { scripts: ['CoalTrucks'] },
