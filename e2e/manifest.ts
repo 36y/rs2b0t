@@ -276,6 +276,15 @@ export const CASES: readonly Case[] = [
         status: 'unvetted'
     },
     {
+        id: 'holy-grail-246-live',
+        harness: 'holy-grail-246-live.ts',
+        covers: { scripts: ['AIOQuester'] },
+        status: 'vetted',
+        budgetMin: 90,
+        provenAt: '8b21aef5',
+        note: 'Holy Grail start to finish in 26 minutes at --tick 200; --stage takes the %grail values quest_grail.constant uses'
+    },
+    {
         id: 'horror-deep-216-live',
         harness: 'horror-deep-216-live.ts',
         covers: { scripts: ['AIOQuester'] },

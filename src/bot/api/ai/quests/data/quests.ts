@@ -385,8 +385,10 @@ export const QUESTS: QuestRecord[] = [
     },
     {
         id: 'grail', name: 'Holy Grail', questPoints: 2,
-        requirements: {},
-        items: []
+        requirements: { quests: ['arthur'] },
+        items: [
+            { name: 'Excalibur', qty: 1, kind: 'acquirable' }
+        ]
     },
     {
         id: 'grandtree', name: 'The Grand Tree', questPoints: 5,
