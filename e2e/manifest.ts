@@ -643,6 +643,13 @@ export const CASES: readonly Case[] = [
         status: 'unvetted'
     },
     {
+        id: 'treegnome-263-live',
+        harness: 'treegnome-263-live.ts',
+        covers: { scripts: ['AIOQuester'] },
+        status: 'unvetted',
+        budgetMin: 120
+    },
+    {
         id: 'tribal-totem-262-live',
         harness: 'tribal-totem-262-live.ts',
         covers: { scripts: ['AIOQuester'] },

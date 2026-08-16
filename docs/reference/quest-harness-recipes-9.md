@@ -54,6 +54,42 @@ Four details govern this harness:
 
 What the live runs paid for is in [Tai Bwo Wannai Trio's pitfalls](../decisions/quest-pitfalls-14.md).
 
+## Tree Gnome Village — stage-scoped harness
+
+[`e2e/treegnome-263-live.ts`](../../e2e/treegnome-263-live.ts) drives the quest from a
+clean account or from any point inside it. `--stage N` sets `%treequest`, hands over the
+orb that stage assumes was already won, and relogs; `--lost-orb` withholds it.
+
+```sh
+HEADED=1 bun e2e/treegnome-263-live.ts --stage 0 --until 9 --minutes 90 --tick 200  # end to end
+HEADED=1 bun e2e/treegnome-263-live.ts --stage 0 --until 4 --minutes 45 --tick 200  # Bolren, Montai, the axe, six logs
+HEADED=1 bun e2e/treegnome-263-live.ts --stage 4 --until 7 --minutes 30 --tick 200  # ballista, breach, chest, Bolren
+HEADED=1 bun e2e/treegnome-263-live.ts --stage 7 --until 9 --minutes 45 --tick 200  # the warlord and the hand-back
+HEADED=1 bun e2e/treegnome-263-live.ts --stage 6 --until 9 --minutes 45 --lost-orb  # the chest again after a lost orb
+```
+
+Measured at `--tick 200` on 70 stats, no parks:
+
+| Stages | Minutes | Covers |
+|---|---|---|
+| 0 → 4 | 5 | Bolren through the railing, Montai, Aemad's axe, six logs |
+| 4 → 7 | 3 | the ballista, the crumbled wall, the inner door, the chest, Bolren |
+| 7 → 9 | 3 | the warlord and both orbs back to Bolren |
+| 0 → 9 | 8 | a clean account to `QUEST COMPLETE!` |
+
+Four details govern this harness:
+
+- **The bank holds coins, food and a rune melee kit.** The axe, the six logs and both
+  orbs have a source in the world; seeding one would hide whether the bot can find it.
+- **Stats are 70 rather than max.** Prayer 70 covers Protect from Melee, which is what
+  makes the warlord a fight the bot walks away from at full health.
+- **It runs on `:8890`.** `givebank` is inert there and every seed falls through to
+  `~bankitem`, which the helper verifies at a booth before trusting it.
+- **The quest is members-only, and the run deploys its own client.** A neighbouring
+  harness writing `public/bot/` mid-boot would otherwise decide which branch runs.
+
+What the live runs paid for is in [Tree Gnome Village's pitfalls](../decisions/quest-pitfalls-17.md).
+
 ## Tribal Totem — stage-scoped harness
 
 [`e2e/tribal-totem-262-live.ts`](../../e2e/tribal-totem-262-live.ts) drives the quest from a
