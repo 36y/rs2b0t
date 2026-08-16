@@ -430,7 +430,10 @@ export const QUESTS: QuestRecord[] = [
     },
     {
         id: 'itgronigen', name: 'Observatory Quest', questPoints: 2,
-        requirements: {},
+        // Why: the server gates nothing — `craft_telescope_disc` carries no level check — but the quest is listed at Crafting 10 and the eligibility view should say so.
+        requirements: { skills: [{ skill: 'crafting', level: 10 }] },
+        // Why: the professor takes the planks, the bar, the glass and the mould one stage at a time and deletes each as it lands, so a provisioning list would re-fetch items the quest has already spent.
+        // Why: the module sources every one of them itself, bank first.
         items: []
     },
     {

@@ -485,7 +485,7 @@ export const CASES: readonly Case[] = [
         covers: { scripts: ['AIOQuester'] },
         status: 'documented',
         budgetMin: 120,
-        documentedIn: 'docs/reference/quest-harness-recipes-6.md'
+        documentedIn: 'docs/reference/quest-harness-recipes-14.md'
     },
     {
         id: 'nav-path-paint-live',
@@ -520,6 +520,15 @@ export const CASES: readonly Case[] = [
         harness: 'nav-two-route-smoke-live.ts',
         covers: { subsystems: ['nav'] },
         status: 'unvetted'
+    },
+    {
+        id: 'observatory-252-live',
+        harness: 'observatory-252-live.ts',
+        covers: { scripts: ['AIOQuester'], subsystems: ['quests'] },
+        status: 'vetted',
+        budgetMin: 90,
+        provenAt: '8b21aef5',
+        note: 'Observatory Quest start to finish in 14 minutes at --tick 200, 70 stats; --stage is the raw %itgronigen'
     },
     {
         id: 'route-walk-live',
