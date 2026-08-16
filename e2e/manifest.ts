@@ -621,6 +621,13 @@ export const CASES: readonly Case[] = [
         status: 'unvetted'
     },
     {
+        id: 'sheep-herder-260-live',
+        harness: 'sheep-herder-260-live.ts',
+        covers: { scripts: ['AIOQuester'], subsystems: ['quests'] },
+        status: 'unvetted',
+        budgetMin: 90
+    },
+    {
         id: 'shield-of-arrav-232-live',
         harness: 'shield-of-arrav-232-live.ts',
         covers: { scripts: ['AIOQuester'], subsystems: ['quests'] },
