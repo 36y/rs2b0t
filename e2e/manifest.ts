@@ -153,6 +153,15 @@ export const CASES: readonly Case[] = [
         budgetMin: 60
     },
     {
+        id: 'eadgar-ruse-241-live',
+        harness: 'eadgar-ruse-241-live.ts',
+        covers: { scripts: ['AIOQuester'] },
+        status: 'documented',
+        budgetMin: 180,
+        documentedIn: 'docs/reference/quest-harness-recipes-4.md',
+        note: "Eadgar's Ruse leg by leg at --tick 200; --stage jumps %eadgar_quest, --unfreed exercises the free-Eadgar recovery"
+    },
+    {
         id: 'entrana-gear-368-live',
         harness: 'entrana-gear-368-live.ts',
         covers: { subsystems: ['world'] },

@@ -2,6 +2,8 @@
 
 # Quest harness recipes (E)
 
+Elemental Workshop, Ernest the Chicken and Eadgar's Ruse.
+
 Per-quest seed and stage commands, with what each recipe has proven.
 
 ## Elemental Workshop — harness recipes and combat floor search
@@ -87,6 +89,44 @@ HEADED=1 bun e2e/aio-quest-test.ts http://localhost:8890 ewprobe elemental_works
 
 Expect `check the bank` / `withdraw` after book/key. After journal **ENTERED**,
 death recovery re-enters with **Push** (no key) and re-withdraws bank tools.
+
+## Eadgar's Ruse — harness recipes
+
+[`e2e/eadgar-ruse-241-live.ts`](../../e2e/eadgar-ruse-241-live.ts), base `:8890`.
+The bank gets coins, food, a rune kit and **one ranarr weed** — no 2004 shop sells a
+ranarr or a ranarr potion (unf), and everything else the quest wants (the boots, the
+knife, the pineapple, the vodka, the axe, the pestle, the tinderbox, the logs, the
+chickens, the grain) has to be sourced by the run.
+
+| Flag | What it changes |
+|---|---|
+| `--stage N` | `%eadgar_quest`, then relogs so the journal recolours |
+| `--until N` | stop at that stage; `>= 110` waits for the journal to go green |
+| `--at x,z,level` | start tile, so an inner leg skips the walk in |
+| `--pack` | boots, food, a scimitar and coins straight to the inventory |
+| `--unfreed` | leaves `troll_freed_eadgar` clear, so the free-Eadgar recovery runs |
+| `--paint` | draws the planned route in red and the client's own leg in cyan |
+
+```sh
+HEADED=1 bun e2e/eadgar-ruse-241-live.ts --stage 0 --minutes 180 --tick 200
+HEADED=1 bun e2e/eadgar-ruse-241-live.ts --stage 25 --until 50 --at 2890,10086,2 --pack --minutes 45 --tick 200
+HEADED=1 bun e2e/eadgar-ruse-241-live.ts --stage 70 --until 110 --minutes 90 --tick 200
+```
+
+Measured at `--tick 200`, with 70 in every skill and the bank seed above:
+
+| Leg | What it proves | Time |
+|---|---|---|
+| `--stage 0 --until 10` | Sanfew's offer, and buying the boots from Tenzing | 3 min |
+| `--stage 10 --until 15` | the walk onto Trollheim and into Mad Eadgar's cave | 5 min |
+| `--stage 15 --until 25` | the stronghold kitchen and Burntmeat | 2 min |
+| `--stage 25 --until 50` | the parrot chain end to end, three counters and two kingdoms | 16 min |
+| `--stage 70 --until 110` | robe, potion, parrot back, fake man, storeroom, Sanfew | 42 min |
+
+It deploys its own copy of the client through
+[`deployIsolatedClient`](../../e2e/lib/harness.ts), which this quest needs more than most:
+it adds three transport edges, and a neighbouring session's deploy landing in the shared
+`public/bot` shows up only as `no path to (2890,10086,2): unreachable`.
 
 ## See also
 
