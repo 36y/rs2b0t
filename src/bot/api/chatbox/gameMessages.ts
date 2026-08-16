@@ -7,6 +7,11 @@ export const CANT_REACH = /^i can't reach that/i;
 
 const CAP = 64;
 
+function matches(pattern: RegExp, text: string): boolean {
+    pattern.lastIndex = 0;
+    return pattern.test(text);
+}
+
 class GameMessagesImpl {
     private ring: GameMessage[] = [];
     private lastSeq = 0;
@@ -27,7 +32,11 @@ class GameMessagesImpl {
     }
 
     sawSince(mark: number, pattern: RegExp): boolean {
-        return this.ring.some(m => m.seq > mark && pattern.test(m.text));
+        return this.ring.some(m => m.seq > mark && matches(pattern, m.text));
+    }
+
+    firstSince(mark: number, pattern: RegExp): GameMessage | undefined {
+        return this.ring.find(m => m.seq > mark && matches(pattern, m.text));
     }
 
     /** Newest-first slice of the ring (for death / failure dumps). */

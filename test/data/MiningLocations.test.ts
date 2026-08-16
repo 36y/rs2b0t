@@ -72,6 +72,11 @@ describe('resolveMiningLocation', () => {
         expect(loc?.notes).toContain('no Brass key required');
     });
 
+    test('Desert Mining Camp exposes every ore verified in its underground scene', () => {
+        const loc = resolveMiningLocation('desert mining camp', new Tile(0, 0, 0));
+        expect(loc?.resources).toEqual(['copper', 'tin', 'mithril', 'adamantite']);
+    });
+
     test('named Wilderness Skeleton Mine selects the verified coal field', () => {
         const loc = resolveMiningLocation('WILDERNESS SKELETON MINE', new Tile(0, 0, 0));
         expect(loc?.name).toBe('Wilderness Skeleton Mine');
