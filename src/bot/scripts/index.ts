@@ -652,9 +652,9 @@ ScriptRegistry.register({
 
 ScriptRegistry.register({
     name: 'HillGiant',
-    description: 'Edgeville dungeon hill giants — fetches the brass key if the bank has none, unlocks the hut, and banks limpwurt roots and big bones at Varrock West',
+    description: 'Edgeville dungeon hill giants — enters through the public trapdoor and banks limpwurt roots and big bones at Edgeville',
     category: 'Combat',
-    tags: ['combat', 'giants', 'edgeville', 'varrock', 'banking', 'looting'],
+    tags: ['combat', 'giants', 'edgeville', 'banking', 'looting'],
     settingsSchema: HILL_GIANT_SETTINGS,
     create: () => new HillGiant()
 });

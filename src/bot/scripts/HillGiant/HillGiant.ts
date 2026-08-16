@@ -23,20 +23,15 @@ import { Npcs, type Npc } from '../../api/npcs/Npcs.js';
 import { matchesEntityName } from '../../api/query/Query.js';
 import { ScriptRunner } from '../../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
-import { BIG_BONES, BRASS_KEY, LIMPWURT, PIT_SPOTS, bonesAction, isHillGiantKill, keepOnDeposit, pickSpot, shouldBank, shouldEatForSpace, tripNeeds } from './HillGiantLogic.js';
+import { BIG_BONES, LIMPWURT, PIT_SPOTS, bonesAction, isHillGiantKill, keepOnDeposit, pickSpot, shouldBank, shouldEatForSpace, tripNeeds } from './HillGiantLogic.js';
 import { scriptFood } from '../../api/loadout/loadoutPlan.js';
 import { LOADOUT_SETTING } from '../../api/loadout/loadoutSetting.js';
 
 const TARGET = 'Giant';
 
-// Why: on a rev-274 engine the hut door opens by using the key on it — oploc1 only says "The door is locked".
-// Why: the ladder inside the hut drops into the Edgeville dungeon giant pit.
-// Why: Varrock West is closer to the Edgeville dungeon hut than East (#428).
-const BANK_TILE = new Tile(3185, 3440, 0);
-const HUT_DOOR = new Tile(3115, 3450, 0);
-const HUT_LADDER = new Tile(3116, 3452, 0);
-const HUT_OUTSIDE = new Tile(3116, 3448, 0);
-const KEY_SPAWN = new Tile(3131, 9862, 0);
+// Why: the public Edgeville trapdoor + dungeon gates already sit on the nav graph, so the hut/brass-key shortcut is unused weight.
+const BANK_TILE = new Tile(3094, 3493, 0);
+const TRAPDOOR = new Tile(3096, 3468, 0);
 const PIT_RADIUS = 14;
 
 const DROPS: string[] = DROP_DB[TARGET] ?? [];
@@ -119,7 +114,6 @@ export default class HillGiant extends TaskBot {
             new SetAttackStyle(this),
             new BuryBones(this),
             new BankRun(this),
-            new FetchKey(this),
             new EnterPit(this),
             new LootCorpse(this),
             new Fight(this)
@@ -186,15 +180,12 @@ export default class HillGiant extends TaskBot {
     foodInPack(): number {
         return foodCountIn(Inventory.items(), this.foodName);
     }
-    hasKey(): boolean {
-        return Inventory.contains(BRASS_KEY);
-    }
     inPit(): boolean {
         const here = Game.tile();
         return here !== null && here.z > 9000 && this.spot.distanceTo(new Tile(here.x, here.z, here.level)) <= PIT_RADIUS + 12;
     }
     lootUsed(): number {
-        return Inventory.used() - this.foodInPack() - (this.hasKey() ? 1 : 0);
+        return Inventory.used() - this.foodInPack();
     }
 
     override onPaint(ctx: CanvasRenderingContext2D): void {
@@ -204,7 +195,7 @@ export default class HillGiant extends TaskBot {
         const perHr = mins > 0.5 ? Math.round((this.kills / mins) * 60) : 0;
         p.row(`Runtime: ${fmtDuration(mins)}`, `Kills: ${this.kills}`, `Kills/hr: ${perHr}`);
         p.row(`Looted: ${this.looted}`, `Buried: ${this.buried}`, `Trips: ${this.trips}`);
-        p.row(`Food: ${this.foodInPack()}`, `Key: ${this.hasKey() ? 'yes' : 'no'}`, `Spot: ${this.spot.x},${this.spot.z}`);
+        p.row(`Food: ${this.foodInPack()}`, `Spot: ${this.spot.x},${this.spot.z}`);
         p.gap();
         ScriptRunner.paintControls(p);
         p.end();
@@ -216,72 +207,50 @@ export default class HillGiant extends TaskBot {
             return true;
         }
         this.setStatus(`walking to ${what}`);
-        return Traversal.walkResilient(dest, { radius: 3, attempts: 2, timeoutMs: 90_000, log: m => this.log(`  ${m}`) });
+        return Traversal.walkResilient(dest, { radius: 3, attempts: 6, timeoutMs: 180_000, log: m => this.log(`  ${m}`) });
     }
 
-    /** Bank -> hut door (key) -> ladder -> the trip's pit spot. */
+    /** Bank -> public Edgeville trapdoor -> dungeon gates -> the trip's pit spot. */
     async travelToPit(): Promise<boolean> {
         if (this.inPit()) {
             return this.walkTo(this.spot, 'the pit spot');
         }
-        // Stop OUTSIDE the door: the ladder is behind it, so pathing straight to
-        // the ladder makes the walker batter a door only the key can open.
-        if (!(await this.walkTo(HUT_OUTSIDE, 'the hill giant hut'))) {
-            this.log('could not reach the hill giant hut — retrying');
+        const here = Game.tile();
+        if (here && here.z < 6400 && !(await this.descendTrapdoor())) {
             return false;
         }
-        if (!(await this.openHutDoor())) {
-            return false;
-        }
-        if (!(await this.walkTo(HUT_LADDER, 'the hut ladder'))) {
-            this.log('unlocked the hut but could not reach the ladder — retrying');
-            return false;
-        }
-        const ladder = Locs.query().name('Ladder').action('Climb-down').within(6).nearest();
-        if (!ladder) {
-            this.log('no ladder down in the hut — repathing');
-            return false;
-        }
-        this.setStatus('climbing down to the giants');
-        if (!(await ladder.interact('Climb-down'))) {
-            this.log('the hut ladder refused the climb — retrying');
-            return false;
-        }
-        if (!(await Execution.delayUntil(() => (Game.tile()?.z ?? 0) > 9000, 8000))) {
-            this.log('did not arrive underground — retrying');
-            return false;
-        }
-        return this.walkTo(this.spot, 'the pit spot');
+        return this.walkTo(this.spot, 'the giant pit');
     }
 
-    /** The hut door only opens by using the brass key on it. */
-    private async openHutDoor(): Promise<boolean> {
-        const here = Game.tile();
-        if (here && here.z > 9000) {
+    private async descendTrapdoor(): Promise<boolean> {
+        if ((Game.tile()?.z ?? 0) > 9000) {
             return true;
         }
-        const shutDoor = () => Locs.query().name('Door').where(l => l.tile().x === HUT_DOOR.x && l.tile().z === HUT_DOOR.z).nearest();
-        const door = shutDoor();
-        if (!door) {
-            // an opened door stops occupying the locked tile
-            return true;
-        }
-        const key = Inventory.first(BRASS_KEY);
-        if (!key) {
-            this.log(`no ${BRASS_KEY} to unlock the hut`);
+        if (!(await this.walkTo(TRAPDOOR, 'the Edgeville trapdoor'))) {
+            this.log('could not reach the Edgeville trapdoor');
             return false;
         }
-        this.setStatus('unlocking the hut door');
-        if (!(await key.useOn(door))) {
-            this.log('the hut door refused the key — retrying');
-            return false;
+        for (let attempt = 0; attempt < 7; attempt++) {
+            const trapdoor = Locs.query().name('Trapdoor').within(6).nearest();
+            if (!trapdoor) {
+                await Execution.delayTicks(2);
+                continue;
+            }
+            const action = trapdoor.actions().find(op => /climb-down/i.test(op))
+                ?? trapdoor.actions().find(op => /^open$/i.test(op));
+            if (!action) {
+                await Execution.delayTicks(2);
+                continue;
+            }
+            this.setStatus(`${action.toLowerCase()} the Edgeville trapdoor`);
+            await trapdoor.interact(action);
+            if (await Execution.delayUntil(() => (Game.tile()?.z ?? 0) > 9000, /^open$/i.test(action) ? 2500 : 8000)) {
+                this.log('climbed down the Edgeville trapdoor');
+                return true;
+            }
         }
-        if (!(await Execution.delayUntil(() => shutDoor() === null, 5000))) {
-            this.log('the hut door stayed shut after using the key — retrying');
-            return false;
-        }
-        this.log('unlocked the hut door');
-        return true;
+        this.log('the Edgeville trapdoor did not drop us into the dungeon');
+        return (Game.tile()?.z ?? 0) > 9000;
     }
 }
 
@@ -392,7 +361,7 @@ class BankRun implements Task {
     async execute(): Promise<void> {
         const { food, foodPerTrip, lootSlots } = this.bot.cfg();
         this.bot.setStatus('banking for food/loot');
-        if (!(await this.bot.walkTo(BANK_TILE, 'the Varrock West bank'))) {
+        if (!(await this.bot.walkTo(BANK_TILE, 'the Edgeville bank'))) {
             return;
         }
         if (!(await Bank.openNearest('Bank booth', 'Use-quickly', m => this.bot.log(`  ${m}`)))) {
@@ -401,14 +370,7 @@ class BankRun implements Task {
         const keep = keepOnDeposit(food).map(n => n.toLowerCase());
         await Bank.depositAllMatching(name => !keep.includes(name.toLowerCase()));
 
-        const needs = tripNeeds(this.bot.hasKey(), this.bot.foodInPack(), foodPerTrip);
-        if (needs.key) {
-            if (Bank.count(BRASS_KEY) > 0) {
-                await Bank.withdrawX(BRASS_KEY, 1);
-            } else {
-                this.bot.log(`no ${BRASS_KEY} banked — fetching one from the Edgeville dungeon`);
-            }
-        }
+        const needs = tripNeeds(this.bot.foodInPack(), foodPerTrip);
         const weapon = this.bot.wantsWeapon();
         if (weapon !== '' && !Equipment.contains(weapon) && !Inventory.contains(weapon)) {
             if (Bank.count(weapon) > 0) {
@@ -433,38 +395,10 @@ class BankRun implements Task {
     }
 }
 
-/** The issue's fallback when the bank has no key: take the dungeon ground spawn. */
-class FetchKey implements Task {
-    constructor(private bot: HillGiant) {}
-    validate(): boolean {
-        return !this.bot.hasKey() && !this.bot.inPit();
-    }
-    async execute(): Promise<void> {
-        this.bot.setStatus(`fetching a ${BRASS_KEY}`);
-        // the Edgeville trapdoor is a curated transport, so the walker takes
-        // itself down into the dungeon on the way to the spawn tile
-        if (!(await this.bot.walkTo(KEY_SPAWN, `the ${BRASS_KEY} spawn`))) {
-            this.bot.log(`could not reach the ${BRASS_KEY} spawn in the Edgeville dungeon`);
-            return;
-        }
-        const key = GroundItems.query().name(BRASS_KEY).within(8).nearest();
-        if (!key) {
-            this.bot.log(`no ${BRASS_KEY} on the floor yet — waiting for the respawn`);
-            await Execution.delayTicks(5);
-            return;
-        }
-        const before = Inventory.used();
-        await key.interact('Take');
-        if (await Execution.delayUntil(() => Inventory.used() > before, 4000)) {
-            this.bot.log(`picked up the ${BRASS_KEY}`);
-        }
-    }
-}
-
 class EnterPit implements Task {
     constructor(private bot: HillGiant) {}
     validate(): boolean {
-        return this.bot.hasKey() && !this.bot.inPit();
+        return !this.bot.inPit();
     }
     async execute(): Promise<void> {
         await this.bot.travelToPit();

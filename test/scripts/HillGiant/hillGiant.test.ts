@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import {
     BIG_BONES,
-    BRASS_KEY,
     LIMPWURT,
     PIT_SPOTS,
     bonesAction,
@@ -61,20 +60,15 @@ describe('HillGiant pit spots', () => {
 });
 
 describe('HillGiant trip needs', () => {
-    test('withdraws a key only when one is not already carried', () => {
-        expect(tripNeeds(false, 0, 12).key).toBe(true);
-        expect(tripNeeds(true, 0, 12).key).toBe(false);
-    });
-
     test('tops food up to the trip size rather than always withdrawing a full load', () => {
-        expect(tripNeeds(true, 0, 12).food).toBe(12);
-        expect(tripNeeds(true, 5, 12).food).toBe(7);
-        expect(tripNeeds(true, 12, 12).food).toBe(0);
-        expect(tripNeeds(true, 20, 12).food).toBe(0);
+        expect(tripNeeds(0, 12).food).toBe(12);
+        expect(tripNeeds(5, 12).food).toBe(7);
+        expect(tripNeeds(12, 12).food).toBe(0);
+        expect(tripNeeds(20, 12).food).toBe(0);
     });
 
-    test('keeps the key and the food when depositing loot', () => {
-        expect(keepOnDeposit('Trout')).toEqual([BRASS_KEY, 'Trout']);
+    test('keeps only the food when depositing loot', () => {
+        expect(keepOnDeposit('Trout')).toEqual(['Trout']);
     });
 });
 

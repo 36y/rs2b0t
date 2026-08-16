@@ -2,10 +2,13 @@ import { describe, expect, test } from 'bun:test';
 import {
     desertCampBankCatchNeeded,
     desertCampBankTripDirection,
+    desertCampDestinationFor,
+    desertCampKeepNames,
     DESERT_CAMP_ITEMS,
     DESERT_CAMP_KEEP_NAMES,
     desertCampRouteArea,
     desertCampRoutePhase,
+    isDesertCampLocation,
     metalKeyCaptainAvailable,
     metalKeyCaptainClaimAcknowledged,
     metalKeyDuelNeedsRetreat,
@@ -108,6 +111,18 @@ describe('Desert Mining Camp restart phases', () => {
         expect(desertCampRoutePhase('enter', 'mineEntrance')).toBe('enterMine');
         expect(desertCampRoutePhase('enter', 'mineLower')).toBe('enterMine');
         expect(desertCampRoutePhase('enter', 'mineDeep')).toBe('done');
+    });
+
+    test('surface destination stops at the camp and walks out of a leftover underground tile', () => {
+        expect(desertCampRoutePhase('enter', 'shantayNorth', 'campSurface')).toBe('prepareAndCrossShantay');
+        expect(desertCampRoutePhase('enter', 'desert', 'campSurface')).toBe('enterCamp');
+        expect(desertCampRoutePhase('enter', 'campSurface', 'campSurface')).toBe('done');
+        expect(desertCampRoutePhase('enter', 'mineDeep', 'campSurface')).toBe('exitMine');
+        expect(desertCampRoutePhase('exit', 'campSurface', 'campSurface')).toBe('exitCamp');
+        expect(isDesertCampLocation('Desert Mining Camp')).toBe(true);
+        expect(isDesertCampLocation('Desert Mining Camp Surface')).toBe(true);
+        expect(desertCampDestinationFor('Desert Mining Camp Surface')).toBe('campSurface');
+        expect(desertCampDestinationFor('Desert Mining Camp')).toBe('mineDeep');
     });
 
     test('exit hands every underground crossing to one shared surface walk', () => {
@@ -282,6 +297,42 @@ describe('Desert Mining Camp supply plan', () => {
         for (const name of DESERT_CAMP_ITEMS.desert) {
             expect(DESERT_CAMP_KEEP_NAMES).not.toContain(name);
         }
+    });
+
+    test('surface trips keep desert clothes and Metal key, not slave gear or Wrought', () => {
+        const keep = desertCampKeepNames('campSurface');
+        expect(keep).toEqual(expect.arrayContaining([DESERT_CAMP_ITEMS.metalKey, ...DESERT_CAMP_ITEMS.desert]));
+        expect(keep).not.toContain(DESERT_CAMP_ITEMS.wroughtKey);
+        for (const name of DESERT_CAMP_ITEMS.slave) {
+            expect(keep).not.toContain(name);
+        }
+    });
+
+    test('surface supply plan withdraws desert clothes and Metal key without slave gear', () => {
+        const plan = planDesertCampSupplies(
+            supply({
+                bank: {
+                    ...Object.fromEntries(DESERT_CAMP_ITEMS.desert.map(name => [name, 1])),
+                    [DESERT_CAMP_ITEMS.metalKey]: 1,
+                    [DESERT_CAMP_ITEMS.pass]: 1,
+                    [DESERT_CAMP_ITEMS.wroughtKey]: 1,
+                    ...Object.fromEntries(DESERT_CAMP_ITEMS.slave.map(name => [name, 1]))
+                }
+            }),
+            'campSurface'
+        );
+        expect(plan).toMatchObject({
+            ok: true,
+            recoverSlaveOutfit: false,
+            recoverWroughtKey: false,
+            recoverMetalKey: false,
+            buyPass: false
+        });
+        expect(plan.withdraw).toEqual([
+            ...DESERT_CAMP_ITEMS.desert.map(name => ({ name, qty: 1 })),
+            { name: DESERT_CAMP_ITEMS.metalKey, qty: 1 },
+            { name: DESERT_CAMP_ITEMS.pass, qty: 1 }
+        ]);
     });
 
     test('keeps a worn pickaxe equipped without reserving a pack slot', () => {

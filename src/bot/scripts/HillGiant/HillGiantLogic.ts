@@ -2,9 +2,8 @@ import Tile from '../../geometry/Tile.js';
 import type { WorldTile } from '../../adapter/ClientAdapter.js';
 import { shouldEatToUseFood } from '../../api/combat/food.js';
 
-// Pure decisions for HillGiant, kept out of the game-touching bot so the pit spot spread, the key/food trip requirements and the loot rules can be tested without a client.
+// Pure decisions for HillGiant, kept out of the game-touching bot so the pit spot spread, the food trip requirements and the loot rules can be tested without a client.
 
-export const BRASS_KEY = 'Brass key';
 export const BIG_BONES = 'Big bones';
 export const LIMPWURT = 'Limpwurt root';
 
@@ -30,16 +29,12 @@ export function pickSpot(rand: number, spots: WorldTile[] = PIT_SPOTS): WorldTil
 }
 
 interface TripNeeds {
-    key: boolean;
     food: number;
 }
 
-/**
- * What a trip must leave the bank with. The key is only needed when it is not
- * already carried — it is never dropped, so one is enough forever.
- */
-export function tripNeeds(carryingKey: boolean, foodInPack: number, foodPerTrip: number): TripNeeds {
-    return { key: !carryingKey, food: Math.max(0, foodPerTrip - foodInPack) };
+/** What a trip must leave the bank with. */
+export function tripNeeds(foodInPack: number, foodPerTrip: number): TripNeeds {
+    return { food: Math.max(0, foodPerTrip - foodInPack) };
 }
 
 interface BankDecision {
@@ -95,7 +90,7 @@ export function bonesAction(buryBones: boolean): 'bury' | 'bank' {
 
 /** Names a trip keeps in the pack when depositing at the bank. */
 export function keepOnDeposit(food: string): string[] {
-    return [BRASS_KEY, food];
+    return [food];
 }
 
 // Why: counting on Attack multi-counts, since a death anim stays Attackable for several ticks and each Fight loop re-clicks Attack (#479).

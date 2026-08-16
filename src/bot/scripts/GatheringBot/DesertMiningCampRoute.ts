@@ -30,7 +30,26 @@ export const DESERT_CAMP_ITEMS = {
 
 type DesertOutfitItem = (typeof DESERT_CAMP_ITEMS.desert)[number];
 
+export const DESERT_CAMP_UNDERGROUND_NAME = 'Desert Mining Camp';
+export const DESERT_CAMP_SURFACE_NAME = 'Desert Mining Camp Surface';
+
+export type DesertCampDestination = 'campSurface' | 'mineDeep';
+
+export function isDesertCampLocation(name: string | null | undefined): boolean {
+    return name === DESERT_CAMP_UNDERGROUND_NAME || name === DESERT_CAMP_SURFACE_NAME;
+}
+
+export function desertCampDestinationFor(name: string | null | undefined): DesertCampDestination {
+    return name === DESERT_CAMP_SURFACE_NAME ? 'campSurface' : 'mineDeep';
+}
+
 export const DESERT_CAMP_KEEP_NAMES = [DESERT_CAMP_ITEMS.pass, DESERT_CAMP_ITEMS.disclaimer, DESERT_CAMP_ITEMS.cellKey, DESERT_CAMP_ITEMS.metalKey, DESERT_CAMP_ITEMS.wroughtKey, ...DESERT_CAMP_ITEMS.slave] as const;
+
+export function desertCampKeepNames(destination: DesertCampDestination): readonly string[] {
+    return destination === 'campSurface'
+        ? [DESERT_CAMP_ITEMS.pass, DESERT_CAMP_ITEMS.disclaimer, DESERT_CAMP_ITEMS.metalKey, ...DESERT_CAMP_ITEMS.desert]
+        : DESERT_CAMP_KEEP_NAMES;
+}
 
 const DESERT_SHOP_BUDGET: Record<DesertOutfitItem, number> = {
     'Desert shirt': 43,
@@ -100,11 +119,20 @@ export function desertCampBankCatchNeeded(bankTrip: boolean, startupBank: boolea
     return bankTrip || startupBank || restock || fullWithDeposit;
 }
 
-export function desertCampRoutePhase(direction: DesertCampRouteDirection, area: DesertCampRouteArea): DesertCampRoutePhase {
+export function desertCampRoutePhase(
+    direction: DesertCampRouteDirection,
+    area: DesertCampRouteArea,
+    destination: DesertCampDestination = 'mineDeep'
+): DesertCampRoutePhase {
     if (area === 'unsupported') return 'unsupported';
     if (direction === 'enter') {
         if (area === 'mainland' || area === 'shantayNorth') return 'prepareAndCrossShantay';
         if (area === 'desert') return 'enterCamp';
+        if (destination === 'campSurface') {
+            if (area === 'campSurface') return 'done';
+            if (area === 'mineEntrance' || area === 'mineLower' || area === 'mineDeep') return 'exitMine';
+            return 'unsupported';
+        }
         if (area === 'campSurface') return 'enterMine';
         return area === 'mineDeep' ? 'done' : 'enterMine';
     }
@@ -149,21 +177,25 @@ function available(snap: DesertCampSupplySnapshot, name: string): number {
     return countOf(snap.inventory, name) + countOf(snap.equipment, name) + countOf(snap.bank, name);
 }
 
-export function planDesertCampSupplies(snap: DesertCampSupplySnapshot): DesertCampSupplyPlan {
+export function planDesertCampSupplies(
+    snap: DesertCampSupplySnapshot,
+    destination: DesertCampDestination = 'mineDeep'
+): DesertCampSupplyPlan {
     const withdraw: { name: string; qty: number }[] = [];
     const buyOutfit: DesertOutfitItem[] = [];
     const missing: string[] = [];
+    const surface = destination === 'campSurface';
 
-    const recoverSlaveOutfit = DESERT_CAMP_ITEMS.slave.some(name => available(snap, name) === 0);
-    if (!recoverSlaveOutfit) {
+    const recoverSlaveOutfit = !surface && DESERT_CAMP_ITEMS.slave.some(name => available(snap, name) === 0);
+    if (!surface && !recoverSlaveOutfit) {
         for (const name of DESERT_CAMP_ITEMS.slave) {
             if (!owned(snap, name)) withdraw.push({ name, qty: 1 });
         }
     }
 
-    // Why: desert clothes are only the currency for recovering a lost slave
-    // disguise. Carrying a spare set costs three ore slots on every mining trip.
-    const desertTarget = recoverSlaveOutfit ? 1 : 0;
+    // Why: underground trips bank desert clothes and only withdraw them to buy
+    // a replacement slave disguise. Surface trips wear desert clothes for heat.
+    const desertTarget = surface || recoverSlaveOutfit ? 1 : 0;
     for (const name of DESERT_CAMP_ITEMS.desert) {
         const held = countOf(snap.inventory, name) + countOf(snap.equipment, name);
         const needed = Math.max(0, desertTarget - held);
@@ -181,7 +213,7 @@ export function planDesertCampSupplies(snap: DesertCampSupplySnapshot): DesertCa
         return true;
     };
     const recoverMetalKey = planKey(DESERT_CAMP_ITEMS.metalKey);
-    const recoverWroughtKey = planKey(DESERT_CAMP_ITEMS.wroughtKey);
+    const recoverWroughtKey = surface ? false : planKey(DESERT_CAMP_ITEMS.wroughtKey);
 
     let buyPass = false;
     if (countOf(snap.inventory, DESERT_CAMP_ITEMS.pass) === 0) {
@@ -204,9 +236,8 @@ export function planDesertCampSupplies(snap: DesertCampSupplySnapshot): DesertCa
     let requiredSlots = withdraw.reduce((slots, step) => slots + (step.name === DESERT_CAMP_ITEMS.coins && countOf(snap.inventory, step.name) > 0 ? 0 : step.name === DESERT_CAMP_ITEMS.coins ? 1 : step.qty), 0);
     requiredSlots += buyOutfit.length;
     if (buyPass && countOf(snap.inventory, DESERT_CAMP_ITEMS.pass) === 0) requiredSlots++;
-    // The desk grants every missing key in order. With neither camp key available,
-    // the peak route load is Cell + Metal + Wrought, so the bank must leave three slots.
-    if (recoverMetalKey && recoverWroughtKey) {
+    // Desk awards every missing key, so surface metal recovery still reserves three slots.
+    if (recoverMetalKey && (recoverWroughtKey || surface)) {
         requiredSlots += 3;
     } else if (recoverWroughtKey) {
         requiredSlots += countOf(snap.inventory, DESERT_CAMP_ITEMS.cellKey) > 0 ? 1 : 2;
@@ -288,14 +319,17 @@ function pickaxeName(items: { name: string | null }[]): string | null {
 }
 
 export class DesertMiningCampRoute {
-    constructor(private readonly host: DesertMiningCampRouteHost) {}
+    constructor(
+        private readonly host: DesertMiningCampRouteHost,
+        readonly destination: DesertCampDestination = 'mineDeep'
+    ) {}
 
     area(): DesertCampRouteArea {
         return desertCampRouteArea(Game.tile());
     }
 
     phase(direction: DesertCampRouteDirection): DesertCampRoutePhase {
-        return desertCampRoutePhase(direction, this.area());
+        return desertCampRoutePhase(direction, this.area(), this.destination);
     }
 
     needsStep(direction: DesertCampRouteDirection): boolean {
@@ -306,12 +340,15 @@ export class DesertMiningCampRoute {
         if (!Bank.isOpen() || !Bank.snapshotReady()) {
             throw new Error('desert camp: supply planning requires an authoritative open bank snapshot');
         }
-        return planDesertCampSupplies({
-            inventory: liveCounts(Inventory.items()),
-            equipment: liveCounts(Equipment.items()),
-            bank: liveCounts(Bank.items()),
-            freeSlots: Inventory.free()
-        });
+        return planDesertCampSupplies(
+            {
+                inventory: liveCounts(Inventory.items()),
+                equipment: liveCounts(Equipment.items()),
+                bank: liveCounts(Bank.items()),
+                freeSlots: Inventory.free()
+            },
+            this.destination
+        );
     }
 
     async withdrawPlannedSuppliesAtOpenBank(plan: DesertCampSupplyPlan): Promise<boolean> {
@@ -327,7 +364,7 @@ export class DesertMiningCampRoute {
                 return this.fail(`desert camp: withdrawal did not land for ${step.name}`);
             }
         }
-        if (!plan.recoverSlaveOutfit && !(await this.bankOptionalDesertOutfit())) return false;
+        if (this.destination === 'mineDeep' && !plan.recoverSlaveOutfit && !(await this.bankOptionalDesertOutfit())) return false;
         this.host.log(
             `desert camp: route supplies ready; withdraw=${plan.withdraw.map(step => `${step.qty} ${step.name}`).join(', ') || 'none'}; ` +
                 `buyOutfit=${plan.buyOutfit.join(', ') || 'none'}; buyPass=${plan.buyPass}; ` +
@@ -386,11 +423,12 @@ export class DesertMiningCampRoute {
         }
         if (!questComplete()) return this.fail('desert camp: The Tourist Trap must be complete');
         const area = this.area();
-        const phase = desertCampRoutePhase(direction, area);
-        this.host.log(`desert camp: route ${direction}; area=${area}; phase=${phase}; tile=${this.tileLabel()}`);
+        const phase = desertCampRoutePhase(direction, area, this.destination);
+        this.host.log(`desert camp: route ${direction}; dest=${this.destination}; area=${area}; phase=${phase}; tile=${this.tileLabel()}`);
         this.host.setStatus(`desert camp: ${phase}`);
         if (phase === 'unsupported') return this.fail(`desert camp: unsupported route tile ${this.tileLabel()}`);
         if (phase === 'done') return true;
+        if (phase === 'exitMine' && direction === 'enter') return this.exit(area);
 
         if (direction === 'enter') return this.enter(area);
         return this.exit(area);
@@ -414,6 +452,12 @@ export class DesertMiningCampRoute {
         }
 
         if (area === 'campSurface') {
+            if (this.destination === 'campSurface') {
+                if (!Inventory.contains(DESERT_CAMP_ITEMS.metalKey) && !(await this.recoverDeskKeys())) return false;
+                if (!(await this.wear(DESERT_CAMP_ITEMS.desert, 'desert travel outfit'))) return false;
+                this.host.log(`desert camp: surface destination reached; tile=${this.tileLabel()}`);
+                return true;
+            }
             if (!Inventory.contains(DESERT_CAMP_ITEMS.wroughtKey) && !(await this.recoverDeskKeys())) return false;
             if (!this.hasSlaveOutfit() && !(await this.recoverSlaveOutfit())) return false;
             if (!(await this.wear(DESERT_CAMP_ITEMS.slave, 'slave disguise'))) return false;
@@ -444,7 +488,11 @@ export class DesertMiningCampRoute {
 
         if (area === 'campSurface') {
             if (!Inventory.contains(DESERT_CAMP_ITEMS.metalKey) && !(await this.recoverDeskKeys())) return false;
-            if (!(await this.wear(DESERT_CAMP_ITEMS.slave, 'slave disguise'))) return false;
+            if (this.destination === 'mineDeep') {
+                if (!(await this.wear(DESERT_CAMP_ITEMS.slave, 'slave disguise'))) return false;
+            } else if (!(await this.wear(DESERT_CAMP_ITEMS.desert, 'desert travel outfit'))) {
+                return false;
+            }
             if (!(await this.walk(CAMP_OUTSIDE, 0, 'outside mining-camp gate', 'desert'))) return false;
             this.host.log(`desert camp: shared walk completed outer gate out; tile=${this.tileLabel()}`);
             return true;
@@ -459,7 +507,7 @@ export class DesertMiningCampRoute {
     }
 
     private async finishShantayProvisioning(): Promise<boolean> {
-        const desertTarget = this.hasSlaveOutfit() ? 0 : 1;
+        const desertTarget = this.destination === 'campSurface' || !this.hasSlaveOutfit() ? 1 : 0;
         const missingDesert = DESERT_CAMP_ITEMS.desert.flatMap(name => Array.from({ length: Math.max(0, desertTarget - Inventory.count(name) - equipmentCount(name)) }, () => name));
         if (missingDesert.length > 0 && !(await this.buyDesertOutfit(missingDesert))) return false;
         if (!Inventory.contains(DESERT_CAMP_ITEMS.pass)) {
@@ -476,6 +524,9 @@ export class DesertMiningCampRoute {
     }
 
     private wearTravelOutfit(): Promise<boolean> {
+        if (this.destination === 'campSurface') {
+            return this.wear(DESERT_CAMP_ITEMS.desert, 'desert travel outfit');
+        }
         return this.hasSlaveOutfit()
             ? this.wear(DESERT_CAMP_ITEMS.slave, 'slave disguise')
             : this.wear(DESERT_CAMP_ITEMS.desert, 'slave-disguise recovery outfit');
@@ -733,10 +784,14 @@ export class DesertMiningCampRoute {
     }
 
     private async recoverDeskKeys(): Promise<boolean> {
-        const wanted = [DESERT_CAMP_ITEMS.cellKey, DESERT_CAMP_ITEMS.metalKey, DESERT_CAMP_ITEMS.wroughtKey];
-        const missing = wanted.filter(name => !Inventory.contains(name));
-        if (Inventory.free() < missing.length) {
-            return this.fail(`desert camp: Captain Siad desk needs ${missing.length} free slot(s), only ${Inventory.free()} available`);
+        const wanted = this.destination === 'campSurface'
+            ? [DESERT_CAMP_ITEMS.metalKey]
+            : [DESERT_CAMP_ITEMS.cellKey, DESERT_CAMP_ITEMS.metalKey, DESERT_CAMP_ITEMS.wroughtKey];
+        const deskAwards = [DESERT_CAMP_ITEMS.cellKey, DESERT_CAMP_ITEMS.metalKey, DESERT_CAMP_ITEMS.wroughtKey].filter(
+            name => !Inventory.contains(name)
+        );
+        if (Inventory.free() < deskAwards.length) {
+            return this.fail(`desert camp: Captain Siad desk needs ${deskAwards.length} free slot(s), only ${Inventory.free()} available`);
         }
         if (!(await this.walk(SIAD_DESK, 2, "Captain Siad's desk"))) return false;
         const findDesk = () =>
@@ -751,13 +806,17 @@ export class DesertMiningCampRoute {
         if (!desk || !(await desk.interact('Search'))) {
             return this.fail(`desert camp: Captain Siad's desk has no usable Search action at ${this.tileLabel()}`);
         }
-        if (!(await this.drainOwnedChatUntil(() => missing.every(name => Inventory.contains(name))))) {
-            return this.fail(`desert camp: Captain Siad's desk did not award ${missing.join(', ')}`);
+        if (!(await this.drainOwnedChatUntil(() => deskAwards.every(name => Inventory.contains(name))))) {
+            return this.fail(`desert camp: Captain Siad's desk did not award ${deskAwards.join(', ')}`);
         }
-        if (!Inventory.contains(DESERT_CAMP_ITEMS.metalKey) || !Inventory.contains(DESERT_CAMP_ITEMS.wroughtKey)) {
-            return this.fail("desert camp: Captain Siad's desk recovery finished without both camp keys");
+        if (wanted.some(name => !Inventory.contains(name))) {
+            return this.fail(`desert camp: Captain Siad's desk recovery finished without ${wanted.filter(name => !Inventory.contains(name)).join(', ')}`);
         }
-        this.host.log(`desert camp: recovered Wrought iron key from Captain Siad's desk; tile=${this.tileLabel()}`);
+        this.host.log(
+            this.destination === 'campSurface'
+                ? `desert camp: recovered Metal key from Captain Siad's desk; tile=${this.tileLabel()}`
+                : `desert camp: recovered Wrought iron key from Captain Siad's desk; tile=${this.tileLabel()}`
+        );
         return true;
     }
 

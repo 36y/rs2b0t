@@ -116,6 +116,12 @@ export const CASES: readonly Case[] = [
         status: 'unvetted'
     },
     {
+        id: 'desert-camp-surface-live',
+        harness: 'desert-camp-surface-live.ts',
+        covers: { scripts: ['GatheringBot'] },
+        status: 'unvetted'
+    },
+    {
         id: 'doric-level3-test',
         harness: 'doric-level3-test.ts',
         covers: { scripts: ['AIOQuester'] },

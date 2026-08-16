@@ -205,6 +205,12 @@ describe('named-camp ore validation', () => {
         expect(unsupportedCampOres(['Coal'], supported)).toEqual(['Coal']);
     });
 
+    test('accepts the four live Desert Mining Camp Surface ores and rejects underground-only Mithril', () => {
+        const supported = ['copper', 'tin', 'iron', 'coal'];
+        expect(unsupportedCampOres(['Copper', 'Tin', 'Iron', 'Coal'], supported)).toEqual([]);
+        expect(unsupportedCampOres(['Mithril'], supported)).toEqual(['Mithril']);
+    });
+
     test('matches ore names case-insensitively and leaves freeform camps alone', () => {
         expect(unsupportedCampOres(['Mithril', 'ADAMANTITE'], ['mithril', 'adamantite'])).toEqual([]);
         expect(unsupportedCampOres(['Coal'], undefined)).toEqual([]);

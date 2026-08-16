@@ -201,6 +201,17 @@ export const MINING_LOCATIONS: MiningLocation[] = [
         91
     ),
     mine(
+        'Desert Mining Camp Surface',
+        // Why: stand between the four coal rocks so iron/copper west and tin north stay inside the camp leash.
+        new Tile(3293, 3016, 0),
+        BANK.shantay,
+        ['copper', 'tin', 'iron', 'coal'],
+        'Surface rocks inside the camp; requires completed Tourist Trap and Metal key',
+        true,
+        // Guard/Mercenary 45 → 2×45+1. Same camp as the underground mine.
+        91
+    ),
+    mine(
         'Lava Maze Runite Mine',
         new Tile(3058, 3884, 0),
         BANK.edgeville,

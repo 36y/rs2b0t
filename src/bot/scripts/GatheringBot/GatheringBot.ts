@@ -221,9 +221,10 @@ import {
 import {
     desertCampBankCatchNeeded as shouldRunDesertCampBankCatch,
     desertCampBankTripDirection,
-    DESERT_CAMP_KEEP_NAMES,
-    DESERT_CAMP_MINE_ANCHOR,
+    desertCampDestinationFor,
+    desertCampKeepNames,
     DesertMiningCampRoute,
+    isDesertCampLocation,
     type DesertCampRouteDirection,
     type DesertCampSupplyPlan
 } from './DesertMiningCampRoute.js';
@@ -545,14 +546,16 @@ export default class GatheringBot extends TaskBot {
             this.leash = effectiveGatherLeash(this.leash, locSetting);
         }
 
-        if (this.location?.name === 'Desert Mining Camp') {
-            const supported = this.location.resources;
+        const desertCamp = isDesertCampLocation(this.location?.name) ? this.location : null;
+        if (desertCamp) {
+            const camp = desertCamp.name;
+            const supported = desertCamp.resources;
             if (!supported) {
-                throw new Error('Desert Mining Camp has no configured ore types');
+                throw new Error(`${camp} has no configured ore types`);
             }
             const unsupported = unsupportedCampOres(this.selectedRockNames, supported);
             if (unsupported.length > 0) {
-                const message = `Desert Mining Camp supports ${supported.join(', ')}; ` + `selected ${unsupported.join(', ')}`;
+                const message = `${camp} supports ${supported.join(', ')}; ` + `selected ${unsupported.join(', ')}`;
                 this.setStatus(`${message} — stopped`);
                 this.log(message);
                 ScriptRunner.stop(message);
@@ -573,8 +576,8 @@ export default class GatheringBot extends TaskBot {
         {
             this.muleMode = parseMuleMode(this.settings.str('muleMode', 'Off'));
             this.mulePartners = parsePartnerList(this.settings.str('mulePartner', ''));
-            if (this.location?.name === 'Desert Mining Camp' && this.muleMode !== 'off') {
-                const message = `Desert Mining Camp does not support Mule mode '${this.muleMode}'`;
+            if (desertCamp && this.muleMode !== 'off') {
+                const message = `${desertCamp.name} does not support Mule mode '${this.muleMode}'`;
                 this.setStatus(`${message} — stopped`);
                 this.log(message);
                 ScriptRunner.stop(message);
@@ -713,8 +716,8 @@ export default class GatheringBot extends TaskBot {
         this.toolAcquire = parseToolAcquireMode(this.settings.str('toolAcquire', 'Off'));
         this.forgetfulBank = this.settings.bool('forgetfulBank', false);
         this.startupToolBankSyncPending = false;
-        if (this.location?.name === 'Desert Mining Camp' && this.toolAcquire === 'on') {
-            const message = 'Desert Mining Camp does not support Tool acquire Buy/repair';
+        if (desertCamp && this.toolAcquire === 'on') {
+            const message = `${desertCamp.name} does not support Tool acquire Buy/repair`;
             this.setStatus(`${message} — stopped`);
             this.log(message);
             ScriptRunner.stop(message);
@@ -733,30 +736,35 @@ export default class GatheringBot extends TaskBot {
             }
         }
 
-        if (this.location?.name === 'Desert Mining Camp') {
+        if (desertCamp) {
+            const camp = desertCamp.name;
             if (!this.minerFood) {
-                const message = 'Desert Mining Camp requires Food to withdraw greater than 0';
+                const message = `${camp} requires Food to withdraw greater than 0`;
                 this.setStatus(`${message} — stopped`);
                 this.log(message);
                 ScriptRunner.stop(message);
                 return;
             }
             if (desertCampFoodReserveDepleted(this.minerFood.target)) {
-                const message = 'Desert Mining Camp requires Food to withdraw of at least 2';
+                const message = `${camp} requires Food to withdraw of at least 2`;
                 this.setStatus(`${message} — stopped`);
                 this.log(message);
                 ScriptRunner.stop(message);
                 return;
             }
-            this.desertCampRoute = new DesertMiningCampRoute({
-                log: message => this.log(message),
-                setStatus: message => this.setStatus(message),
-                stop: reason => ScriptRunner.stop(reason),
-                foodCount: () => this.minerFoodCount()
-            });
+            const destination = desertCampDestinationFor(camp);
+            this.desertCampRoute = new DesertMiningCampRoute(
+                {
+                    log: message => this.log(message),
+                    setStatus: message => this.setStatus(message),
+                    stop: reason => ScriptRunner.stop(reason),
+                    foodCount: () => this.minerFoodCount()
+                },
+                destination
+            );
             this.desertCampStartupBankPending = true;
-            this.anchor = DESERT_CAMP_MINE_ANCHOR;
-            this.log('desert camp: dedicated gated route enabled; initial provisioning bank required');
+            this.anchor = desertCamp.spot;
+            this.log(`desert camp: dedicated gated route enabled; dest=${destination}; initial provisioning bank required`);
 
             Sustain.set(async () => {
                 if (!Bank.isOpen() && !EventSignal.pending() && reader.modals().main === -1 && !ChatDialog.isOpen() && !ChatDialog.canContinue() && this.shouldEatMinerFood()) {
@@ -1005,7 +1013,7 @@ export default class GatheringBot extends TaskBot {
     private rebuildGearKeep(): string[] {
         const names = new Set<string>(toolKeepNames(this.toolReqs));
         if (this.desertCampRoute) {
-            for (const name of DESERT_CAMP_KEEP_NAMES) {
+            for (const name of desertCampKeepNames(this.desertCampRoute.destination)) {
                 names.add(name);
             }
         }
