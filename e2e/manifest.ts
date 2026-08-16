@@ -250,6 +250,13 @@ export const CASES: readonly Case[] = [
         status: 'unvetted'
     },
     {
+        id: 'grand-tree-247-live',
+        harness: 'grand-tree-247-live.ts',
+        covers: { scripts: ['AIOQuester'] },
+        status: 'unvetted',
+        budgetMin: 90
+    },
+    {
         id: 'greendragon-test',
         harness: 'greendragon-test.ts',
         covers: { scripts: ['GreenDragon'] },

@@ -49,6 +49,58 @@ What the legs proved, at `--tick 200` on `:8890`:
 | 5 → 6 | PASS, 1 min | the reward talk, the pet kitten, the chocolate cake and stew, 1 quest point |
 | 0 → 6 | PASS, 7 min | the uncheated run: 16 steps, no parks, nothing seeded but coins and food |
 
+## The Grand Tree — stage-scoped harness
+
+[`e2e/grand-tree-247-live.ts`](../../e2e/grand-tree-247-live.ts). Members content, so
+`:8890` only.
+
+| Flag | Default | Purpose |
+|---|---|---|
+| `--stage N` | 0 | `setvar grandtree N`, then relog so the quest list recolours |
+| `--until N` | 160 | stop at this stage; 160 waits for the journal to go green |
+| `--tick N` | 300 | server tick in ms; 300 is double speed |
+| `--minutes N` | 90 | wall-clock budget |
+| `--stats N` | 70 | every skill, not max — the demon is the whole point of the floor |
+| `--root N` | 15 | which of the fifteen roots holds the rock, for `--stage 150` |
+| `--food NAME` | Lobster | the AIO Quester's food setting |
+| `--no-tele` | off | start where the account already stands |
+| `--no-deploy` | off | skip the build and copy |
+
+`--stage` accepts only the sixteen values `%grandtree` takes (0, 10, … 150); anything else
+is a state the content never writes. Stage starts are chosen by continent: 0 to 70 at the
+Ardougne East bank, 80 at the Grand Tree bank, 90 at the glider crash site in the Karamja
+jungle, 100 and up at the Grand Tree bank.
+
+The bank seed is coins, lobsters and a rune melee kit — `rune_chainbody` rather than
+`rune_platebody`, which wants Dragon Slayer. Every quest item is left in the world: the bark
+sample and the translation book come from the King, the scroll from Hazelmere, the journal
+from Glough's cupboard, the lumber order from the foreman, the key from Anita, the twigs
+from the King again and the rock out of the roots.
+
+Stats are **70 across the board rather than max**, because the quest ends on a level-172
+Black Demon with 157 hitpoints and 152 defence, and the question this harness answers is
+whether a 70 account holds Protect from Melee through it.
+
+What the legs proved, at `--tick 300` on `:8890`:
+
+| Leg | Result | What it covered |
+|---|---|---|
+| 0 → 20 | PASS, 4 min | the walk in from Ardougne, the Femi gate crossing, the King's trapdoor cutscene, Hazelmere's island ladder |
+| 20 → 70 | PASS, 4 min | the five-page translation, Glough, the King, Charlie through the cage, the cupboard's south-only stand |
+| 80 → 90 | PASS, 3 min | the glider off the top of the tree, the Ka-Lu-Min gate, the foreman's three questions |
+| 90 → 110 | PASS, 7 min | the six-hundred-tile walk home, Femi's cart, Anita's unbaked staircase, the chest — through a death in the jungle |
+| 110 → 160 | PASS, 5 min | the twigs on their pillars, the Black Demon, the roots, the quest-complete scroll |
+| 150 → 160, `--root 15` | PASS, 4 min | the worst-case sweep: all fifteen roots in order, the rock in the last |
+| 0 → 160 | PASS, 16 min | the uncheated run: 31 steps, no parks, nothing seeded but coins, lobsters and a banked rune kit |
+
+The demon fought at 70 across the board in a rune melee kit under Protect from Melee:
+**63 seconds, one Attack click held the whole fight, hitpoints never left 70/70, prayer
+70 → 22**. Nothing about the kit is load-bearing except how long it takes.
+
+`%daconia_rock_root` is rolled by the King's stage-140 dialogue, so a jump straight to 150
+leaves it 0 — a value no root in `daconia_coords` answers, which the sweep would walk
+forever. `--root N` writes it, and 15 is the default because it is the longest walk.
+
 ## See also
 
 - [Quest harness recipes (A–D)](quest-harness-recipes.md)
@@ -64,3 +116,4 @@ What the legs proved, at `--tick 200` on `:8890`:
 - [Quest harness method](quest-harness-method.md)
 - [Seeding test accounts](seeding-test-accounts.md)
 - [Gertrude's Cat pitfalls](../decisions/quest-pitfalls-19.md)
+- [The Grand Tree pitfalls](../decisions/quest-pitfalls-20.md)
