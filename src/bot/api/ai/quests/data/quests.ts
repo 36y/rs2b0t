@@ -377,11 +377,8 @@ export const QUESTS: QuestRecord[] = [
     {
         id: 'fluffs', name: "Gertrude's Cat", questPoints: 1,
         requirements: {},
-        items: [
-            { name: 'Raw sardine', qty: 1, kind: 'mustHave' },
-            { name: 'Bucket of milk', qty: 1, kind: 'mustHave' },
-            { name: 'Coins', qty: 100, kind: 'mustHave' }
-        ]
+        // Why: the milk, the doogle leaves and the sardine are all fed to Fluffs mid-quest, so the module sources each on the leg that needs it rather than the provisioner refetching all three on every resume.
+        items: []
     },
     {
         id: 'grail', name: 'Holy Grail', questPoints: 2,

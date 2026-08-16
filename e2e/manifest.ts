@@ -230,6 +230,14 @@ export const CASES: readonly Case[] = [
         documentedIn: 'package.json verify:gatheringbot'
     },
     {
+        id: 'gertrudes-cat-245-live',
+        harness: 'gertrudes-cat-245-live.ts',
+        covers: { scripts: ['AIOQuester'] },
+        status: 'documented',
+        budgetMin: 60,
+        documentedIn: 'docs/reference/quest-harness-recipes-11.md'
+    },
+    {
         id: 'greendragon-pk-flee-test',
         harness: 'greendragon-pk-flee-test.ts',
         covers: { scripts: ['GreenDragon'] },
