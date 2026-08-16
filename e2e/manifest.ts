@@ -483,6 +483,12 @@ export const CASES: readonly Case[] = [
         status: 'unvetted'
     },
     {
+        id: 'boat-stall-probe-live',
+        harness: 'nav/boat-stall-probe-live.ts',
+        covers: { subsystems: ['nav'] },
+        status: 'unvetted'
+    },
+    {
         id: 'piratestreasure-231-live',
         harness: 'piratestreasure-231-live.ts',
         covers: { scripts: ['AIOQuester'] },

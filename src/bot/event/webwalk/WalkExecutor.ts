@@ -57,6 +57,7 @@ import {
 } from './exec/doorCrossing.js';
 import { handleSpecialCrossing } from './exec/specialCrossing.js';
 import {
+    awaitTransportLoc,
     findTransportLoc,
     matchesTransportLanding,
     matchesTransportLoc,
@@ -96,6 +97,8 @@ const MAX_REPATHS = 5;
 const MIN_FOLLOW_REMAINING_MS = 3_000;
 const PATH_REQUEST_TIMEOUT_MS = 30_000;
 const TRANSPORT_WAIT_MS = 8000;
+/** Ceiling on the client scene rebuild after a landing, before a hop's loc counts as absent. */
+const SCENE_REBUILD_MS = 3000;
 const SCENE_STEP_MS = 8000;
 /** Walking the last tiles onto a hop's planned approach after a server can't-reach. */
 const APPROACH_STEP_MS = 4000;
@@ -1232,7 +1235,10 @@ class WalkExecutorImpl {
         }
 
         for (let attempt = 0; attempt < 2; attempt++) {
-            const loc = findTransportLoc(transport);
+            const landing = transport.toLevel !== undefined || transport.toTile !== undefined;
+            const loc = landing
+                ? await awaitTransportLoc(transport, SCENE_REBUILD_MS, Execution.delayUntil.bind(Execution))
+                : findTransportLoc(transport);
             if (!loc) {
                 if (transport.toLevel === undefined && transport.toTile === undefined) {
                     // Already open / no shut Open-target: do not burn TRANSPORT_WAIT.

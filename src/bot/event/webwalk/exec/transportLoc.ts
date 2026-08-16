@@ -147,6 +147,23 @@ export function findTransportLoc(transport: TransportInfo): Loc | null {
     return null;
 }
 
+// Why: a ship or teleport landing rebuilds the client scene, so the disembark loc is unqueryable for a few ticks and the first lookup misses — failing there repaths off a deck the walker is standing on.
+
+/** Look for a transport loc, waiting out a scene rebuild before reporting it absent. */
+export async function awaitTransportLoc(
+    transport: TransportInfo,
+    waitMs: number,
+    delayUntil: (pred: () => boolean, ms: number) => Promise<boolean>,
+    find: (t: TransportInfo) => Loc | null = findTransportLoc
+): Promise<Loc | null> {
+    const present = find(transport);
+    if (present) {
+        return present;
+    }
+    await delayUntil(() => find(transport) !== null, waitMs);
+    return find(transport);
+}
+
 export async function openShutTrapdoor(
     transport: TransportInfo,
     log: (msg: string) => void,
