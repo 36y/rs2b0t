@@ -77,6 +77,7 @@ minutes**.
 ## See also
 
 - [Quest harness recipes (A–D)](quest-harness-recipes.md)
+- [Quest harness recipes (Dig)](quest-harness-recipes-15.md)
 - [Quest harness recipes (E)](quest-harness-recipes-4.md)
 - [Quest harness recipes (F)](quest-harness-recipes-2.md)
 - [Quest harness recipes (G)](quest-harness-recipes-11.md)

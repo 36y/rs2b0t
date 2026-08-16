@@ -55,6 +55,7 @@ import { eadgar } from './eadgar/index.js';
 import { sheepherder } from './sheepherder/index.js';
 import { ikov } from './ikov/index.js';
 import { observatory } from './observatory/index.js';
+import { digsite } from './digsite/index.js';
 
 // Why: Dragon Slayer is last, as it is gated at 32 quest points and the queue has to earn them on the way past everything else before it becomes runnable.
 // Why: Death Plateau comes before Troll Stronghold, which requires it complete.
@@ -73,7 +74,7 @@ import { observatory } from './observatory/index.js';
 // Why: Sheep Herder sits with the other Ardougne quests for the same reason Hazeel Cult does — every leg of it is in East Ardougne, so the teleport Plague City unlocks pays for all of them.
 // Why: Temple of Ikov sits near the end because it fletches its own yew shortbow, so it wants woodcutting 60 and fletching 65 on top of its thieving and ranged gates.
 // Why: the Observatory follows Clock Tower, as both are Ardougne-side and it pays two quest points towards Dragon Slayer's gate for one outing.
-export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, knightssword, sheepshearer, restlessghost, cooksassistant, impcatcher, ernest, hetty, romeojuliet, princeali, piratestreasure, shieldofarrav, gertrudescat, waterfall, goblindiplomacy, demonslayer, witchshouse, dwarfcannon, clocktower, observatory, monksfriend, merlinscrystal, holygrail, priestperil, druidspirit, mortton, blackknight, druidicritual, lostcity, touristtrap, watchtower, vampireslayer, fishingcontest, junglepotion, tbwt, shilo, elementalworkshop, deathplateau, trollstronghold, eadgar, plaguecity, biohazard, hazeelcult, tribaltotem, sheepherder, familycrest, horror, scorpcatcher, fightarena, seaslug, murder, treegnome, grandtree, ikov, dragonslayer];
+export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, knightssword, sheepshearer, restlessghost, cooksassistant, impcatcher, ernest, hetty, romeojuliet, princeali, piratestreasure, shieldofarrav, gertrudescat, waterfall, goblindiplomacy, demonslayer, witchshouse, dwarfcannon, clocktower, observatory, monksfriend, merlinscrystal, holygrail, priestperil, druidspirit, mortton, blackknight, druidicritual, lostcity, touristtrap, watchtower, vampireslayer, fishingcontest, junglepotion, tbwt, shilo, elementalworkshop, deathplateau, trollstronghold, eadgar, plaguecity, biohazard, hazeelcult, tribaltotem, sheepherder, familycrest, horror, scorpcatcher, fightarena, seaslug, murder, treegnome, grandtree, ikov, digsite, dragonslayer];
 
 export function defById(id: string): QuestModule | undefined {
     return QUEST_DEFS.find(d => d.record.id === id);
