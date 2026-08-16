@@ -62,5 +62,5 @@ One more, found on the way to an axe and left alone:
 
 - [Quest pitfalls](quest-pitfalls.md)
 - [More pitfalls](quest-pitfalls-2.md)
-- [Tree Gnome Village's harness recipe](../reference/quest-harness-recipes-9.md)
+- [Tree Gnome Village's harness recipe](../reference/quest-harness-recipes-13.md)
 - [Add a quest](../how-to/add-a-quest.md)

@@ -75,4 +75,4 @@ cost either a read of the content scripts or a live run.
 
 - [Engine behaviour](quest-pitfalls-engine.md)
 - [Tooling and verification habits](quest-pitfalls-habits.md)
-- [Harness recipes (T)](../reference/quest-harness-recipes-9.md)
+- [Harness recipes (Tai–Temple)](../reference/quest-harness-recipes-9.md)

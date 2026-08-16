@@ -682,6 +682,16 @@ export const CASES: readonly Case[] = [
         documentedIn: 'docs/reference/quest-harness-recipes-9.md'
     },
     {
+        id: 'temple-of-ikov-250-live',
+        harness: 'temple-of-ikov-250-live.ts',
+        covers: { scripts: ['AIOQuester'], subsystems: ['quests'] },
+        status: 'vetted',
+        budgetMin: 90,
+        provenAt: '760bae8f',
+        documentedIn: 'docs/reference/quest-harness-recipes-9.md',
+        note: 'members-only, :8890 — uncheated --until 100 finished in 39 minutes at --tick 200 on 20 lobsters, no parks and no deaths; the default kit is coins, food and the gear the bank already holds'
+    },
+    {
         id: 'thievingbot-test',
         harness: 'thievingbot-test.ts',
         covers: { scripts: ['ThievingBot'] },

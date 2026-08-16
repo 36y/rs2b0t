@@ -138,6 +138,7 @@ live runs paid for are in [Fishing Contest's pitfalls](../decisions/quest-pitfal
 - [Quest harness recipes (P–R)](quest-harness-recipes-5.md)
 - [Quest harness recipes (Sea–Shades)](quest-harness-recipes-7.md)
 - [Quest harness recipes (Sheep–Shield)](quest-harness-recipes-12.md)
-- [Quest harness recipes (T)](quest-harness-recipes-9.md)
+- [Quest harness recipes (Tai–Temple)](quest-harness-recipes-9.md)
+- [Quest harness recipes (Tree–Tribal)](quest-harness-recipes-13.md)
 - [Quest harness method](quest-harness-method.md)
 - [Seeding test accounts](seeding-test-accounts.md)

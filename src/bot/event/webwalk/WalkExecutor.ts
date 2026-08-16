@@ -99,6 +99,9 @@ const PATH_REQUEST_TIMEOUT_MS = 30_000;
 const TRANSPORT_WAIT_MS = 8000;
 /** Ceiling on the client scene rebuild after a landing, before a hop's loc counts as absent. */
 const SCENE_REBUILD_MS = 3000;
+// Why: the same rebuild that hides a hop's loc also empties `toLocal` for the tiles ahead, so every click candidate fails and the follow repaths with nothing clicked — five times inside the window, then the walk starts over from the top.
+/** All-candidate misses to sit out before repathing, while nothing has been clicked yet. */
+const CANDIDATE_SETTLE_TRIES = 3;
 const SCENE_STEP_MS = 8000;
 /** Walking the last tiles onto a hop's planned approach after a server can't-reach. */
 const APPROACH_STEP_MS = 4000;
@@ -273,6 +276,8 @@ class WalkExecutorImpl {
         }
 
         try {
+            // Why: one budget for the walk, so a landing costs a settle once rather than once per repath.
+            const settleBudget = { left: CANDIDATE_SETTLE_TRIES };
             for (let repaths = 0; repaths <= MAX_REPATHS; repaths++) {
                 const me = reader.worldTile();
                 if (!me) {
@@ -338,7 +343,7 @@ class WalkExecutorImpl {
                     this.lastOutcome = 'failed';
                     return false;
                 }
-                const result = await this.followPath(tiles, dest, radius, deadline, log);
+                const result = await this.followPath(tiles, dest, radius, deadline, log, settleBudget);
                 if (result === 'arrived') {
                     this.lastOutcome = 'arrived';
                     return true;
@@ -610,6 +615,7 @@ class WalkExecutorImpl {
             const radius = 4;
             const timeoutMs = 120_000;
             const deadline = performance.now() + timeoutMs;
+            const settleBudget = { left: CANDIDATE_SETTLE_TRIES };
             for (let repaths = 0; repaths <= MAX_REPATHS; repaths++) {
                 const me = reader.worldTile();
                 if (!me) {
@@ -625,7 +631,7 @@ class WalkExecutorImpl {
                 }
                 const tiles = expandWaypoints(path.waypoints);
                 this.publishPath(tiles, 0, -1);
-                const result = await this.followPath(tiles, stand, radius, deadline, m => log(`  ${m}`));
+                const result = await this.followPath(tiles, stand, radius, deadline, m => log(`  ${m}`), settleBudget);
                 if (result === 'arrived' || result === 'closest' || result === 'blocked') {
                     return true;
                 }
@@ -825,7 +831,8 @@ class WalkExecutorImpl {
         dest: WorldTile,
         radius: number,
         deadline: number,
-        log: (msg: string) => void
+        log: (msg: string) => void,
+        settleBudget: { left: number } = { left: CANDIDATE_SETTLE_TRIES }
     ): Promise<FollowResult> {
         let pathIdx = 0;
         let stallRetries = 0;
@@ -1180,6 +1187,13 @@ class WalkExecutorImpl {
                             this.noteDoorRefusal(hop, log);
                             return 'repath';
                         }
+                    }
+                    // Why: a walk that has clicked nothing yet is one the scene may not have caught up with, and repathing inside that window burns the five-repath budget on an identical path.
+                    // Why: the budget spans the walk rather than the follow, so a destination that was never reachable still fails in about the time it used to.
+                    if (clicks === 0 && settleBudget.left > 0) {
+                        settleBudget.left--;
+                        await Execution.delayTicks(2);
+                        continue;
                     }
                     log(
                         `client walk pathfind failed for all click candidates near path idx ${pathIdx} — repathing immediately (${clicks} clicks)`

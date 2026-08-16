@@ -156,6 +156,10 @@ export const SPECIAL_CROSSINGS: SpecialCrossing[] = [
     // Why: without a key the graph must route around the hut (#421, #423).
     { x: 3115, z: 3450, level: 0, locName: 'Door', action: 'Open', useItem: { id: 983, name: 'Brass key' }, requires: { item: 'Brass key', count: 1 }, label: 'Hill giant hut brass key door' },
 
+    // Why: ikov_shinykeydoor answers Open with "The door is locked." from both sides, and the ladder it fences off is the only way back from where Winelda drops you (#250).
+    // Why: keyed rather than removed, because pruning it without the key is what stops the pathfinder walking a keyless bot into McGrubor's Wood for a door it cannot open.
+    { x: 2657, z: 3496, level: 0, locName: 'Door', action: 'Open', requires: { item: 'Shiny key', count: 1 }, label: 'Temple of Ikov shiny key door (#250)' },
+
     // Why: the Baxtorian Falls approach (#369 / #320) uses the same stands as FireGiantLogic — Board Log raft @ ~2510,3493 → crash mound 2512,3481.
     // Why: walk south to the throw stand 2512,3477, inside THROW_ZONE z 3476–3481.
     // Why: Rope on Rock @ 2512,3468 → PastRock (~2513,3468, r≤3).

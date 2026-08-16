@@ -1,6 +1,6 @@
 [Manual](../README.md) › [Testing](../TESTING.md) › Quest harness recipes
 
-# Quest harness recipes (T)
+# Quest harness recipes (Tai–Temple)
 
 Per-quest seed and stage commands, with what each recipe has proven.
 
@@ -54,81 +54,69 @@ Four details govern this harness:
 
 What the live runs paid for is in [Tai Bwo Wannai Trio's pitfalls](../decisions/quest-pitfalls-14.md).
 
-## Tree Gnome Village — stage-scoped harness
+## Temple of Ikov — stage-scoped harness
 
-[`e2e/treegnome-263-live.ts`](../../e2e/treegnome-263-live.ts) drives the quest from a
-clean account or from any point inside it. `--stage N` sets `%treequest`, hands over the
-orb that stage assumes was already won, and relogs; `--lost-orb` withholds it.
-
-```sh
-HEADED=1 bun e2e/treegnome-263-live.ts --stage 0 --until 9 --minutes 90 --tick 200  # end to end
-HEADED=1 bun e2e/treegnome-263-live.ts --stage 0 --until 4 --minutes 45 --tick 200  # Bolren, Montai, the axe, six logs
-HEADED=1 bun e2e/treegnome-263-live.ts --stage 4 --until 7 --minutes 30 --tick 200  # ballista, breach, chest, Bolren
-HEADED=1 bun e2e/treegnome-263-live.ts --stage 7 --until 9 --minutes 45 --tick 200  # the warlord and the hand-back
-HEADED=1 bun e2e/treegnome-263-live.ts --stage 6 --until 9 --minutes 45 --lost-orb  # the chest again after a lost orb
-```
-
-Measured at `--tick 200` on 70 stats, no parks:
-
-| Stages | Minutes | Covers |
-|---|---|---|
-| 0 → 4 | 5 | Bolren through the railing, Montai, Aemad's axe, six logs |
-| 4 → 7 | 3 | the ballista, the crumbled wall, the inner door, the chest, Bolren |
-| 7 → 9 | 3 | the warlord and both orbs back to Bolren |
-| 0 → 9 | 8 | a clean account to `QUEST COMPLETE!` |
-
-Four details govern this harness:
-
-- **The bank holds coins, food and a rune melee kit.** The axe, the six logs and both
-  orbs have a source in the world; seeding one would hide whether the bot can find it.
-- **Stats are 70 rather than max.** Prayer 70 covers Protect from Melee, which is what
-  makes the warlord a fight the bot walks away from at full health.
-- **It runs on `:8890`.** `givebank` is inert there and every seed falls through to
-  `~bankitem`, which the helper verifies at a booth before trusting it.
-- **The quest is members-only, and the run deploys its own client.** A neighbouring
-  harness writing `public/bot/` mid-boot would otherwise decide which branch runs.
-
-What the live runs paid for is in [Tree Gnome Village's pitfalls](../decisions/quest-pitfalls-17.md).
-
-## Tribal Totem — stage-scoped harness
-
-[`e2e/tribal-totem-262-live.ts`](../../e2e/tribal-totem-262-live.ts) drives the quest from a
-clean account, or one leg of it. `--stage N` is `%totemquest` itself and relogs.
+[`e2e/temple-of-ikov-250-live.ts`](../../e2e/temple-of-ikov-250-live.ts), members-only,
+so `:8890`. The end-to-end command is vetted: uncheated `--until 100` finished in 39
+minutes at `--tick 200`, on twenty lobsters, with no parks and no deaths. It was 70
+minutes and about sixty lobsters before the ice cavern split into a crossing leg and an
+armoured one, the chest search learned to read an empty chest, and the roots farm moved
+to the peninsula in bank-picked gear.
 
 ```sh
-HEADED=1 bun e2e/tribal-totem-262-live.ts --stage 0 --until 5 --minutes 45 --tick 200  # end to end
-HEADED=1 bun e2e/tribal-totem-262-live.ts --stage 1 --until 3 --minutes 15 --tick 200  # label, crate, delivery
-HEADED=1 bun e2e/tribal-totem-262-live.ts --stage 4 --until 5 --minutes 20 --tick 200  # lock, trap, chest, hand-in
-HEADED=1 bun e2e/tribal-totem-262-live.ts --stage 4 --combo --until 5 --minutes 15     # skip the lock
+HEADED=1 bun e2e/temple-of-ikov-250-live.ts --until 100 --tick 200 --minutes 180              # end to end
+HEADED=1 bun e2e/temple-of-ikov-250-live.ts --stage 10 --kit dungeon --until 30 --minutes 45  # boots, lever, arrows
+HEADED=1 bun e2e/temple-of-ikov-250-live.ts --stage 30 --kit warrior --until 40 --minutes 30  # the Fire Warrior
+HEADED=1 bun e2e/temple-of-ikov-250-live.ts --stage 40 --kit roots --until 60 --minutes 30    # Winelda
+HEADED=1 bun e2e/temple-of-ikov-250-live.ts --stage 60 --kit guardian --until 100 --minutes 45 # guardians and Lucien
 ```
 
-Measured at `--tick 200` on 70 stats, no parks:
+`--stage N` sets `%ikov` and relogs. `--lever` sets bit 0 of `%ikov_dungeon`, the
+permanent unlock the south gate reads, so a stage test can skip the lava bridge.
+`--until 100` asserts the journal is green rather than a varp value — the Armadyl
+ending leaves `%ikov` at 80, not 100.
 
-| Stages | Minutes | Covers |
+`--kit` is the seeding dial, and every step up it is a claim the run no longer makes:
+
+| Kit | Adds | What it stops proving |
 |---|---|---|
-| 1 → 3 | 1 | the address label, the relabel, the R.P.D.T. delivery |
-| 4 → 5 | 3 | the KURT lock, the stairs trap, the chest, the ferry home |
-| 0 → 5 | 4-5 | a clean account to `QUEST COMPLETE!` |
+| `none` | — | nothing; the default |
+| `dungeon` | pendant, candle, tinderbox, knife | the Catherby shops and the Seers knife spawn |
+| `warrior` | + yew shortbow, 40 ice arrows, boots of lightness | the fletching chain, the ice chests, the webbed alcove |
+| `roots` | + 20 limpwurt roots | the hobgoblin farm |
+| `guardian` | + shiny key | Winelda's ferry — the key is what walks a seeded stage-60 run in through McGrubor's Wood |
 
-Four details govern this harness:
+The bank holds two million coins, three hundred lobsters, a set of studded leather and a
+rune scimitar at every kit. Nothing else is seeded by default: the axe, the knife, the flax, the yew logs,
+the bow string, the candle, the arrows, the boots and the roots each have a source the bot
+walks to, and seeding one hides whether it can find it. The armour and the weapon are the
+exception, because the quest sources neither — the module wears the best ranged pieces and
+wields the best melee weapon the bank already holds, so an unseeded bank proves only that
+it copes in boots with the yew axe.
 
-- **`--stage` is the varp, and 4 starts inside the mansion.** Nothing walks into Handelmort
-  Mansion — its one ground-floor door opens outward only — so a stage-4 seed teleports to
-  Cromperty's landing tile at (2638,3321) rather than the bank every earlier stage starts at.
-- **The stairs trap bit is never seeded.** `--combo` sets bit 0 of
-  `%handelmort_traps_disabled` to skip the four dials, and bit 21 is deliberately left clear:
-  a run that climbs without Investigating falls into the Ardougne sewers for a fifth of its
-  hitpoints, and that is the thing worth proving.
-- **The bank holds coins and lobsters and nothing else.** The address label comes off a crate
-  in the R.P.D.T. depot and the ferry fare comes out of the engine's coin float, so seeding
-  either would hide whether the bot can find it.
-- **The first Talk-to after a long walk can report unreachable.** Kangai Mau stands behind a
-  counter and Cromperty wanders his own house; each cost one retry per run and neither cost a
-  park. Read the second attempt's timing, not the first's.
+Six facts govern this harness:
 
-It is members-only, so it needs the `:8890` world; the `:8888` sim also answers neither
-`givebank` nor `~bankitem`, so a run there starts with an empty bank and parks on the coin
-float.
+- **`--stats 70` is the default**, not 99. Thieving 42 and Ranged 40 are the server
+  gates; woodcutting 60, fletching 65 and crafting 10 are what the yew shortbow costs,
+  and the module warns rather than blocks below them.
+- **The lava bridge fails at any non-negative weight.** The boots are -10lb worn, so
+  the leg that crosses carries the candle, the pendant and food and nothing else — the
+  bow is 3lb and never goes near it.
+- **The armour goes on after the lever, never before it.** A studded body is 12lb, so the
+  crossing leg fetches the boots and the lever alone and climbs out; the chest circuit is a
+  second descent through the south gate, which needs no bridge. `--lever` does not skip
+  that first descent: the module has no client-visible read on `%ikov_dungeon`, so it still
+  walks to the gate to learn it is open — what the flag saves is the lava crossing behind it.
+- **The Fire Warrior refuses anything but ranged with ice arrows in the quiver.** A run
+  that reaches him without both stands there swinging and never lands a hit.
+- **A seeded stage never walked the sourcing leg.** A run started at 50 has no axe
+  banked, and bare fists against level-42 hobgoblins is what killed the first attempt,
+  so the farm's arm check falls through to Aemad's counter when the bank is empty.
+- **Winelda's teleport is one-way.** Past it the shiny key is the only way out, so a
+  stage test seeded at 60 or 70 has to let the bot pick the key up before it can walk
+  to Lucien.
+
+What the live runs paid for is in Temple of Ikov's pitfalls, [engine behaviour](../decisions/quest-pitfalls-24.md), [the route](../decisions/quest-pitfalls-25.md) and [the fights](../decisions/quest-pitfalls-26.md).
 
 ## See also
 
@@ -143,5 +131,6 @@ float.
 - [Quest harness recipes (P–R)](quest-harness-recipes-5.md)
 - [Quest harness recipes (Sea–Shades)](quest-harness-recipes-7.md)
 - [Quest harness recipes (Sheep–Shield)](quest-harness-recipes-12.md)
+- [Quest harness recipes (Tree–Tribal)](quest-harness-recipes-13.md)
 - [Quest harness method](quest-harness-method.md)
 - [Seeding test accounts](seeding-test-accounts.md)
