@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { ROUTE, SMOKE_ROUTE } from '#/bot/scripts/ShopRunner/ShopRunnerRoute.js';
+import { ROUTE } from '#/bot/scripts/ShopRunner/ShopRunnerRoute.js';
 import { SHOP_DB } from '#/bot/data/shopdb.js';
 import { SHOPRUNNER_SETTINGS } from '#/bot/scripts/ShopRunner/ShopRunner.js';
 import type { Route } from '#/bot/api/shop/types.js';
@@ -85,11 +85,8 @@ describe('route data integrity vs generated shopdb', () => {
             buys: [{ obj: 'vial_water' }]
         }]);
     });
-    test('smoke route is the Aubury-only varrock cluster', () => {
-        checkRoute(SMOKE_ROUTE);
-        expect(SMOKE_ROUTE.clusters).toHaveLength(1);
-        expect(SMOKE_ROUTE.clusters[0].shops).toHaveLength(1);
-        expect(SMOKE_ROUTE.clusters[0].shops[0].shopId).toBe('runeshop');
+    test('ShopRunner has no smoke-varrock route setting', () => {
+        expect(SHOPRUNNER_SETTINGS).not.toHaveProperty('route');
     });
 });
 

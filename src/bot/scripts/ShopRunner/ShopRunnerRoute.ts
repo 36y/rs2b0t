@@ -96,8 +96,3 @@ export const ROUTE: Route = {
     ],
     ring: ['varrock', 'portsarim', 'taverley', 'catherby', 'fishingguild', 'rangingguild', 'ardougne', 'magicguild', 'magearena']
 };
-
-export const SMOKE_ROUTE: Route = {
-    clusters: [{ ...ROUTE.clusters[0], shops: [ROUTE.clusters[0].shops[0]] }],
-    ring: ['varrock']
-};

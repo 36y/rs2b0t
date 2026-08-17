@@ -676,7 +676,6 @@ World shop-run supply loop — cycles shop clusters buying Herblore supplies, fe
 | `maxGpPerLeg` | number (1000–) | `100000` | Max gp per withdrawal |
 | `stopFloorGp` | number (0–) | `5000` | Stop below bank gp |
 | `mageArena` | boolean | `true` | Mage Arena leg |
-| `route` | string | `"live"` | Route — one of: live, smoke-varrock |
 
 ## Navigation
 
