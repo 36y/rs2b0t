@@ -37,6 +37,7 @@ import { hazeelcult } from './hazeelcult.js';
 import { familycrest } from './familycrest/index.js';
 import { horror } from './horror/index.js';
 import { fightarena } from './fightarena/index.js';
+import { chompybird } from './chompybird/index.js';
 import { clocktower } from './clocktower.js';
 import { monksfriend } from './monksfriend.js';
 import { seaslug } from './seaslug/index.js';
@@ -65,6 +66,7 @@ import { upass } from './upass/index.js';
 // Why: Shield of Arrav sits late among the free quests — it is the one quest that stalls without a partner or a banked certificate, so the queue should bank the others first.
 // Why: Tribal Totem sits with the other Ardougne quests — no quest requires it, and its 21 Thieving gate is eligibility's job rather than the order's.
 // Why: Hazeel Cult follows Plague City for the same reason Family Crest does — every leg of it is in Ardougne, so the teleport Plague City unlocks pays for all of them.
+// Why: Big Chompy Bird Hunting follows Fight Arena, which is where the melee kit its wolves need is already proven.
 // Why: Fishing Contest follows Vampire Slayer, which is the other quest that empties Morgan's cupboard, so the two Draynor legs run back to back.
 // Why: Tai Bwo Wannai Trio follows Jungle Potion, which it requires complete.
 // Why: Holy Grail follows Merlin's Crystal, which is its prerequisite and the only source of the Excalibur its one fight needs.
@@ -76,7 +78,7 @@ import { upass } from './upass/index.js';
 // Why: Temple of Ikov sits near the end because it fletches its own yew shortbow, so it wants woodcutting 60 and fletching 65 on top of its thieving and ranged gates.
 // Why: the Observatory follows Clock Tower, as both are Ardougne-side and it pays two quest points towards Dragon Slayer's gate for one outing.
 // Why: Underground Pass follows Biohazard, which it requires complete, and sits second to last as the longest single run in the queue.
-export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, knightssword, sheepshearer, restlessghost, cooksassistant, impcatcher, ernest, hetty, romeojuliet, princeali, piratestreasure, shieldofarrav, gertrudescat, waterfall, goblindiplomacy, demonslayer, witchshouse, dwarfcannon, clocktower, observatory, monksfriend, merlinscrystal, holygrail, priestperil, druidspirit, mortton, blackknight, druidicritual, lostcity, touristtrap, watchtower, vampireslayer, fishingcontest, junglepotion, tbwt, shilo, elementalworkshop, deathplateau, trollstronghold, eadgar, plaguecity, biohazard, hazeelcult, tribaltotem, sheepherder, familycrest, horror, scorpcatcher, fightarena, seaslug, murder, treegnome, grandtree, ikov, digsite, upass, dragonslayer];
+export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, knightssword, sheepshearer, restlessghost, cooksassistant, impcatcher, ernest, hetty, romeojuliet, princeali, piratestreasure, shieldofarrav, gertrudescat, waterfall, goblindiplomacy, demonslayer, witchshouse, dwarfcannon, clocktower, observatory, monksfriend, merlinscrystal, holygrail, priestperil, druidspirit, mortton, blackknight, druidicritual, lostcity, touristtrap, watchtower, vampireslayer, fishingcontest, junglepotion, tbwt, shilo, elementalworkshop, deathplateau, trollstronghold, eadgar, plaguecity, biohazard, hazeelcult, tribaltotem, sheepherder, familycrest, horror, scorpcatcher, fightarena, chompybird, seaslug, murder, treegnome, grandtree, ikov, digsite, upass, dragonslayer];
 
 export function defById(id: string): QuestModule | undefined {
     return QUEST_DEFS.find(d => d.record.id === id);

@@ -41,6 +41,7 @@ and both winch ropes from nothing — a mid-quest recipe re-buys the guide's tea
 
 ## See also
 
+- [Quest harness recipes (Big)](quest-harness-recipes-17.md)
 - [Quest harness recipes (A–D)](quest-harness-recipes.md)
 - [Quest harness recipes (E)](quest-harness-recipes-4.md)
 - [Quest harness recipes (F)](quest-harness-recipes-2.md)

@@ -100,6 +100,7 @@ walk out to wherever the previous leg would already have left the bot standing.
 ## See also
 
 - [Quest harness recipes (A–D)](quest-harness-recipes.md)
+- [Quest harness recipes (Big)](quest-harness-recipes-17.md)
 - [Quest harness recipes (Dig)](quest-harness-recipes-15.md)
 - [Quest harness recipes (E)](quest-harness-recipes-4.md)
 - [Quest harness recipes (F)](quest-harness-recipes-2.md)
