@@ -592,9 +592,10 @@ export const QUESTS: QuestRecord[] = [
         requirements: {
             quests: ['biohazard']
         },
+        // Why: the plank only crosses the double spring trap, and the module walks that with the journal
+        // held open instead, so requiring one would block a quest it no longer needs.
         items: [
-            { name: 'Rope', qty: 1, kind: 'mustHave' },
-            { name: 'Plank', qty: 1, kind: 'mustHave' }
+            { name: 'Rope', qty: 1, kind: 'acquirable' }
         ]
     },
     {

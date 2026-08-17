@@ -83,5 +83,6 @@ cross-contaminates the two bots. PASS wants all four: `phoenixgang = 10`,
 - [Quest harness recipes (P–R)](quest-harness-recipes-5.md)
 - [Quest harness recipes (Tai–Temple)](quest-harness-recipes-9.md)
 - [Quest harness recipes (Tree–Tribal)](quest-harness-recipes-13.md)
+- [Quest harness recipes (U)](quest-harness-recipes-16.md)
 - [Quest harness method](quest-harness-method.md)
 - [Seeding test accounts](seeding-test-accounts.md)

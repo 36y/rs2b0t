@@ -60,7 +60,7 @@ What the legs proved, at `--tick 200` on `:8890`:
 | `--until N` | 160 | stop at this stage; 160 waits for the journal to go green |
 | `--tick N` | 300 | server tick in ms; 300 is double speed |
 | `--minutes N` | 90 | wall-clock budget |
-| `--stats N` | 70 | every skill, not max — the demon is the whole point of the floor |
+| `--stats N` | 70 | every skill, not max — the demon is what the floor exists for |
 | `--root N` | 15 | which of the fifteen roots holds the rock, for `--stage 150` |
 | `--food NAME` | Lobster | the AIO Quester's food setting |
 | `--no-tele` | off | start where the account already stands |
@@ -94,7 +94,7 @@ What the legs proved, at `--tick 300` on `:8890`:
 | 0 → 160 | PASS, 16 min | the uncheated run: 31 steps, no parks, nothing seeded but coins, lobsters and a banked rune kit |
 
 The demon fought at 70 across the board in a rune melee kit under Protect from Melee:
-**63 seconds, one Attack click held the whole fight, hitpoints never left 70/70, prayer
+**63 seconds, one Attack click held from start to finish, hitpoints never left 70/70, prayer
 70 → 22**. Nothing about the kit is load-bearing except how long it takes.
 
 `%daconia_rock_root` is rolled by the King's stage-140 dialogue, so a jump straight to 150
@@ -117,6 +117,7 @@ forever. `--root N` writes it, and 15 is the default because it is the longest w
 - [Quest harness recipes (Sheep–Shield)](quest-harness-recipes-12.md)
 - [Quest harness recipes (Tai–Temple)](quest-harness-recipes-9.md)
 - [Quest harness recipes (Tree–Tribal)](quest-harness-recipes-13.md)
+- [Quest harness recipes (U)](quest-harness-recipes-16.md)
 - [Quest harness method](quest-harness-method.md)
 - [Seeding test accounts](seeding-test-accounts.md)
 - [Gertrude's Cat pitfalls](../decisions/quest-pitfalls-19.md)

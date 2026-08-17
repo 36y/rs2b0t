@@ -96,5 +96,6 @@ float.
 - [Quest harness recipes (Sea–Shades)](quest-harness-recipes-7.md)
 - [Quest harness recipes (Sheep–Shield)](quest-harness-recipes-12.md)
 - [Quest harness recipes (Tai–Temple)](quest-harness-recipes-9.md)
+- [Quest harness recipes (U)](quest-harness-recipes-16.md)
 - [Quest harness method](quest-harness-method.md)
 - [Seeding test accounts](seeding-test-accounts.md)

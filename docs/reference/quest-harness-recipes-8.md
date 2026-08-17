@@ -101,5 +101,6 @@ Per leg — stage 0 to 3 **5 min**, 3 to 4 **4 min**, 4 to 8 **14 min**, 8 to co
 - [Quest harness recipes (Sheep–Shield)](quest-harness-recipes-12.md)
 - [Quest harness recipes (Tai–Temple)](quest-harness-recipes-9.md)
 - [Quest harness recipes (Tree–Tribal)](quest-harness-recipes-13.md)
+- [Quest harness recipes (U)](quest-harness-recipes-16.md)
 - [Quest harness method](quest-harness-method.md)
 - [Seeding test accounts](seeding-test-accounts.md)

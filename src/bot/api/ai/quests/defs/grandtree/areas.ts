@@ -218,7 +218,7 @@ export const PILOT: NpcStop = {
     prefer: ['Take me to Karamja please!']
 };
 
-// Why: `grandtree_trapdoorunder` only opens once the quest is complete, so the caves have exactly one ungated mouth and it is one-way — the way in is Glough's trapdoor, which the module drives itself.
+// Why: `grandtree_trapdoorunder` only opens once the quest is complete, so the caves have one ungated mouth and no other and it is one-way — the way in is Glough's trapdoor, which the module drives itself.
 export const GT_HOPS: LadderHop[] = [
     { stand: GT_TILE.caveLadder, locName: 'Ladder', op: 'Climb-up', arrive: new Tile(2463, 3497, 0) }
 ];

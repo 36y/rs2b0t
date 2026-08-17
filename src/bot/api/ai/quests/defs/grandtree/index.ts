@@ -141,7 +141,7 @@ export function decide(snap: QuestSnapshot): QuestStep {
     if (stage === undefined) { return { kind: 'wait', reason: 'The Grand Tree journal stage unavailable' }; }
 
     // Why: the twig legs live on Glough's pillar floor, a seven-tile pocket with no baked way off it, so the kit is bought on the ground before the first climb rather than beside the trapdoor.
-    // Why: a run that arrives up there still owing gear climbs back down for it — a bank step decided in the pocket has no route and burns the whole budget proving so.
+    // Why: a run that arrives up there still owing gear climbs back down for it — a bank step decided in the pocket has no route and burns its budget down to nothing proving so.
     if ((stage === GT_STAGE.GIVEN_TWIGS || stage === GT_STAGE.UNLOCKED_TRAPDOOR) && !inCaves(snap.tile)) {
         const kit = demonKit(snap);
         if (kit) {

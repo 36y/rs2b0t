@@ -134,5 +134,6 @@ What the live runs paid for is in Temple of Ikov's pitfalls, [engine behaviour](
 - [Quest harness recipes (Sea–Shades)](quest-harness-recipes-7.md)
 - [Quest harness recipes (Sheep–Shield)](quest-harness-recipes-12.md)
 - [Quest harness recipes (Tree–Tribal)](quest-harness-recipes-13.md)
+- [Quest harness recipes (U)](quest-harness-recipes-16.md)
 - [Quest harness method](quest-harness-method.md)
 - [Seeding test accounts](seeding-test-accounts.md)

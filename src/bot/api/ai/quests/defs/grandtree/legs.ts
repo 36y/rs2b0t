@@ -71,7 +71,7 @@ export async function startQuest(log: Log): Promise<boolean> {
 // Why: an interrupted run resumes from inside the cell, where Charlie's own `apnpc1` runs the same chain from the middle.
 
 // Why: the goal state — standing one tile east of the cell — is also where a chain that broke after the teleport leaves the player, so this leg never short-circuits on it.
-// Why: a stage-70 pass that starts there walks back to Glough instead, who jails the player again and runs the whole chain from the top.
+// Why: a stage-70 pass that starts there walks back to Glough instead, who jails the player again and runs the chain again from the top.
 
 /** Confront Glough with his journal and come out of the cage he answers with. */
 export async function jailedByGlough(log: Log): Promise<boolean> {
@@ -132,7 +132,7 @@ export async function foremanOrder(log: Log): Promise<boolean> {
     if (heldId(GT_OBJ.LUMBER_ORDER) > 0) {
         return true;
     }
-    // Why: the gate swaps itself for an inviswall for three ticks after it teleports the player through, so the client repaths off the tile it just landed on and a two-pass walk budget is spent on the recovery.
+    // Why: the gate swaps itself for an inviswall for three ticks after it teleports the player through, so the client repaths off the tile it has landed on and a two-pass walk budget is spent on the recovery.
     const near = Npcs.query().name(FOREMAN.npc).within(8).nearest();
     if (!near && !(await Traversal.walkResilient(FOREMAN.anchor, { radius: 4, attempts: 5, timeoutMs: 120_000, log }))) {
         return false;
@@ -252,7 +252,7 @@ export async function climbToPillars(log: Log): Promise<boolean> {
     return true;
 }
 
-// Why: the pillar floor is a seven-tile pocket whose only ways off are the tree back down and the trapdoor, and neither is a baked edge — so a bank step decided up here has no route and spends the whole budget proving it.
+// Why: the pillar floor is a seven-tile pocket whose only ways off are the tree back down and the trapdoor, and neither is a baked edge — so a bank step decided up here has no route and spends its budget down to nothing proving it.
 
 /** Climb out of Glough's tree, back to the ground the bank is on. */
 export async function descendGloughTree(log: Log): Promise<boolean> {

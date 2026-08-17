@@ -1,5 +1,5 @@
 /** Live Grand Tree harness (#247): --stage N --until N --minutes N, base :8890.
- *  Why: `%grandtree` is the whole state machine, so `--stage` writes it and relogs — `update_questlist` only recolours the list at login, and the module reads that colour before it reads the journal.
+ *  Why: `%grandtree` is the state machine and nothing else is, so `--stage` writes it and relogs — `update_questlist` only recolours the list at login, and the module reads that colour before it reads the journal.
  *  Why: stats are 70 across the board rather than max, because the quest ends on a level-172 Black Demon and the point is to prove a 70 account can hold Protect from Melee through it.
  *  Why: the bank holds coins, lobsters and a rune melee kit — every quest item has a source in the world, and seeding one would hide whether the bot can find it. */
 
@@ -86,7 +86,7 @@ const KARAMJA_CRASH = { x: 2917, z: 3058, level: 0 };
 /** `%grandtree` values the module branches on, and the only ones `--stage` accepts. */
 const STAGES = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150];
 
-// Why: past the glider the quest is in the Karamja jungle, and past the trapdoor it is under the tree — starting a leg on the wrong continent spends its whole budget walking.
+// Why: past the glider the quest is in the Karamja jungle, and past the trapdoor it is under the tree — starting a leg on the wrong continent spends its budget walking.
 function startTile(stage: number): { x: number; z: number; level: number } {
     if (stage === 80 || stage === 90) {
         return stage === 80 ? STRONGHOLD_BANK : KARAMJA_CRASH;

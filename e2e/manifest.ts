@@ -569,6 +569,15 @@ export const CASES: readonly Case[] = [
         note: 'clean account to journal complete in 23min at --tick 300, no parks'
     },
     {
+        id: 'upass-265-live',
+        harness: 'upass-265-live.ts',
+        covers: { scripts: ['AIOQuester'], subsystems: ['quests'] },
+        status: 'unvetted',
+        budgetMin: 110,
+        documentedIn: 'docs/reference/quest-harness-recipes-16.md',
+        note: 'every leg 0 to 10 proven live from its own seeded stage; end to end stalls in the second cavern'
+    },
+    {
         id: 'plague-pipe-366-live',
         harness: 'plague-pipe-366-live.ts',
         covers: { subsystems: ['world'] },
