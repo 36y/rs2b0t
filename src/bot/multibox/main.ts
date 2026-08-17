@@ -6,7 +6,7 @@ import { DomSlotOps, orderedSlotElements } from './DomSlotOps.js';
 import { MultiBoxController } from './MultiBoxController.js';
 import { ProfileChooser } from './ProfileChooser.js';
 import { vault, type Profile } from './ProfileVault.js';
-import { renderRailTile } from './RailTile.js';
+import { renderRailTile, slotIsRunning } from './RailTile.js';
 import { ResourcePanel } from './ResourcePanel.js';
 import { TabBar } from './TabBar.js';
 import { VaultPrompt } from './VaultPrompt.js';
@@ -309,7 +309,7 @@ function boot(): void {
     function renderRail(): void {
         tabBar.render(controller.tabs(), controller.activeTab());
         const snaps = controller.snapshot();
-        resources.setBotCount(snaps.length);
+        resources.setBotCount(snaps.length, snaps.filter(slotIsRunning).length);
         const empty = snaps.length === 0;
         startAll.disabled = empty;
         stopAll.disabled = empty;
