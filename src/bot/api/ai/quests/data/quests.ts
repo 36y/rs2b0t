@@ -609,7 +609,14 @@ export const QUESTS: QuestRecord[] = [
                 { skill: 'fletching', level: 25 }
             ]
         },
-        items: []
+        items: [
+            // Why: the axe and the knife have permanent spawns inside Rellekka, the tinderbox comes off Arhein in Catherby,
+            // Why: and the shark is bought from Rufus in Canifis, the only shop in the game that restocks one.
+            { name: 'Bronze axe', qty: 1, kind: 'acquirable' },
+            { name: 'Knife', qty: 1, kind: 'acquirable' },
+            { name: 'Tinderbox', qty: 1, kind: 'acquirable' },
+            { name: 'Raw shark', qty: 1, kind: 'acquirable' }
+        ]
     },
     {
         id: 'waterfall',

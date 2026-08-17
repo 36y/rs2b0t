@@ -108,6 +108,7 @@ forever. `--root N` writes it, and 15 is the default because it is the longest w
 - [Quest harness recipes (Dig)](quest-harness-recipes-15.md)
 - [Quest harness recipes (E)](quest-harness-recipes-4.md)
 - [Quest harness recipes (F)](quest-harness-recipes-2.md)
+- [Quest harness recipes (Fre)](quest-harness-recipes-18.md)
 - [Quest harness recipes (Haz–Hol)](quest-harness-recipes-8.md)
 - [Quest harness recipes (Hor)](quest-harness-recipes-10.md)
 - [Quest harness recipes (I–L)](quest-harness-recipes-3.md)

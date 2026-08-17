@@ -132,6 +132,7 @@ live runs paid for are in [Fishing Contest's pitfalls](../decisions/quest-pitfal
 - [Quest harness recipes (Big)](quest-harness-recipes-17.md)
 - [Quest harness recipes (Dig)](quest-harness-recipes-15.md)
 - [Quest harness recipes (E)](quest-harness-recipes-4.md)
+- [Quest harness recipes (Fre)](quest-harness-recipes-18.md)
 - [Quest harness recipes (G)](quest-harness-recipes-11.md)
 - [Quest harness recipes (Haz–Hol)](quest-harness-recipes-8.md)
 - [Quest harness recipes (Hor)](quest-harness-recipes-10.md)

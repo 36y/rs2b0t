@@ -243,6 +243,16 @@ export const CASES: readonly Case[] = [
         note: 'uncheated --stage 0 --until 5 finished in 6 minutes at --tick 150; --stage is %fishingcompo'
     },
     {
+        id: 'fremennik-trials-266-live',
+        harness: 'fremennik-trials-266-live.ts',
+        covers: { scripts: ['AIOQuester'] },
+        status: 'vetted',
+        provenAt: '7a90d351',
+        budgetMin: 180,
+        documentedIn: 'docs/reference/quest-harness-recipes-18.md',
+        note: 'Seven trials at 70 stats and --tick 200; --stage counts whole trials won. Koschei passes on a roll that lands on the last hitpoint, so a run can spend one death and a walk back from Lumbridge'
+    },
+    {
         id: 'gatheringbot-cooker-pair-test',
         harness: 'gatheringbot-cooker-pair-test.ts',
         covers: { scripts: ['GatheringBot'] },

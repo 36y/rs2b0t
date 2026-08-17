@@ -2,8 +2,6 @@
 
 # Quest harness recipes (E)
 
-Elemental Workshop, Ernest the Chicken and Eadgar's Ruse.
-
 Per-quest seed and stage commands, with what each recipe has proven.
 
 ## Elemental Workshop — harness recipes and combat floor search
@@ -134,6 +132,7 @@ it adds three transport edges, and a neighbouring session's deploy landing in th
 - [Quest harness recipes (Big)](quest-harness-recipes-17.md)
 - [Quest harness recipes (Dig)](quest-harness-recipes-15.md)
 - [Quest harness recipes (F)](quest-harness-recipes-2.md)
+- [Quest harness recipes (Fre)](quest-harness-recipes-18.md)
 - [Quest harness recipes (G)](quest-harness-recipes-11.md)
 - [Quest harness recipes (Haz–Hol)](quest-harness-recipes-8.md)
 - [Quest harness recipes (Hor)](quest-harness-recipes-10.md)

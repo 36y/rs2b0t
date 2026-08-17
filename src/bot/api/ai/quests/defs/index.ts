@@ -58,6 +58,7 @@ import { ikov } from './ikov/index.js';
 import { observatory } from './observatory/index.js';
 import { digsite } from './digsite/index.js';
 import { upass } from './upass/index.js';
+import { fremenniktrials } from './fremenniktrials/index.js';
 
 // Why: Dragon Slayer is last, as it is gated at 32 quest points and the queue has to earn them on the way past everything else before it becomes runnable.
 // Why: Death Plateau comes before Troll Stronghold, which requires it complete.
@@ -78,7 +79,8 @@ import { upass } from './upass/index.js';
 // Why: Temple of Ikov sits near the end because it fletches its own yew shortbow, so it wants woodcutting 60 and fletching 65 on top of its thieving and ranged gates.
 // Why: the Observatory follows Clock Tower, as both are Ardougne-side and it pays two quest points towards Dragon Slayer's gate for one outing.
 // Why: Underground Pass follows Biohazard, which it requires complete, and sits second to last as the longest single run in the queue.
-export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, knightssword, sheepshearer, restlessghost, cooksassistant, impcatcher, ernest, hetty, romeojuliet, princeali, piratestreasure, shieldofarrav, gertrudescat, waterfall, goblindiplomacy, demonslayer, witchshouse, dwarfcannon, clocktower, observatory, monksfriend, merlinscrystal, holygrail, priestperil, druidspirit, mortton, blackknight, druidicritual, lostcity, touristtrap, watchtower, vampireslayer, fishingcontest, junglepotion, tbwt, shilo, elementalworkshop, deathplateau, trollstronghold, eadgar, plaguecity, biohazard, hazeelcult, tribaltotem, sheepherder, familycrest, horror, scorpcatcher, fightarena, chompybird, seaslug, murder, treegnome, grandtree, ikov, digsite, upass, dragonslayer];
+// Why: The Fremennik Trials wants Woodcutting and Crafting 40, so it runs after the skilling quests rather than among the early ones.
+export const QUEST_DEFS: QuestModule[] = [runemysteries, doric, knightssword, sheepshearer, restlessghost, cooksassistant, impcatcher, ernest, hetty, romeojuliet, princeali, piratestreasure, shieldofarrav, gertrudescat, waterfall, goblindiplomacy, demonslayer, witchshouse, dwarfcannon, clocktower, observatory, monksfriend, merlinscrystal, holygrail, priestperil, druidspirit, mortton, blackknight, druidicritual, lostcity, touristtrap, watchtower, vampireslayer, fishingcontest, junglepotion, tbwt, shilo, elementalworkshop, deathplateau, trollstronghold, eadgar, plaguecity, biohazard, hazeelcult, tribaltotem, sheepherder, familycrest, horror, scorpcatcher, fightarena, chompybird, seaslug, murder, treegnome, grandtree, ikov, digsite, upass, fremenniktrials, dragonslayer];
 
 export function defById(id: string): QuestModule | undefined {
     return QUEST_DEFS.find(d => d.record.id === id);

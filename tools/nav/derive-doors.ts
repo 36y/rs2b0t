@@ -82,7 +82,13 @@ function main(): void {
             // Shield of Arrav's three hideout doors. Why: the weapon store answers Open with "The door is securely locked" and yields only to an oplocu with the key, while the other two refuse until you have joined and then p_teleport you through — none is an edge the walker can step.
             'phoenixdoor', 'phoenixdoor2', 'blackarmdoor',
             // Khazard stronghold's front door. Why: quest_tree.rs2 opens it only for a player already north of it, so the pathfinder routed every trip to the chest through a door that answers "The door seems to be locked from the inside." — the crumbled wall is the way in, driven by defs/treegnome.
-            'khazard_stronghold_door'
+            'khazard_stronghold_door',
+            // Peer the Seer's puzzle house. door1 opens only to a solved combination lock and an empty pack; door2 answers "This door is locked tightly shut." and yields to an oplocu with the key from inside.
+            // Why: baked as edges the pathfinder routes a bot into a sealed pocket it then cannot leave, which is where a Fremennik Trials run wedged.
+            'viking_seers_door1', 'viking_seers_door2',
+            // Why: the longhall's backstage door stays in — the bouncer refuses only the inward crossing, and the stage behind it is a dead end nothing routes through, so removing it would seal the bard in after his performance.
+            // Rellekka's north fence: "Only Fremenniks may pass this gate." until the trials are over.
+            'viking_fencegate_l', 'viking_fencegate_r'
         ]);
         const label = `${type.name ?? ''} ${type.debugname ?? ''}`.toLowerCase();
         if (label.includes('locked') || (type.debugname ?? '').startsWith('macro_') || SCRIPT_REFUSED.has(type.debugname ?? '')) {

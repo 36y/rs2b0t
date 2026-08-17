@@ -125,6 +125,7 @@ What the live runs paid for is in Temple of Ikov's pitfalls, [engine behaviour](
 - [Quest harness recipes (Dig)](quest-harness-recipes-15.md)
 - [Quest harness recipes (E)](quest-harness-recipes-4.md)
 - [Quest harness recipes (F)](quest-harness-recipes-2.md)
+- [Quest harness recipes (Fre)](quest-harness-recipes-18.md)
 - [Quest harness recipes (G)](quest-harness-recipes-11.md)
 - [Quest harness recipes (Haz–Hol)](quest-harness-recipes-8.md)
 - [Quest harness recipes (Hor)](quest-harness-recipes-10.md)
