@@ -236,15 +236,23 @@ export const ARENA_EDGES: readonly ArenaEdge[] = [
     { a: 24, b: 23, kind: 'plank', minLevel: 1, mode: 'interact', locName: 'Plank', op: 'Walk-on' }
 ];
 
-/** Spike trap between platforms 13↔14 — centre-ish grind while waiting. */
+/** Spike trap between platforms 13↔14. */
 export const SPIKE_EDGE: ArenaEdge = ARENA_EDGES.find(e => e.a === 13 && e.b === 14)!;
-export const SPIKE_PLATFORMS = [13, 14] as const;
 export const CENTRE_PLATFORM = 12;
 
 export const ARDY_BANK = { x: 2655, z: 3283, level: 0 };
 export const ARENA_ENTRANCE = { x: 2809, z: 3194, level: 0 };
 export const LADDER_DOWN_STAND = { x: 2809, z: 3194, level: 0 };
 export const KARAMJA_GENERAL = { x: 2902, z: 3146, level: 0 };
+
+/** Clerk rotates the active dispenser every 98 server ticks (~58.8s). One ticket per rotation after the first tag. */
+export const PILLAR_CYCLE_TICKS = 98;
+export const TICKET_CAP_PER_HOUR = Math.floor(3_600_000 / (PILLAR_CYCLE_TICKS * 600));
+
+/** A hint swap without a tag on the previous pillar is a missed ticket and also breaks the streak. */
+export function hintMissed(prevHint: number, nextHint: number, taggedThisHint: boolean): boolean {
+    return prevHint >= 0 && nextHint >= 0 && nextHint !== prevHint && !taggedThisHint;
+}
 
 /** True when the return ship is unaffordable but the pack still has food to sell. */
 export function needsFoodSaleForBoat(coins: number, foodCount: number, atBrimhaven: boolean): boolean {
@@ -448,6 +456,35 @@ export function canStartObstacle(_animating: boolean, inPit: boolean): boolean {
     return !inPit;
 }
 
+/** Lower is faster. Monkey/handholds are long anims; zone traps are a 1-tick dive. */
+function hopKindCost(kind: ObstacleKind | undefined): number {
+    switch (kind) {
+        case 'saws':
+        case 'spikes':
+        case 'pressure':
+        case 'darts':
+            return 0;
+        case 'wall':
+        case 'pillar':
+            return 1;
+        case 'ledge':
+        case 'log':
+            return 2;
+        case 'rope':
+        case 'swing':
+            return 3;
+        case 'monkey':
+        case 'handholds':
+            return 4;
+        case 'plank':
+            return 5;
+        case 'blade':
+            return 9;
+        default:
+            return 3;
+    }
+}
+
 /** Manhattan tile distance between two arena platforms (for hop tie-breaks). */
 function platformGeoDist(a: number, b: number): number {
     const pa = PILLARS[a];
@@ -462,9 +499,28 @@ export function usableEdges(agility: number): ArenaEdge[] {
     return ARENA_EDGES.filter(e => agility >= e.minLevel);
 }
 
+// Why: timed blades knock you back on a 7-tick cycle — walking them is a stall, not a hop.
+// Why: a random ticket-grid plank is `plank_broke1` and dumps you in the pit with no agility roll.
+// Why: below 20 the plank is the only 5↔6 link; at 20+ spikes/handholds replace it.
+// Why: the SE landing still needs 24↔23 when the rope swing is awkward.
+function pathingEdges(agility: number): ArenaEdge[] {
+    return usableEdges(agility).filter(e => {
+        if (e.a === 24 || e.b === 24) {
+            return true;
+        }
+        if (e.kind === 'blade') {
+            return false;
+        }
+        if (e.kind === 'plank' && agility >= 20) {
+            return false;
+        }
+        return true;
+    });
+}
+
 function arenaAdj(agility: number): Map<number, number[]> {
     const adj = new Map<number, number[]>();
-    for (const e of usableEdges(agility)) {
+    for (const e of pathingEdges(agility)) {
         if (!adj.has(e.a)) {
             adj.set(e.a, []);
         }
@@ -526,6 +582,11 @@ export function pathPlatforms(from: number, to: number, agility: number): number
             if (ga !== gb) {
                 return ga - gb;
             }
+            const ca = hopKindCost(edgeBetween(cur, a, agility)?.kind);
+            const cb = hopKindCost(edgeBetween(cur, b, agility)?.kind);
+            if (ca !== cb) {
+                return ca - cb;
+            }
             return a - b;
         });
         cur = opts[0];
@@ -546,26 +607,48 @@ export function edgeBetween(a: number, b: number, agility: number): ArenaEdge | 
 }
 
 /** Next hop platform toward `goal`, or null if stuck/arrived. */
-export function nextHop(from: number, goal: number, agility: number): number | null {
+export function nextHop(from: number, goal: number, agility: number, avoid = -1): number | null {
     const path = pathPlatforms(from, goal, agility);
     if (path === null) {
         return null;
     }
-    return path[0] ?? null;
+    const first = path[0];
+    if (first === undefined || first !== avoid) {
+        return first ?? null;
+    }
+    const rem = hopDistFrom(goal, arenaAdj(agility));
+    const need = (rem.get(from) ?? 0) - 1;
+    for (const e of usableEdges(agility)) {
+        const n = e.a === from ? e.b : e.b === from ? e.a : -1;
+        if (n >= 0 && n !== avoid && rem.get(n) === need) {
+            return n;
+        }
+    }
+    return first;
 }
 
-/**
- * Where to idle between tags: prefer spike platforms when agility ≥ 20,
- * otherwise the geometric centre platform.
- */
-export function waitPlatform(agility: number, here: number): number {
-    if (agility >= 20) {
-        // Prefer the nearer of the two spike platforms so we don't cross half the map.
-        const d13 = pathPlatforms(here, 13, agility)?.length ?? 99;
-        const d14 = pathPlatforms(here, 14, agility)?.length ?? 99;
-        return d13 <= d14 ? 13 : 14;
+/** Source-side trap trigger: 5 tiles toward dest. A dest-island click paths around the loc into the pit. */
+export function walkTrapStand(from: number, to: number): { x: number; z: number } | null {
+    const a = PILLARS[from];
+    const b = PILLARS[to];
+    if (!a || !b) {
+        return null;
     }
-    return CENTRE_PLATFORM;
+    return {
+        x: a.x + Math.sign(b.x - a.x) * 5,
+        z: a.z + Math.sign(b.z - a.z) * 5
+    };
+}
+
+/** Tickets in a window if every cycle after the unpaid first tag is caught. */
+export function ticketsInWindow(minutes: number, firstUnpaid = true, misses = 0): number {
+    const cycles = Math.floor((minutes * 60_000) / (PILLAR_CYCLE_TICKS * 600));
+    return Math.max(0, cycles - (firstUnpaid ? 1 : 0) - misses);
+}
+
+/** Centre plus the two spike islands — standing here keeps the next random pillar to a short chase. */
+export function onTicketHub(platform: number): boolean {
+    return platform === CENTRE_PLATFORM || platform === 13 || platform === 14;
 }
 
 /** Inventory keep list when depositing: food name forms + coins. */

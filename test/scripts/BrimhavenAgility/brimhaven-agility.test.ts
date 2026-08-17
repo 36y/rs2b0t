@@ -12,6 +12,10 @@ import {
     coinsNeeded,
     coinsToWithdraw,
     KARAMJA_GENERAL,
+    PILLAR_CYCLE_TICKS,
+    TICKET_CAP_PER_HOUR,
+    hintMissed,
+    ticketsInWindow,
     needsFoodSaleForBoat,
     strandedWithoutBoatFare,
     edgeBetween,
@@ -39,8 +43,9 @@ import {
     GUARD_THIEVING_MIN,
     ticketInventoryGain,
     usableEdges,
-    waitPlatform,
-    wantRunForGoal
+    wantRunForGoal,
+    onTicketHub,
+    walkTrapStand
 } from '#/bot/scripts/BrimhavenAgility/BrimhavenAgilityLogic.js';
 import {
     DEFAULT_BANK_TICKETS,
@@ -222,20 +227,63 @@ describe('BrimhavenAgility pathfinding', () => {
         }
     });
 
+    test('walk traps step onto the source-side trigger, not the dest island', () => {
+        expect(walkTrapStand(1, 6)).toEqual({ x: 2772, z: 9551 });
+        expect(walkTrapStand(6, 1)).toEqual({ x: 2772, z: 9552 });
+        expect(walkTrapStand(7, 6)).toEqual({ x: 2778, z: 9557 });
+    });
+
+    test('ticket-grid routes skip broken planks and timed blades', () => {
+        const usesPair = (from: number, path: number[], a: number, b: number) =>
+            [from, ...path].some(
+                (p, i, seq) => i > 0 && Math.min(seq[i - 1], p) === a && Math.max(seq[i - 1], p) === b
+            );
+        const via7 = pathPlatforms(7, 10, 99);
+        const via6 = pathPlatforms(6, 5, 99);
+        const viaBlade = pathPlatforms(7, 2, 99);
+        expect(via7).not.toBeNull();
+        expect(via6).not.toBeNull();
+        expect(viaBlade).not.toBeNull();
+        expect(usesPair(7, via7!, 5, 6)).toBe(false);
+        expect(usesPair(6, via6!, 5, 6)).toBe(false);
+        expect(usesPair(7, viaBlade!, 2, 7)).toBe(false);
+    });
+
     test('among equal-hop routes, first step leans toward the goal (no long-way detour)', () => {
-        // 5→8: both 0-first and 6-first are 5 hops; geo-tiebreak prefers east/south toward 8.
+        // 5→8: plank 5↔6 is off the graph, so 0 and 10 are the 5-hop starts; geo ties to 0.
         const path = pathPlatforms(5, 8, 63);
         expect(path).not.toBeNull();
         expect(path!.length).toBe(5);
-        expect(path![0]).toBe(6);
-        // 10→12: prefer 11 over backtracking north through 5.
+        expect(path![0]).toBe(0);
+        // 10→12: 11 is geographically closer than the north spike detour through 15.
         expect(pathPlatforms(10, 12, 63)?.[0]).toBe(11);
+        // 13→5: wall 13→12 is a 1-tick-class hop; monkey 13→8 is a long anim.
+        expect(pathPlatforms(13, 5, 99)?.[0]).toBe(12);
+        // 12→5 must go west through 7, not north through the cheap saws at 17.
+        expect(pathPlatforms(12, 5, 99)?.[0]).toBe(7);
     });
 
-    test('wait platform prefers spikes at 20+ and centre below', () => {
-        expect(waitPlatform(19, 0)).toBe(12);
-        const wait = waitPlatform(50, 0);
-        expect([13, 14]).toContain(wait);
+    test('from the ticket hub, every pillar is a same-cycle chase at 99', () => {
+        const cycleMs = PILLAR_CYCLE_TICKS * 600;
+        const hopMs = 8_000;
+        const hubs = [12, 13, 14];
+        for (const hub of hubs) {
+            for (let dest = 0; dest < 24; dest++) {
+                const path = pathPlatforms(hub, dest, 99);
+                expect(path, `no path ${hub}→${dest}`).not.toBeNull();
+                expect((path!.length) * hopMs).toBeLessThan(cycleMs);
+            }
+        }
+        const hour = ticketsInWindow(60, true, 0);
+        expect((hour / 60) * 60).toBeGreaterThanOrEqual(59);
+        expect(ticketsInWindow(60, false, 0)).toBe(TICKET_CAP_PER_HOUR);
+    });
+
+    test('ticket hub is centre plus the two spike islands', () => {
+        expect(onTicketHub(12)).toBe(true);
+        expect(onTicketHub(13)).toBe(true);
+        expect(onTicketHub(14)).toBe(true);
+        expect(onTicketHub(0)).toBe(false);
     });
 });
 
@@ -257,6 +305,15 @@ describe('BrimhavenAgility banking & combat decisions', () => {
         expect(needsCoinsRestock(230, false, false)).toBe(true); // still under full trip on mainland
         expect(onBrimhavenSurface(ARENA_ENTRANCE.x, ARENA_ENTRANCE.z, 0)).toBe(true);
         expect(onBrimhavenSurface(2655, 3283, 0)).toBe(false); // Ardougne south bank
+    });
+
+    test('the dispenser cycle caps tickets at one per 98 ticks', () => {
+        expect(PILLAR_CYCLE_TICKS).toBe(98);
+        expect(TICKET_CAP_PER_HOUR).toBe(61);
+        expect(hintMissed(3, 7, false)).toBe(true);
+        expect(hintMissed(3, 7, true)).toBe(false);
+        expect(hintMissed(-1, 7, false)).toBe(false);
+        expect(hintMissed(3, 3, false)).toBe(false);
     });
 
     test('sells food at the Karamja store only when stranded without the return fare', () => {
