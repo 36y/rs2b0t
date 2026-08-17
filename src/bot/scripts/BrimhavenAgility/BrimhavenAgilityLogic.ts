@@ -244,6 +244,17 @@ export const CENTRE_PLATFORM = 12;
 export const ARDY_BANK = { x: 2655, z: 3283, level: 0 };
 export const ARENA_ENTRANCE = { x: 2809, z: 3194, level: 0 };
 export const LADDER_DOWN_STAND = { x: 2809, z: 3194, level: 0 };
+export const KARAMJA_GENERAL = { x: 2902, z: 3146, level: 0 };
+
+/** True when the return ship is unaffordable but the pack still has food to sell. */
+export function needsFoodSaleForBoat(coins: number, foodCount: number, atBrimhaven: boolean): boolean {
+    return atBrimhaven && coins < BOAT_FARE && foodCount > 0;
+}
+
+/** True when the return ship is unaffordable and there is nothing left to sell. */
+export function strandedWithoutBoatFare(coins: number, foodCount: number, atBrimhaven: boolean): boolean {
+    return atBrimhaven && coins < BOAT_FARE && foodCount <= 0;
+}
 
 function bitSet(varp: number, bit: number): boolean {
     return ((varp >>> bit) & 1) === 1;

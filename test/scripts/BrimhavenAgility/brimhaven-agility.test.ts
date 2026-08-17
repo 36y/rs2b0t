@@ -11,6 +11,9 @@ import {
     TRIP_COINS,
     coinsNeeded,
     coinsToWithdraw,
+    KARAMJA_GENERAL,
+    needsFoodSaleForBoat,
+    strandedWithoutBoatFare,
     edgeBetween,
     hasPaid,
     canStartObstacle,
@@ -254,6 +257,16 @@ describe('BrimhavenAgility banking & combat decisions', () => {
         expect(needsCoinsRestock(230, false, false)).toBe(true); // still under full trip on mainland
         expect(onBrimhavenSurface(ARENA_ENTRANCE.x, ARENA_ENTRANCE.z, 0)).toBe(true);
         expect(onBrimhavenSurface(2655, 3283, 0)).toBe(false); // Ardougne south bank
+    });
+
+    test('sells food at the Karamja store only when stranded without the return fare', () => {
+        expect(needsFoodSaleForBoat(29, 5, true)).toBe(true);
+        expect(needsFoodSaleForBoat(30, 5, true)).toBe(false);
+        expect(needsFoodSaleForBoat(0, 5, false)).toBe(false);
+        expect(needsFoodSaleForBoat(0, 0, true)).toBe(false);
+        expect(strandedWithoutBoatFare(0, 0, true)).toBe(true);
+        expect(strandedWithoutBoatFare(29, 1, true)).toBe(false);
+        expect(onBrimhavenSurface(KARAMJA_GENERAL.x, KARAMJA_GENERAL.z, 0)).toBe(true);
     });
 
     test('banks when out of food or ticket threshold hit', () => {

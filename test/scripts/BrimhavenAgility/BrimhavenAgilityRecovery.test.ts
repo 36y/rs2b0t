@@ -14,6 +14,7 @@ import {
     ARDY_BANK,
     ARENA_ENTRANCE,
     ARENA_VARP,
+    KARAMJA_GENERAL,
     TICKET_NAME
 } from '#/bot/scripts/BrimhavenAgility/BrimhavenAgilityLogic.js';
 
@@ -107,6 +108,19 @@ describe('BrimhavenAgility off-course recovery', () => {
             expect(bot.inArenaNow()).toBe(false);
             expect(bot.inPitNow()).toBe(false);
             expect(walks).toEqual([Tile.from(ARDY_BANK)]);
+        } finally {
+            bot.disposeSubscriptions();
+        }
+    });
+
+    test('a Brimhaven bot short of the ship fare walks to the Karamja store', async () => {
+        food = 8;
+        coins = 5;
+        Game.tile = () => new Tile(ARENA_ENTRANCE.x, ARENA_ENTRANCE.z, 0);
+        const bot = await startedBot();
+        try {
+            await bot.loop();
+            expect(walks).toEqual([Tile.from(KARAMJA_GENERAL)]);
         } finally {
             bot.disposeSubscriptions();
         }

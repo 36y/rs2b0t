@@ -7,6 +7,7 @@ import Tile from '../../geometry/Tile.js';
 import { Traversal } from '../../api/walking/Traversal.js';
 import { ContinueDialog } from '../../api/tasks/ContinueDialog.js';
 import { Bank } from '../../api/bank/Bank.js';
+import { Shop } from '../../api/shop/Shop.js';
 import { ChatDialog } from '../../api/ui/dialogue/ChatDialog.js';
 import { Inventory } from '../../api/inventory/Inventory.js';
 import { Paint } from '../../paint/Paint.js';
@@ -21,7 +22,9 @@ import type { SettingsSchema } from '../../runtime/Settings.js';
 import {
     ARDY_BANK,
     ARENA_ENTRANCE,
+    KARAMJA_GENERAL,
     ARENA_VARP,
+    BOAT_FARE,
     CENTRE_PLATFORM,
     DEFAULT_BANK_TICKETS,
     DEFAULT_FOOD_PER_TRIP,
@@ -42,6 +45,8 @@ import {
     STEAL_THIEVING_MIN,
     needsCakeSteal,
     needsCoinsRestock,
+    needsFoodSaleForBoat,
+    strandedWithoutBoatFare,
     nextHop,
     obstacleOutcome,
     onArenaPlatform,
@@ -146,6 +151,7 @@ export default class BrimhavenAgility extends TaskBot {
             new Eat(this),
             new ClimbOutOfPit(this),
             new LeaveForSteal(this),
+            new SellFoodForBoat(this),
             new StealFood(this),
             new StealCoins(this),
             new BankTrip(this),
@@ -195,6 +201,15 @@ export default class BrimhavenAgility extends TaskBot {
 
     needsCakesNow(): boolean {
         return needsCakeSteal(this.foodInPack(), this.cakesInPack(), this.stealRestock, this.needsCoinsNow());
+    }
+
+    onBrimhavenNow(): boolean {
+        const here = this.here();
+        return here !== null && onBrimhavenSurface(here.x, here.z, here.level);
+    }
+
+    needsFoodSaleForBoatNow(): boolean {
+        return needsFoodSaleForBoat(this.coinCount(), this.edibleInPack(), this.onBrimhavenNow());
     }
 
     stunned(): boolean {
@@ -317,10 +332,55 @@ class LeaveForSteal implements Task {
     }
 }
 
+class SellFoodForBoat implements Task {
+    constructor(private bot: BrimhavenAgility) {}
+    validate(): boolean {
+        return this.bot.needsFoodSaleForBoatNow() && !this.bot.inArenaNow();
+    }
+    async execute(): Promise<void> {
+        this.bot.setStatus('selling food at the Karamja General Store');
+        if (!(await Traversal.walkResilient(new Tile(KARAMJA_GENERAL.x, KARAMJA_GENERAL.z, 0), {
+            radius: 3,
+            attempts: 4,
+            timeoutMs: 180_000,
+            log: m => this.bot.log(`  ${m}`)
+        }))) {
+            this.bot.log('could not reach the Karamja General Store');
+            return;
+        }
+        if (!(await Shop.open('Shop keeper')) && !(await Shop.open('Shop assistant'))) {
+            this.bot.log('could not open the Karamja General Store');
+            return;
+        }
+        while (this.bot.coinCount() < BOAT_FARE) {
+            const item = findEdible(this.bot.cfg().food);
+            if (!item?.name) {
+                break;
+            }
+            const beforeCoins = this.bot.coinCount();
+            const sold = await Shop.sell(item.name, 1);
+            if (sold <= 0 || this.bot.coinCount() <= beforeCoins) {
+                const msg = `Karamja store did not buy ${item.name} — still ${this.bot.coinCount()} coins, need ${BOAT_FARE} for the Ardougne ship`;
+                await Shop.close();
+                this.bot.setStatus(`stopped — ${msg}`);
+                ScriptRunner.stop(msg);
+                return;
+            }
+            this.bot.log(`sold ${item.name} (${this.bot.coinCount()} coins)`);
+        }
+        await Shop.close();
+        if (strandedWithoutBoatFare(this.bot.coinCount(), this.bot.edibleInPack(), true)) {
+            const msg = `sold food but only have ${this.bot.coinCount()} coins — need ${BOAT_FARE} for the Ardougne ship`;
+            this.bot.setStatus(`stopped — ${msg}`);
+            ScriptRunner.stop(msg);
+        }
+    }
+}
+
 class StealFood implements Task {
     constructor(private bot: BrimhavenAgility) {}
     validate(): boolean {
-        return this.bot.needsCakesNow() && !this.bot.inArenaNow();
+        return this.bot.needsCakesNow() && !this.bot.inArenaNow() && !this.bot.needsFoodSaleForBoatNow();
     }
     async execute(): Promise<void> {
         if (Game.inCombat()) {
@@ -347,7 +407,7 @@ class StealFood implements Task {
 class StealCoins implements Task {
     constructor(private bot: BrimhavenAgility) {}
     validate(): boolean {
-        return this.bot.cfg().stealRestock && this.bot.needsCoinsNow() && !this.bot.inArenaNow() && !this.bot.needsCakesNow();
+        return this.bot.cfg().stealRestock && this.bot.needsCoinsNow() && !this.bot.inArenaNow() && !this.bot.needsCakesNow() && !this.bot.needsFoodSaleForBoatNow();
     }
     async execute(): Promise<void> {
         const thieving = Skills.level('thieving');
@@ -429,6 +489,9 @@ class Eat implements Task {
 class BankTrip implements Task {
     constructor(private bot: BrimhavenAgility) {}
     validate(): boolean {
+        if (this.bot.needsFoodSaleForBoatNow()) {
+            return false;
+        }
         const steal = this.bot.cfg().stealRestock;
         if (this.bot.inArenaNow()) {
             return shouldBank(this.bot.ticketCount(), this.bot.foodInPack(), this.bot.cfg().bankAtTickets, steal);
