@@ -60,6 +60,15 @@ export const ROUTE: Route = {
             gates: [{ skill: { name: 'ranged', level: 40 } }]
         },
         {
+            id: 'ardougne',
+            bank: { stand: { x: 2655, z: 3283, level: 0 }, ...BOOTH },
+            shops: [
+                { shopId: 'adventurershop', keeperNpc: 'Aemad', stand: { x: 2613, z: 3294, level: 0 }, buys: [{ obj: 'vial_water' }] }
+            ],
+            gates: [],
+            repeatWhileFull: true
+        },
+        {
             id: 'magicguild',
             bank: { stand: { x: 2612, z: 3092, level: 0 }, ...BOOTH },
             shops: [
@@ -85,7 +94,7 @@ export const ROUTE: Route = {
             setting: 'mageArena'
         }
     ],
-    ring: ['varrock', 'portsarim', 'taverley', 'catherby', 'fishingguild', 'rangingguild', 'magicguild', 'magearena']
+    ring: ['varrock', 'portsarim', 'taverley', 'catherby', 'fishingguild', 'rangingguild', 'ardougne', 'magicguild', 'magearena']
 };
 
 export const SMOKE_ROUTE: Route = {
