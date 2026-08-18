@@ -1,4 +1,4 @@
-// Live proof — HillGiant banks at Edgeville (~3094,3493), not Varrock.
+// Live proof — HillGiant with a Brass key banks at Varrock West (~3185,3440).
 
 //   ENGINE_DIR=... sh tools/deploy-local.sh   # once
 //   bun e2e/hillgiant-bank-428-live.ts [http://localhost:8888]
@@ -46,6 +46,7 @@ try {
     await cheatQuiet(page, 'give trout 2', 1200);
     await cheatQuiet(page, 'give limpwurt_root 14', 2000);
     await cheatQuiet(page, 'give big_bones 12', 2000);
+    await cheatQuiet(page, 'give edgevilledungeonkey 1', 1200);
 
     const seeded = await page.evaluate(() => {
         const api = (globalThis as never as Api).__rs2b0t;
@@ -72,30 +73,30 @@ try {
         }
         g.rs2b0t.runner.start(meta);
     });
-    console.log('HillGiant started — waiting for Edgeville bank');
+    console.log('HillGiant started — waiting for Varrock West bank');
 
     const deadline = Date.now() + 180_000;
-    let sawEdge = false;
+    let sawWest = false;
     while (Date.now() < deadline) {
         const t = await page.evaluate(() => (globalThis as never as Api).__rs2b0t.reader.worldTile());
         const logs = await page.evaluate(() =>
             ((globalThis as never as Api).rs2b0t.runner.ctx?.log ?? []).slice(-20).map(l => l.msg)
         );
         if (t && t.level === 0 && t.z < 4000) {
-            if (cheb(t, EDGEVILLE) <= 8) {
-                sawEdge = true;
-                console.log(`PASS — at Edgeville bank area ${JSON.stringify(t)}`);
+            if (cheb(t, WEST) <= 8) {
+                sawWest = true;
+                console.log(`PASS — at Varrock West bank area ${JSON.stringify(t)}`);
                 break;
             }
-            if (cheb(t, WEST) <= 8) {
-                fail(`banked at Varrock West ${JSON.stringify(t)}`);
+            if (cheb(t, EDGEVILLE) <= 8) {
+                fail(`banked at Edgeville ${JSON.stringify(t)}`);
             }
             if (cheb(t, EAST) <= 8) {
                 fail(`banked at Varrock East ${JSON.stringify(t)}`);
             }
         }
-        if (logs.some(m => /Varrock (?:West|East) bank/i.test(m))) {
-            fail('script still walks to a Varrock bank');
+        if (logs.some(m => /Edgeville bank/i.test(m))) {
+            fail('script still walks to Edgeville bank');
         }
         await page.waitForTimeout(1500);
     }
@@ -108,10 +109,10 @@ try {
         console.log(`  ${m}`);
     }
 
-    if (!sawEdge) {
-        fail('never reached Edgeville bank within 3 minutes');
+    if (!sawWest) {
+        fail('never reached Varrock West bank within 3 minutes');
     }
-    console.log('PASS — HillGiant banks at Edgeville');
+    console.log('PASS — HillGiant banks at Varrock West');
 } finally {
     await browser.close();
 }

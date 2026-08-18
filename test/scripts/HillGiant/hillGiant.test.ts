@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
     BIG_BONES,
+    BRASS_KEY,
     LIMPWURT,
     PIT_SPOTS,
     bonesAction,
@@ -67,8 +68,8 @@ describe('HillGiant trip needs', () => {
         expect(tripNeeds(20, 12).food).toBe(0);
     });
 
-    test('keeps only the food when depositing loot', () => {
-        expect(keepOnDeposit('Trout')).toEqual(['Trout']);
+    test('keeps food and the Brass key when depositing loot', () => {
+        expect(keepOnDeposit('Trout')).toEqual(['Trout', BRASS_KEY]);
     });
 });
 

@@ -6,6 +6,9 @@ import { shouldEatToUseFood } from '../../api/combat/food.js';
 
 export const BIG_BONES = 'Big bones';
 export const LIMPWURT = 'Limpwurt root';
+export const BRASS_KEY = 'Brass key';
+// Why: dungeon tile of the Edgeville-dungeon Brass key spawn — used to fetch the hut shortcut key.
+export const KEY_SPAWN = new Tile(3131, 9862, 0);
 
 // Why: several bots on one world otherwise pile onto the same corner and starve each other of spawns, so a trip picks one at random.
 
@@ -90,7 +93,7 @@ export function bonesAction(buryBones: boolean): 'bury' | 'bank' {
 
 /** Names a trip keeps in the pack when depositing at the bank. */
 export function keepOnDeposit(food: string): string[] {
-    return [food];
+    return [food, BRASS_KEY];
 }
 
 // Why: counting on Attack multi-counts, since a death anim stays Attackable for several ticks and each Fight loop re-clicks Attack (#479).

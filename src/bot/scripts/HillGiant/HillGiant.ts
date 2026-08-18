@@ -16,22 +16,19 @@ import { fmtDuration } from '../../paint/paintLogic.js';
 import { COMBAT_STYLE_OPTIONS, describeCombatStyle, parseCombatStyle, type MeleeCombatStyle } from '../../api/combat/CombatStyle.js';
 import { DROP_DB } from '../../data/dropdb.js';
 import { foodForms, foodCount as foodCountIn, foodHealAmount, shouldEatToUseFood } from '../../api/combat/food.js';
-import { matchesCommonBankLoot } from '../../api/bank/Banking.js';
 import { GroundItems } from '../../api/grounditems/GroundItems.js';
-import { Locs } from '../../api/locs/Locs.js';
 import { Npcs, type Npc } from '../../api/npcs/Npcs.js';
 import { matchesEntityName } from '../../api/query/Query.js';
 import { ScriptRunner } from '../../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
-import { BIG_BONES, LIMPWURT, PIT_SPOTS, bonesAction, isHillGiantKill, keepOnDeposit, pickSpot, shouldBank, shouldEatForSpace, tripNeeds } from './HillGiantLogic.js';
+import { BIG_BONES, BRASS_KEY, KEY_SPAWN, LIMPWURT, PIT_SPOTS, bonesAction, isHillGiantKill, keepOnDeposit, pickSpot, shouldBank, shouldEatForSpace, tripNeeds } from './HillGiantLogic.js';
 import { scriptFood } from '../../api/loadout/loadoutPlan.js';
 import { LOADOUT_SETTING } from '../../api/loadout/loadoutSetting.js';
 
 const TARGET = 'Giant';
 
-// Why: the public Edgeville trapdoor + dungeon gates already sit on the nav graph, so the hut/brass-key shortcut is unused weight.
-const BANK_TILE = new Tile(3094, 3493, 0);
-const TRAPDOOR = new Tile(3096, 3468, 0);
+// Why: the nav graph uses the Brass-key hut ladder + keyed door when the key is held, and the public trapdoor otherwise — no hard-coded route.
+const WEST_BANK = new Tile(3185, 3440, 0);
 const PIT_RADIUS = 14;
 
 const DROPS: string[] = DROP_DB[TARGET] ?? [];
@@ -113,6 +110,7 @@ export default class HillGiant extends TaskBot {
             new GearEquip(this),
             new SetAttackStyle(this),
             new BuryBones(this),
+            new GetKey(this),
             new BankRun(this),
             new EnterPit(this),
             new LootCorpse(this),
@@ -184,8 +182,11 @@ export default class HillGiant extends TaskBot {
         const here = Game.tile();
         return here !== null && here.z > 9000 && this.spot.distanceTo(new Tile(here.x, here.z, here.level)) <= PIT_RADIUS + 12;
     }
+    hasBrassKey(): boolean {
+        return Inventory.contains(BRASS_KEY);
+    }
     lootUsed(): number {
-        return Inventory.used() - this.foodInPack();
+        return Inventory.used() - this.foodInPack() - (this.hasBrassKey() ? 1 : 0);
     }
 
     override onPaint(ctx: CanvasRenderingContext2D): void {
@@ -195,7 +196,7 @@ export default class HillGiant extends TaskBot {
         const perHr = mins > 0.5 ? Math.round((this.kills / mins) * 60) : 0;
         p.row(`Runtime: ${fmtDuration(mins)}`, `Kills: ${this.kills}`, `Kills/hr: ${perHr}`);
         p.row(`Looted: ${this.looted}`, `Buried: ${this.buried}`, `Trips: ${this.trips}`);
-        p.row(`Food: ${this.foodInPack()}`, `Spot: ${this.spot.x},${this.spot.z}`);
+        p.row(`Food: ${this.foodInPack()}`, `Key: ${this.hasBrassKey() ? 'yes' : 'no'}`, `Spot: ${this.spot.x},${this.spot.z}`);
         p.gap();
         ScriptRunner.paintControls(p);
         p.end();
@@ -210,47 +211,40 @@ export default class HillGiant extends TaskBot {
         return Traversal.walkResilient(dest, { radius: 3, attempts: 6, timeoutMs: 180_000, log: m => this.log(`  ${m}`) });
     }
 
-    /** Bank -> public Edgeville trapdoor -> dungeon gates -> the trip's pit spot. */
+    /** Route to the pit via the nav graph (hut ladder + keyed door when the key is held, else the trapdoor). */
     async travelToPit(): Promise<boolean> {
         if (this.inPit()) {
             return this.walkTo(this.spot, 'the pit spot');
         }
-        const here = Game.tile();
-        if (here && here.z < 6400 && !(await this.descendTrapdoor())) {
+        if (!this.hasBrassKey() && !(await this.goGetKey())) {
             return false;
         }
         return this.walkTo(this.spot, 'the giant pit');
     }
 
-    private async descendTrapdoor(): Promise<boolean> {
-        if ((Game.tile()?.z ?? 0) > 9000) {
-            return true;
-        }
-        if (!(await this.walkTo(TRAPDOOR, 'the Edgeville trapdoor'))) {
-            this.log('could not reach the Edgeville trapdoor');
+    async goGetKey(): Promise<boolean> {
+        this.log(`no ${BRASS_KEY} — going to fetch it`);
+        if (!(await this.walkTo(KEY_SPAWN, `the ${BRASS_KEY} spawn`))) {
+            this.log(`could not reach the ${BRASS_KEY} spawn`);
             return false;
         }
-        for (let attempt = 0; attempt < 7; attempt++) {
-            const trapdoor = Locs.query().name('Trapdoor').within(6).nearest();
-            if (!trapdoor) {
-                await Execution.delayTicks(2);
-                continue;
-            }
-            const action = trapdoor.actions().find(op => /climb-down/i.test(op))
-                ?? trapdoor.actions().find(op => /^open$/i.test(op));
-            if (!action) {
-                await Execution.delayTicks(2);
-                continue;
-            }
-            this.setStatus(`${action.toLowerCase()} the Edgeville trapdoor`);
-            await trapdoor.interact(action);
-            if (await Execution.delayUntil(() => (Game.tile()?.z ?? 0) > 9000, /^open$/i.test(action) ? 2500 : 8000)) {
-                this.log('climbed down the Edgeville trapdoor');
+        for (let attempt = 0; attempt < 12; attempt++) {
+            if (this.hasBrassKey()) {
+                this.log(`got the ${BRASS_KEY}`);
                 return true;
             }
+            const drop = GroundItems.query().name(BRASS_KEY).within(8).nearest();
+            if (drop && (await drop.interact('Take'))) {
+                if (await Execution.delayUntil(() => this.hasBrassKey(), 3000)) {
+                    return true;
+                }
+            } else {
+                this.log(`no ${BRASS_KEY} on the floor yet — waiting for the respawn`);
+            }
+            await Execution.delayTicks(5);
         }
-        this.log('the Edgeville trapdoor did not drop us into the dungeon');
-        return (Game.tile()?.z ?? 0) > 9000;
+        this.log(`could not obtain the ${BRASS_KEY}`);
+        return false;
     }
 }
 
@@ -361,7 +355,11 @@ class BankRun implements Task {
     async execute(): Promise<void> {
         const { food, foodPerTrip, lootSlots } = this.bot.cfg();
         this.bot.setStatus('banking for food/loot');
-        if (!(await this.bot.walkTo(BANK_TILE, 'the Edgeville bank'))) {
+        if (!this.bot.hasBrassKey()) {
+            this.bot.log(`need a ${BRASS_KEY} before banking`);
+            return;
+        }
+        if (!(await this.bot.walkTo(WEST_BANK, 'the Varrock West bank'))) {
             return;
         }
         if (!(await Bank.openNearest('Bank booth', 'Use-quickly', m => this.bot.log(`  ${m}`)))) {
@@ -395,6 +393,16 @@ class BankRun implements Task {
     }
 }
 
+class GetKey implements Task {
+    constructor(private bot: HillGiant) {}
+    validate(): boolean {
+        return !this.bot.hasBrassKey();
+    }
+    async execute(): Promise<void> {
+        await this.bot.goGetKey();
+    }
+}
+
 class EnterPit implements Task {
     constructor(private bot: HillGiant) {}
     validate(): boolean {
@@ -408,12 +416,9 @@ class EnterPit implements Task {
 class LootCorpse implements Task {
     constructor(private bot: HillGiant) {}
     private find() {
-        const { lootSet, bankCommon } = this.bot.cfg();
+        const { lootSet } = this.bot.cfg();
         return GroundItems.query()
-            .where(g => {
-                const name = (g.name ?? '').toLowerCase();
-                return lootSet.has(name) || (bankCommon && matchesCommonBankLoot(g.name ?? '', g.id));
-            })
+            .where(g => lootSet.has((g.name ?? '').toLowerCase()))
             .within(PIT_RADIUS)
             .nearest();
     }
@@ -456,6 +461,10 @@ class Fight implements Task {
 
     validate(): boolean {
         if (!this.bot.inPit()) {
+            this.targetIdx = null;
+            return false;
+        }
+        if (!this.bot.hasBrassKey()) {
             this.targetIdx = null;
             return false;
         }
