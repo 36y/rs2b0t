@@ -53,7 +53,7 @@ beforeEach(() => {
     Inventory.items = () => Array.from({ length: food }, (_, slot) => ({ name: 'Lobster', slot })) as never;
     Inventory.count = name => name === 'Coins' ? coins : (name === TICKET_NAME ? 0 : 0);
     Skills.level = name => name === 'agility' ? 40 : 20;
-    Skills.effective = name => name === 'hitpoints' ? 20 : 1;
+    Skills.effective = name => name === 'hitpoints' ? 20 : name === 'agility' ? 40 : 1;
     Skills.xp = () => 0;
     Traversal.walkResilient = async destination => {
         walks.push(Tile.from(destination));

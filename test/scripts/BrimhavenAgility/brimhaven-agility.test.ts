@@ -233,6 +233,21 @@ describe('BrimhavenAgility pathfinding', () => {
         expect(walkTrapStand(7, 6)).toEqual({ x: 2778, z: 9557 });
     });
 
+    test('ticket-grid routes skip dart traps that drain agility on fail', () => {
+        const usesPair = (from: number, path: number[], a: number, b: number) =>
+            [from, ...path].some(
+                (p, i, seq) => i > 0 && Math.min(seq[i - 1], p) === a && Math.max(seq[i - 1], p) === b
+            );
+        const via13 = pathPlatforms(13, 19, 99);
+        const via18 = pathPlatforms(18, 12, 99);
+        expect(via13).not.toBeNull();
+        expect(via18).not.toBeNull();
+        expect(usesPair(13, via13!, 13, 18)).toBe(false);
+        expect(usesPair(18, via18!, 13, 18)).toBe(false);
+        expect(edgeBetween(13, 18, 39)).toBeNull();
+        expect(pathPlatforms(13, 19, 39)).not.toBeNull();
+    });
+
     test('ticket-grid routes skip broken planks and timed blades', () => {
         const usesPair = (from: number, path: number[], a: number, b: number) =>
             [from, ...path].some(

@@ -304,8 +304,9 @@ export default class BrimhavenAgility extends TaskBot {
         return Inventory.count('Coins');
     }
 
+    // Why: dart/saw traps roll `stat(agility)` (current) and 100% fail below the gate — base level would keep walking them after drain.
     agility(): number {
-        return Skills.level('agility');
+        return Skills.effective('agility');
     }
 
     hp(): number {
@@ -374,7 +375,7 @@ export default class BrimhavenAgility extends TaskBot {
         p.row(`Runtime: ${fmtDuration(mins)}`, `Tickets: ${pace.tickets}`, `Tickets/hr: ${tph}`);
         p.row(`Tags: ${pace.tags}`, `Missed: ${pace.misses}`, `Falls: ${pace.falls}`);
         p.row(`Hops: ${pace.hops}`, `Last tag: ${pace.lastTagMs > 0 ? `${(pace.lastTagMs / 1000).toFixed(1)}s` : '—'}`, `XP/hr: ${xph}`);
-        p.row(`HP: ${this.hp()}`, `Agility: ${this.agility()}`);
+        p.row(`HP: ${this.hp()}`, `Agility: ${this.agility()}/${Skills.level('agility')}`);
         p.row(`Platform: ${pace.platform}`, `Target: ${pace.target}`, pace.tagged ? 'tagged' : 'chasing');
         p.gap();
         ScriptRunner.paintControls(p);
