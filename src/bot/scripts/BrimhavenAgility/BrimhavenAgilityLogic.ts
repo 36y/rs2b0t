@@ -619,7 +619,8 @@ export function nextHop(from: number, goal: number, agility: number, avoid = -1)
     }
     const rem = hopDistFrom(goal, arenaAdj(agility));
     const need = (rem.get(from) ?? 0) - 1;
-    for (const e of usableEdges(agility)) {
+    // Why: usableEdges still lists dart/blade traps; taking those after a fall is the drain doom loop.
+    for (const e of pathingEdges(agility)) {
         const n = e.a === from ? e.b : e.b === from ? e.a : -1;
         if (n >= 0 && n !== avoid && rem.get(n) === need) {
             return n;

@@ -246,6 +246,8 @@ describe('BrimhavenAgility pathfinding', () => {
         expect(usesPair(18, via18!, 13, 18)).toBe(false);
         expect(edgeBetween(13, 18, 39)).toBeNull();
         expect(pathPlatforms(13, 19, 39)).not.toBeNull();
+        // Why: after a 13→14 spike fall, usableEdges offers 13→18 (darts) at the same hop count.
+        expect(nextHop(13, 19, 99, 14)).not.toBe(18);
     });
 
     test('ticket-grid routes skip broken planks and timed blades', () => {
