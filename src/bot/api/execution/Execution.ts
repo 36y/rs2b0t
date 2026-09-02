@@ -1,6 +1,8 @@
 import { BotHost } from '../../runtime/BotHost.js';
 import { Scheduler } from '../../runtime/Scheduler.js';
 
+let lastReportedProgressAt = 0;
+
 /**
  * The only legal way to sleep. Waits are settled from the client's frame
  * callback, so they follow game time and unwind cleanly on Stop.
@@ -18,6 +20,16 @@ export const Execution = {
 
     delayUntil(cond: () => boolean, timeoutMs: number = 6000): Promise<boolean> {
         return Scheduler.enqueue({ kind: 'cond', cond, timeoutAt: timeoutMs > 0 ? performance.now() + timeoutMs : null });
+    },
+
+    /** Work the watchdog cannot infer from movement or xp, reported by the script doing it. */
+    noteProgress(): void {
+        lastReportedProgressAt = performance.now();
+    },
+
+    /** @internal Timestamp consumed by Supervisor without importing Supervisor into the API layer. */
+    lastReportedProgressAt(): number {
+        return lastReportedProgressAt;
     },
 
     /**
