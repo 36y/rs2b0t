@@ -108,8 +108,8 @@ export const CASES: readonly Case[] = [
         harness: 'bankfletcher-live.ts',
         covers: { scripts: ['BankFletcher'] },
         status: 'unvetted',
-        budgetMin: 5,
-        note: 'Varrock West: knife stays through a willow longbow bank trip, stringing raises strung id 847, headless attach climbs'
+        budgetMin: 8,
+        note: 'Draynor start banks locally rather than trekking to the Varrock West preset, then Varrock West: knife stays through a willow longbow bank trip, stringing raises strung id 847, headless attach climbs'
     },
     {
         id: 'baxtorian-rope-369-live',
@@ -981,6 +981,14 @@ export const CASES: readonly Case[] = [
         provenAt: '7fe84288',
         budgetMin: 10,
         note: 'Varrock West with iron, coal, natures and a staff of fire banked; passes on steel bars plus magic and smithing XP together'
+    },
+    {
+        id: 'superheater-fire-battlestaff-live',
+        harness: 'superheater-fire-battlestaff-live.ts',
+        covers: { scripts: ['Superheater'] },
+        status: 'unvetted',
+        budgetMin: 10,
+        note: 'Varrock West with iron, coal, natures and a Fire battlestaff banked (no Staff of fire); passes on wore Fire battlestaff plus steel bars'
     },
     {
         id: 'strangebox-repro-live',
