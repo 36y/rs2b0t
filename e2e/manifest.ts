@@ -51,6 +51,16 @@ export const CASES: readonly Case[] = [
         note: 'PRIVATE world only: BASE localhost:8891, HEADED=1, E2E_CLIENT_PAGE=/bot-north-green.html and NORTH_SERVER_TRACE required. Three stationary north-only NPC317 spawns; actual Fisher full catch, teller deposit, bridge return and next catch. Never run on shared 8890.'
     },
     {
+        id: 'leather-thread-279-live',
+        harness: 'leather-thread-279-live.ts',
+        covers: { scripts: ['LeatherCrafter'] },
+        status: 'vetted',
+        provenAt: '5b423ccaa000b99bbb0b9a900e337755c6684d4e',
+        manual: true,
+        budgetMin: 10,
+        note: 'Fresh local account; no thread, banked leather and coins at Varrock West. Actual nearest-shop purchase, original-bank return and Crafting XP; screenshots docs/e2e/issue-279*.png.'
+    },
+    {
         id: 'nature-runner-coins-739-live',
         harness: 'nature-runner-coins-739-live.ts',
         covers: { scripts: ['NatureCrafter'] },
