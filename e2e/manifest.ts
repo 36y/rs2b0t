@@ -70,6 +70,15 @@ export const CASES: readonly Case[] = [
         note: 'drops 450 Coins outside the altar and proves the runner takes that ground stack into inventory'
     },
     {
+        id: 'deathplateau-scout-470-live',
+        harness: 'deathplateau-scout-470-live.ts',
+        covers: { scripts: ['AIOQuester'], subsystems: ['quests'] },
+        status: 'vetted',
+        provenAt: 'baf798efe70b4d892fd232b2926e635b266e07db',
+        budgetMin: 8,
+        note: 'starts three tiles south of the scout zone with the secret map and proves AIOQuester enters the zone and advances death_map from 7 to 8'
+    },
+    {
         id: 'fisher-shilo-shopping-live',
         harness: 'fisher-shilo-shopping-live.ts',
         covers: { scripts: ['GatheringBot'] },
