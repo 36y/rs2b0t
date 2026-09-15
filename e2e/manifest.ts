@@ -88,6 +88,15 @@ export const CASES: readonly Case[] = [
         note: 'prepares a Hans clue from a real bank and proves 20 Law, 100 Air, 20 Earth, 20 Fire and 20 Water runes plus the ten-food cap'
     },
     {
+        id: 'catherby-sweep-687-live',
+        harness: 'catherby-sweep-687-live.ts',
+        covers: { scripts: ['GatheringBot'] },
+        status: 'vetted',
+        provenAt: 'adeab3c5186429fcd01479bb1180b488a552dbf5',
+        budgetMin: 7,
+        note: 'starts within 28 tiles of camp with no visible fishing NPC and proves a shoreline sweep produces a real catch and Fishing XP'
+    },
+    {
         id: 'fisher-shilo-shopping-live',
         harness: 'fisher-shilo-shopping-live.ts',
         covers: { scripts: ['GatheringBot'] },
