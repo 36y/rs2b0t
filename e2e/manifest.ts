@@ -79,6 +79,15 @@ export const CASES: readonly Case[] = [
         note: 'starts three tiles south of the scout zone with the secret map and proves AIOQuester enters the zone and advances death_map from 7 to 8'
     },
     {
+        id: 'clue-rune-budget-593-live',
+        harness: 'clue-rune-budget-593-live.ts',
+        covers: { scripts: ['ClueSolver'], subsystems: ['clues'] },
+        status: 'vetted',
+        provenAt: '2773b993e38a40c737beb2c34901238f28632dbb',
+        budgetMin: 6,
+        note: 'prepares a Hans clue from a real bank and proves 20 Law, 100 Air, 20 Earth, 20 Fire and 20 Water runes plus the ten-food cap'
+    },
+    {
         id: 'fisher-shilo-shopping-live',
         harness: 'fisher-shilo-shopping-live.ts',
         covers: { scripts: ['GatheringBot'] },
