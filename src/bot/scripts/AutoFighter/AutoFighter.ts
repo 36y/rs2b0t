@@ -617,7 +617,12 @@ class BankRun implements Task {
         if (!(await Traversal.walkResilient(bank.tile, { radius: 3, attempts: 4, timeoutMs: 300_000, log: m => this.bot.log(`  ${m}`) }))) {
             return;
         }
-        if (!(await Bank.openNearest(BOOTH.name, BOOTH.op, m => this.bot.log(`  ${m}`)))) {
+        const opened = bank.npcAccess
+            ? await Bank.openNpcAccess(bank.npcAccess, m => this.bot.log(`  ${m}`))
+            : bank.access
+                ? await Bank.openNearestAccess(bank.access, m => this.bot.log(`  ${m}`))
+                : await Bank.openNearest(BOOTH.name, BOOTH.op, m => this.bot.log(`  ${m}`));
+        if (!opened) {
             return;
         }
         await Bank.depositAllMatching((name, id) => !shouldKeepBankItem(name, id, FOOD, BANK_COMMON, STYLE === 'range' ? [AMMO] : [], TRACKED_GEAR, BURY_BONES), m => this.bot.log(`  ${m}`));
