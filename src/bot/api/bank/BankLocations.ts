@@ -175,6 +175,26 @@ function meetsRequirement(bank: BankLocation): boolean {
     return true;
 }
 
+function shadowWarriorsLegendsBank(from: WorldTile): BankLocation | null {
+    const inShadowWarriorsDungeon =
+        from.level === 0 &&
+        from.x >= 2680 &&
+        from.x <= 2740 &&
+        from.z >= 9720 &&
+        from.z <= 9800;
+
+    if (!inShadowWarriorsDungeon) {
+        return null;
+    }
+
+    return BANK_LOCATIONS.find(
+        bank => bank.name === "Legends' Guild" && meetsRequirement(bank)
+    ) ?? null;
+}
+
 export function nearestBank(from: WorldTile): BankLocation | null {
-    return nearestUsableBank(from, meetsRequirement);
+    // The Shadow Warriors dungeon lives in a separate coordinate region even though
+    // its staircase exits inside Legends' Guild. Straight-line ranking therefore
+    // incorrectly prefers Seers. Only override ranking while physically in this dungeon.
+    return shadowWarriorsLegendsBank(from) ?? nearestUsableBank(from, meetsRequirement);
 }
