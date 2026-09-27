@@ -74,8 +74,13 @@ export const BANK_LOCATIONS: BankLocation[] = [
     { name: 'Ardougne West', tile: new Tile(2616, 3332, 0) },
     { name: 'Ardougne East', tile: new Tile(2655, 3283, 0) },
     { name: 'Canifis', tile: new Tile(3512, 3480, 0), requires: { quest: 'Priest in Peril' } },
-    // Legends' Guild upstairs bank. AutoFighter's nearest-bank selection can use this instead of routing nearby training spots to Seers.
-    { name: "Legends' Guild", tile: new Tile(2732, 3376, 2), requires: { quest: "Legends' Quest" } },
+    // Why: this is an upstairs Banker NPC, not a booth. The Bank op opens the bank directly; choose is only a fallback if the server presents dialogue first.
+    {
+        name: "Legends' Guild",
+        tile: new Tile(2732, 3376, 2),
+        requires: { quest: 'Legends Quest' },
+        npcAccess: { name: 'Banker', op: 'Bank', choose: "I'd like to access my bank account" }
+    },
     // Why: Shilo has no booth at all, `bank_store_icon` is the only bank loc in the mapsquare and the teller is `shilobanker` (npc 499), whose `op3=Bank` runs `@openbank` outright. Without npcAccess the booth query finds nothing, the walk lands and the bank never opens, which is what made this look like an icon with nothing behind it.
     // Why: the quest gate is the village, not the teller, every tile of it is behind Vigroy's cart, and `shiloCartEdges` refuses the Brimhaven crossing until Shilo Village is complete.
     {
