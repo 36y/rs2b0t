@@ -13,6 +13,7 @@
         "build:dev": "bun run bundle.ts dev",
         "build:bot": "bun run bot.bundle.ts",
         "build:bot:dev": "bun run bot.bundle.ts dev",
+        "build:bot:scripts": "bun run bot.bundle.ts scripts",
         "b0t": "sh tools/b0t.sh",
         "test": "bun test",
         "lint": "eslint .",
