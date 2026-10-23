@@ -14,8 +14,8 @@ import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.2.2-intree';
-const BUILD_LABEL = '3T TICK-DRIVEN LURE / INTREE / v0.2.2';
+const VERSION = '0.2.3-intree';
+const BUILD_LABEL = '3T SAME-TICK LURE / INTREE / v0.2.3';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -1416,8 +1416,13 @@ class FlyFisherLab extends LoopingBot {
     const here = Game.tile();
     const local = here ? reader.toLocal(here.x, here.z) : null;
     const cancelled = local ? actions.walkTo(local.lx, local.lz) : false;
-    this.log(`3T INIT tick=${tick} use=${used} make=${made} tileCancel=${cancelled} tile=${here ? `${here.x},${here.z}` : 'unknown'} anim=${this.selfAnimation()}`);
-    this.remember('3T INIT', `use=${used} make=${made} tileCancel=${cancelled}`, tick);
+    // Restart fishing immediately after cancelling the weak fletching queue.
+    // Keep all four actions synchronous and ordered on the same observed tick.
+    const lured = spot.interact(LURE);
+    this.lastLureAttemptTick = tick;
+    if (lured) this.totalLures++;
+    this.log(`3T INIT tick=${tick} use=${used} make=${made} tileCancel=${cancelled} lure=${lured} tile=${here ? `${here.x},${here.z}` : 'unknown'} anim=${this.selfAnimation()}`);
+    this.remember('3T INIT', `use=${used} make=${made} tileCancel=${cancelled} lure=${lured}`, tick);
   }
 
   private driveMenu(tick: number): void {
@@ -1895,18 +1900,7 @@ class FlyFisherLab extends LoopingBot {
       this.log(`3T DROP tick=${tick} item=${fish.name} accepted=${accepted}`);
       return;
     }
-    if (offset === 2 && this.lastLureAttemptTick !== tick) {
-      // T+2: re-issue Lure after the drop, never before it.
-      this.lastLureAttemptTick = tick;
-      const spot = this.activeSpot();
-      if (!spot || !this.originalSpotStillPresent()) {
-        this.beginRelocation('spot-moved-before-lure', this.nearestSpot());
-        return;
-      }
-      const accepted = spot.interact(LURE);
-      if (accepted) this.totalLures++;
-      this.log(`3T FISH tick=${tick} accepted=${accepted} anim=${this.selfAnimation()}`);
-    }
+    // T+2: no action. Lure is sent immediately after tile cancellation on T.
   }
 
   private async initiateFishing(): Promise<void> {
