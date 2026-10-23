@@ -14,8 +14,8 @@ import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.2.5-intree';
-const BUILD_LABEL = '3T LOCATION SELECT / INTREE / v0.2.5';
+const VERSION = '0.2.6-intree';
+const BUILD_LABEL = '3T GNOME ANCHOR / INTREE / v0.2.6';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -29,6 +29,8 @@ const LURE = 'Lure';
 const CRAFTED_BOW = 'Arrow shaft';
 
 const EDGE_BANK = new Tile(3094, 3491, 0);
+const GNOME_BANK = new Tile(2445, 3424, 1);
+const GNOME_FISH = new Tile(2381, 3415, 0);
 const FISH_RETURN = new Tile(3105, 3430, 0);
 
 const FISH_TILES = [
@@ -949,8 +951,8 @@ class FlyFisherLab extends LoopingBot {
   ): boolean {
     // Gnome mode is deliberately start-on-site: no unverified long-distance routing.
     if (this.fishingLocation() === 'gnome') {
-      return tile.level === 0 && tile.x >= 2380 && tile.x <= 2500 &&
-        tile.z >= 3370 && tile.z <= 3540;
+      return tile.level === GNOME_FISH.level &&
+        distance(tile, GNOME_FISH) <= 18;
     }
     return distance(tile, FISH_RETURN) <= 12;
   }
@@ -965,11 +967,7 @@ class FlyFisherLab extends LoopingBot {
           !!tile &&
           tile.level === 0 &&
           (this.fishingLocation() === 'gnome'
-            ? (() => {
-                const here = Game.tile();
-                return !!here && this.atFishingArea(here) &&
-                  distance(tile, here) <= 18;
-              })()
+            ? distance(tile, GNOME_FISH) <= 18
             : FISH_TILES.some(
                 known => distance(tile, known) <= 2
               ))
@@ -1992,7 +1990,7 @@ class FlyFisherLab extends LoopingBot {
     }
 
     if (this.fishingLocation() === 'gnome') {
-      this.log('GNOME LOCATION: travel to the south-west fly-fishing area manually before starting.');
+      this.log(`GNOME LOCATION: stand near fishing anchor ${GNOME_FISH.x},${GNOME_FISH.z},${GNOME_FISH.level} before starting (current=${Game.tile()?.x},${Game.tile()?.z},${Game.tile()?.level}).`);
       return;
     }
 
@@ -2021,7 +2019,7 @@ class FlyFisherLab extends LoopingBot {
     }
 
     if (this.fishingLocation() === 'gnome') {
-      this.log('GNOME RESTOCK: supplies missing; restock manually (Edgeville banking disabled in Gnome mode).');
+      this.log(`GNOME RESTOCK: supplies missing; restock manually at bank ${GNOME_BANK.x},${GNOME_BANK.z},${GNOME_BANK.level}. Automatic upstairs routing disabled.`);
       return;
     }
 
@@ -2186,7 +2184,7 @@ export const FLYFISHER_LAB_SETTINGS: SettingsSchema = {
     type: 'string', default: 'edgeville',
     label: 'Fishing location', options: ['edgeville', 'gnome'],
     optionLabels: { edgeville: 'Edgeville / Barbarian Village', gnome: 'Tree Gnome Stronghold' },
-    help: 'Gnome mode: stand by the south-west fly-fishing spots before starting; restock manually.'
+    help: 'Gnome: start near 2381,3415,0. Bank at 2445,3424,1 is recorded, but upstairs travel/restocking remain manual.'
   },
   featherWithdrawAmount: { type: 'number', label: 'Feathers to withdraw', default: 10000 },
   carrierWithdrawAmount: { type: 'number', label: 'Normal logs to withdraw', default: 2 }
