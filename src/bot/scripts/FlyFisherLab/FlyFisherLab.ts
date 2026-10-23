@@ -14,8 +14,8 @@ import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.2.0-intree';
-const BUILD_LABEL = '3T INIT DROP FISH / INTREE / v0.2.0';
+const VERSION = '0.2.1-intree';
+const BUILD_LABEL = '3T TILE CANCEL / INTREE / v0.2.1';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -1404,9 +1404,13 @@ class FlyFisherLab extends LoopingBot {
     // T: initiate the manipulation; keep these consecutive and synchronous.
     const used = logs.useOn(knife);
     const made = actions.ifButton(8889);
-    const closed = actions.closeModal();
-    this.log(`3T INIT tick=${tick} use=${used} make=${made} close=${closed} anim=${this.selfAnimation()}`);
-    this.remember('3T INIT', `use=${used} make=${made} close=${closed}`, tick);
+    // Click the player's own tile to attempt to cancel fletching.
+    // walkTo uses scene-local coordinates, not world coordinates.
+    const here = Game.tile();
+    const local = here ? reader.toLocal(here.x, here.z) : null;
+    const cancelled = local ? actions.walkTo(local.lx, local.lz) : false;
+    this.log(`3T INIT tick=${tick} use=${used} make=${made} tileCancel=${cancelled} tile=${here ? `${here.x},${here.z}` : 'unknown'} anim=${this.selfAnimation()}`);
+    this.remember('3T INIT', `use=${used} make=${made} tileCancel=${cancelled}`, tick);
   }
 
   private driveMenu(tick: number): void {
