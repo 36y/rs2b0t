@@ -1605,6 +1605,34 @@ export const actions = {
         return true;
     },
 
+    /**
+     * Enqueue a sequence of native menu actions synchronously into the client's
+     * outgoing Packet buffer. Client.ts writes the buffer to its stream once
+     * per client cycle. This method does not flush and does not guarantee a
+     * server tick boundary; callers must separately validate that timing.
+     *
+     * No promises or scheduler yields are permitted between actions.
+     * This is deliberately all-or-stop on client preflight, not a transaction:
+     * the server can still reject individual actions.
+     */
+    batchMenuActions(steps: readonly { action: number; a: number; b: number; c: number }[]): boolean {
+        if (!raw || !raw.ingame || !raw.out || steps.length === 0 || steps.length > 5) {
+            return false;
+        }
+        for (const step of steps) {
+            if (!Number.isInteger(step.action) || !Number.isInteger(step.a)
+                || !Number.isInteger(step.b) || !Number.isInteger(step.c)) {
+                return false;
+            }
+        }
+        for (const step of steps) {
+            if (!actions.menuAction(step.action, step.a, step.b, step.c)) {
+                return false;
+            }
+        }
+        return true;
+    },
+
     answerCountDialog(value: number): boolean {
         if (!raw || !raw.ingame || !raw.out || !raw.dialogInputOpen) {
             return false;
