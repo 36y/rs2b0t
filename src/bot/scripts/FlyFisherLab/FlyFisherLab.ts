@@ -14,8 +14,8 @@ import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.1.2-intree';
-const BUILD_LABEL = '3T LAB / BATCH API / v0.1.2';
+const VERSION = '0.1.3-intree';
+const BUILD_LABEL = '3T LAB / SCRIPT ONLY / v0.1.3';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -318,7 +318,7 @@ class FlyFisherLab extends LoopingBot {
     });
 
     this.log(`FlyFisherLab v${VERSION} started`);
-    this.log('3T batch API available; controller OFF until action sequence and tick boundary are validated');
+    this.log('3T controller OFF; script-only mode, no host changes');
     this.log('Reader selfAnim, carrier consumption and banking diagnostics enabled');
 
     this.log(
@@ -393,7 +393,7 @@ class FlyFisherLab extends LoopingBot {
     const lines = [
       `=== ${BUILD_LABEL} ===`,
       `FlyFisher v${VERSION}`,
-      `3T batching: API ready / controller OFF`,
+      `3T batching: not enabled / host unchanged`,
       `Phase: ${this.phase}`,
       `Cycle: ${this.cycleNumber}`,
       `Tick: ${this.observedTick}`,
