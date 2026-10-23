@@ -14,8 +14,8 @@ import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.2.3-intree';
-const BUILD_LABEL = '3T SAME-TICK LURE / INTREE / v0.2.3';
+const VERSION = '0.2.4-intree';
+const BUILD_LABEL = '3T DROP BEFORE LURE / INTREE / v0.2.4';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -1416,13 +1416,18 @@ class FlyFisherLab extends LoopingBot {
     const here = Game.tile();
     const local = here ? reader.toLocal(here.x, here.z) : null;
     const cancelled = local ? actions.walkTo(local.lx, local.lz) : false;
-    // Restart fishing immediately after cancelling the weak fletching queue.
-    // Keep all four actions synchronous and ordered on the same observed tick.
+    // Experimental ordering: Drop BEFORE Lure so fishing is the final action.
+    const fishBefore = this.fishCount();
+    const fish = this.firstFish();
+    const dropped = fish ? fish.interact('Drop') : false;
+    this.lastDropAttemptTick = tick;
+    if (dropped) this.totalDrops++;
+    // Restart fishing after both tile cancellation and the optional drop.
     const lured = spot.interact(LURE);
     this.lastLureAttemptTick = tick;
     if (lured) this.totalLures++;
-    this.log(`3T INIT tick=${tick} use=${used} make=${made} tileCancel=${cancelled} lure=${lured} tile=${here ? `${here.x},${here.z}` : 'unknown'} anim=${this.selfAnimation()}`);
-    this.remember('3T INIT', `use=${used} make=${made} tileCancel=${cancelled} lure=${lured}`, tick);
+    this.log(`3T INIT tick=${tick} use=${used} make=${made} tileCancel=${cancelled} drop=${dropped} fishBefore=${fishBefore} fishItem=${fish ? fish.name : 'none'} lure=${lured} tile=${here ? `${here.x},${here.z}` : 'unknown'} anim=${this.selfAnimation()}`);
+    this.remember('3T INIT', `use=${used} make=${made} tileCancel=${cancelled} drop=${dropped} fishBefore=${fishBefore} lure=${lured}`, tick);
   }
 
   private driveMenu(tick: number): void {
@@ -1890,17 +1895,11 @@ class FlyFisherLab extends LoopingBot {
       this.prepareNextMenu(tick);
       return;
     }
-    if (offset === 1 && this.lastDropAttemptTick !== tick) {
-      // T+1: one shift-drop-equivalent inventory Drop, if caught fish exists.
-      this.lastDropAttemptTick = tick;
-      const fish = this.firstFish();
-      if (!fish) return;
-      const accepted = fish.interact('Drop');
-      if (accepted) this.totalDrops++;
-      this.log(`3T DROP tick=${tick} item=${fish.name} accepted=${accepted}`);
-      return;
+    // T+1/T+2: no actions; Drop and Lure were both sent on T.
+    // Confirm inventory change separately from local Drop acceptance.
+    if (offset === 1) {
+      this.log(`3T DROP VERIFY tick=${tick} fishHeld=${this.fishCount()}`);
     }
-    // T+2: no action. Lure is sent immediately after tile cancellation on T.
   }
 
   private async initiateFishing(): Promise<void> {
