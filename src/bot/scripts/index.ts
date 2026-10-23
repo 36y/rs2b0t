@@ -18,6 +18,7 @@ import { ROCK_OPTIONS } from '../data/miningRocks.js';
 import { MINER_FOOD_SETTINGS } from './GatheringBot/MinerLogic.js';
 import EdgevilleMonkeyBars, { EDGEVILLE_MONKEYBARS_SETTINGS } from './EdgevilleMonkeyBars/EdgevilleMonkeyBars.js';
 import { ScriptRegistry } from '../runtime/ScriptRegistry.js';
+import FlyFisherLab, { FLYFISHER_LAB_SETTINGS } from './FlyFisherLab/FlyFisherLab.js';
 import AgilityBot from './AgilityBot/AgilityBot.js';
 import ArdyFighter, { SETTINGS as ARDY_SETTINGS } from './ArdyFighter/ArdyFighter.js';
 import AutoFighter, { SETTINGS as AUTOFIGHTER_SETTINGS } from './AutoFighter/AutoFighter.js';
@@ -774,4 +775,16 @@ ScriptRegistry.register({
     tags: ['crafting', 'fletching', 'flax', 'bow-strings', 'trade', 'two-player', 'afk'],
     settingsSchema: FLAXRUNNER_SETTINGS,
     create: () => new FlaxRunner()
+});
+
+// FlyFisherLab is an isolated InTree four-tick reference implementation.
+// Three-tick packet sequencing is intentionally not claimed until verified on-server.
+ScriptRegistry.register({
+    name: 'FlyFisherLab (InTree)',
+    description: 'Edgeville fly fishing with four-tick knife manipulation, catch dropping, banking and detailed timing diagnostics',
+    version: '0.1.0-intree',
+    category: 'Fishing',
+    tags: ['fishing', 'fly-fishing', 'tick-manipulation', 'four-tick', 'experimental'],
+    settingsSchema: FLYFISHER_LAB_SETTINGS,
+    create: () => new FlyFisherLab()
 });
