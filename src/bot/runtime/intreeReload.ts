@@ -13,6 +13,8 @@ export async function initializeInTreeScripts(): Promise<void> {
     await reloadInTreeScripts();
 }
 let registered = new Set<string>();
+let loadedVersion: string | null = null;
+let importSequence = 0;
 let busy = false;
 
 function safeToReload(): void {
@@ -43,13 +45,24 @@ export async function reloadInTreeScripts(): Promise<number> {
             throw new Error('Shared client code changed. Reload the browser page once before loading these scripts.');
         }
 
+        // Browsers cache successful module imports by URL. Importing the same
+        // version again does not rerun its registration side effects.
+        if (loadedVersion === manifest.version && registered.size > 0) {
+            return registered.size;
+        }
+
         // Capture registrations in isolation. A failed import must not remove
         // previously working scripts from the library.
         const previousRegister = ScriptRegistry.register.bind(ScriptRegistry);
         const next = new Map<string, ScriptMeta>();
         ScriptRegistry.register = (meta: ScriptMeta) => { next.set(meta.name, meta); };
         try {
-            await dynamicImport(new URL('./bot/intree-scripts.js?version=' + encodeURIComponent(manifest.version), document.baseURI).href);
+            // A version may recur (A → B → A). Give each actual import a fresh
+            // URL so the browser reruns its registration side effects.
+            const importUrl = new URL('./bot/intree-scripts.js', document.baseURI);
+            importUrl.searchParams.set('version', manifest.version);
+            importUrl.searchParams.set('load', String(++importSequence));
+            await dynamicImport(importUrl.href);
         } finally {
             ScriptRegistry.register = previousRegister;
         }
@@ -63,6 +76,7 @@ export async function reloadInTreeScripts(): Promise<number> {
         }
         registered = new Set(next.keys());
         baselineChunks = fingerprint;
+        loadedVersion = manifest.version;
         return next.size;
     } finally {
         busy = false;

@@ -28,8 +28,19 @@ if (!existsSync(join(OUT, 'botclient.js'))) {
     process.exit(1);
 }
 const bundleSrc = await Bun.file(join(OUT, 'botclient.js')).text();
-if (!bundleSrc.includes(LIVE_HOST)) {
-    console.error(`out/botclient.js does not target ${LIVE_HOST} — did you build with TARGET=live? Aborting.`);
+// The live hostname is configured by the proxy, not necessarily embedded in
+// the bundled client. Validate the build manifest and exact installed host
+// bytes instead of looking for a hostname string in minified JavaScript.
+const manifestPath = join(OUT, 'intree-scripts.json');
+let manifest: { target?: string; hostFingerprint?: string };
+try {
+    manifest = await Bun.file(manifestPath).json();
+} catch {
+    console.error('Missing or invalid out/intree-scripts.json — rebuild with TARGET=live.');
+    process.exit(1);
+}
+if (manifest.target !== 'live' || manifest.hostFingerprint !== Bun.hash(bundleSrc).toString(36)) {
+    console.error('Client build target or host fingerprint mismatch — rebuild with TARGET=live.');
     process.exit(1);
 }
 if (!existsSync(join(OUT, 'collision.lcnav.gz'))) {
