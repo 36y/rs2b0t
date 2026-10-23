@@ -61,6 +61,7 @@ import LeatherCrafter, { CRAFTER_SETTINGS } from './LeatherCrafter/LeatherCrafte
 import Firemaker, { FIREMAKER_SETTINGS } from './Firemaker/Firemaker.js';
 import SmithingBot, { SETTINGS as SMITHING_SETTINGS } from './SmithingBot/SmithingBot.js';
 import BankFletcher, { SETTINGS as BANKFLETCHER_SETTINGS } from './BankFletcher/BankFletcher.js';
+import FlyFisherLab, { FLYFISHER_LAB_SETTINGS } from './FlyFisherLab/FlyFisherLab.js';
 import BankSorter, { BANKSORTER_SETTINGS } from './BankSorter/BankSorter.js';
 import DartFletcher, { DART_FLETCHER_SETTINGS } from './DartFletcher/DartFletcher.js';
 import BoneBurier, { BONE_BURIER_SETTINGS } from './BoneBurier/BoneBurier.js';
@@ -893,4 +894,17 @@ ScriptRegistry.register({
     tags: ['crafting', 'fletching', 'flax', 'bow-strings', 'trade', 'two-player', 'afk'],
     settingsSchema: FLAXRUNNER_SETTINGS,
     create: () => new FlaxRunner()
+});
+
+
+// FlyFisherLab is an isolated InTree four-tick reference implementation.
+// Three-tick packet sequencing is intentionally not claimed until verified on-server.
+ScriptRegistry.register({
+    name: 'FlyFisherLab (InTree)',
+    description: 'Edgeville fly fishing with four-tick knife manipulation, catch dropping, banking and detailed timing diagnostics',
+    version: '0.1.0-intree',
+    category: 'Fishing',
+    tags: ['fishing', 'fly-fishing', 'tick-manipulation', 'four-tick', 'experimental'],
+    settingsSchema: FLYFISHER_LAB_SETTINGS,
+    create: () => new FlyFisherLab()
 });
