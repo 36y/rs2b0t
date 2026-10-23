@@ -290,7 +290,13 @@ export default class OnDemand extends OnDemandProvider {
             return;
         }
 
-        const worker = new Worker(new URL('./ondemandworker.js', import.meta.url), { type: 'module' });
+        // The bot build splits this module into /bot/chunks/, but publishes the worker at /bot/.
+        // Keep the original relative URL for non-bot client builds.
+        const moduleUrl = new URL(import.meta.url);
+        const workerUrl = moduleUrl.pathname.startsWith('/bot/chunks/')
+            ? new URL('/bot/ondemandworker.js', moduleUrl)
+            : new URL('./ondemandworker.js', moduleUrl);
+        const worker = new Worker(workerUrl, { type: 'module' });
         this.worker = worker;
         this.lastIngame = this.app.ingame;
 
