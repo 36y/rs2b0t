@@ -51,13 +51,17 @@ const define = {
 };
 
 const args = process.argv.slice(2);
-const prod = args[0] !== 'dev';
+const scriptsOnly = args.includes('scripts');
+const prod = !args.includes('dev');
+if (scriptsOnly && !fs.existsSync('out/intree-scripts.json')) {
+    throw new Error('Build and launch the full bot client once before building scripts only.');
+}
 
 if (!fs.existsSync('out')) {
     fs.mkdirSync('out');
 }
 
-fs.copyFileSync('src/client/3rdparty/tinymidipcm/tinymidipcm.wasm', 'out/tinymidipcm.wasm');
+if (!scriptsOnly) fs.copyFileSync('src/client/3rdparty/tinymidipcm/tinymidipcm.wasm', 'out/tinymidipcm.wasm');
 
 // Build the client and InTree registration entry together so Bun shares the
 // runtime modules between them rather than creating duplicate singletons.
@@ -93,22 +97,37 @@ for (const output of build.outputs) {
     outputs.set(name, text.replace('sourceMappingURL=' + generated + '.map', 'sourceMappingURL=' + target + '.map'));
     if (output.sourcemap) outputs.set(name + '.map', await output.sourcemap.text());
 }
+const hostSource = outputs.get('botclient.js') ?? '';
+if (!hostSource) throw new Error('Bot client entrypoint missing from build outputs');
+const hostFingerprint = Bun.hash(hostSource).toString(36);
+if (scriptsOnly) {
+    const existing = JSON.parse(fs.readFileSync('out/intree-scripts.json', 'utf8')) as { hostFingerprint?: string; runtimeChunks?: string[]; target?: string };
+    if (existing.hostFingerprint !== hostFingerprint || existing.target !== TARGET_NAME) {
+        throw new Error('The host runtime or build target changed. Full client rebuild and page restart required.');
+    }
+    for (const chunk of existing.runtimeChunks ?? []) {
+        const next = outputs.get(chunk);
+        if (!next || !fs.existsSync('out/' + chunk) || fs.readFileSync('out/' + chunk, 'utf8') !== next) {
+            throw new Error('Shared host chunk changed (' + chunk + '). Full client restart required.');
+        }
+    }
+}
 for (const [name, source] of outputs) {
+    if (scriptsOnly && (name === 'botclient.js' || name === 'botclient.js.map')) continue;
     fs.mkdirSync('out/' + name.split('/').slice(0, -1).join('/'), { recursive: true });
     fs.writeFileSync('out/' + name, source);
 }
 // Fingerprint only chunks imported by the running host, not script-only
 // chunks that legitimately change on each script rebuild.
-const hostSource = outputs.get('botclient.js') ?? '';
 const runtimeChunks = [...outputs.keys()].filter(name =>
     name.startsWith('chunks/') && name.endsWith('.js') && hostSource.includes(name)
 ).sort();
 const scriptSource = outputs.get('intree-scripts.js');
 if (!scriptSource) throw new Error('InTree script entrypoint missing from build outputs');
 const version = Bun.hash([...outputs.entries()].filter(([name]) => name === 'intree-scripts.js' || name.startsWith('chunks/')).map(([name, value]) => name + value).join('')).toString(36);
-fs.writeFileSync('out/intree-scripts.json', JSON.stringify({ version, runtimeChunks }));
+fs.writeFileSync('out/intree-scripts.json', JSON.stringify({ version, runtimeChunks, hostFingerprint, target: TARGET_NAME }));
 
-for (const [entry, name] of [
+if (!scriptsOnly) for (const [entry, name] of [
     ['src/bot/multibox/main.ts', 'multibox.js'],
     ['src/client/io/OnDemandWorker.ts', 'ondemandworker.js'],
     ['src/bot/event/webwalk/NavWorker.ts', 'navworker.js']
@@ -125,7 +144,7 @@ for (const [entry, name] of [
     fs.writeFileSync('out/' + name + '.map', extra.outputs[0].sourcemap ? await extra.outputs[0].sourcemap.text() : '');
 }
 
-writeVersionJson('out/version.json', identity);
+if (!scriptsOnly) writeVersionJson('out/version.json', identity);
 console.log(
-    `bot bundle built (${prod ? 'prod' : 'dev'}): out/botclient.js  git=${identity.dirty ? `${identity.short}-dirty` : identity.short}`
+    scriptsOnly ? `InTree scripts rebuilt: ${version} (host preserved)` : `bot bundle built (${prod ? 'prod' : 'dev'}): out/botclient.js  git=${identity.dirty ? `${identity.short}-dirty` : identity.short}`
 );
