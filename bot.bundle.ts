@@ -59,36 +59,50 @@ if (!fs.existsSync('out')) {
 
 fs.copyFileSync('src/client/3rdparty/tinymidipcm/tinymidipcm.wasm', 'out/tinymidipcm.wasm');
 
-const entrypoints: [entry: string, output: string][] = [
-    ['src/bot/main.ts', 'botclient.js'],
-    ['src/bot/multibox/main.ts', 'multibox.js'],
-    ['src/client/io/OnDemandWorker.ts', 'ondemandworker.js'],
-    ['src/bot/event/webwalk/NavWorker.ts', 'navworker.js']
+// Build the client and InTree registration entry together so Bun shares the
+// runtime modules between them rather than creating duplicate singletons.
+const entries = [
+    'src/bot/main.ts',
+    'src/bot/scripts/index.ts',
+    'src/bot/multibox/main.ts',
+    'src/client/io/OnDemandWorker.ts',
+    'src/bot/event/webwalk/NavWorker.ts'
 ];
-
-for (const [entry, output] of entrypoints) {
-    const build = await Bun.build({
-        entrypoints: [entry],
-        sourcemap: 'external',
-        define,
-        minify: prod
-    });
-
-    if (!build.success) {
-        build.logs.forEach((x: unknown) => console.log(x));
-        process.exit(1);
-    }
-
-    let source = await build.outputs[0].text();
-    const sourcemap = build.outputs[0].sourcemap ? await build.outputs[0].sourcemap.text() : '';
-
-    // the bundle is renamed on disk; keep the sourcemap pointer in sync
-    const generatedName = build.outputs[0].path.split('/').pop()!;
-    source = source.replace(`sourceMappingURL=${generatedName}.map`, `sourceMappingURL=${output}.map`);
-
-    fs.writeFileSync(`out/${output}`, source);
-    fs.writeFileSync(`out/${output}.map`, sourcemap);
+const build = await Bun.build({
+    entrypoints: entries,
+    sourcemap: 'external',
+    define,
+    minify: prod,
+    splitting: true,
+    naming: { entry: '[name].js', chunk: 'chunks/[name]-[hash].js', asset: '[name]-[hash].[ext]' }
+});
+if (!build.success) {
+    build.logs.forEach((x: unknown) => console.log(x));
+    process.exit(1);
 }
+
+const outputs = new Map<string, string>();
+for (const output of build.outputs) {
+    const generated = output.path.split('/').pop()!;
+    const target = generated === 'main.js' ? 'botclient.js'
+        : generated === 'index.js' ? 'intree-scripts.js'
+        : generated === 'OnDemandWorker.js' ? 'ondemandworker.js'
+        : generated === 'NavWorker.js' ? 'navworker.js'
+        : generated;
+    const relative = output.path.replace(/^.*?\/(chunks\/.*)$/, '$1');
+    const name = relative.startsWith('chunks/') ? relative : target;
+    const text = await output.text();
+    outputs.set(name, text.replace('sourceMappingURL=' + generated + '.map', 'sourceMappingURL=' + target + '.map'));
+}
+for (const [name, source] of outputs) {
+    fs.mkdirSync('out/' + name.split('/').slice(0, -1).join('/'), { recursive: true });
+    fs.writeFileSync('out/' + name, source);
+}
+const runtimeChunks = [...outputs.keys()].filter(name => name.startsWith('chunks/') && name.endsWith('.js')).sort();
+const scriptSource = outputs.get('intree-scripts.js');
+if (!scriptSource) throw new Error('InTree script entrypoint missing from build outputs');
+const version = Bun.hash(scriptSource).toString(36);
+fs.writeFileSync('out/intree-scripts.json', JSON.stringify({ version, runtimeChunks }));
 
 writeVersionJson('out/version.json', identity);
 console.log(
