@@ -14,8 +14,8 @@ import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.1.8-intree';
-const BUILD_LABEL = '3T T+2 DROP / INTREE / v0.1.8';
+const VERSION = '0.1.9-intree';
+const BUILD_LABEL = '3T INLINE DROP / INTREE / v0.1.9';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -1404,9 +1404,14 @@ class FlyFisherLab extends LoopingBot {
     const used = logs.useOn(knife);
     const made = actions.ifButton(8889);
     const closed = actions.closeModal();
+    // Drop before Lure in the same synchronous batch so Lure is last.
+    // Only one fish per cycle; never send a later standalone drop.
+    const fish = this.firstFish();
+    const dropped = fish ? fish.interact('Drop') : false;
+    if (dropped) this.totalDrops++;
     const lured = spot.interact(LURE);
-    this.log(`3T SYNC tick=${tick} use=${used} make=${made} close=${closed} lure=${lured} anim=${this.selfAnimation()}`);
-    this.remember('3T SYNC', `use=${used} make=${made} close=${closed} lure=${lured}`, tick);
+    this.log(`3T INLINE tick=${tick} use=${used} make=${made} close=${closed} drop=${dropped} fish=${fish?.name ?? 'none'} lure=${lured} anim=${this.selfAnimation()}`);
+    this.remember('3T INLINE', `use=${used} make=${made} close=${closed} drop=${dropped} lure=${lured}`, tick);
   }
 
   private driveMenu(tick: number): void {
@@ -1869,21 +1874,9 @@ class FlyFisherLab extends LoopingBot {
 
   private driveTick(tick: number): void {
     if (!this.rideActive) return;
-    const offset = this.knifeTick < 0 ? 3 : tick - this.knifeTick;
-    if (offset >= 3) {
-      this.prepareNextMenu(tick);
-      return;
-    }
-    // Experimental: T+1 is intentionally idle; attempt one fish drop
-    // at T+2 only. This may still interrupt the fishing action; verify XP.
-    if (offset !== 2 || this.lastDropAttemptTick === tick) return;
-    this.lastDropAttemptTick = tick;
-    const fish = this.firstFish();
-    if (!fish) return;
-    const accepted = fish.interact('Drop');
-    if (accepted) this.totalDrops++;
-    this.log(`3T T+2 DROP tick=${tick} item=${fish.name} accepted=${accepted} anim=${this.selfAnimation()}`);
-    this.remember('3T T+2 DROP', `item=${fish.name} accepted=${accepted}`, tick);
+    // All interactions are in the batch; no T+1/T+2 drops.
+    if (this.knifeTick >= 0 && tick - this.knifeTick < 3) return;
+    this.prepareNextMenu(tick);
   }
 
   private async initiateFishing(): Promise<void> {
