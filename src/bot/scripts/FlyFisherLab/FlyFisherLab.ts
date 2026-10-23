@@ -14,8 +14,8 @@ import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.1.7-intree';
-const BUILD_LABEL = '3T SAFE CLEANUP / INTREE / v0.1.7';
+const VERSION = '0.1.8-intree';
+const BUILD_LABEL = '3T T+2 DROP / INTREE / v0.1.8';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -1869,10 +1869,21 @@ class FlyFisherLab extends LoopingBot {
 
   private driveTick(tick: number): void {
     if (!this.rideActive) return;
-    // Never send drop interactions inside a manipulation cycle:
-    // they can clear the pending weak queue and disrupt knife/Make-1.
-    if (this.knifeTick >= 0 && tick - this.knifeTick < 3) return;
-    this.prepareNextMenu(tick);
+    const offset = this.knifeTick < 0 ? 3 : tick - this.knifeTick;
+    if (offset >= 3) {
+      this.prepareNextMenu(tick);
+      return;
+    }
+    // Experimental: T+1 is intentionally idle; attempt one fish drop
+    // at T+2 only. This may still interrupt the fishing action; verify XP.
+    if (offset !== 2 || this.lastDropAttemptTick === tick) return;
+    this.lastDropAttemptTick = tick;
+    const fish = this.firstFish();
+    if (!fish) return;
+    const accepted = fish.interact('Drop');
+    if (accepted) this.totalDrops++;
+    this.log(`3T T+2 DROP tick=${tick} item=${fish.name} accepted=${accepted} anim=${this.selfAnimation()}`);
+    this.remember('3T T+2 DROP', `item=${fish.name} accepted=${accepted}`, tick);
   }
 
   private async initiateFishing(): Promise<void> {
