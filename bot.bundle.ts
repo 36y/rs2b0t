@@ -30,7 +30,12 @@ if (!(TARGET_NAME in TARGET_RSA)) {
     process.exit(1);
 }
 
-const rsa = TARGET_RSA[TARGET_NAME] ?? TARGET_RSA.local;
+const scriptsOnlyRequested = process.argv.slice(2).includes('scripts');
+const previousManifest = scriptsOnlyRequested && fs.existsSync('out/intree-scripts.json')
+    ? JSON.parse(fs.readFileSync('out/intree-scripts.json', 'utf8')) as { target?: string; rsa?: { rsae: string; rsan: string } }
+    : null;
+if (scriptsOnlyRequested && previousManifest?.target !== TARGET_NAME) throw new Error('Build target differs from the running client.');
+const rsa = scriptsOnlyRequested && previousManifest?.rsa ? previousManifest.rsa : TARGET_RSA[TARGET_NAME] ?? TARGET_RSA.local;
 if ((TARGET_NAME === 'live' || TARGET_NAME === 'prod') && rsa.rsan === '') {
     const envVar = TARGET_NAME === 'live' ? 'LIVE_RSAN' : 'PROD_RSAN';
     console.error(`TARGET=${TARGET_NAME} requires ${envVar} (rs2b2t rotated modulus). Aborting.`);
@@ -102,7 +107,7 @@ if (!hostSource) throw new Error('Bot client entrypoint missing from build outpu
 const hostFingerprint = Bun.hash(hostSource).toString(36);
 if (scriptsOnly) {
     const existing = JSON.parse(fs.readFileSync('out/intree-scripts.json', 'utf8')) as { hostFingerprint?: string; runtimeChunks?: string[]; target?: string };
-    if (existing.hostFingerprint !== hostFingerprint || existing.target !== TARGET_NAME) {
+    if (existing.target !== TARGET_NAME) {
         throw new Error('The host runtime or build target changed. Full client rebuild and page restart required.');
     }
     for (const chunk of existing.runtimeChunks ?? []) {
@@ -125,7 +130,7 @@ const runtimeChunks = [...outputs.keys()].filter(name =>
 const scriptSource = outputs.get('intree-scripts.js');
 if (!scriptSource) throw new Error('InTree script entrypoint missing from build outputs');
 const version = Bun.hash([...outputs.entries()].filter(([name]) => name === 'intree-scripts.js' || name.startsWith('chunks/')).map(([name, value]) => name + value).join('')).toString(36);
-fs.writeFileSync('out/intree-scripts.json', JSON.stringify({ version, runtimeChunks, hostFingerprint, target: TARGET_NAME }));
+fs.writeFileSync('out/intree-scripts.json', JSON.stringify({ version, runtimeChunks, hostFingerprint, target: TARGET_NAME, rsa }));
 
 if (!scriptsOnly) for (const [entry, name] of [
     ['src/bot/multibox/main.ts', 'multibox.js'],
