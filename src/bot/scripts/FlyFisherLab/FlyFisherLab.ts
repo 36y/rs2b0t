@@ -14,8 +14,8 @@ import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.1.6-intree';
-const BUILD_LABEL = '3T LIVE DROP / INTREE / v0.1.6';
+const VERSION = '0.1.7-intree';
+const BUILD_LABEL = '3T SAFE CLEANUP / INTREE / v0.1.7';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -1869,23 +1869,10 @@ class FlyFisherLab extends LoopingBot {
 
   private driveTick(tick: number): void {
     if (!this.rideActive) return;
-    const offset = this.knifeTick >= 0 ? tick - this.knifeTick : 3;
-    if (offset >= 3) {
-      // Keep the four-action manipulation tick exclusive.
-      this.prepareNextMenu(tick);
-      return;
-    }
-    // Drop at most one fish on each spare tick (+1, +2), never
-    // on the manipulation tick. No async waits or ride interruption.
-    if (offset > 0 && this.lastDropAttemptTick !== tick) {
-      this.lastDropAttemptTick = tick;
-      const fish = this.firstFish();
-      if (fish) {
-        const dropped = fish.interact('Drop');
-        this.log(`3T LIVE DROP tick=${tick} offset=${offset} item=${fish.name} accepted=${dropped}`);
-        if (dropped) this.totalDrops++;
-      }
-    }
+    // Never send drop interactions inside a manipulation cycle:
+    // they can clear the pending weak queue and disrupt knife/Make-1.
+    if (this.knifeTick >= 0 && tick - this.knifeTick < 3) return;
+    this.prepareNextMenu(tick);
   }
 
   private async initiateFishing(): Promise<void> {
@@ -1937,20 +1924,21 @@ class FlyFisherLab extends LoopingBot {
     this.actionBusy = true;
 
     try {
+      let sentThisTick = 0;
+      let dropTick = Game.tick();
       for (const item of Inventory.items()) {
-        if (
-          !DROP_NAMES.has(
-            (item.name ?? '').toLowerCase()
-          )
-        ) {
-          continue;
+        if (!DROP_NAMES.has((item.name ?? '').toLowerCase())) continue;
+        // Avoid exceeding the server's per-tick action budget.
+        if (sentThisTick >= 4 || Game.tick() !== dropTick) {
+          await Execution.delayTicks(1);
+          dropTick = Game.tick();
+          sentThisTick = 0;
         }
-
-        await this.trackAction(
-          'CLEANUP DROP',
-          () => item.interact('Drop')
-        );
+        const success = await this.trackAction('CLEANUP DROP', () => item.interact('Drop'));
+        if (success) this.totalDrops++;
+        sentThisTick++;
       }
+      this.log(`3T CLEANUP COMPLETE tick=${Game.tick()} remaining=${this.fishCount()}`);
     } finally {
       this.actionBusy = false;
     }
@@ -2116,7 +2104,8 @@ class FlyFisherLab extends LoopingBot {
       return;
     }
 
-    if (Inventory.isFull()) {
+    if (Inventory.isFull() || this.fishCount() >= 12) {
+      if (this.fishCount() >= 12 && !Inventory.isFull()) this.log(`3T CLEANUP PAUSE tick=${Game.tick()} fish=${this.fishCount()}`);
       await this.dropCatch();
       return;
     }
