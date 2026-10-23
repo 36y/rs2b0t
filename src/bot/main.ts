@@ -24,7 +24,7 @@ import Overlay from './panel/Overlay.js';
 import { installPaintInput } from './panel/PaintInput.js';
 import { paintState } from './paint/paintLogic.js';
 import { BUILD_INFO, formatBuildInfo } from './runtime/buildInfo.js';
-import './scripts/index.js';
+import { initializeInTreeScripts } from './runtime/intreeReload.js';
 
 export { BotClient, BotHost };
 
@@ -63,6 +63,8 @@ if (typeof document !== 'undefined' && document.getElementById('canvas')) {
     }
 
     installAbi();
+
+    void initializeInTreeScripts().catch(err => console.error('[rs2b0t] InTree script load failed:', err));
 
     if (params.get('autorelogin') !== '0') {
         AutoRelogin.enable(params.get('autologin') === '1');
