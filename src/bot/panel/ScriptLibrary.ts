@@ -1,6 +1,8 @@
 import { loadFromFile, loadFromUrl, type LoadResult } from '../runtime/loader.js';
 import { ScriptRegistry, type ScriptMeta } from '../runtime/ScriptRegistry.js';
 import { el } from './dom.js';
+import { reloadInTreeScripts } from '../runtime/intreeReload.js';
+import { ScriptRunner } from '../runtime/ScriptRunner.js';
 
 export default class ScriptLibrary {
     private backdrop: HTMLElement;
@@ -58,6 +60,7 @@ export default class ScriptLibrary {
         this.listEl = el('div', 'rs2b0t-library-list');
         modal.appendChild(this.listEl);
 
+        modal.appendChild(this.buildInTreeReloadSection());
         modal.appendChild(this.buildLoadSection());
 
         this.backdrop.appendChild(modal);
@@ -68,6 +71,34 @@ export default class ScriptLibrary {
                 this.render();
             }
         });
+    }
+
+    private buildInTreeReloadSection(): HTMLElement {
+        const section = el('div', 'rs2b0t-library-load');
+        const button = document.createElement('button');
+        button.className = 'rs2b0t-button';
+        button.textContent = 'Reload InTree scripts';
+        const status = el('div', 'rs2b0t-load-status');
+        button.addEventListener('click', async () => {
+            if (ScriptRunner.state === 'running' || ScriptRunner.state === 'paused' || ScriptRunner.state === 'stopping') {
+                status.textContent = 'Stop the current script before reloading.';
+                return;
+            }
+            button.disabled = true;
+            status.textContent = 'Reloading InTree scripts…';
+            try {
+                const count = await reloadInTreeScripts();
+                status.textContent = 'Reloaded ' + count + ' InTree scripts. Select one and press Start.';
+                this.render();
+            } catch (err) {
+                status.textContent = 'Reload failed: ' + (err instanceof Error ? err.message : String(err));
+            } finally {
+                button.disabled = false;
+            }
+        });
+        section.appendChild(button);
+        section.appendChild(status);
+        return section;
     }
 
     private buildLoadSection(): HTMLElement {
