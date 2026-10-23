@@ -5,7 +5,9 @@ import { buildIdentityDefines, resolveBuildIdentity, writeVersionJson } from './
 // Bot client build: src/bot/main.ts → botclient.js, console always kept.
 // Why: no terser pass, so `globalThis.__rs2b0t` keeps stable property names for externally-compiled scripts and string-keyed self-tests; Bun's minifier shortens locals only.
 
-const TARGET_NAME = process.env.TARGET ?? 'local';
+const TARGET_NAME = process.env.TARGET ?? (process.argv.slice(2).includes('scripts') && fs.existsSync('out/intree-scripts.json')
+    ? (JSON.parse(fs.readFileSync('out/intree-scripts.json', 'utf8')) as { target: string }).target
+    : 'local');
 
 // Public login keys per target: 1024-bit RSA, exponent 65537, upstream's 512-bit default was rotated out.
 // Why: local is the engine repo's committed private.pem public half; LOCAL_RSAE/LOCAL_RSAN override it against an unmodified upstream engine, and live's rotated modulus arrives as LIVE_RSAN at build time.
