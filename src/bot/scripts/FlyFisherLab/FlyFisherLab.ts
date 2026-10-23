@@ -7,6 +7,7 @@ import { Game } from '../../api/game/Game.js';
 import { Inventory } from '../../api/inventory/Inventory.js';
 import { LoopingBot } from '../../api/bot/Bot.js';
 import { Npcs } from '../../api/npcs/Npcs.js';
+import { Locs } from '../../api/locs/Locs.js';
 import { actions, reader } from '../../adapter/ClientAdapter.js';
 import { Skills } from '../../api/skills/Skills.js';
 import Tile from '../../geometry/Tile.js';
@@ -14,8 +15,8 @@ import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.2.7-intree';
-const BUILD_LABEL = '3T GNOME SUPPLY DIAGNOSTICS / INTREE / v0.2.7';
+const VERSION = '0.2.8-intree';
+const BUILD_LABEL = '3T GNOME BANK ROUTE / INTREE / v0.2.8';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -31,6 +32,8 @@ const CRAFTED_BOW = 'Arrow shaft';
 const EDGE_BANK = new Tile(3094, 3491, 0);
 const GNOME_BANK = new Tile(2445, 3424, 1);
 const GNOME_FISH = new Tile(2381, 3415, 0);
+const GNOME_UP = new Tile(2446, 3415, 0);
+const GNOME_DOWN = new Tile(2445, 3416, 1);
 const FISH_RETURN = new Tile(3105, 3430, 0);
 
 const FISH_TILES = [
@@ -122,6 +125,7 @@ class FlyFisherLab extends LoopingBot {
   private menuRequestTick = -1;
   private menuPollCount = 0;
   private lastMenuWaitLogTick = -1;
+  private gnomeRetryAfterMs = 0;
   private lastGnomeMissingMessage = '';
   private lastGnomeMissingLogTick = -1;
   private forceFreshKnife = false;
@@ -1986,13 +1990,103 @@ class FlyFisherLab extends LoopingBot {
     }
   }
 
+  private async gnomeWalk(dest: Tile, radius = 2): Promise<boolean> {
+    const ok = await Traversal.walkResilient(dest, {
+      ...Traversal.pureWalk, radius, attempts: 4, timeoutMs: 45000,
+      log: message => this.log(`GNOME WALK ${message}`)
+    });
+    const here = Game.tile();
+    return ok && !!here && here.level === dest.level && distance(here, dest) <= radius;
+  }
+
+  private async gnomeClimb(anchor: Tile, action: string, expectedLevel: number): Promise<boolean> {
+    const here = Game.tile();
+    if (!here || here.level !== anchor.level) return false;
+    if (distance(here, anchor) > 3 && !(await this.gnomeWalk(anchor, 2))) return false;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const staircase = Locs.query().name('Staircase').action(action)
+        .where(loc => loc.tile().level === anchor.level && distance(loc.tile(), anchor) <= 3)
+        .nearest();
+      if (!staircase) {
+        this.log(`GNOME STAIRCASE NOT FOUND action=${action} anchor=${anchor.x},${anchor.z},${anchor.level}`);
+        return false;
+      }
+      const issued = await staircase.interact(action);
+      this.log(`GNOME STAIRCASE action=${action} issued=${issued}`);
+      if (!issued) return false;
+      for (let wait = 0; wait < 12; wait++) {
+        await Execution.delayTicks(1);
+        if (Game.tile()?.level === expectedLevel) return true;
+      }
+    }
+    this.log(`GNOME STAIRCASE LEVEL TIMEOUT action=${action} expected=${expectedLevel}`);
+    return false;
+  }
+
+  private async gnomeRestock(): Promise<void> {
+    if (this.actionBusy || Date.now() < this.gnomeRetryAfterMs) return;
+    this.stopRide();
+    this.actionBusy = true;
+    this.bankTrips++;
+    this.bankStartMs = Date.now();
+    let bankOpened = false;
+    try {
+      this.log(`GNOME RESTOCK START missing=[${this.missingSupplies().join(', ')}]`);
+      const here = Game.tile();
+      if (!here) return;
+      if (here.level === 0) {
+        if (!(await this.gnomeClimb(GNOME_UP, 'Climb-up', 1))) return;
+      } else if (here.level !== 1) {
+        this.log(`GNOME RESTOCK UNSUPPORTED LEVEL ${here.level}`);
+        return;
+      }
+      if (!(await this.gnomeWalk(GNOME_BANK, 2))) return;
+      bankOpened = await Banking.open({stand: GNOME_BANK, log: message => this.log(message)});
+      if (!bankOpened || !(await Bank.waitReady(10000, message => this.log(message)))) {
+        this.log('GNOME BANK OPEN/READY FAILED');
+        return;
+      }
+      await Bank.depositAllMatching(name => !KEEP.has(name.toLowerCase()), message => this.log(message));
+      if (!Inventory.contains(ROD)) await Bank.withdrawX(ROD, 1);
+      if (!Inventory.contains(KNIFE)) await Bank.withdrawX(KNIFE, 1);
+      if (Inventory.count(FEATHER) <= 0) await Bank.withdrawX(FEATHER, this.settings.num('featherWithdrawAmount', 10000));
+      if (Inventory.count(LOGS) <= 0) await Bank.withdrawX(LOGS, this.settings.num('carrierWithdrawAmount', 2));
+      await BankRuntime.close();
+      bankOpened = false;
+      this.log(`GNOME RESTOCK WITHDRAWN missing=[${this.missingSupplies().join(', ')}]`);
+      if (!this.hasSupplies()) return;
+      if (!(await this.gnomeClimb(GNOME_DOWN, 'Climb-down', 0))) return;
+      if (!(await this.gnomeWalk(GNOME_FISH, 4))) return;
+      this.log('GNOME RESTOCK RETURNED TO FISHING');
+    } catch (error) {
+      this.log(`GNOME RESTOCK ERROR ${String(error)}`);
+    } finally {
+      if (bankOpened) {
+        try { await BankRuntime.close(); } catch { /* best effort */ }
+      }
+      this.bankMs += Math.max(0, Date.now() - this.bankStartMs);
+      this.lastLogCount = Inventory.count(LOGS);
+      this.gnomeRetryAfterMs = Date.now() + 10000;
+      this.actionBusy = false;
+    }
+  }
+
   private async walkToFishing(): Promise<void> {
     if (this.actionBusy) {
       return;
     }
 
     if (this.fishingLocation() === 'gnome') {
-      this.log(`GNOME LOCATION: stand near fishing anchor ${GNOME_FISH.x},${GNOME_FISH.z},${GNOME_FISH.level} before starting (current=${Game.tile()?.x},${Game.tile()?.z},${Game.tile()?.level}).`);
+      if (this.actionBusy || Date.now() < this.gnomeRetryAfterMs) return;
+      this.actionBusy = true;
+      try {
+        const here = Game.tile();
+        if (here?.level === 1 && !(await this.gnomeClimb(GNOME_DOWN, 'Climb-down', 0))) return;
+        if (Game.tile()?.level === 0) await this.gnomeWalk(GNOME_FISH, 4);
+      } finally {
+        this.gnomeRetryAfterMs = Date.now() + 10000;
+        this.actionBusy = false;
+      }
       return;
     }
 
@@ -2021,14 +2115,7 @@ class FlyFisherLab extends LoopingBot {
     }
 
     if (this.fishingLocation() === 'gnome') {
-      const missing = this.missingSupplies().join(', ');
-      const tick = Game.tick();
-      if (missing !== this.lastGnomeMissingMessage ||
-          tick - this.lastGnomeMissingLogTick >= 50) {
-        this.log(`GNOME RESTOCK: missing=[${missing}] rod=${Inventory.contains(ROD)} knife=${Inventory.contains(KNIFE)} feathers=${Inventory.count(FEATHER)} logs=${Inventory.count(LOGS)}; restock manually at ${GNOME_BANK.x},${GNOME_BANK.z},${GNOME_BANK.level}. Upstairs routing disabled.`);
-        this.lastGnomeMissingMessage = missing;
-        this.lastGnomeMissingLogTick = tick;
-      }
+      await this.gnomeRestock();
       return;
     }
 
@@ -2195,7 +2282,7 @@ export const FLYFISHER_LAB_SETTINGS: SettingsSchema = {
     type: 'string', default: 'edgeville',
     label: 'Fishing location', options: ['edgeville', 'gnome'],
     optionLabels: { edgeville: 'Edgeville / Barbarian Village', gnome: 'Tree Gnome Stronghold' },
-    help: 'Gnome: start near 2381,3415,0. Bank at 2445,3424,1 is recorded, but upstairs travel/restocking remain manual.'
+    help: 'Gnome: automatic restocking via ground-floor and upstairs staircases; test the route with supplies in bank.'
   },
   featherWithdrawAmount: { type: 'number', label: 'Feathers to withdraw', default: 10000 },
   carrierWithdrawAmount: { type: 'number', label: 'Normal logs to withdraw', default: 2 }
