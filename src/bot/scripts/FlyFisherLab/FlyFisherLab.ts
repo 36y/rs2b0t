@@ -14,8 +14,8 @@ import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.1.9-intree';
-const BUILD_LABEL = '3T INLINE DROP / INTREE / v0.1.9';
+const VERSION = '0.2.0-intree';
+const BUILD_LABEL = '3T INIT DROP FISH / INTREE / v0.2.0';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -1393,7 +1393,7 @@ class FlyFisherLab extends LoopingBot {
     const knife = Inventory.first(KNIFE);
     if (!spot || !logs || !knife) return;
     if (!this.originalSpotStillPresent()) {
-      this.beginRelocation('spot-moved-before-batch', this.nearestSpot());
+      this.beginRelocation('spot-moved-before-init', this.nearestSpot());
       return;
     }
     this.lastKnifeAttemptTick = tick;
@@ -1401,17 +1401,12 @@ class FlyFisherLab extends LoopingBot {
     this.makeTick = tick;
     this.cycleNumber++;
     this.phase = 'cycling';
+    // T: initiate the manipulation; keep these consecutive and synchronous.
     const used = logs.useOn(knife);
     const made = actions.ifButton(8889);
     const closed = actions.closeModal();
-    // Drop before Lure in the same synchronous batch so Lure is last.
-    // Only one fish per cycle; never send a later standalone drop.
-    const fish = this.firstFish();
-    const dropped = fish ? fish.interact('Drop') : false;
-    if (dropped) this.totalDrops++;
-    const lured = spot.interact(LURE);
-    this.log(`3T INLINE tick=${tick} use=${used} make=${made} close=${closed} drop=${dropped} fish=${fish?.name ?? 'none'} lure=${lured} anim=${this.selfAnimation()}`);
-    this.remember('3T INLINE', `use=${used} make=${made} close=${closed} drop=${dropped} lure=${lured}`, tick);
+    this.log(`3T INIT tick=${tick} use=${used} make=${made} close=${closed} anim=${this.selfAnimation()}`);
+    this.remember('3T INIT', `use=${used} make=${made} close=${closed}`, tick);
   }
 
   private driveMenu(tick: number): void {
@@ -1874,9 +1869,33 @@ class FlyFisherLab extends LoopingBot {
 
   private driveTick(tick: number): void {
     if (!this.rideActive) return;
-    // All interactions are in the batch; no T+1/T+2 drops.
-    if (this.knifeTick >= 0 && tick - this.knifeTick < 3) return;
-    this.prepareNextMenu(tick);
+    const offset = this.knifeTick < 0 ? 3 : tick - this.knifeTick;
+    if (offset >= 3) {
+      this.prepareNextMenu(tick);
+      return;
+    }
+    if (offset === 1 && this.lastDropAttemptTick !== tick) {
+      // T+1: one shift-drop-equivalent inventory Drop, if caught fish exists.
+      this.lastDropAttemptTick = tick;
+      const fish = this.firstFish();
+      if (!fish) return;
+      const accepted = fish.interact('Drop');
+      if (accepted) this.totalDrops++;
+      this.log(`3T DROP tick=${tick} item=${fish.name} accepted=${accepted}`);
+      return;
+    }
+    if (offset === 2 && this.lastLureAttemptTick !== tick) {
+      // T+2: re-issue Lure after the drop, never before it.
+      this.lastLureAttemptTick = tick;
+      const spot = this.activeSpot();
+      if (!spot || !this.originalSpotStillPresent()) {
+        this.beginRelocation('spot-moved-before-lure', this.nearestSpot());
+        return;
+      }
+      const accepted = spot.interact(LURE);
+      if (accepted) this.totalLures++;
+      this.log(`3T FISH tick=${tick} accepted=${accepted} anim=${this.selfAnimation()}`);
+    }
   }
 
   private async initiateFishing(): Promise<void> {
