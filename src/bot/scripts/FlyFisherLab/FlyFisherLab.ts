@@ -3,6 +3,7 @@ import { Bank } from '../../api/bank/Bank.js';
 import { Banking } from '../../api/bank/Banking.js';
 import { ChatDialog } from '../../api/ui/dialogue/ChatDialog.js';
 import { Execution } from '../../api/execution/Execution.js';
+import { EventSignal } from '../../api/execution/EventSignal.js';
 import { Game } from '../../api/game/Game.js';
 import { Inventory } from '../../api/inventory/Inventory.js';
 import { LoopingBot } from '../../api/bot/Bot.js';
@@ -15,8 +16,8 @@ import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.2.8-intree';
-const BUILD_LABEL = '3T GNOME BANK ROUTE / INTREE / v0.2.8';
+const VERSION = '0.2.9-intree';
+const BUILD_LABEL = '3T RANDOM EVENT YIELD / INTREE / v0.2.9';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -126,6 +127,7 @@ class FlyFisherLab extends LoopingBot {
   private menuPollCount = 0;
   private lastMenuWaitLogTick = -1;
   private gnomeRetryAfterMs = 0;
+  private randomYieldActive = false;
   private lastGnomeMissingMessage = '';
   private lastGnomeMissingLogTick = -1;
   private forceFreshKnife = false;
@@ -293,6 +295,24 @@ class FlyFisherLab extends LoopingBot {
 
   private startTime = Date.now();
 
+  private yieldToRandomEvent(): boolean {
+    const pending = EventSignal.pending();
+    if (pending) {
+      if (!this.randomYieldActive) {
+        this.randomYieldActive = true;
+        this.stopRide();
+        this.log(`RANDOM EVENT YIELD tick=${Game.tick()} stopping 3T actions for host handler`);
+      }
+      return true;
+    }
+    if (this.randomYieldActive) {
+      this.randomYieldActive = false;
+      this.stopRide();
+      this.log(`RANDOM EVENT CLEAR tick=${Game.tick()} resuming from fresh fishing state`);
+    }
+    return false;
+  }
+
   override async onStart(): Promise<void> {
     this.startTime = Date.now();
     this.lastLogCount = Inventory.count(LOGS);
@@ -308,6 +328,7 @@ class FlyFisherLab extends LoopingBot {
 
     this.on('tick', event => {
       this.observedTick = event.tick;
+      if (this.yieldToRandomEvent()) return;
       this.observeTickCadence(event.tick);
 
       // Observe network positions before any tick-level
@@ -2004,6 +2025,7 @@ class FlyFisherLab extends LoopingBot {
     if (!here || here.level !== anchor.level) return false;
     if (distance(here, anchor) > 3 && !(await this.gnomeWalk(anchor, 2))) return false;
     for (let attempt = 0; attempt < 3; attempt++) {
+      if (this.yieldToRandomEvent()) return false;
       const staircase = Locs.query().name('Staircase').action(action)
         .where(loc => loc.tile().level === anchor.level && distance(loc.tile(), anchor) <= 3)
         .nearest();
@@ -2015,6 +2037,7 @@ class FlyFisherLab extends LoopingBot {
       this.log(`GNOME STAIRCASE action=${action} issued=${issued}`);
       if (!issued) return false;
       for (let wait = 0; wait < 12; wait++) {
+        if (this.yieldToRandomEvent()) return false;
         await Execution.delayTicks(1);
         if (Game.tile()?.level === expectedLevel) return true;
       }
@@ -2040,12 +2063,14 @@ class FlyFisherLab extends LoopingBot {
         this.log(`GNOME RESTOCK UNSUPPORTED LEVEL ${here.level}`);
         return;
       }
-      if (!(await this.gnomeWalk(GNOME_BANK, 2))) return;
+      if (this.yieldToRandomEvent() || !(await this.gnomeWalk(GNOME_BANK, 2))) return;
+      if (this.yieldToRandomEvent()) return;
       bankOpened = await Banking.open({stand: GNOME_BANK, log: message => this.log(message)});
       if (!bankOpened || !(await Bank.waitReady(10000, message => this.log(message)))) {
         this.log('GNOME BANK OPEN/READY FAILED');
         return;
       }
+      if (this.yieldToRandomEvent()) return;
       await Bank.depositAllMatching(name => !KEEP.has(name.toLowerCase()), message => this.log(message));
       if (!Inventory.contains(ROD)) await Bank.withdrawX(ROD, 1);
       if (!Inventory.contains(KNIFE)) await Bank.withdrawX(KNIFE, 1);
@@ -2055,7 +2080,7 @@ class FlyFisherLab extends LoopingBot {
       bankOpened = false;
       this.log(`GNOME RESTOCK WITHDRAWN missing=[${this.missingSupplies().join(', ')}]`);
       if (!this.hasSupplies()) return;
-      if (!(await this.gnomeClimb(GNOME_DOWN, 'Climb-down', 0))) return;
+      if (this.yieldToRandomEvent() || !(await this.gnomeClimb(GNOME_DOWN, 'Climb-down', 0))) return;
       if (!(await this.gnomeWalk(GNOME_FISH, 4))) return;
       this.log('GNOME RESTOCK RETURNED TO FISHING');
     } catch (error) {
@@ -2207,6 +2232,7 @@ class FlyFisherLab extends LoopingBot {
   }
 
   override async loop(): Promise<void> {
+    if (this.yieldToRandomEvent()) return;
     if (!Game.ingame()) {
       return;
     }
