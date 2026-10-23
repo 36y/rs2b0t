@@ -14,8 +14,8 @@ import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.2.1-intree';
-const BUILD_LABEL = '3T TILE CANCEL / INTREE / v0.2.1';
+const VERSION = '0.2.2-intree';
+const BUILD_LABEL = '3T TICK-DRIVEN LURE / INTREE / v0.2.2';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -309,6 +309,13 @@ class FlyFisherLab extends LoopingBot {
       this.observeCrafting('tick');
       this.observeSpots('tick');
       this.repeatIncidentSummary(event.tick);
+
+      // Run the three-tick action sequence on every actual tick event.
+      // The asynchronous bot loop can skip T+1/T+2 entirely.
+      if (this.rideActive && !this.relocating && !this.actionBusy &&
+          !this.dropPending && !this.boundaryDropPending) {
+        this.driveTick(event.tick);
+      }
 
       if (
         this.rideActive &&
@@ -2148,7 +2155,7 @@ class FlyFisherLab extends LoopingBot {
     }
 
     if (this.rideActive) {
-      this.driveTick(Game.tick());
+      // Tick handler owns all cycle actions; do not double-send here.
       return;
     }
 
