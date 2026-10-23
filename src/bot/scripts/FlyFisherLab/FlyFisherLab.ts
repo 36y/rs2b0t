@@ -148,6 +148,36 @@ class FlyFisherLab extends LoopingBot {
   private observedTick = -1;
   private cycleNumber = 0;
 
+  // Observe the actual tick-feed cadence before enabling packet-sensitive 3t actions.
+  // The tick event is a client observation, not proof of the server read boundary.
+  private lastTickAtMs = -1;
+  private tickGapSamples = 0;
+  private tickGapTotalMs = 0;
+  private tickGapMinMs = Number.POSITIVE_INFINITY;
+  private tickGapMaxMs = 0;
+  private tickGapOver900Ms = 0;
+
+  private observeTickCadence(tick: number): void {
+    const now = performance.now();
+    if (this.lastTickAtMs >= 0) {
+      const gap = now - this.lastTickAtMs;
+      this.tickGapSamples++;
+      this.tickGapTotalMs += gap;
+      this.tickGapMinMs = Math.min(this.tickGapMinMs, gap);
+      this.tickGapMaxMs = Math.max(this.tickGapMaxMs, gap);
+      if (gap > 900) this.tickGapOver900Ms++;
+      if (this.tickGapSamples % 100 === 0) {
+        this.log(`3T TICK FEED tick=${tick} samples=${this.tickGapSamples}` +
+          ` avgMs=${Math.round(this.tickGapTotalMs / this.tickGapSamples)}` +
+          ` minMs=${Math.round(this.tickGapMinMs)}` +
+          ` maxMs=${Math.round(this.tickGapMaxMs)}` +
+          ` gapsOver900Ms=${this.tickGapOver900Ms}` +
+          ` selfAnim=${this.selfAnimation()}`);
+      }
+    }
+    this.lastTickAtMs = now;
+  }
+
   private totalKnives = 0;
   private totalMakes = 0;
   private totalLures = 0;
@@ -267,6 +297,7 @@ class FlyFisherLab extends LoopingBot {
 
     this.on('tick', event => {
       this.observedTick = event.tick;
+      this.observeTickCadence(event.tick);
 
       // Observe network positions before any tick-level
       // relocation handling changes the tracked spot.
