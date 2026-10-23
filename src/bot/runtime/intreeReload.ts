@@ -14,6 +14,7 @@ export async function initializeInTreeScripts(): Promise<void> {
 }
 let registered = new Set<string>();
 let loadedVersion: string | null = null;
+let importSequence = 0;
 let busy = false;
 
 function safeToReload(): void {
@@ -56,7 +57,12 @@ export async function reloadInTreeScripts(): Promise<number> {
         const next = new Map<string, ScriptMeta>();
         ScriptRegistry.register = (meta: ScriptMeta) => { next.set(meta.name, meta); };
         try {
-            await dynamicImport(new URL('./bot/intree-scripts.js?version=' + encodeURIComponent(manifest.version), document.baseURI).href);
+            // A version may recur (A → B → A). Give each actual import a fresh
+            // URL so the browser reruns its registration side effects.
+            const importUrl = new URL('./bot/intree-scripts.js', document.baseURI);
+            importUrl.searchParams.set('version', manifest.version);
+            importUrl.searchParams.set('load', String(++importSequence));
+            await dynamicImport(importUrl.href);
         } finally {
             ScriptRegistry.register = previousRegister;
         }
