@@ -14,7 +14,8 @@ import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.1.0-intree';
+const VERSION = '0.1.1-intree';
+const BUILD_LABEL = '3T LAB / TICK FEED / v0.1.1';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -390,6 +391,7 @@ class FlyFisherLab extends LoopingBot {
       this.incidents[this.incidents.length - 1];
 
     const lines = [
+      `=== ${BUILD_LABEL} ===`,
       `FlyFisher v${VERSION}`,
       `Phase: ${this.phase}`,
       `Cycle: ${this.cycleNumber}`,
@@ -423,12 +425,15 @@ class FlyFisherLab extends LoopingBot {
       `Menu timeouts: ${this.menuTimeouts}`
     ];
 
+    ctx.font = 'bold 14px monospace';
+    ctx.fillStyle = '#00ffb3';
+    ctx.fillText(BUILD_LABEL, 12, 20);
     ctx.font = '12px monospace';
     ctx.fillStyle = '#ffffff';
     ctx.shadowColor = '#000000';
     ctx.shadowBlur = 3;
 
-    let y = 25;
+    let y = 43;
 
     for (const line of lines) {
       ctx.fillText(line, 12, y);
