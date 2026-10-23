@@ -14,8 +14,8 @@ import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.1.3-intree';
-const BUILD_LABEL = '3T LAB / SCRIPT ONLY / v0.1.3';
+const VERSION = '0.1.4-intree';
+const BUILD_LABEL = '3T SHAFTS / INTREE / v0.1.4';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -24,9 +24,9 @@ const MAX_INCIDENTS = 20;
 const ROD = 'Fly fishing rod';
 const FEATHER = 'Feather';
 const KNIFE = 'Knife';
-const LOGS = 'Willow logs';
+const LOGS = 'Logs';
 const LURE = 'Lure';
-const CRAFTED_BOW = 'Willow shortbow';
+const CRAFTED_BOW = 'Arrow shaft';
 
 const EDGE_BANK = new Tile(3094, 3491, 0);
 const FISH_RETURN = new Tile(3105, 3430, 0);
@@ -42,7 +42,7 @@ const KEEP = new Set([
   'fly fishing rod',
   'feather',
   'knife',
-  'willow logs'
+  'logs'
 ]);
 
 const DROP_NAMES = new Set([
@@ -50,7 +50,9 @@ const DROP_NAMES = new Set([
   'raw salmon',
   'shortbow (u)',
   'willow shortbow (u)',
-  'willow shortbow'
+  'willow shortbow',
+  'arrow shaft',
+  'arrow shafts'
 ]);
 
 const BankRuntime = Bank as typeof Bank & {
@@ -318,7 +320,7 @@ class FlyFisherLab extends LoopingBot {
     });
 
     this.log(`FlyFisherLab v${VERSION} started`);
-    this.log('3T controller OFF; script-only mode, no host changes');
+    this.log('3T SHAFTS experimental controller ON; InTree imports only; no host changes');
     this.log('Reader selfAnim, carrier consumption and banking diagnostics enabled');
 
     this.log(
@@ -393,7 +395,7 @@ class FlyFisherLab extends LoopingBot {
     const lines = [
       `=== ${BUILD_LABEL} ===`,
       `FlyFisher v${VERSION}`,
-      `3T batching: not enabled / host unchanged`,
+      `3T SHAFTS: experimental / InTree / host unchanged`,
       `Phase: ${this.phase}`,
       `Cycle: ${this.cycleNumber}`,
       `Tick: ${this.observedTick}`,
@@ -403,7 +405,7 @@ class FlyFisherLab extends LoopingBot {
       )}`,
       `Fish seen: ${this.fishSeen}`,
       `Fish held: ${this.fishCount()}`,
-      `Willow shortbows detected: ${this.willowShortbowsDetected}`,
+      `Arrow shafts detected: ${this.willowShortbowsDetected}`,
       `Fletching XP gained: ${this.fletchingXpGained}`,
       `Fletching XP events: ${this.fletchingXpEvents}`,
       `Bow inventory gains: ${this.bowInventoryGainEvents}`,
@@ -1461,7 +1463,7 @@ class FlyFisherLab extends LoopingBot {
 
     this.log(
       `CYCLE ${this.cycleNumber}` +
-      ` T1 WILLOW LOGS -> KNIFE tick=${tick}`
+      ` T1 NORMAL LOGS -> KNIFE tick=${tick}`
     );
 
     void this.trackAction(
@@ -1550,19 +1552,19 @@ class FlyFisherLab extends LoopingBot {
         product =>
           product
             .toLowerCase()
-            .includes('willow shortbow')
+            .includes('arrow shaft')
       );
 
     if (!shortbow) {
       this.log(
-        `WILLOW SHORTBOW MISSING tick=${tick}` +
+        `ARROW SHAFT MISSING tick=${tick}` +
         ` products=${
           ChatDialog.makeProducts().join(', ')
         }`
       );
 
       this.invalidateMenu(
-        'willow-shortbow-missing',
+        'arrow-shaft-missing',
         tick
       );
 
@@ -1591,7 +1593,7 @@ class FlyFisherLab extends LoopingBot {
     );
 
     this.log(
-      `T2 MAKE WILLOW SHORTBOW tick=${tick}` +
+      `T2 MAKE ARROW SHAFTS (MAKE 1) tick=${tick}` +
       ` knifeGap=${tick - this.knifeTick}`
     );
 
@@ -1954,12 +1956,10 @@ class FlyFisherLab extends LoopingBot {
         return;
       }
 
-      if (offset === 2) {
-        this.tickFourDrop(tick);
-        return;
-      }
-
-      if (offset >= 3) {
+      // Three-tick experimental cadence: Make-1 at T2, lure at T3,
+      // finish and prepare the next knife on the following tick.
+      // Drop fish only when inventory is full to avoid delaying T1.
+      if (offset >= 2) {
         this.finishCycleBeforeKnife(tick);
         return;
       }
@@ -2224,7 +2224,7 @@ class FlyFisherLab extends LoopingBot {
 
 export const FLYFISHER_LAB_SETTINGS: SettingsSchema = {
   featherWithdrawAmount: { type: 'number', label: 'Feathers to withdraw', default: 10000 },
-  carrierWithdrawAmount: { type: 'number', label: 'Willow logs to withdraw', default: 2 }
+  carrierWithdrawAmount: { type: 'number', label: 'Normal logs to withdraw', default: 2 }
 };
 
 export default FlyFisherLab;
