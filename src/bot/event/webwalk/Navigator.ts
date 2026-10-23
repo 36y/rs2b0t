@@ -54,7 +54,7 @@ class NavigatorImpl {
         worker.onmessage = (event: MessageEvent): void => this.onMessage(event.data as NavResponse);
         worker.onerror = (event: ErrorEvent): void => this.fail(`worker error: ${event.message}`);
 
-        navPackForWorker(new URL('./collision.lcnav.gz', import.meta.url))
+        navPackForWorker(new URL('/bot/collision.lcnav.gz', import.meta.url))
             .then(({ pack, transfer }) => {
                 if (this.worker === worker) {
                     worker.postMessage({ type: 'init', pack }, transfer);
