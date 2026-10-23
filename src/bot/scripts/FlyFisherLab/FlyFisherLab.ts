@@ -14,8 +14,8 @@ import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.2.6-intree';
-const BUILD_LABEL = '3T GNOME ANCHOR / INTREE / v0.2.6';
+const VERSION = '0.2.7-intree';
+const BUILD_LABEL = '3T GNOME SUPPLY DIAGNOSTICS / INTREE / v0.2.7';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -122,6 +122,8 @@ class FlyFisherLab extends LoopingBot {
   private menuRequestTick = -1;
   private menuPollCount = 0;
   private lastMenuWaitLogTick = -1;
+  private lastGnomeMissingMessage = '';
+  private lastGnomeMissingLogTick = -1;
   private forceFreshKnife = false;
 
   private knifeTick = -1;
@@ -2019,7 +2021,14 @@ class FlyFisherLab extends LoopingBot {
     }
 
     if (this.fishingLocation() === 'gnome') {
-      this.log(`GNOME RESTOCK: supplies missing; restock manually at bank ${GNOME_BANK.x},${GNOME_BANK.z},${GNOME_BANK.level}. Automatic upstairs routing disabled.`);
+      const missing = this.missingSupplies().join(', ');
+      const tick = Game.tick();
+      if (missing !== this.lastGnomeMissingMessage ||
+          tick - this.lastGnomeMissingLogTick >= 50) {
+        this.log(`GNOME RESTOCK: missing=[${missing}] rod=${Inventory.contains(ROD)} knife=${Inventory.contains(KNIFE)} feathers=${Inventory.count(FEATHER)} logs=${Inventory.count(LOGS)}; restock manually at ${GNOME_BANK.x},${GNOME_BANK.z},${GNOME_BANK.level}. Upstairs routing disabled.`);
+        this.lastGnomeMissingMessage = missing;
+        this.lastGnomeMissingLogTick = tick;
+      }
       return;
     }
 
@@ -2153,6 +2162,8 @@ class FlyFisherLab extends LoopingBot {
       await this.restock();
       return;
     }
+
+    this.lastGnomeMissingMessage = '';
 
     if (Inventory.isFull() || this.fishCount() >= 12) {
       if (this.fishCount() >= 12 && !Inventory.isFull()) this.log(`3T CLEANUP PAUSE tick=${Game.tick()} fish=${this.fishCount()}`);
