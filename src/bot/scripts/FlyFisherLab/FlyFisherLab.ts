@@ -7,15 +7,15 @@ import { Game } from '../../api/game/Game.js';
 import { Inventory } from '../../api/inventory/Inventory.js';
 import { LoopingBot } from '../../api/bot/Bot.js';
 import { Npcs } from '../../api/npcs/Npcs.js';
-import { reader } from '../../adapter/ClientAdapter.js';
+import { actions, reader } from '../../adapter/ClientAdapter.js';
 import { Skills } from '../../api/skills/Skills.js';
 import Tile from '../../geometry/Tile.js';
 import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.1.4-intree';
-const BUILD_LABEL = '3T SHAFTS / INTREE / v0.1.4';
+const VERSION = '0.1.5-intree';
+const BUILD_LABEL = '3T SYNC TEST / INTREE / v0.1.5';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -1384,105 +1384,29 @@ class FlyFisherLab extends LoopingBot {
   }
 
   private prepareNextMenu(tick: number): void {
-    if (
-      !this.rideActive ||
-      this.relocating ||
-      this.actionBusy ||
-      this.knifePending ||
-      this.makePending ||
-      this.dropPending ||
-      this.boundaryDropPending ||
-      this.menuRequested
-    ) {
-      return;
-    }
-
-    if (
-      tick < this.nextKnifeAllowedTick ||
-      this.lastKnifeAttemptTick === tick
-    ) {
-      return;
-    }
-
-    if (
-      !this.forceFreshKnife &&
-      ChatDialog.isMakeMenu()
-    ) {
-      this.log(
-        `MENU ALREADY OPEN tick=${tick}`
-      );
-
-      this.menuRequested = true;
-      this.menuRequestTick = tick - 1;
-      this.knifeTick = tick - 1;
-      this.phase = 'menu-poll';
-
-      return;
-    }
-
-    const closest = this.nearestSpot();
-
-    if (
-      closest &&
-      this.spotTileKey &&
-      tileKey(closest.tile()) !==
-        this.spotTileKey
-    ) {
-      this.beginRelocation(
-        'spot-changed-before-T1',
-        closest
-      );
-
-      this.driveRelocation(tick);
-      return;
-    }
-
+    if (!this.rideActive || this.relocating || this.actionBusy ||
+        this.dropPending || this.boundaryDropPending ||
+        this.lastKnifeAttemptTick === tick ||
+        tick < this.nextKnifeAllowedTick) return;
+    const spot = this.activeSpot();
     const logs = Inventory.first(LOGS);
     const knife = Inventory.first(KNIFE);
-
-    if (!logs || !knife) {
+    if (!spot || !logs || !knife) return;
+    if (!this.originalSpotStillPresent()) {
+      this.beginRelocation('spot-moved-before-batch', this.nearestSpot());
       return;
     }
-
-    const generation = this.generation;
-
-    this.forceFreshKnife = false;
     this.lastKnifeAttemptTick = tick;
     this.knifeTick = tick;
-
-    this.menuRequested = true;
-    this.menuRequestTick = tick;
-    this.menuPollCount = 0;
-    this.lastMenuWaitLogTick = -1;
-
-    this.knifePending = true;
-    this.phase = 'menu-poll';
-
+    this.makeTick = tick;
     this.cycleNumber++;
-    this.totalKnives++;
-
-    this.log(
-      `CYCLE ${this.cycleNumber}` +
-      ` T1 NORMAL LOGS -> KNIFE tick=${tick}`
-    );
-
-    void this.trackAction(
-      'T1 KNIFE',
-      () => logs.useOn(knife)
-    ).then(success => {
-      if (generation !== this.generation) {
-        return;
-      }
-
-      this.knifePending = false;
-
-      if (!success) {
-        this.invalidateMenu(
-          'knife-failed',
-          Game.tick()
-        );
-      }
-    });
+    this.phase = 'cycling';
+    const used = logs.useOn(knife);
+    const made = actions.ifButton(8889);
+    const closed = actions.closeModal();
+    const lured = spot.interact(LURE);
+    this.log(`3T SYNC tick=${tick} use=${used} make=${made} close=${closed} lure=${lured} anim=${this.selfAnimation()}`);
+    this.remember('3T SYNC', `use=${used} make=${made} close=${closed} lure=${lured}`, tick);
   }
 
   private driveMenu(tick: number): void {
@@ -1944,30 +1868,9 @@ class FlyFisherLab extends LoopingBot {
   }
 
   private driveTick(tick: number): void {
-    if (!this.rideActive) {
-      return;
-    }
-
-    if (this.makeTick >= 0) {
-      const offset = tick - this.makeTick;
-
-      if (offset === 1) {
-        this.tickThreeLure(tick);
-        return;
-      }
-
-      // Three-tick experimental cadence: Make-1 at T2, lure at T3,
-      // finish and prepare the next knife on the following tick.
-      // Drop fish only when inventory is full to avoid delaying T1.
-      if (offset >= 2) {
-        this.finishCycleBeforeKnife(tick);
-        return;
-      }
-
-      return;
-    }
-
-    this.driveMenu(tick);
+    if (!this.rideActive) return;
+    if (this.knifeTick >= 0 && tick - this.knifeTick < 3) return;
+    this.prepareNextMenu(tick);
   }
 
   private async initiateFishing(): Promise<void> {
