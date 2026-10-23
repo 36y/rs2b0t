@@ -7,6 +7,11 @@ interface ScriptBuildManifest {
 }
 
 let baselineChunks: string | null = null;
+const dynamicImport = new Function('url', 'return import(url)') as (url: string) => Promise<unknown>;
+
+export async function initializeInTreeScripts(): Promise<void> {
+    await reloadInTreeScripts();
+}
 let registered = new Set<string>();
 let busy = false;
 
@@ -44,7 +49,7 @@ export async function reloadInTreeScripts(): Promise<number> {
         const next = new Map<string, ScriptMeta>();
         ScriptRegistry.register = (meta: ScriptMeta) => { next.set(meta.name, meta); };
         try {
-            await import(/* @vite-ignore */ './intree-scripts.js?version=' + encodeURIComponent(manifest.version));
+            await dynamicImport(new URL('./bot/intree-scripts.js?version=' + encodeURIComponent(manifest.version), document.baseURI).href);
         } finally {
             ScriptRegistry.register = previousRegister;
         }
