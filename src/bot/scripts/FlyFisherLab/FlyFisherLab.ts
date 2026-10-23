@@ -14,8 +14,8 @@ import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.1.5-intree';
-const BUILD_LABEL = '3T SYNC TEST / INTREE / v0.1.5';
+const VERSION = '0.1.6-intree';
+const BUILD_LABEL = '3T LIVE DROP / INTREE / v0.1.6';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -1869,8 +1869,23 @@ class FlyFisherLab extends LoopingBot {
 
   private driveTick(tick: number): void {
     if (!this.rideActive) return;
-    if (this.knifeTick >= 0 && tick - this.knifeTick < 3) return;
-    this.prepareNextMenu(tick);
+    const offset = this.knifeTick >= 0 ? tick - this.knifeTick : 3;
+    if (offset >= 3) {
+      // Keep the four-action manipulation tick exclusive.
+      this.prepareNextMenu(tick);
+      return;
+    }
+    // Drop at most one fish on each spare tick (+1, +2), never
+    // on the manipulation tick. No async waits or ride interruption.
+    if (offset > 0 && this.lastDropAttemptTick !== tick) {
+      this.lastDropAttemptTick = tick;
+      const fish = this.firstFish();
+      if (fish) {
+        const dropped = fish.interact('Drop');
+        this.log(`3T LIVE DROP tick=${tick} offset=${offset} item=${fish.name} accepted=${dropped}`);
+        if (dropped) this.totalDrops++;
+      }
+    }
   }
 
   private async initiateFishing(): Promise<void> {
