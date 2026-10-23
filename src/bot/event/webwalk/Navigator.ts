@@ -48,7 +48,7 @@ class NavigatorImpl {
         }
         this.state = 'starting';
 
-        const worker = new Worker(new URL('./navworker.js', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('/bot/navworker.js', import.meta.url), { type: 'module' });
         this.worker = worker;
 
         worker.onmessage = (event: MessageEvent): void => this.onMessage(event.data as NavResponse);
