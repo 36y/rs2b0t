@@ -44,7 +44,22 @@ if ((TARGET_NAME === 'live' || TARGET_NAME === 'prod') && rsa.rsan === '') {
     process.exit(1);
 }
 
-const identity = resolveBuildIdentity();
+// Reuse the identity embedded in the installed host when rebuilding scripts.
+// In particular, BUILD_TIME must not change between script-only builds.
+const identity = scriptsOnlyRequested
+    ? (() => {
+        if (!fs.existsSync('out/version.json')) {
+            throw new Error('Missing host build identity. Run a full client build first.');
+        }
+        const saved = JSON.parse(fs.readFileSync('out/version.json', 'utf8')) as {
+            commit?: string; short?: string; dirty?: boolean; builtAt?: string;
+        };
+        if (!saved.commit || !saved.short || !saved.builtAt || typeof saved.dirty !== 'boolean') {
+            throw new Error('Invalid host build identity. Run a full client build first.');
+        }
+        return { commit: saved.commit, short: saved.short, dirty: saved.dirty, builtAt: saved.builtAt };
+    })()
+    : resolveBuildIdentity();
 
 const define = {
     'process.env.SECURE_ORIGIN': JSON.stringify(process.env.SECURE_ORIGIN ?? 'false'),
@@ -108,6 +123,11 @@ const hostSource = outputs.get('botclient.js') ?? '';
 if (!hostSource) throw new Error('Bot client entrypoint missing from build outputs');
 const hostFingerprint = Bun.hash(hostSource).toString(36);
 if (scriptsOnly) {
+    // Compare against the installed host, not a timestamp-dependent manifest hash.
+    // Reject host-only changes and changed build defines before publishing scripts.
+    if (!fs.existsSync('out/botclient.js') || fs.readFileSync('out/botclient.js', 'utf8') !== hostSource) {
+        throw new Error('Host bundle changed. Full client rebuild and page restart required.');
+    }
     const existing = JSON.parse(fs.readFileSync('out/intree-scripts.json', 'utf8')) as { hostFingerprint?: string; runtimeChunks?: string[]; target?: string };
     if (existing.target !== TARGET_NAME) {
         throw new Error('The host runtime or build target changed. Full client rebuild and page restart required.');
