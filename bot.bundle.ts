@@ -95,10 +95,15 @@ for (const [name, source] of outputs) {
     fs.mkdirSync('out/' + name.split('/').slice(0, -1).join('/'), { recursive: true });
     fs.writeFileSync('out/' + name, source);
 }
-const runtimeChunks = [...outputs.keys()].filter(name => name.startsWith('chunks/') && name.endsWith('.js')).sort();
+// Fingerprint only chunks imported by the running host, not script-only
+// chunks that legitimately change on each script rebuild.
+const hostSource = outputs.get('botclient.js') ?? '';
+const runtimeChunks = [...outputs.keys()].filter(name =>
+    name.startsWith('chunks/') && name.endsWith('.js') && hostSource.includes(name)
+).sort();
 const scriptSource = outputs.get('intree-scripts.js');
 if (!scriptSource) throw new Error('InTree script entrypoint missing from build outputs');
-const version = Bun.hash(scriptSource).toString(36);
+const version = Bun.hash([...outputs.entries()].filter(([name]) => name === 'intree-scripts.js' || name.startsWith('chunks/')).map(([name, value]) => name + value).join('')).toString(36);
 fs.writeFileSync('out/intree-scripts.json', JSON.stringify({ version, runtimeChunks }));
 
 for (const [entry, name] of [
