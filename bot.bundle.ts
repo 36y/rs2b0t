@@ -80,6 +80,7 @@ if (!build.success) {
 
 const outputs = new Map<string, string>();
 for (const output of build.outputs) {
+    if (output.path.endsWith('.map')) continue;
     const generated = output.path.split('/').pop()!;
     const target = generated === 'main.js' ? 'botclient.js'
         : generated === 'index.js' ? 'intree-scripts.js'
@@ -90,6 +91,7 @@ for (const output of build.outputs) {
     const name = relative.startsWith('chunks/') ? relative : target;
     const text = await output.text();
     outputs.set(name, text.replace('sourceMappingURL=' + generated + '.map', 'sourceMappingURL=' + target + '.map'));
+    if (output.sourcemap) outputs.set(name + '.map', await output.sourcemap.text());
 }
 for (const [name, source] of outputs) {
     fs.mkdirSync('out/' + name.split('/').slice(0, -1).join('/'), { recursive: true });
