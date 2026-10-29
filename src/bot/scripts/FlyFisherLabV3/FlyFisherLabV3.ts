@@ -16,8 +16,8 @@ import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.3.0-experimental-2t';
-const BUILD_LABEL = '2T EXPERIMENT / INTREE / v0.3.0';
+const VERSION = '0.3.1-experimental-2point5t';
+const BUILD_LABEL = '2.5T EXPERIMENT / INTREE / v0.3.1';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -160,6 +160,8 @@ class FlyFisherLabV3 extends LoopingBot {
 
   private observedTick = -1;
   private cycleNumber = 0;
+  // Next gap alternates 2, 3, 2, 3 ticks; reset when a ride stops.
+  private nextCycleGap = 2;
 
   // Observe the actual tick-feed cadence before enabling packet-sensitive 3t actions.
   // The tick event is a client observation, not proof of the server read boundary.
@@ -1214,6 +1216,7 @@ class FlyFisherLabV3 extends LoopingBot {
 
     this.knifeTick = -1;
     this.makeTick = -1;
+    this.nextCycleGap = 2;
     this.nextKnifeAllowedTick = -1;
 
     this.lastKnifeAttemptTick = -1;
@@ -1338,7 +1341,7 @@ class FlyFisherLabV3 extends LoopingBot {
       this.rideActive = true;
       this.phase = 'cycling';
 
-      this.makeTick = tick - 2;
+      this.makeTick = tick - 3;
 
       this.finishCycleBeforeKnife(tick);
       return;
@@ -1446,6 +1449,9 @@ class FlyFisherLabV3 extends LoopingBot {
     this.lastKnifeAttemptTick = tick;
     this.knifeTick = tick;
     this.makeTick = tick;
+    this.nextKnifeAllowedTick = tick + this.nextCycleGap;
+    this.log(`2.5T CYCLE tick=${tick} nextGap=${this.nextCycleGap} nextTick=${this.nextKnifeAllowedTick}`);
+    this.nextCycleGap = this.nextCycleGap === 2 ? 3 : 2;
     this.cycleNumber++;
     this.phase = 'cycling';
     // T: initiate the manipulation; keep these consecutive and synchronous.
@@ -1931,11 +1937,11 @@ class FlyFisherLabV3 extends LoopingBot {
   private driveTick(tick: number): void {
     if (!this.rideActive) return;
     const offset = this.knifeTick < 0 ? 2 : tick - this.knifeTick;
-    if (offset >= 2) {
+    if (this.knifeTick < 0 || tick >= this.nextKnifeAllowedTick) {
       this.prepareNextMenu(tick);
       return;
     }
-    // T+1: observe only; repeat at T+2. Experimental, unverified server catch cadence.
+    // Observe between alternating 2-tick and 3-tick starts; do not send actions early.
     // Confirm inventory change separately from local Drop acceptance.
     if (offset === 1) {
       this.log(`3T DROP VERIFY tick=${tick} fishHeld=${this.fishCount()}`);
