@@ -16,8 +16,8 @@ import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.3.1-experimental-2point5t';
-const BUILD_LABEL = '2.5T EXPERIMENT / INTREE / v0.3.1';
+const VERSION = '0.3.2-diagnostic-2point5t';
+const BUILD_LABEL = '2.5T DIAGNOSTIC LAB / INTREE / v0.3.2';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -162,6 +162,70 @@ class FlyFisherLabV3 extends LoopingBot {
   private cycleNumber = 0;
   // Next gap alternates 2, 3, 2, 3 ticks; reset when a ride stops.
   private nextCycleGap = 2;
+  private diagLastTick = -1;
+  private diagCycleTick = -1;
+  private diagPriorGap = 0;
+  private diagLastXpTick = -1;
+  private diagXpLureOffsets = new Map<number, number>();
+  private diagCatchGaps = new Map<number, number>();
+  private diagXpByGap = new Map<number, number>();
+  private diagCyclesByGap = new Map<number, number>();
+  private diagAnimCounts = new Map<string, number>();
+  private diagActionTotalMs = 0;
+  private diagActionMaxMs = 0;
+  private diagActionCount = 0;
+  private diagLastSummaryTick = -1;
+  private diagSummaryXp = 0;
+  private diagSummaryFish = 0;
+  private diagSummaryCycles = 0;
+  private diagMap(map: Map<number, number>): string {
+    return [...map].sort((a,b) => a[0]-b[0]).map(([k,v]) => k+':'+v).join(',') || 'none';
+  }
+  private diagAdd(map: Map<number, number>, key: number, value = 1): void {
+    map.set(key, (map.get(key) ?? 0) + value);
+  }
+  private diagSnapshot(tick: number): void {
+    if (this.diagLastTick === tick || !Game.ingame()) return;
+    this.diagLastTick = tick;
+    const anim = this.selfAnimation();
+    const key = String(anim);
+    this.diagAnimCounts.set(key, (this.diagAnimCounts.get(key) ?? 0)+1);
+    if (this.rideActive && this.settings.bool('diagnosticTickTrace', true)) {
+      const tile = Game.tile();
+      this.log('V3 DIAG TICK tick='+tick+' cycle='+this.cycleNumber+
+        ' phase='+this.phase+' priorGap='+this.diagPriorGap+
+        ' sinceLure='+(this.lastLureAttemptTick<0?-1:tick-this.lastLureAttemptTick)+
+        ' nextCycle='+this.nextKnifeAllowedTick+' anim='+anim+
+        ' animating='+Game.animating()+' fish='+this.fishCount()+
+        ' trout='+Inventory.count('Raw trout')+' salmon='+Inventory.count('Raw salmon')+
+        ' logs='+Inventory.count(LOGS)+' feathers='+Inventory.count(FEATHER)+
+        ' fishingXp='+Skills.xp('Fishing')+' fletchingXp='+Skills.xp('Fletching')+
+        ' spot='+this.spotIndex+'@'+this.spotTileKey+
+        ' tile='+(tile?tileKey(tile):'none')+' busy='+this.actionBusy);
+    }
+    if (this.diagLastSummaryTick < 0) this.diagLastSummaryTick = tick;
+    if (tick-this.diagLastSummaryTick >= 50) this.diagSummary('PERIODIC', tick);
+  }
+  private diagSummary(reason: string, tick = Game.tick()): void {
+    const elapsed = Math.max(1,tick-this.diagLastSummaryTick);
+    const xp = this.fishingXpGained-this.diagSummaryXp;
+    this.log('V3 DIAG SUMMARY reason='+reason+' tick='+tick+
+      ' windowTicks='+elapsed+' windowXp='+xp+
+      ' windowXpHr='+Math.round(xp*6000/elapsed)+
+      ' windowFish='+(this.fishSeen-this.diagSummaryFish)+
+      ' windowCycles='+(this.cycleNumber-this.diagSummaryCycles)+
+      ' cyclesByGap='+this.diagMap(this.diagCyclesByGap)+
+      ' xpByPriorGap='+this.diagMap(this.diagXpByGap)+
+      ' xpSinceLure='+this.diagMap(this.diagXpLureOffsets)+
+      ' catchGapTicks='+this.diagMap(this.diagCatchGaps)+
+      ' animCounts='+[...this.diagAnimCounts].map(([k,v])=>k+':'+v).join(',')+
+      ' actionAvgMs='+(this.diagActionCount?Math.round(this.diagActionTotalMs/this.diagActionCount):0)+
+      ' actionMaxMs='+Math.round(this.diagActionMaxMs));
+    this.diagLastSummaryTick=tick;
+    this.diagSummaryXp=this.fishingXpGained;
+    this.diagSummaryFish=this.fishSeen;
+    this.diagSummaryCycles=this.cycleNumber;
+  }
 
   // Observe the actual tick-feed cadence before enabling packet-sensitive 3t actions.
   // The tick event is a client observation, not proof of the server read boundary.
@@ -332,6 +396,8 @@ class FlyFisherLabV3 extends LoopingBot {
       this.observedTick = event.tick;
       if (this.yieldToRandomEvent()) return;
       this.observeTickCadence(event.tick);
+      this.updateFishingEvidence();
+      this.diagSnapshot(event.tick);
 
       // Observe network positions before any tick-level
       // relocation handling changes the tracked spot.
@@ -378,6 +444,7 @@ class FlyFisherLabV3 extends LoopingBot {
     this.observeCrafting('stop');
     this.printIncidentSummary('STOP');
     this.labSummary('STOP');
+    this.diagSummary('STOP');
     this.stopRide();
     this.log('FlyFisherLab stopped');
   }
@@ -386,6 +453,7 @@ class FlyFisherLabV3 extends LoopingBot {
     this.observeCrafting('pause');
     this.printIncidentSummary('PAUSE');
     this.labSummary('PAUSE');
+    this.diagSummary('PAUSE');
     this.stopRide();
     this.log('FlyFisherLab paused');
   }
@@ -946,6 +1014,16 @@ class FlyFisherLabV3 extends LoopingBot {
       const gain = xp - this.fishingLastXp;
 
       this.fishingXpGained += gain;
+      const tick=Game.tick();
+      const sinceLure=this.lastLureAttemptTick<0?-1:tick-this.lastLureAttemptTick;
+      this.diagAdd(this.diagXpLureOffsets,sinceLure);
+      this.diagAdd(this.diagXpByGap,this.diagPriorGap,gain);
+      if(this.diagLastXpTick>=0)this.diagAdd(this.diagCatchGaps,tick-this.diagLastXpTick);
+      this.diagLastXpTick=tick;
+      this.log('V3 DIAG XP tick='+tick+' gain='+gain+
+        ' sinceLure='+sinceLure+' priorGap='+this.diagPriorGap+
+        ' sinceCycle='+(this.diagCycleTick<0?-1:tick-this.diagCycleTick)+
+        ' anim='+this.selfAnimation());
 
       this.log(
         `FISHING XP +${gain} tick=${Game.tick()}`
@@ -1449,12 +1527,16 @@ class FlyFisherLabV3 extends LoopingBot {
     this.lastKnifeAttemptTick = tick;
     this.knifeTick = tick;
     this.makeTick = tick;
+    this.diagPriorGap=this.diagCycleTick<0?0:tick-this.diagCycleTick;
+    if(this.diagPriorGap>0)this.diagAdd(this.diagCyclesByGap,this.diagPriorGap);
+    this.diagCycleTick=tick;
     this.nextKnifeAllowedTick = tick + this.nextCycleGap;
     this.log(`2.5T CYCLE tick=${tick} nextGap=${this.nextCycleGap} nextTick=${this.nextKnifeAllowedTick}`);
     this.nextCycleGap = this.nextCycleGap === 2 ? 3 : 2;
     this.cycleNumber++;
     this.phase = 'cycling';
     // T: initiate the manipulation; keep these consecutive and synchronous.
+    const diagActionStart=performance.now();
     const used = logs.useOn(knife);
     const made = actions.ifButton(8889);
     // Click the player's own tile to attempt to cancel fletching.
@@ -1472,6 +1554,14 @@ class FlyFisherLabV3 extends LoopingBot {
     const lured = spot.interact(LURE);
     this.lastLureAttemptTick = tick;
     if (lured) this.totalLures++;
+    const diagMs=performance.now()-diagActionStart;
+    this.diagActionCount++;
+    this.diagActionTotalMs+=diagMs;
+    this.diagActionMaxMs=Math.max(this.diagActionMaxMs,diagMs);
+    this.log('V3 DIAG ACTION tick='+tick+' priorGap='+this.diagPriorGap+
+      ' nextGap='+(this.nextKnifeAllowedTick-tick)+
+      ' actionMs='+diagMs.toFixed(2)+
+      ' accepted='+[used,made,cancelled,dropped,lured].join(','));
     this.log(`3T INIT tick=${tick} use=${used} make=${made} tileCancel=${cancelled} drop=${dropped} fishBefore=${fishBefore} fishItem=${fish ? fish.name : 'none'} lure=${lured} tile=${here ? `${here.x},${here.z}` : 'unknown'} anim=${this.selfAnimation()}`);
     this.remember('3T INIT', `use=${used} make=${made} tileCancel=${cancelled} drop=${dropped} fishBefore=${fishBefore} lure=${lured}`, tick);
   }
@@ -2316,6 +2406,7 @@ export const FLYFISHER_LAB_V3_SETTINGS: SettingsSchema = {
     optionLabels: { edgeville: 'Edgeville / Barbarian Village', gnome: 'Tree Gnome Stronghold' },
     help: 'Gnome: automatic restocking via ground-floor and upstairs staircases; test the route with supplies in bank.'
   },
+  diagnosticTickTrace: { type: 'boolean', label: 'Verbose per-tick diagnostics', default: true },
   featherWithdrawAmount: { type: 'number', label: 'Feathers to withdraw', default: 10000 },
   carrierWithdrawAmount: { type: 'number', label: 'Normal logs to withdraw', default: 2 }
 };
