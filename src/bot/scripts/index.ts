@@ -793,9 +793,9 @@ ScriptRegistry.register({
 
 // Separate experimental script: v0.2.9 remains unchanged and selectable.
 ScriptRegistry.register({
-    name: 'FlyFisherLab V3 (2.5T Experimental)',
+    name: 'FlyFisherLab V3 (2.5T Diagnostic Lab)',
     description: 'Experimental alternating two-/three-tick fly-fishing cadence; preserves separate proven FlyFisherLab v0.2.9 script',
-    version: '0.3.1-experimental-2point5t',
+    version: '0.3.2-diagnostic-2point5t',
     category: 'Fishing',
     tags: ['fishing', 'fly-fishing', 'tick-manipulation', 'two-point-five-tick', 'experimental'],
     settingsSchema: FLYFISHER_LAB_V3_SETTINGS,
