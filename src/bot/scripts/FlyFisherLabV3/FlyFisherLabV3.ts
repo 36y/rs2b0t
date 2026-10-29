@@ -16,8 +16,8 @@ import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.3.3-fixed3t-scheduler-diagnostics';
-const BUILD_LABEL = '3T SCHEDULER DIAGNOSTIC / INTREE / v0.3.3';
+const VERSION = '0.3.4-drop-placement-study';
+const BUILD_LABEL = '3T DROP PLACEMENT LAB / INTREE / v0.3.4';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -163,6 +163,44 @@ class FlyFisherLabV3 extends LoopingBot {
   // Next gap alternates 2, 3, 2, 3 ticks; reset when a ride stops.
   private nextCycleGap = 3;
   private diagLastBlockedTick = -1;
+  private dropCommandTick = -1;
+  private dropCommandFish = 0;
+  private dropCommandCycle = -1;
+  private dropLatencies = new Map<number, number>();
+  private dropCommands = 0;
+  private dropUnresolved = 0;
+  private dropTiming(): string { return this.settings.str('dropTiming', 'sameTick'); }
+  private issueDiagnosticDrop(tick: number, stage: string): boolean {
+    const before = this.fishCount();
+    const fish = this.firstFish();
+    const start = performance.now();
+    const sent = fish ? fish.interact('Drop') : false;
+    this.lastDropAttemptTick = tick;
+    if (sent) {
+      this.totalDrops++;
+      if (this.dropCommandTick >= 0) this.dropUnresolved++;
+      this.dropCommandTick = tick;
+      this.dropCommandFish = before;
+      this.dropCommandCycle = this.cycleNumber;
+      this.dropCommands++;
+    }
+    this.log('V3 DROP COMMAND tick='+tick+' cycle='+this.cycleNumber+
+      ' stage='+stage+' sent='+sent+' fishBefore='+before+
+      ' callMs='+(performance.now()-start).toFixed(3));
+    return sent;
+  }
+  private observeDiagnosticDrop(tick: number): void {
+    if (this.dropCommandTick < 0) return;
+    const now = this.fishCount();
+    if (now < this.dropCommandFish) {
+      const lag = tick - this.dropCommandTick;
+      this.diagAdd(this.dropLatencies, lag);
+      this.log('V3 DROP OBSERVED tick='+tick+' commandTick='+this.dropCommandTick+
+        ' cycle='+this.dropCommandCycle+' latencyTicks='+lag+
+        ' fishBefore='+this.dropCommandFish+' fishNow='+now);
+      this.dropCommandTick = -1;
+    }
+  }
   private diagLateCycles = 0;
   private diagMaxLateness = 0;
   private diagBlockedReasons = new Map<string, number>();
@@ -244,6 +282,8 @@ class FlyFisherLabV3 extends LoopingBot {
       ' animCounts='+[...this.diagAnimCounts].map(([k,v])=>k+':'+v).join(',')+
       ' actionAvgMs='+(this.diagActionCount?Math.round(this.diagActionTotalMs/this.diagActionCount):0)+
       ' actionMaxMs='+Math.round(this.diagActionMaxMs)+
+      ' dropMode='+this.dropTiming()+' dropCommands='+this.dropCommands+
+      ' dropLatencies='+this.diagMap(this.dropLatencies)+' dropUnresolved='+this.dropUnresolved+
       ' lateCycles='+this.diagLateCycles+' maxLateTicks='+this.diagMaxLateness+
       ' blockedReasons='+[...this.diagBlockedReasons].map(([k,v])=>k+':'+v).join(','));
     this.diagLastSummaryTick=tick;
@@ -422,6 +462,7 @@ class FlyFisherLabV3 extends LoopingBot {
       if (this.yieldToRandomEvent()) return;
       this.observeTickCadence(event.tick);
       this.updateFishingEvidence();
+      this.observeDiagnosticDrop(event.tick);
       this.diagSnapshot(event.tick);
       this.diagSchedule(event.tick);
 
@@ -1579,23 +1620,26 @@ class FlyFisherLabV3 extends LoopingBot {
     // T: initiate the manipulation; keep these consecutive and synchronous.
     const diagActionStart=performance.now();
     const used = logs.useOn(knife);
+    const useMs = performance.now()-diagActionStart;
     const made = actions.ifButton(8889);
+    const makeMs = performance.now()-diagActionStart;
     // Click the player's own tile to attempt to cancel fletching.
     // walkTo uses scene-local coordinates, not world coordinates.
     const here = Game.tile();
     const local = here ? reader.toLocal(here.x, here.z) : null;
     const cancelled = local ? actions.walkTo(local.lx, local.lz) : false;
+    const cancelMs = performance.now()-diagActionStart;
     // Experimental ordering: Drop BEFORE Lure so fishing is the final action.
     const fishBefore = this.fishCount();
     const fish = this.firstFish();
-    const dropped = fish ? fish.interact('Drop') : false;
-    this.lastDropAttemptTick = tick;
-    if (dropped) this.totalDrops++;
+    const dropped = this.dropTiming() === 'sameTick' ? this.issueDiagnosticDrop(tick, 'T-before-Lure') : false;
     // Restart fishing after both tile cancellation and the optional drop.
     const lured = spot.interact(LURE);
+    const lureMs = performance.now()-diagActionStart;
     this.lastLureAttemptTick = tick;
     if (lured) this.totalLures++;
     const diagMs=performance.now()-diagActionStart;
+    this.log('V3 ACTION STAGES tick='+tick+' mode='+this.dropTiming()+' useMs='+useMs.toFixed(3)+' makeMs='+makeMs.toFixed(3)+' cancelMs='+cancelMs.toFixed(3)+' lureMs='+lureMs.toFixed(3));
     this.diagActionCount++;
     this.diagActionTotalMs+=diagMs;
     this.diagActionMaxMs=Math.max(this.diagActionMaxMs,diagMs);
@@ -2075,6 +2119,7 @@ class FlyFisherLabV3 extends LoopingBot {
     // Observe between alternating 2-tick and 3-tick starts; do not send actions early.
     // Confirm inventory change separately from local Drop acceptance.
     if (offset === 1) {
+      if (this.dropTiming() === 'nextTick' && this.fishCount() > 0) this.issueDiagnosticDrop(tick, 'T+1');
       this.log(`3T DROP VERIFY tick=${tick} fishHeld=${this.fishCount()}`);
     }
   }
@@ -2448,6 +2493,9 @@ export const FLYFISHER_LAB_V3_SETTINGS: SettingsSchema = {
     help: 'Gnome: automatic restocking via ground-floor and upstairs staircases; test the route with supplies in bank.'
   },
   diagnosticTickTrace: { type: 'boolean', label: 'Verbose per-tick diagnostics', default: true },
+  dropTiming: { type: 'string', label: 'Drop timing experiment', default: 'sameTick',
+    options: ['sameTick', 'nextTick'],
+    optionLabels: { sameTick: 'Baseline: Drop at T before Lure', nextTick: 'Experiment: Drop at T+1' } },
   featherWithdrawAmount: { type: 'number', label: 'Feathers to withdraw', default: 10000 },
   carrierWithdrawAmount: { type: 'number', label: 'Normal logs to withdraw', default: 2 }
 };
