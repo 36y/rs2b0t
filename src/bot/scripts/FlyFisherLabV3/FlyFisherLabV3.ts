@@ -16,8 +16,8 @@ import { Traversal } from '../../api/walking/Traversal.js';
 import type { Npc } from '../../api/model/Npc.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
 
-const VERSION = '0.3.2-diagnostic-2point5t';
-const BUILD_LABEL = '2.5T DIAGNOSTIC LAB / INTREE / v0.3.2';
+const VERSION = '0.3.3-fixed3t-scheduler-diagnostics';
+const BUILD_LABEL = '3T SCHEDULER DIAGNOSTIC / INTREE / v0.3.3';
 const BOUNDARY_GRACE_MS = 65;
 const INCIDENT_REPEAT_TICKS = 25;
 const MAX_HISTORY = 32;
@@ -161,7 +161,11 @@ class FlyFisherLabV3 extends LoopingBot {
   private observedTick = -1;
   private cycleNumber = 0;
   // Next gap alternates 2, 3, 2, 3 ticks; reset when a ride stops.
-  private nextCycleGap = 2;
+  private nextCycleGap = 3;
+  private diagLastBlockedTick = -1;
+  private diagLateCycles = 0;
+  private diagMaxLateness = 0;
+  private diagBlockedReasons = new Map<string, number>();
   private diagLastTick = -1;
   private diagCycleTick = -1;
   private diagPriorGap = 0;
@@ -183,6 +187,25 @@ class FlyFisherLabV3 extends LoopingBot {
   }
   private diagAdd(map: Map<number, number>, key: number, value = 1): void {
     map.set(key, (map.get(key) ?? 0) + value);
+  }
+  private diagBlocked(tick: number, reason: string): void {
+    if (tick === this.diagLastBlockedTick) return;
+    this.diagLastBlockedTick = tick;
+    this.diagBlockedReasons.set(reason,(this.diagBlockedReasons.get(reason)??0)+1);
+    this.log('V3 DIAG SCHEDULE BLOCK tick='+tick+
+      ' due='+this.nextKnifeAllowedTick+
+      ' lateBy='+(tick-this.nextKnifeAllowedTick)+
+      ' reason='+reason+' phase='+this.phase+
+      ' busy='+this.actionBusy+' relocating='+this.relocating+
+      ' dropPending='+this.dropPending+' boundaryDropPending='+this.boundaryDropPending+
+      ' fish='+this.fishCount()+' anim='+this.selfAnimation());
+  }
+  private diagSchedule(tick: number): void {
+    if (!this.rideActive || this.nextKnifeAllowedTick < 0 || tick < this.nextKnifeAllowedTick) return;
+    if (this.relocating || this.actionBusy || this.dropPending || this.boundaryDropPending) {
+      const reason=this.relocating?'relocating':this.actionBusy?'actionBusy':this.dropPending?'dropPending':'boundaryDropPending';
+      this.diagBlocked(tick,reason);
+    }
   }
   private diagSnapshot(tick: number): void {
     if (this.diagLastTick === tick || !Game.ingame()) return;
@@ -220,7 +243,9 @@ class FlyFisherLabV3 extends LoopingBot {
       ' catchGapTicks='+this.diagMap(this.diagCatchGaps)+
       ' animCounts='+[...this.diagAnimCounts].map(([k,v])=>k+':'+v).join(',')+
       ' actionAvgMs='+(this.diagActionCount?Math.round(this.diagActionTotalMs/this.diagActionCount):0)+
-      ' actionMaxMs='+Math.round(this.diagActionMaxMs));
+      ' actionMaxMs='+Math.round(this.diagActionMaxMs)+
+      ' lateCycles='+this.diagLateCycles+' maxLateTicks='+this.diagMaxLateness+
+      ' blockedReasons='+[...this.diagBlockedReasons].map(([k,v])=>k+':'+v).join(','));
     this.diagLastSummaryTick=tick;
     this.diagSummaryXp=this.fishingXpGained;
     this.diagSummaryFish=this.fishSeen;
@@ -398,6 +423,7 @@ class FlyFisherLabV3 extends LoopingBot {
       this.observeTickCadence(event.tick);
       this.updateFishingEvidence();
       this.diagSnapshot(event.tick);
+      this.diagSchedule(event.tick);
 
       // Observe network positions before any tick-level
       // relocation handling changes the tracked spot.
@@ -1294,7 +1320,7 @@ class FlyFisherLabV3 extends LoopingBot {
 
     this.knifeTick = -1;
     this.makeTick = -1;
-    this.nextCycleGap = 2;
+    this.nextCycleGap = 3;
     this.nextKnifeAllowedTick = -1;
 
     this.lastKnifeAttemptTick = -1;
@@ -1515,12 +1541,20 @@ class FlyFisherLabV3 extends LoopingBot {
     if (!this.rideActive || this.relocating || this.actionBusy ||
         this.dropPending || this.boundaryDropPending ||
         this.lastKnifeAttemptTick === tick ||
-        tick < this.nextKnifeAllowedTick) return;
+        tick < this.nextKnifeAllowedTick) {
+      if(this.rideActive && this.nextKnifeAllowedTick>=0 && tick>=this.nextKnifeAllowedTick)
+        this.diagBlocked(tick,'prepare-guard');
+      return;
+    }
     const spot = this.activeSpot();
     const logs = Inventory.first(LOGS);
     const knife = Inventory.first(KNIFE);
-    if (!spot || !logs || !knife) return;
+    if (!spot || !logs || !knife) {
+      this.diagBlocked(tick,!spot?'no-spot':!logs?'no-logs':'no-knife');
+      return;
+    }
     if (!this.originalSpotStillPresent()) {
+      this.diagBlocked(tick,'spot-moved');
       this.beginRelocation('spot-moved-before-init', this.nearestSpot());
       return;
     }
@@ -1530,9 +1564,16 @@ class FlyFisherLabV3 extends LoopingBot {
     this.diagPriorGap=this.diagCycleTick<0?0:tick-this.diagCycleTick;
     if(this.diagPriorGap>0)this.diagAdd(this.diagCyclesByGap,this.diagPriorGap);
     this.diagCycleTick=tick;
-    this.nextKnifeAllowedTick = tick + this.nextCycleGap;
-    this.log(`2.5T CYCLE tick=${tick} nextGap=${this.nextCycleGap} nextTick=${this.nextKnifeAllowedTick}`);
-    this.nextCycleGap = this.nextCycleGap === 2 ? 3 : 2;
+    const scheduled=this.nextKnifeAllowedTick;
+    if(scheduled>=0 && tick>scheduled){
+      const late=tick-scheduled;
+      this.diagLateCycles++;
+      this.diagMaxLateness=Math.max(this.diagMaxLateness,late);
+      this.log('V3 DIAG LATE START tick='+tick+' scheduled='+scheduled+' lateBy='+late);
+    }
+    this.nextKnifeAllowedTick = tick + 3;
+    this.log(`3T CYCLE tick=${tick} nextGap=3 nextTick=${this.nextKnifeAllowedTick}`);
+    this.nextCycleGap = 3;
     this.cycleNumber++;
     this.phase = 'cycling';
     // T: initiate the manipulation; keep these consecutive and synchronous.
