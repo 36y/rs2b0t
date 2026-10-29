@@ -793,7 +793,7 @@ ScriptRegistry.register({
 
 // Separate experimental script: v0.2.9 remains unchanged and selectable.
 ScriptRegistry.register({
-    name: 'FlyFisherLab V3 (Fixed 3T Scheduler Diagnostic)',
+    name: 'FlyFisherLab V3 (3T Drop Placement Lab)',
     description: 'Experimental alternating two-/three-tick fly-fishing cadence; preserves separate proven FlyFisherLab v0.2.9 script',
     version: '0.3.3-fixed3t-scheduler-diagnostics',
     category: 'Fishing',
