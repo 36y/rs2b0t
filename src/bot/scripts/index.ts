@@ -19,6 +19,7 @@ import { MINER_FOOD_SETTINGS } from './GatheringBot/MinerLogic.js';
 import EdgevilleMonkeyBars, { EDGEVILLE_MONKEYBARS_SETTINGS } from './EdgevilleMonkeyBars/EdgevilleMonkeyBars.js';
 import { ScriptRegistry } from '../runtime/ScriptRegistry.js';
 import FlyFisherLab, { FLYFISHER_LAB_SETTINGS } from './FlyFisherLab/FlyFisherLab.js';
+import FlyFisherLabV3, { FLYFISHER_LAB_V3_SETTINGS } from './FlyFisherLabV3/FlyFisherLabV3.js';
 import AgilityBot from './AgilityBot/AgilityBot.js';
 import ArdyFighter, { SETTINGS as ARDY_SETTINGS } from './ArdyFighter/ArdyFighter.js';
 import AutoFighter, { SETTINGS as AUTOFIGHTER_SETTINGS } from './AutoFighter/AutoFighter.js';
@@ -787,4 +788,16 @@ ScriptRegistry.register({
     tags: ['fishing', 'fly-fishing', 'tick-manipulation', 'four-tick', 'experimental'],
     settingsSchema: FLYFISHER_LAB_SETTINGS,
     create: () => new FlyFisherLab()
+});
+
+
+// Separate experimental script: v0.2.9 remains unchanged and selectable.
+ScriptRegistry.register({
+    name: 'FlyFisherLab V3 (2T Experimental)',
+    description: 'Experimental two-tick fly-fishing cadence; preserves separate proven FlyFisherLab v0.2.9 script',
+    version: '0.3.0-experimental-2t',
+    category: 'Fishing',
+    tags: ['fishing', 'fly-fishing', 'tick-manipulation', 'two-tick', 'experimental'],
+    settingsSchema: FLYFISHER_LAB_V3_SETTINGS,
+    create: () => new FlyFisherLabV3()
 });
