@@ -54,6 +54,7 @@ import BrimhavenAgility, { BRIMHAVEN_AGILITY_SETTINGS } from './BrimhavenAgility
 import SmelterBot, { SETTINGS as SMELTER_SETTINGS } from './SmelterBot/SmelterBot.js';
 import Superheater, { SUPERHEATER_SETTINGS } from './Superheater/Superheater.js';
 import Alcher, { ALCHER_SETTINGS } from './Alcher/Alcher.js';
+import ShopAlchAudit, { SHOP_ALCH_AUDIT_SETTINGS } from './ShopAlchAudit/ShopAlchAudit.js';
 import HillGiant, { HILL_GIANT_SETTINGS } from './HillGiant/HillGiant.js';
 import TannerBot, { TANNER_SETTINGS } from './TannerBot/TannerBot.js';
 import VialFiller, { VIAL_FILLER_SETTINGS } from './VialFiller/VialFiller.js';
@@ -907,4 +908,13 @@ ScriptRegistry.register({
     tags: ['fishing', 'fly-fishing', 'tick-manipulation', 'four-tick', 'experimental'],
     settingsSchema: FLYFISHER_LAB_SETTINGS,
     create: () => new FlyFisherLab()
+});
+
+ScriptRegistry.register({
+    name: 'Shop Alch Audit (One-shot)',
+    description: 'Single-pass shop and inventory state diagnostic; optional normal inventory alchemy control',
+    category: 'Magic',
+    tags: ['magic', 'shop', 'audit', 'diagnostic'],
+    settingsSchema: SHOP_ALCH_AUDIT_SETTINGS,
+    create: () => new ShopAlchAudit()
 });
