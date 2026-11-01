@@ -1,3 +1,4 @@
+import ShopAlchAudit, { SHOP_ALCH_AUDIT_SETTINGS } from './ShopAlchAudit/ShopAlchAudit.js';
 import { AGILITY_SETTINGS } from './AgilityBot/AgilityBot.js';
 import { FISHING_LOCATION_OPTIONS } from '../data/fishingLocations.js';
 import { FISHING_METHOD_OPTIONS } from '../data/fishingMethods.js';
@@ -800,4 +801,13 @@ ScriptRegistry.register({
     tags: ['fishing', 'fly-fishing', 'tick-manipulation', 'two-point-five-tick', 'experimental'],
     settingsSchema: FLYFISHER_LAB_V3_SETTINGS,
     create: () => new FlyFisherLabV3()
+});
+
+ScriptRegistry.register({
+    name: 'Shop Alch Audit (One-shot)',
+    description: 'One-shot shop alchemy ownership test with inventory, stock, coin, rune and XP state diffs',
+    category: 'Magic',
+    tags: ['shop', 'alchemy', 'audit', 'experimental'],
+    settingsSchema: SHOP_ALCH_AUDIT_SETTINGS,
+    create: () => new ShopAlchAudit()
 });
