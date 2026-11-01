@@ -1,3 +1,4 @@
+import ShopTransactionAudit, { SHOP_TRANSACTION_AUDIT_SETTINGS } from './ShopTransactionAudit/ShopTransactionAudit.js';
 import ShopAlchAudit, { SHOP_ALCH_AUDIT_SETTINGS } from './ShopAlchAudit/ShopAlchAudit.js';
 import { AGILITY_SETTINGS } from './AgilityBot/AgilityBot.js';
 import { FISHING_LOCATION_OPTIONS } from '../data/fishingLocations.js';
@@ -810,4 +811,13 @@ ScriptRegistry.register({
     tags: ['shop', 'alchemy', 'audit', 'experimental'],
     settingsSchema: SHOP_ALCH_AUDIT_SETTINGS,
     create: () => new ShopAlchAudit()
+});
+
+ScriptRegistry.register({
+    name: 'Shop Transaction Audit (One-shot)',
+    description: 'One normal buy/sell or observation with inventory, stock, coins and tick accounting',
+    category: 'Other',
+    tags: ['shop', 'transaction', 'audit', 'diagnostic'],
+    settingsSchema: SHOP_TRANSACTION_AUDIT_SETTINGS,
+    create: () => new ShopTransactionAudit()
 });
