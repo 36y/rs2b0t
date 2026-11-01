@@ -4,6 +4,7 @@ import { Execution } from '../../api/execution/Execution.js';
 import { Game } from '../../api/game/Game.js';
 import { Inventory } from '../../api/inventory/Inventory.js';
 import { Shop } from '../../api/shop/Shop.js';
+import { Input } from '../../input/Input.js';
 import { Skills } from '../../api/skills/Skills.js';
 import { ScriptRunner } from '../../runtime/ScriptRunner.js';
 import type { SettingsSchema } from '../../runtime/Settings.js';
@@ -24,10 +25,10 @@ export const SHOP_ALCH_AUDIT_SETTINGS: SettingsSchema = {
     mode: {
         type: 'string',
         default: 'observe',
-        options: ['observe', 'inventory-control'],
-        optionLabels: ['Observe only', 'Normal inventory alch (one cast)'],
+        options: ['observe', 'inventory-control', 'shop-probe'],
+        optionLabels: ['Observe only', 'Normal inventory alch (one cast)', 'Shop stock target (one cast)'],
         label: 'Test mode',
-        help: 'Observe requires no cast. Inventory control casts once on a real inventory item, never on shop stock.'
+        help: 'Observe sends nothing; inventory-control casts on your pack item; shop-probe sends one spell-on-shop-stock action.'
     }
 };
 
@@ -76,7 +77,7 @@ export default class ShopAlchAudit extends LoopingBot {
         const wanted = this.settings.str('item', '').trim();
         const mode = this.settings.str('mode', 'observe');
         const before = capture();
-        const candidate = before.shop.find(i => i.name?.toLowerCase() === wanted.toLowerCase());
+        const candidate = before.shop.find(i => i.name?.toLowerCase() === wanted.toLowerCase() && i.count > 0);
         this.log('PRE ' + JSON.stringify(before));
 
         if (!wanted || !candidate) {
@@ -85,18 +86,35 @@ export default class ShopAlchAudit extends LoopingBot {
         }
         this.log('SHOP TARGET ' + JSON.stringify(candidate));
 
-        if (mode === 'inventory-control') {
-            const inv = Inventory.items().find(i => i.id === candidate.id);
-            if (!inv) {
-                ScriptRunner.stop('Inventory control requires owning the same item ID; no action sent.');
-                return;
-            }
+        if (mode === 'inventory-control' || mode === 'shop-probe') {
             if (Skills.level('magic') < 55 || Inventory.count('Nature rune') < 1) {
                 ScriptRunner.stop('High Alchemy requires 55 Magic and at least one nature rune.');
                 return;
             }
             if (!(await Game.openSideTab(6))) {
                 ScriptRunner.stop('Could not open magic tab; no action sent.');
+                return;
+            }
+        }
+
+        if (mode === 'shop-probe') {
+            if (!Shop.isOpen()) {
+                ScriptRunner.stop('Shop closed before probe; no action sent.');
+                return;
+            }
+            const live = reader.shopInv(3900).find(i => i.id === candidate.id && i.slot === candidate.slot && i.count > 0);
+            const spellComId = reader.targetButtonByBase(reader.sideTabInterface(6), 'High Level Alchemy');
+            if (!live || spellComId === -1) {
+                ScriptRunner.stop('Shop item or High Level Alchemy button no longer available; no action sent.');
+                return;
+            }
+            this.log('PROBE_DISPATCH ' + JSON.stringify({ spellComId, itemId: live.id, slot: live.slot, itemComId: live.comId }));
+            const sent = Input.castOnItem(spellComId, live.id, live.slot, live.comId);
+            this.log('PROBE_CLIENT_ACCEPTED ' + String(sent));
+        } else if (mode === 'inventory-control') {
+            const inv = Inventory.items().find(i => i.id === candidate.id);
+            if (!inv) {
+                ScriptRunner.stop('Inventory control requires owning the same item ID; no action sent.');
                 return;
             }
             const sent = await Game.castOnItem('High Level Alchemy', inv);
@@ -118,6 +136,10 @@ export default class ShopAlchAudit extends LoopingBot {
             inventoryDeltas: itemDeltas(before.inventory, after.inventory),
             shopDeltas: before.shopOpen && after.shopOpen ? itemDeltas(before.shop, after.shop) : null,
             shopOpenAfter: after.shopOpen,
+            candidateStockBefore: candidate.count,
+            candidateStockAfter: after.shopOpen ? (after.shop.find(i => i.id === candidate.id && i.slot === candidate.slot)?.count ?? 0) : null,
+            suspiciousGoldWithoutInventoryConsumption:
+                after.coins > before.coins && !itemDeltas(before.inventory, after.inventory).some(d => d.id === candidate.id && d.delta < 0),
             before,
             after
         };
